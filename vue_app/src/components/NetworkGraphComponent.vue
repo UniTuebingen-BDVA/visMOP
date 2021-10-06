@@ -41,6 +41,7 @@
                   :search="tableSearch"
                   class="elevation-1"
                   id="transcriptomics"
+                  @click:row="focusNodeTranscriptomics"
                 ></v-data-table>
               </v-tab-item>
 
@@ -53,6 +54,7 @@
                   :search="tableSearch"
                   class="elevation-1"
                   id="proteomicsTable"
+                  @click:row="focusNodeProteomics"
                 ></v-data-table>
               </v-tab-item>
 
@@ -77,7 +79,18 @@
           </v-row>
         </v-card>
       </v-col>
-
+      <v-col cols = "2" class="mb-2">
+        <v-overflow-btn
+        :items="pathwayLayouting.pathway_list"
+        v-on:change="selectPathway"
+        v-on:click:clear="clearPathway"
+        editable
+        clearable
+        label="Focus Pathway"
+        hide-details
+        overflow
+      ></v-overflow-btn>
+      </v-col>
     </v-row>
     <div class="text-center">
       <v-overlay :value="overlay">
@@ -91,17 +104,14 @@
 
 <script>
 import { mapState } from "vuex";
-import { mainGraph } from "@/assets/js/main_network.ts";
+import { mainGraph, panToNode, layoutToPathway } from "@/assets/js/main_network.ts";
 import { generateGraphData } from "@/assets/js/graphPreparation.ts";
-//import { mainGraph } from "@/assets/js/main_network.ts";
-//import { generateGraphData } from "@/assets/js/graphPreparation.ts";
 export default {
   // name of the component
   name: "NetworkGraphComponent",
 
   // data section of the Vue component. Access via this.<varName> .
   data: () => ({
-    overlay: false,
     tableSearch: "",
     selectedTab: "transcriptomics"
   }),
@@ -113,8 +123,12 @@ export default {
       proteomicsTableHeaders: state => state.proteomicsTableHeaders,
       proteomicsTableData: state => state.proteomicsTableData,
       graphData: state => state.graphData,
-      fcs: state => state.fcs
-
+      fcs: state => state.fcs,
+      transcriptomicsSymbolDict: state => state.transcriptomicsSymbolDict,
+      proteomicsSymbolDict: state => state.proteomicsSymbolDict,
+      usedSymbolCols: state => state.usedSymbolCols,
+      overlay: state => state.overlay,
+      pathwayLayouting: state => state.pathwayLayouting
     }),
   },
   watch: {
@@ -131,7 +145,26 @@ export default {
   },
 
   methods: {
-    
+    focusNodeTranscriptomics(row){
+      let symbol = row[this.usedSymbolCols["transcriptomics"]]
+      console.log("Symbol", symbol)
+      console.log("dict", this.transcriptomicsSymbolDict)
+      let keggID = this.transcriptomicsSymbolDict[symbol]
+      console.log("ID", keggID)
+      panToNode(this.networkGraph, keggID)
+    },
+    focusNodeProteomics(row){
+      let symbol = row[this.usedSymbolCols["proteomics"]]
+      let keggID = this.proteomicsSymbolDict[symbol]
+      panToNode(this.networkGraph, keggID)
+    },
+    selectPathway(key){
+      let nodeList = this.pathwayLayouting.pathway_node_dictionary[key]
+      layoutToPathway(this.networkGraph, key , nodeList)
+    },
+    clearPathway(){
+      console.log("CLEAR")
+    },
     // basic GET request using fetch
     calculateCombinedExtent() {
       console.log("fcs", this.fcs)

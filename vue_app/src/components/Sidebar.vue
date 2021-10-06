@@ -176,7 +176,7 @@ export default {
       }
     },
     generateKGMLs() {
-      this.overlay = true;
+      this.$store.commit("setOverlay", true)
       let payload = {
         transcriptomics: {
           recieved: this.recievedTranscriptomicsData,
@@ -200,9 +200,14 @@ export default {
         .then((dataContent) => {
           this.$store.commit("setGraphData", dataContent["main_data"]);
           this.$store.commit("setFCS", dataContent["fcs"]);
+          this.$store.commit("setTranscriptomicsSymbolDict", dataContent["transcriptomics_symbol_dict"])
+          this.$store.commit("setProteomicsSymbolDict", dataContent["proteomics_symbol_dict"])
+          this.$store.commit("setUsedSymbolCols", dataContent["used_symbol_cols"])
+          this.$store.commit("setPathwayLayouting", dataContent["pathway_layouting"])
+
         })
 
-        .then(() => (this.overlay = false))
+        .then(() => this.$store.commit("setOverlay", false))
     },
     lockHover() {
       this.$store.commit("setSideBarExpand", false);

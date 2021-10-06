@@ -10,7 +10,7 @@ import json
 data_path = pathlib.Path().resolve()
 #data_path = pathlib.Path("/var/www/visMOP")
 
-def make_protein_dict(df):
+def make_protein_dict(df, colname):
     column_names = df.columns
     '''col_name_change = {}
     for i in column_names:
@@ -24,7 +24,7 @@ def make_protein_dict(df):
     df.rename(columns=col_name_change, inplace=True)
     col_names_new = df.columns'''
 
-    df = df.set_index(column_names[0])
+    df = df.set_index(colname)
 
     # stores 'Protein name', 'Gene Symbol', 'HED_SED/CON_SED' for each 'Uniprot ID'
 

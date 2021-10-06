@@ -66,15 +66,11 @@ def prot_table_recieve():
     transfer_dat = request.files['proteinDat']
     prot_data = create_df(transfer_dat)
 
-    # create dict with additional uniprot data
-    protein_dict = make_protein_dict(prot_data)
-    get_uniprot_entry(protein_dict)
-    add_uniprot_info(protein_dict)
+   
 
     # shorten protein names a bit
     prot_data['Protein name'] = prot_data['Protein name'].apply(lambda x: x.split("(")[0])
     # add location to data table
-    prot_data['Location'] = [protein_dict[item]['location'] for item in protein_dict]
 
     prot_table_global = prot_data.copy(deep=True)
 
@@ -99,17 +95,23 @@ def prot_table_recieve():
         interaction_dict = {}
         print("Download 10090.protein.physical.links.v11.0.txt.gz from STRING database.")
 
-    global prot_dict_global
-    prot_dict_global= protein_dict
+   
     global interaction_dict_global
     interaction_dict_global= interaction_dict
     #compressed = snappy.compress(json.dumps({"protein_dat": protein_dict, "protein_table": out_data})) # , "interaction_dict": interaction_dict
     #resp = Response(response=compressed, mimetype="application/octet-stream")
     #resp.headers["Content-Type"] = "application/octet-stream; charset=utf-8"
 
-    return json.dumps({"protein_dat": protein_dict, "protein_table": out_data})
+    return json.dumps({"protein_table": out_data})
 
-
+def uniprot_access(colname):
+     # create dict with additional uniprot data
+    protein_dict = make_protein_dict(prot_table_global,colname)
+    get_uniprot_entry(protein_dict)
+    add_uniprot_info(protein_dict)
+    prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
+    global prot_dict_global
+    prot_dict_global= protein_dict
 
 
 """
@@ -120,7 +122,7 @@ def kegg_parsing():
     global_entry = {}
     global_relation = {}
     global_reaction = {}
-
+    proteomics_symbol_dict = {}
     mouse_db = "mmu"
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
@@ -139,9 +141,11 @@ def kegg_parsing():
 
         #Handle Proteomics if available
         if proteomics["recieved"]:
+            uniprot_access(proteomics["symbol"])
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
                 print(entry)
+                proteomics_symbol_dict[ID] = entry["kegg_id"]
                 keggIDs_proteomics.append(entry["kegg_id"])
                 fold_changes[entry["kegg_id"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]]}
 
@@ -242,7 +246,15 @@ def kegg_parsing():
                                 init_pos_ov[tmp_key]["available_genes_values"] = [with_init_pos[i]["value"]]
 
         """
-        return json.dumps({"main_data":with_init_pos,  "fcs": list(fold_changes.values())})#json.dumps(pathway_dicts)
+        out_dat = {
+            "main_data":with_init_pos,
+            "fcs": list(fold_changes.values()),
+            "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
+            "pathway_layouting": {"pathway_list": dropdown_pathways, "pathway_node_dictionary": pathway_node_dict},
+            "proteomics_symbol_dict": proteomics_symbol_dict,
+            "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"]}
+        }
+        return json.dumps(out_dat)#json.dumps(pathway_dicts)
 
 
 if __name__ == "__main__":

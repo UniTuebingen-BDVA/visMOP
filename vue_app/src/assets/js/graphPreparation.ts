@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { node,edge,entry,graphData,relation } from './graphTypes';
+import { node,edge,entry,graphData,relation, nodeAttr } from './graphTypes';
 
 
 export function generateGraphData(nodeList: { [key:string] : entry }, fcsExtent: number[]): graphData {
@@ -17,6 +17,7 @@ export function generateGraphData(nodeList: { [key:string] : entry }, fcsExtent:
             if (current_names) {
                 const init_pos_x = entry.initial_pos_x
                 const init_pos_y = entry.initial_pos_y
+                console.log("origPos", entry.orig_pos)
                 const currentNode = {
                     key: keggID,
                     //label: "",
@@ -27,11 +28,15 @@ export function generateGraphData(nodeList: { [key:string] : entry }, fcsExtent:
                         name: _.escape(current_names[0]),
                         color: (entry.entry_type == "gene") ? (typeof(entry.trascriptomicsValue) === "string"? "#808080" : (colorScale(entry.trascriptomicsValue) )):"#808080",
                         secondaryColor:(entry.entry_type == "gene") ? (typeof(entry.proteomicsValue) === "string"? "#808080" : (colorScale(entry.proteomicsValue) )):"#808080",
+                        label: `Name: ${_.escape(current_names[0])}\nTrans:${entry.trascriptomicsValue}\nProt: ${entry.proteomicsValue}`,
                         x: init_pos_x,
                         y: init_pos_y,
+                        initialX: init_pos_x,
+                        initialY: init_pos_y,
+                        origPos:  entry.orig_pos,
                         size: 1,
                         fixed: false, //fixed property on nodes excludes nodes from layouting
-                    }
+                    }as nodeAttr
 
                 } as node
                 //console.log("currentnode",currentNode)

@@ -11,11 +11,16 @@ export const store = new Vuex.Store({
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
     transcriptomicsData: null,
+    transcriptomicsSymbolDict: {},
     proteomicsTableHeaders: [],
     proteomicsTableData: [],
     proteomicsData: null,
+    proteomicsSymbolDict: {},
+    usedSymbolCols: {"transcriptomics": null, "proteomics": null},
+    overlay: false,
     graphData: null,
     fcs: null,
+    pathwayLayouting: {"pathway_list": ["empty"], "pathway_node_dictionary": null},
 
 
   },
@@ -33,6 +38,9 @@ export const store = new Vuex.Store({
     setTranscriptomicsData(state, val){
       state.transcriptomicsData = val
     },
+    setTranscriptomicsSymbolDict(state,val){
+      state.transcriptomicsSymbolDict = val
+    },
     setProteomicsTableHeaders(state, val){
       state.proteomicsTableHeaders = val
     },
@@ -42,11 +50,23 @@ export const store = new Vuex.Store({
     setProteomicsData(state, val){
       state.transcriptomicsData = val
     },
+    setProteomicsSymbolDict(state,val){
+      state.proteomicsSymbolDict = val
+    },
+    setUsedSymbolCols(state,val){
+      state.usedSymbolCols = val
+    },
+    setOverlay(state,val){
+      state.overlay=val
+    },
     setGraphData(state,val){
       state.graphData=val
     },
     setFCS(state,val){
       state.fcs = val
+    },
+    setPathwayLayouting(state, val){
+      state.pathwayLayouting = val
     }
   }
 })

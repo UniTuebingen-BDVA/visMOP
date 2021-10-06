@@ -31,13 +31,11 @@ def get_spring_layout_pos(node_dict, init_scale= 20000):
     pos_x = {}
     pos_y = {}
     for key, value in pos.items():
-        print(value)
-        print()
         G.nodes[key].update({'viz':{'position':{'x' : value[0], 'y' : value[1]}}})
 
     #nx.set_node_attributes(G, pos_x, 'X')
     #nx.set_node_attributes(G, pos_y, 'Y')
-    nx.readwrite.gexf.write_gexf(G, "gexf_test.gexf")
+    ##nx.readwrite.gexf.write_gexf(G, "gexf_test.gexf")
     return pos, G
 
 def add_initial_positions(positions,nodes):
