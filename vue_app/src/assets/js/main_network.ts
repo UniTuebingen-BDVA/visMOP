@@ -102,34 +102,35 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
     const center_y = center_pos["y"]
     //panZoomToTarget(renderer, {x: center_x, y: center_y})
     const newPosisitons: PlainObject<PlainObject<number>> = {};
-    graph.forEachNode((nodeID,attributes)=>{
+    graph.forEachNode((nodeID,attributes )=>{
         if(nodeIDs.includes(nodeID)){
             attributes.fixed =  true
             //attributes.x= center_x + (attributes.origPos[pathway][0] - 0.5) * 250
             //attributes.y= center_y + (attributes.origPos[pathway][1] - 0.5) * 250
-            attributes.color = attributes.nonFadeColor
-            attributes.secondaryColor = attributes.nonFadeColorSecondary
+            attributes.color = attributes.nonFadeColor as string
+            attributes.secondaryColor = attributes.nonFadeColorSecondary as string
             attributes.z = 2
+            const origPos = attributes.origPos as {[key: string]: [number,number]};
             newPosisitons[nodeID] = {
-                x: center_x + (attributes.origPos[pathway][0] - 0.5) * 250,
-                y: center_y + (attributes.origPos[pathway][1] - 0.5) * 250
+                x: center_x + (origPos[pathway][0] - 0.5) * 250,
+                y: center_y + (origPos[pathway][1] - 0.5) * 250
             }
         }
         else{
             attributes.fixed =  false,
-            attributes.color = attributes.fadeColor
-            attributes.secondaryColor = attributes.fadeColorSecondary
+            attributes.color = attributes.fadeColor as string
+            attributes.secondaryColor = attributes.fadeColorSecondary as string
             attributes.z = 1
         }
     })
     graph.forEachEdge((edge, attributes, source, target) => {
         if(!(nodeIDs.includes(source))){
-            attributes.color = attributes.fadeColor
+            attributes.color = attributes.fadeColor as string
             attributes.z = 0
 
         }
         else{
-            attributes.color = attributes.nonFadeColor
+            attributes.color = attributes.nonFadeColor as string
             attributes.z = 2
 
         }
@@ -153,13 +154,13 @@ export function relaxLayout(renderer: Sigma){
 
     graph.forEachNode((nodeID,attributes)=>{
         attributes.fixed =  false,
-        attributes.color = attributes.nonFadeColor
-        attributes.secondaryColor = attributes.nonFadeColorSecondary
+        attributes.color = attributes.nonFadeColor as string
+        attributes.secondaryColor = attributes.nonFadeColorSecondary as string
         attributes.z = 1
 
     })
     graph.forEachEdge((edge, attributes) => {
-            attributes.color = attributes.nonFadeColor
+            attributes.color = attributes.nonFadeColor as string
             attributes.z = 2
     })
     const fa2Layout  =  new FA2Layout(graph, {settings:inferredSettings})

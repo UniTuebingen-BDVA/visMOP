@@ -1,6 +1,7 @@
+import { Attributes } from "graphology-types";
 
 export interface edge { key: string, source: string, target: string, attributes: { color: string, z:number, fadeColor: string, nonFadeColor: string, type: string } }
-export interface nodeAttr {
+export interface nodeAttr extends Attributes{
     name: string,
     x: number,
     y: number,
