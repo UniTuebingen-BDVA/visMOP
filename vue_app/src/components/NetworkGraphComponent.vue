@@ -104,7 +104,7 @@
 
 <script>
 import { mapState } from "vuex";
-import { mainGraph, panToNode, layoutToPathway } from "@/assets/js/main_network.ts";
+import { mainGraph, panToNode, layoutToPathway, relaxLayout } from "@/assets/js/main_network.ts";
 import { generateGraphData } from "@/assets/js/graphPreparation.ts";
 export default {
   // name of the component
@@ -163,7 +163,7 @@ export default {
       layoutToPathway(this.networkGraph, key , nodeList)
     },
     clearPathway(){
-      console.log("CLEAR")
+      relaxLayout(this.networkGraph)
     },
     // basic GET request using fetch
     calculateCombinedExtent() {

@@ -1,14 +1,19 @@
 
-export interface edge { key: string, source: string, target: string, attributes: { color: string, type: string } }
+export interface edge { key: string, source: string, target: string, attributes: { color: string, z:number, fadeColor: string, nonFadeColor: string, type: string } }
 export interface nodeAttr {
     name: string,
     x: number,
     y: number,
+    z: number,
     initialX: number,
     initialY: number,
     origPos: { [key: string]: number[] },
     color: string,
     secondaryColor: string,
+    nonFadeColor: string,
+    nonFadeColorSecondary: string,
+    fadeColor: string ,
+    fadeColorSecondary: string ,
     size: number,
     fixed: boolean,
     type: string

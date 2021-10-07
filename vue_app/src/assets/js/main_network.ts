@@ -1,4 +1,5 @@
 import {MultiGraph} from "graphology";
+import Graph from "graphology";
 import FA2Layout from "graphology-layout-forceatlas2/worker";
 import forceAtlas2 from "graphology-layout-forceatlas2";
 import Sigma from "sigma"
@@ -82,32 +83,105 @@ export function mainGraph(elemID: string, data: graphData): Sigma {
 }
 
 export function panToNode(renderer: Sigma, nodeKey: string){
-    renderer.getCamera().animate({...renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }, ratio:0.05}, {
+    panZoomToTarget(renderer, renderer.getNodeDisplayData(nodeKey) as { x: number; y: number })
+}
+
+function panZoomToTarget(renderer: Sigma, target: {x: number; y:number}){
+    renderer.getCamera().animate({...target, ratio:0.05}, {
         easing: "linear",
         duration: 500,
       });
-      
 }
 
 export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: string[]){
     const graph = renderer.getGraph()
     const inferredSettings = forceAtlas2.inferSettings(graph);
 
-    nodeIDs.forEach(
-        nodeID => {
-            graph.updateNode(
-                nodeID,
-                (attr:Attributes) => {
-                    console.log("layout attr",attr)
-                    return {
-                        ...attr,
-                        fixed: true,
-                        x: (attr.origPos[pathway][0] - 0.5) * 1000,
-                        y: (attr.origPos[pathway][1] - 0.5) * 1000
-                    }
-                }
-            )
+    const center_pos = get_pathway_center_pos(graph, nodeIDs)
+    const center_x = center_pos["x"]
+    const center_y = center_pos["y"]
+    //panZoomToTarget(renderer, {x: center_x, y: center_y})
+    const newPosisitons: PlainObject<PlainObject<number>> = {};
+    graph.forEachNode((nodeID,attributes)=>{
+        if(nodeIDs.includes(nodeID)){
+            attributes.fixed =  true
+            //attributes.x= center_x + (attributes.origPos[pathway][0] - 0.5) * 250
+            //attributes.y= center_y + (attributes.origPos[pathway][1] - 0.5) * 250
+            attributes.color = attributes.nonFadeColor
+            attributes.secondaryColor = attributes.nonFadeColorSecondary
+            attributes.z = 2
+            newPosisitons[nodeID] = {
+                x: center_x + (attributes.origPos[pathway][0] - 0.5) * 250,
+                y: center_y + (attributes.origPos[pathway][1] - 0.5) * 250
+            }
         }
-    )
-    forceAtlas2.assign(graph,{iterations:500 , settings: inferredSettings});
+        else{
+            attributes.fixed =  false,
+            attributes.color = attributes.fadeColor
+            attributes.secondaryColor = attributes.fadeColorSecondary
+            attributes.z = 1
+        }
+    })
+    graph.forEachEdge((edge, attributes, source, target) => {
+        if(!(nodeIDs.includes(source))){
+            attributes.color = attributes.fadeColor
+            attributes.z = 0
+
+        }
+        else{
+            attributes.color = attributes.nonFadeColor
+            attributes.z = 2
+
+        }
+    })    
+    
+    animateNodes(graph, newPosisitons, { duration: 2000 },()=>{
+        //TODO not yet handling if other animation/layouting is in progess
+        const fa2Layout  =  new FA2Layout(graph, {settings:inferredSettings})
+        fa2Layout.start()
+        setTimeout(() => {
+            fa2Layout.kill()
+        }, 5000);
+    })
+    
+    //forceAtlas2.assign(graph,{iterations:40 , settings: inferredSettings});
 }
+
+export function relaxLayout(renderer: Sigma){
+    const graph = renderer.getGraph()
+    const inferredSettings = forceAtlas2.inferSettings(graph);
+
+    graph.forEachNode((nodeID,attributes)=>{
+        attributes.fixed =  false,
+        attributes.color = attributes.nonFadeColor
+        attributes.secondaryColor = attributes.nonFadeColorSecondary
+        attributes.z = 1
+
+    })
+    graph.forEachEdge((edge, attributes) => {
+            attributes.color = attributes.nonFadeColor
+            attributes.z = 2
+    })
+    const fa2Layout  =  new FA2Layout(graph, {settings:inferredSettings})
+        //TODO not yet handling if other animation/layouting is in progess
+        fa2Layout.start()
+        setTimeout(() => {
+            fa2Layout.kill()
+        }, 5000);   
+}
+
+function get_pathway_center_pos(graph: Graph, nodeIDs: string[]){
+    let sum_x = 0
+    let sum_y = 0
+    let num_entries = 0
+
+    nodeIDs.forEach(nodeID => {
+        const nodeAttrib = graph.getNodeAttributes(nodeID)
+        num_entries +=1
+        sum_x += nodeAttrib["x"]
+        sum_y += nodeAttrib["y"]
+    });
+
+   
+    return {x: sum_x/num_entries, y: sum_y/num_entries }
+  }
