@@ -7,12 +7,13 @@ import { floatColor } from "sigma/src/utils";
 import vertexShaderSource from "./square-node-vertex-shader.glsl";
 import fragmentShaderSource from "./square-node-fragment-shader.glsl";
 
-const POINTS = 3,
+const POINTS = 1,
   ATTRIBUTES = 6;
 
 export default class CustomNodeProgram extends AbstractNodeProgram {
   colorLocation0: GLint;
   colorLocation1: GLint;
+  colorLocation2: GLint;
 
   constructor(gl: WebGLRenderingContext) {
     super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES);
@@ -21,6 +22,8 @@ export default class CustomNodeProgram extends AbstractNodeProgram {
     this.sizeLocation = gl.getAttribLocation(this.program, "a_size");
     this.colorLocation0 = gl.getAttribLocation(this.program, "a_color0");
     this.colorLocation1 = gl.getAttribLocation(this.program, "a_color1");
+    this.colorLocation2 = gl.getAttribLocation(this.program, "a_color2");
+
 
     this.bind();
   }
@@ -31,6 +34,7 @@ export default class CustomNodeProgram extends AbstractNodeProgram {
     gl.enableVertexAttribArray(this.sizeLocation);
     gl.enableVertexAttribArray(this.colorLocation0);
     gl.enableVertexAttribArray(this.colorLocation1);
+    gl.enableVertexAttribArray(this.colorLocation2);
 
     gl.vertexAttribPointer(
       this.positionLocation,
@@ -57,6 +61,14 @@ export default class CustomNodeProgram extends AbstractNodeProgram {
       this.attributes * Float32Array.BYTES_PER_ELEMENT,
       16,
     );
+    gl.vertexAttribPointer(
+      this.colorLocation2,
+      4,
+      gl.UNSIGNED_BYTE,
+      true,
+      this.attributes * Float32Array.BYTES_PER_ELEMENT,
+      20,
+    );
   }
   process(data: SplitNodeDisplayData, hidden: boolean, offset: number): void {
     let i = offset * POINTS * ATTRIBUTES;
@@ -67,17 +79,21 @@ export default class CustomNodeProgram extends AbstractNodeProgram {
       array[i++] = 0;
       array[i++] = 0;
       array[i++] = 0;
+      array[i++] = 0;
+      array[i++] = 0;
       return;
     }
     //const colors = data.color.split(";")
     const color1 = floatColor(data.color);
     const color2 = floatColor(data.secondaryColor);
+    const color3 = floatColor(data.outlineColor);
 
     array[i++] = data.x;
     array[i++] = data.y;
     array[i++] = data.size;
     array[i++] = color1;
-    array[i] = color2;
+    array[i++] = color2;
+    array[i] = color3;
   }
 
   render(params: RenderNodeParams): void {

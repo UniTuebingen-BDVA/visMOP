@@ -1,6 +1,20 @@
 import { Attributes } from "graphology-types";
 
-export interface edge { key: string, source: string, target: string, attributes: { color: string, z:number, fadeColor: string, nonFadeColor: string, type: string } }
+export interface edgeAttr extends Attributes{
+        sourceColor: string,
+        targetColor: string,
+        z:number,
+        fadeColor:string,
+        nonFadeColor:string,
+        type: string
+}
+
+export interface edge {
+    key: string,
+    source: string,
+    target: string,
+    attributes:  edgeAttr,
+}
 export interface nodeAttr extends Attributes{
     name: string,
     x: number,
@@ -11,6 +25,7 @@ export interface nodeAttr extends Attributes{
     origPos: { [key: string]: number[] },
     color: string,
     secondaryColor: string,
+    outlineColor: string
     nonFadeColor: string,
     nonFadeColorSecondary: string,
     fadeColor: string ,

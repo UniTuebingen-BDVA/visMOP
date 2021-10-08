@@ -3,6 +3,7 @@ import { node, edge, entry, graphData, relation, nodeAttr } from './graphTypes';
 
 
 export function generateGraphData(nodeList: { [key: string]: entry }, fcsExtent: number[]): graphData {
+    const fadeGray = "rgba(30,30,30,0.2)"
     const graph = { attributes: { name: "BaseNetwork" }, nodes: [], edges: [] } as graphData;
     const addedEdges: string[] = [];
     console.log("fcsExtent", fcsExtent)
@@ -29,10 +30,11 @@ export function generateGraphData(nodeList: { [key: string]: entry }, fcsExtent:
                             name: _.escape(current_names[0]),
                             color: color,
                             secondaryColor: secondaryColor,
+                            outlineColor: "rgba(30,30,30,1.0)",
                             nonFadeColor: color,
                             nonFadeColorSecondary: secondaryColor,
-                            fadeColor: "rgba(125,125,125,0.7)",
-                            fadeColorSecondary: "rgba(125,125,125,0.7)",
+                            fadeColor: fadeGray,
+                            fadeColorSecondary: fadeGray,
                             label: `Name: ${_.escape(current_names[0])}\nTrans:${entry.trascriptomicsValue}\nProt: ${entry.proteomicsValue}`,
                             x: init_pos_x,
                             y: init_pos_y,
@@ -40,7 +42,7 @@ export function generateGraphData(nodeList: { [key: string]: entry }, fcsExtent:
                             initialX: init_pos_x,
                             initialY: init_pos_y,
                             origPos: entry.orig_pos,
-                            size: 1,
+                            size: 3 ,
                             fixed: false, //fixed property on nodes excludes nodes from layouting
                         } as nodeAttr
 
@@ -71,6 +73,8 @@ export function generateGraphData(nodeList: { [key: string]: entry }, fcsExtent:
    * @returns {Object}, cytoscape style edge
    */
 function generateForceGraphEdge(relation: relation): edge {
+    const fadeGray = "rgba(30,30,30,0.2)"
+
     const edgeColors: { [key: string]: string } =
     {
         ECrel: "#BE0032",
@@ -96,10 +100,11 @@ function generateForceGraphEdge(relation: relation): edge {
             target: entry2,
             attributes: {
                 z:0,
-                type: (Math.random() < 0.5) ? "line" : "arrow",
-                color: edgeColors[relationType],
+                type: "fadeColor",
+                sourceColor: edgeColors[relationType],
+                targetColor: edgeColors[relationType],
                 nonFadeColor: edgeColors[relationType],
-                fadeColor: "rgba(125,125,125,0.7)"
+                fadeColor: fadeGray
 
             }
         } as edge
@@ -117,10 +122,11 @@ function generateForceGraphEdge(relation: relation): edge {
             target: entry2,
             attributes: {
                 z: 0,
-                type: (Math.random() < 0.5) ? "line" : "arrow",
-                color: edgeColors["reaction"],
+                type: "fadeColor",
+                sourceColor: edgeColors["reaction"],
+                targetColor: edgeColors["reaction"],
                 nonFadeColor: edgeColors["reaction"],
-                fadeColor: "rgba(125,125,125,0.7)"
+                fadeColor: fadeGray
 
             }
 

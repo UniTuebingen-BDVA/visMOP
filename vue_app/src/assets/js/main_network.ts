@@ -5,6 +5,7 @@ import forceAtlas2 from "graphology-layout-forceatlas2";
 import Sigma from "sigma"
 import { graphData, nodeAttr } from './graphTypes';
 import CustomNodeProgram from "./custom-nodes/custom-node-program";
+import CustomEdgeProgram from "./custom-nodes/colorfade-edge-program"
 import arrowProgram from "sigma/rendering/webgl/programs/edge.arrow"
 import { Attributes, EdgeKey, NodeKey } from "graphology-types";
 import drawHover from "./customHoverRenderer";
@@ -23,13 +24,18 @@ export function mainGraph(elemID: string, data: graphData): Sigma {
     let highlighedEdges = new Set();
     
     const nodeReducer = (node: NodeKey, data: Attributes) => {
-      if (highlighedNodes.has(node)) return { ...data, color: "#f00", zIndex: 1 };
+      if (highlighedNodes.has(node)){
+        return (data.type == "splitSquares")
+            ? { ...data, outlineColor: "rgba(255,0,0,1.0)", zIndex: 1 }
+            : { ...data, color: "rgba(255,0,0,1.0)", zIndex: 1 }
+        
+      }
     
       return data;
     };
     
     const edgeReducer = (edge: EdgeKey, data: Attributes) => {
-      if (highlighedEdges.has(edge)) return { ...data, color: "#f00", zIndex: 1 };
+      if (highlighedEdges.has(edge)) return { ...data, sourceColor: "rgba(255,0,0,1.0)", targetColor: "rgba(255,0,0,1.0)",zIndex: 1 };
     
       return data;
     };
@@ -43,7 +49,9 @@ export function mainGraph(elemID: string, data: graphData): Sigma {
         nodeProgramClasses:{
             splitSquares: CustomNodeProgram
         },
-        edgeProgramClasses:{},
+        edgeProgramClasses:{
+            fadeColor: CustomEdgeProgram
+        },
         hoverRenderer: drawHover,
     });
     console.log(`Node Programs:`)
@@ -94,6 +102,7 @@ function panZoomToTarget(renderer: Sigma, target: {x: number; y:number}){
 }
 
 export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: string[]){
+    const fadeGray = "rgba(30,30,30,0.2)"
     const graph = renderer.getGraph()
     const inferredSettings = forceAtlas2.inferSettings(graph);
 
@@ -109,6 +118,7 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
             //attributes.y= center_y + (attributes.origPos[pathway][1] - 0.5) * 250
             attributes.color = attributes.nonFadeColor as string
             attributes.secondaryColor = attributes.nonFadeColorSecondary as string
+            attributes.outlineColor = "rgba(30,30,30,1.0)"
             attributes.z = 2
             const origPos = attributes.origPos as {[key: string]: [number,number]};
             newPosisitons[nodeID] = {
@@ -120,17 +130,29 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
             attributes.fixed =  false,
             attributes.color = attributes.fadeColor as string
             attributes.secondaryColor = attributes.fadeColorSecondary as string
+            attributes.outlineColor = fadeGray as string
             attributes.z = 1
         }
     })
     graph.forEachEdge((edge, attributes, source, target) => {
-        if(!(nodeIDs.includes(source))){
-            attributes.color = attributes.fadeColor as string
+        if(!(nodeIDs.includes(source) || nodeIDs.includes(target))){
+            attributes.sourceColor = attributes.fadeColor as string
+            attributes.targetColor = attributes.fadeColor as string
             attributes.z = 0
 
         }
+        else if(!(nodeIDs.includes(source))){
+            attributes.sourceColor = attributes.fadeColor as string
+            attributes.z = 0
+        }
+        else if(!(nodeIDs.includes(target))){
+            attributes.targetColor = attributes.fadeColor as string
+            attributes.z = 0
+        }
         else{
-            attributes.color = attributes.nonFadeColor as string
+            attributes.sourceColor = attributes.nonFadeColor as string
+            attributes.targetColor = attributes.nonFadeColor as string
+
             attributes.z = 2
 
         }
@@ -160,7 +182,8 @@ export function relaxLayout(renderer: Sigma){
 
     })
     graph.forEachEdge((edge, attributes) => {
-            attributes.color = attributes.nonFadeColor as string
+            attributes.sourceColor = attributes.nonFadeColor as string
+            attributes.targetColor = attributes.nonFadeColor as string
             attributes.z = 2
     })
     const fa2Layout  =  new FA2Layout(graph, {settings:inferredSettings})

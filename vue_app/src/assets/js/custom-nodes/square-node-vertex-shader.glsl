@@ -2,6 +2,7 @@ attribute vec2 a_position;
 attribute float a_size;
 attribute vec4 a_color0;
 attribute vec4 a_color1;
+attribute vec4 a_color2;
 
 uniform float u_ratio;
 uniform float u_scale;
@@ -9,6 +10,7 @@ uniform mat3 u_matrix;
 
 varying vec4 v_color0;
 varying vec4 v_color1;
+varying vec4 v_color2;
 varying float v_border;
 
 const float bias = 255.0 / 254.0;
@@ -34,4 +36,6 @@ void main() {
   v_color0.a *= bias;
   v_color1 = a_color1;
   v_color1.a *= bias;
+  v_color2 = a_color2;
+  v_color2.a *= bias;
 }
