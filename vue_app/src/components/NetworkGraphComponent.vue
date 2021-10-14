@@ -135,7 +135,7 @@ export default {
     graphData: function(){
       const fcExtents = this.calculateCombinedExtent()
       const networkData = generateGraphData(this.graphData, fcExtents);
-
+      console.log("base dat", networkData)
       this.networkGraph = mainGraph("networkGraph", networkData);
 
     }
@@ -159,8 +159,11 @@ export default {
       panToNode(this.networkGraph, keggID)
     },
     selectPathway(key){
-      let nodeList = this.pathwayLayouting.pathway_node_dictionary[key]
-      layoutToPathway(this.networkGraph, key , nodeList)
+      if(key){
+        let nodeList = this.pathwayLayouting.pathway_node_dictionary[key]
+        layoutToPathway(this.networkGraph, key , nodeList)
+      }
+      
     },
     clearPathway(){
       relaxLayout(this.networkGraph)

@@ -208,11 +208,11 @@ def kegg_parsing():
         #print(without_empty)
         #print(global_dict_entries)
         networkx_parsed = generate_networkx_dict(without_empty)
-        pos, graph = get_spring_layout_pos(networkx_parsed)
+        pos = get_spring_layout_pos(networkx_parsed)
         #current_node_positions = pos
         #current_graph = graph
         #node_data = without_empty
-
+        print("POS", pos)
         with_init_pos = add_initial_positions(pos,without_empty)
 
 

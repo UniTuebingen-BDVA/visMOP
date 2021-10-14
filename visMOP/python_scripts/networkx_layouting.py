@@ -30,13 +30,23 @@ def get_spring_layout_pos(node_dict, init_scale= 20000):
     print("Spring Layouting took {:.3f} s".format((time3-time2)))
     pos_x = {}
     pos_y = {}
-    for key, value in pos.items():
-        G.nodes[key].update({'viz':{'position':{'x' : value[0], 'y' : value[1]}}})
+    #for key, value in pos.items():
+    #    G.nodes[key].update({'viz':{'position':{'x' : value[0], 'y' : value[1]}}})
 
     #nx.set_node_attributes(G, pos_x, 'X')
     #nx.set_node_attributes(G, pos_y, 'Y')
     ##nx.readwrite.gexf.write_gexf(G, "gexf_test.gexf")
-    return pos, G
+    x_vals = [val[0] for key, val in pos.items()]
+    y_vals = [val[1] for key, val in pos.items()]
+    min_x = min(x_vals)
+    max_x = max(x_vals)
+    min_y = min(y_vals)
+    max_y = max(y_vals)
+    divisor_x = abs(max_x) + abs(min_x)
+    divisor_y = abs(max_y) + abs(min_y)
+
+    pos_out = {k:((v[0] - min_x)/divisor_x,(v[1] - min_y)/divisor_y) for k, v in pos.items()}
+    return pos_out
 
 def add_initial_positions(positions,nodes):
     """ Adds positions calculated with networkX to nodes

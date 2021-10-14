@@ -15,7 +15,7 @@
     "force-graph": "^1.33.0",
     "graphology": "^0.20.0",
     "lodash": "^4.17.20",
-    "sigma": "^2.0.0-beta10",
+    "sigma": "^2.0.0-beta13",
     "vue": "^2.6.12",
     "vuex": "^3.6.2",
     "vuetify": "^2.3.10"

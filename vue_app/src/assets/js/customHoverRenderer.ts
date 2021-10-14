@@ -12,7 +12,6 @@
  */
  import { Settings } from "sigma/settings";
  import { NodeDisplayData, PartialButFor } from "sigma/types";
- import drawNode from "sigma/rendering/canvas/node";
  
  function drawLabel(context: CanvasRenderingContext2D, data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">, settings: Settings):void {
     if (!data.label)
@@ -89,8 +88,6 @@
    context.shadowOffsetX = 0;
    context.shadowOffsetY = 0;
    context.shadowBlur = 0;
-   // the inner node of the label box
-   drawNode(context, data);
  
    // And finally we draw the label
    drawLabel(context, data, settings);

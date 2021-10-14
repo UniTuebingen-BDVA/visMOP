@@ -12,11 +12,12 @@ import drawHover from "./customHoverRenderer";
 import { animateNodes } from "sigma/utils/animate";
 import { PlainObject } from "sigma/types";
 
-export function mainGraph(elemID: string, data: graphData): Sigma {
-    console.log(data)
+export function mainGraph(elemID: string, graphData: graphData): Sigma {
+    console.log(graphData)
     const elem = document.getElementById(elemID) as HTMLElement;
-    const graph = MultiGraph.from(data)
+    const graph = MultiGraph.from(graphData)
     console.log("NODES",graph.nodes())
+    
     const inferredSettings = forceAtlas2.inferSettings(graph);
 
     //from events example:
@@ -91,13 +92,15 @@ export function mainGraph(elemID: string, data: graphData): Sigma {
 }
 
 export function panToNode(renderer: Sigma, nodeKey: string){
-    panZoomToTarget(renderer, renderer.getNodeDisplayData(nodeKey) as { x: number; y: number })
+    console.log("pantestNode",{...renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }, ratio: 0.05})
+    panZoomToTarget(renderer, {...renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }, ratio: 0.05})
 }
 
-function panZoomToTarget(renderer: Sigma, target: {x: number; y:number}){
-    renderer.getCamera().animate({...target, ratio:0.05}, {
+function panZoomToTarget(renderer: Sigma, target: {x: number; y:number, ratio:number}){
+    console.log("pantest",target)
+    renderer.getCamera().animate(target, {
         easing: "linear",
-        duration: 500,
+        duration: 1000,
       });
 }
 
@@ -105,11 +108,13 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
     const fadeGray = "rgba(30,30,30,0.2)"
     const graph = renderer.getGraph()
     const inferredSettings = forceAtlas2.inferSettings(graph);
-
-    const center_pos = get_pathway_center_pos(graph, nodeIDs)
-    const center_x = center_pos["x"]
-    const center_y = center_pos["y"]
-    //panZoomToTarget(renderer, {x: center_x, y: center_y})
+    
+    const cameraCenterPos = get_pathway_center_pos(renderer, graph, nodeIDs, "camera")
+    const graphCenterPos = renderer.viewportToGraph(get_pathway_center_pos(renderer, graph, nodeIDs, "graph"))
+    console.log("center pos", graphCenterPos)
+    const center_x = graphCenterPos["x"]
+    const center_y = graphCenterPos["y"]
+    const layoutScaling = 250
     const newPosisitons: PlainObject<PlainObject<number>> = {};
     graph.forEachNode((nodeID,attributes )=>{
         if(nodeIDs.includes(nodeID)){
@@ -122,8 +127,8 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
             attributes.z = 2
             const origPos = attributes.origPos as {[key: string]: [number,number]};
             newPosisitons[nodeID] = {
-                x: center_x + (origPos[pathway][0] - 0.5) * 250,
-                y: center_y + (origPos[pathway][1] - 0.5) * 250
+                x: center_x + (origPos[pathway][0] - 0.5)*layoutScaling,
+                y: center_y + (origPos[pathway][1] - 0.5)*layoutScaling
             }
         }
         else{
@@ -160,6 +165,8 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
     
     animateNodes(graph, newPosisitons, { duration: 2000 },()=>{
         //TODO not yet handling if other animation/layouting is in progess
+        console.log("center_pos",cameraCenterPos)
+        panZoomToTarget(renderer,{...cameraCenterPos,"ratio": 0.2})
         const fa2Layout  =  new FA2Layout(graph, {settings:inferredSettings})
         fa2Layout.start()
         setTimeout(() => {
@@ -193,14 +200,27 @@ export function relaxLayout(renderer: Sigma){
             fa2Layout.kill()
         }, 5000);   
 }
-
-function get_pathway_center_pos(graph: Graph, nodeIDs: string[]){
+/**
+ * 
+ * @param renderer 
+ * @param graph 
+ * @param nodeIDs 
+ * @param type camera needs display data instead of graph data (im not 100% sure why....)
+ * @returns 
+ */
+function get_pathway_center_pos(renderer: Sigma, graph: Graph, nodeIDs: string[], type: "graph"|"camera"){
     let sum_x = 0
     let sum_y = 0
     let num_entries = 0
 
     nodeIDs.forEach(nodeID => {
-        const nodeAttrib = graph.getNodeAttributes(nodeID)
+        let nodeAttrib
+        if (type === "graph")
+        {nodeAttrib = renderer.graphToViewport(Object.assign({}, graph.getNodeAttributes(nodeID)) as { x: number; y: number })}
+        else{
+        nodeAttrib = Object.assign({}, renderer.getNodeDisplayData(nodeID)) as { x: number; y: number }
+        }
+        console.log("ATTRIB",nodeAttrib)
         num_entries +=1
         sum_x += nodeAttrib["x"]
         sum_y += nodeAttrib["y"]
