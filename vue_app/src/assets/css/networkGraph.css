@@ -1,6 +1,6 @@
 
 
-#networkGraph {
+.webglContainer {
     height: 75vh;
     display: block;
     z-index: 2;

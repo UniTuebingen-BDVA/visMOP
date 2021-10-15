@@ -111,7 +111,6 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
     
     const cameraCenterPos = get_pathway_center_pos(renderer, graph, nodeIDs, "camera")
     const graphCenterPos = renderer.viewportToGraph(get_pathway_center_pos(renderer, graph, nodeIDs, "graph"))
-    console.log("center pos", graphCenterPos)
     const center_x = graphCenterPos["x"]
     const center_y = graphCenterPos["y"]
     const layoutScaling = 250
@@ -165,7 +164,6 @@ export function layoutToPathway(renderer: Sigma, pathway: string, nodeIDs: strin
     
     animateNodes(graph, newPosisitons, { duration: 2000 },()=>{
         //TODO not yet handling if other animation/layouting is in progess
-        console.log("center_pos",cameraCenterPos)
         panZoomToTarget(renderer,{...cameraCenterPos,"ratio": 0.2})
         const fa2Layout  =  new FA2Layout(graph, {settings:inferredSettings})
         fa2Layout.start()
@@ -220,7 +218,6 @@ function get_pathway_center_pos(renderer: Sigma, graph: Graph, nodeIDs: string[]
         else{
         nodeAttrib = Object.assign({}, renderer.getNodeDisplayData(nodeID)) as { x: number; y: number }
         }
-        console.log("ATTRIB",nodeAttrib)
         num_entries +=1
         sum_x += nodeAttrib["x"]
         sum_y += nodeAttrib["y"]

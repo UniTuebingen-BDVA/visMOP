@@ -68,7 +68,7 @@
     </v-app-bar>
 
     <v-main class="pl-12">
-      <NetworkGraphComponent/>
+      <MainPage/>
     </v-main>
 
   </v-app>
@@ -77,13 +77,13 @@
 <script>
 import { mapState } from "vuex";
 
-import NetworkGraphComponent from './components/NetworkGraphComponent';
+import MainPage from "./components/MainPage.vue"
 import SideBar from './components/Sidebar'
 export default {
   name: 'App',
 
   components: {
-    NetworkGraphComponent,
+    MainPage,
     SideBar
   },
 
