@@ -73,7 +73,7 @@ export default {
       
     },
     isActive: function(){
-      console.log(this.contextID,"isActive!!!", this.outstandingDraw)
+      console.log(this.contextID,"isActive: ", this.isActive, this.outstandingDraw)
       if(this.outstandingDraw){
         setTimeout(() => {
             this.drawNetwork()

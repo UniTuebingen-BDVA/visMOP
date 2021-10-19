@@ -3,6 +3,7 @@ from python_scripts.networkx_layouting import get_spring_layout_pos, add_initial
 from python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty,add_incoming_edges
 from python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls,associacte_value_keggID
 from python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
+from python_scripts.create_overview import get_overview
 from python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info, make_interaction_dict
 import pandas as pd
 import pathlib
@@ -145,7 +146,7 @@ def kegg_parsing():
             uniprot_access(proteomics["symbol"])
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
-                print(entry)
+                #print(entry)
                 proteomics_symbol_dict[ID] = entry["kegg_id"]
                 keggIDs_proteomics.append(entry["kegg_id"])
                 fold_changes[entry["kegg_id"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]]}
@@ -155,15 +156,18 @@ def kegg_parsing():
         transcriptomics_dict = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"]).to_dict("index")
         
         gene_symbols_transcriptomics=transcriptomics_dict.keys()
-        unwanted_temporary = {"Gm10972","Gm2399","Gm5819","Gm7969","LOC636187"}
+        unwanted_temporary = {"Gm10972","Gm2399","Gm5819","Gm7969","LOC636187","AC004946.2","AP005901.1","AC079779.1","FP325318.1","LINC00540","THCAT155","AC132825.3","AL138889.3","AL023807.1","AC092957.1","LINC02842","AC024337.2","LINC01331","GAGE12B","NBPF5P","LINC00536","AC019270.1","AC092640.1","LINC02470","OR4K13","AL512605.1","AC113418.1","AL359851.1","RPL22P12","OR10G4","AC124804.1","AP005901.5","LINC02717","LINC00906","LINC01727","C10orf105","AC024270.4","AC008083.3","AC104118.1","RPL37P2","ACTG1P15","SEPHS1P1","AL512328.1","RRAS2P1","ARMS2","NPHP3-AS1","AC011595.2","AC022211.1","RPL26P6","SPRR2G","GGTLC4P","AL844908.1","AC025040.2","AC093458.2","AC104024.4","LINC02016","AC090772.3","AC107081.3","AC013724.1","RPS19P3","RPS7P3","AP001432.1","AC069213.3","AP001024.1"}
         gene_symbols_transcriptomics = [symb for symb in gene_symbols_transcriptomics if symb not in unwanted_temporary]
         keggIDs_transcriptomics, symbol_kegg_dict_transcriptomics = gene_symbols_to_keggID(gene_symbols_transcriptomics, mouse_db, data_path / 'kegg_cache/gene_symbol_cache.json')
         for symbol in gene_symbols_transcriptomics:
-            keggID = symbol_kegg_dict_transcriptomics[symbol]
-            if keggID in fold_changes:
-                fold_changes[keggID]["transcriptomics"] = transcriptomics_dict[symbol][transcriptomics["value"]]
-            else:
-                fold_changes[keggID] = {"transcriptomics": transcriptomics_dict[symbol][transcriptomics["value"]], "proteomics": "NA"}
+            try:
+                keggID = symbol_kegg_dict_transcriptomics[symbol]
+                if keggID in fold_changes:
+                    fold_changes[keggID]["transcriptomics"] = transcriptomics_dict[symbol][transcriptomics["value"]]
+                else:
+                    fold_changes[keggID] = {"transcriptomics": transcriptomics_dict[symbol][transcriptomics["value"]], "proteomics": "NA"}
+            except:
+                print("Symbol: {} was not in the kegg dictionary, probably due to it not being found in the kegg DB")
         
         #kegg_ID_value_dict, value_extent, all_gene_fcs = associacte_value_keggID(transcriptomics_df_global,gene_symbols_col,value_col,symbol_kegg_dict)
         #print("kegg_IDs: {}".format(kegg_IDs))
@@ -184,7 +188,7 @@ def kegg_parsing():
         kegg_kgml = query_kgmls(unique_pathways, data_path / 'kegg_cache/kgml_cache.json')
         parsed_pathways = []
         print("Len unique pws: ", len(unique_pathways))
-        for pathwayID in unique_pathways[0:10]:
+        for pathwayID in unique_pathways:
             if "01100" in pathwayID:
                 print("Skipping map01100, general overview")
             else:
@@ -203,7 +207,7 @@ def kegg_parsing():
 
 
 
-        without_empty = drop_empty(global_dict_entries)
+        without_empty = global_dict_entries#drop_empty(global_dict_entries)
         print("global", len(global_dict_entries))
         print("without_empty", len(without_empty))
         #print(without_empty)
@@ -213,13 +217,13 @@ def kegg_parsing():
         #current_node_positions = pos
         #current_graph = graph
         #node_data = without_empty
-        print("POS", pos)
+        #print("POS", pos)
         with_init_pos = add_initial_positions(pos,without_empty)
 
 
         ###########################################################################
         # creates a dict with all pathway names for create_overview function
-        """
+        
         pathway_titles = {}
         for i in parsed_pathways:
             pathway_titles["path:" + i.kegg_ID] = [i.title]
@@ -228,10 +232,12 @@ def kegg_parsing():
         pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles)
 
         network_ov = generate_networkx_dict(pathway_connection_dict)
-        pos_ov, graph_ov = get_spring_layout_pos(network_ov)
+        pos_ov = get_spring_layout_pos(network_ov)
         init_pos_ov = add_initial_positions(pos_ov, pathway_connection_dict)
+        print("OVERVIEW",pathway_connection_dict)
 
         # add genes with available fc values to overview_dict
+        """
         for i in with_init_pos.keys():
             if not with_init_pos[i]["value"] == "NoVal":
                 for key in pathway_node_dict.keys():
@@ -245,9 +251,9 @@ def kegg_parsing():
                             else:
                                 init_pos_ov[tmp_key]["available_genes"] = [with_init_pos[i]["name"][0]]
                                 init_pos_ov[tmp_key]["available_genes_values"] = [with_init_pos[i]["value"]]
-
         """
         out_dat = {
+            "overview_data": pathway_connection_dict,
             "main_data":with_init_pos,
             "fcs": list(fold_changes.values()),
             "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,

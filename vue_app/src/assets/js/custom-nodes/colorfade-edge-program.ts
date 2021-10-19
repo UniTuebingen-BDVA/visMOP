@@ -23,9 +23,9 @@
 import { floatColor, canUse32BitsIndices } from "sigma/utils";
 import { NodeDisplayData } from "sigma/types";
 import { ColorfadeEdgeDisplayData } from "./types";
-import vertexShaderSource from "sigma/src/rendering/webgl/shaders/edge.vert.glsl";
-import fragmentShaderSource from "sigma/src/rendering/webgl/shaders/edge.frag.glsl"
-import { AbstractEdgeProgram, RenderEdgeParams } from "sigma/src/rendering/webgl/programs/common/edge";
+import vertexShaderSource from "sigma/rendering/webgl/shaders/edge.vert.glsl";
+import fragmentShaderSource from "sigma/rendering/webgl/shaders/edge.frag.glsl"
+import { AbstractEdgeProgram, RenderEdgeParams } from "sigma/rendering/webgl/programs/common/edge";
 
 const POINTS = 4,
   ATTRIBUTES = 6,

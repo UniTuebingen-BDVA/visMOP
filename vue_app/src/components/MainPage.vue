@@ -86,13 +86,13 @@
         <v-tabs-items :value="selectedTabNetwork">
           <v-tab-item value="overviewNetwork">
             <keep-alive>
-            <network-graph-component
+            <overview-component
               contextID="overviewContext"
               :transcriptomicsSelection="transcriptomicsSelectionData"
               :proteomicsSelection="proteomicsSelectionData"
               :isActive="activeOverview"
             >
-            </network-graph-component>
+            </overview-component>
             </keep-alive>
           </v-tab-item>
 
@@ -121,8 +121,9 @@
 <script>
 import { mapState } from "vuex";
 import NetworkGraphComponent from "./NetworkGraphComponent.vue";
+import OverviewComponent from "./OverviewComponent.vue";
 export default {
-  components: { NetworkGraphComponent },
+  components: { NetworkGraphComponent, OverviewComponent },
   // name of the component
   name: "MainPage",
 

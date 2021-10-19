@@ -198,6 +198,7 @@ export default {
       })
         .then((response) => response.json())
         .then((dataContent) => {
+          this.$store.commit("setOverviewData", dataContent["overview_data"])
           this.$store.commit("setGraphData", dataContent["main_data"]);
           this.$store.commit("setFCS", dataContent["fcs"]);
           this.$store.commit("setTranscriptomicsSymbolDict", dataContent["transcriptomics_symbol_dict"])

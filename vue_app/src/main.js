@@ -8,6 +8,7 @@ Vue.use(Vuex)
 export const store = new Vuex.Store({
   state:{
     sideBarExpand: true,
+    overviewData: null,
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
     transcriptomicsData: null,
@@ -27,6 +28,9 @@ export const store = new Vuex.Store({
   mutations:{
     setSideBarExpand(state, val){
       state.sideBarExpand = val
+    },
+    setOverviewData(state,val){
+      state.overviewData = val
     },
     setTranscriptomicsTableHeaders(state, val){
       state.transcriptomicsTableHeaders = val

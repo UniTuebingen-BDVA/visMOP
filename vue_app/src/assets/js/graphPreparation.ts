@@ -47,7 +47,8 @@ export function generateGraphData(nodeList: { [key: string]: entry }, fcsExtent:
                         } as nodeAttr
 
                 } as node
-                //console.log("currentnode",currentNode)
+                //if(entry.entry_type == "pathway")
+                //{console.log("currentnode",currentNode)}
                 graph.nodes.push(currentNode);
                 for (const relation of entry.outgoing_edges) {
                     let current_edge = {} as edge

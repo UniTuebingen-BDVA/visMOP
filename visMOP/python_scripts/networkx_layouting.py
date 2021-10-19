@@ -49,6 +49,7 @@ def get_spring_layout_pos(node_dict, init_scale= 20000):
     return pos_out
 
 def add_initial_positions(positions,nodes):
+    #TODO seems like it works inplace
     """ Adds positions calculated with networkX to nodes
 
     Args:

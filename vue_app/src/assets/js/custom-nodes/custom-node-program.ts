@@ -1,9 +1,9 @@
 /**
  * programs changed from sigma.js examples //ToDo copyright stuff
  */
-import { AbstractNodeProgram, RenderNodeParams } from "sigma/src/rendering/webgl/programs/common/node";
+import { AbstractNodeProgram, RenderNodeParams } from "sigma/rendering/webgl/programs/common/node";
 import { SplitNodeDisplayData } from "./types";
-import { floatColor } from "sigma/src/utils";
+import { floatColor } from "sigma/utils";
 import vertexShaderSource from "./square-node-vertex-shader.glsl";
 import fragmentShaderSource from "./square-node-fragment-shader.glsl";
 
