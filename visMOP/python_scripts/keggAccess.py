@@ -119,7 +119,8 @@ def kegg_find(gene_symbol, organism):
         organisum strign corresponding to the target organism (e.g. "mmu")
     """
     kegg_api_url = "http://rest.kegg.jp/find/{}/{}".format(organism, gene_symbol)
-    regex_pattern = re.compile(r"(\\t|\t| ){}(,|;)".format(gene_symbol))
+    print("KEGG-URL, ", kegg_api_url)
+    regex_pattern = re.compile(r"(?i)(\\t|\t| ){}(,|;)".format(gene_symbol))
     try:
         with urllib.request.urlopen( kegg_api_url ) as kegg_response:
                 api_text_lines = kegg_response.read().decode("utf-8")
@@ -338,7 +339,7 @@ def query_gene_symbols(gene_symbols, organism):
                     print("Could not find a KeggID for: {}".format(symbol))
 
             except:
-                print("Could not find a KeggID for: {}".format(symbol))
+                print("Error during query for: {}".format(symbol))
            
     return out_dict
 
