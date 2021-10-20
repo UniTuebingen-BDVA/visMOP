@@ -2,74 +2,88 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import App from './App.vue'
 import vuetify from './plugins/vuetify';
+import _ from 'lodash'
 
 Vue.config.productionTip = false
 Vue.use(Vuex)
 export const store = new Vuex.Store({
-  state:{
+  state: {
     sideBarExpand: true,
     overviewData: null,
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
     transcriptomicsData: null,
     transcriptomicsSymbolDict: {},
+    transcriptomicsKeggIDDict: {},
     proteomicsTableHeaders: [],
     proteomicsTableData: [],
+    clickedNodes: [],
     proteomicsData: null,
     proteomicsSymbolDict: {},
-    usedSymbolCols: {"transcriptomics": null, "proteomics": null},
+    usedSymbolCols: { "transcriptomics": null, "proteomics": null },
     overlay: false,
     graphData: null,
     fcs: null,
-    pathwayLayouting: {"pathway_list": ["empty"], "pathway_node_dictionary": null},
+    pathwayLayouting: { "pathway_list": ["empty"], "pathway_node_dictionary": null },
 
 
   },
-  mutations:{
-    setSideBarExpand(state, val){
+  mutations: {
+    addClickedNode(state, val) {
+      const tableEntry = {"id": val, "name": state.proteomicsSymbolDict[val]}
+      state.clickedNodes.push(tableEntry)
+    },
+    removeClickedNode(state, val) {
+      const indexNode = state.clickedNodes.indexOf(val);
+      if (indexNode > -1) {
+        state.clickedNodes.splice(indexNode, 1);
+      }
+    },
+    setSideBarExpand(state, val) {
       state.sideBarExpand = val
     },
-    setOverviewData(state,val){
+    setOverviewData(state, val) {
       state.overviewData = val
     },
-    setTranscriptomicsTableHeaders(state, val){
+    setTranscriptomicsTableHeaders(state, val) {
       state.transcriptomicsTableHeaders = val
       console.log(state.transcriptomicsTableHeaders)
     },
-    setTranscriptomicsTableData(state, val){
+    setTranscriptomicsTableData(state, val) {
       state.transcriptomicsTableData = val
     },
-    setTranscriptomicsData(state, val){
+    setTranscriptomicsData(state, val) {
       state.transcriptomicsData = val
     },
-    setTranscriptomicsSymbolDict(state,val){
+    setTranscriptomicsSymbolDict(state, val) {
       state.transcriptomicsSymbolDict = val
+      state.transcriptomicsKeggIDDict = _.invert(val)
     },
-    setProteomicsTableHeaders(state, val){
+    setProteomicsTableHeaders(state, val) {
       state.proteomicsTableHeaders = val
     },
-    setProteomicsTableData(state, val){
+    setProteomicsTableData(state, val) {
       state.proteomicsTableData = val
     },
-    setProteomicsData(state, val){
+    setProteomicsData(state, val) {
       state.transcriptomicsData = val
     },
-    setProteomicsSymbolDict(state,val){
+    setProteomicsSymbolDict(state, val) {
       state.proteomicsSymbolDict = val
     },
-    setUsedSymbolCols(state,val){
+    setUsedSymbolCols(state, val) {
       state.usedSymbolCols = val
     },
-    setOverlay(state,val){
-      state.overlay=val
+    setOverlay(state, val) {
+      state.overlay = val
     },
-    setGraphData(state,val){
-      state.graphData=val
+    setGraphData(state, val) {
+      state.graphData = val
     },
-    setFCS(state,val){
+    setFCS(state, val) {
       state.fcs = val
     },
-    setPathwayLayouting(state, val){
+    setPathwayLayouting(state, val) {
       state.pathwayLayouting = val
     }
   }

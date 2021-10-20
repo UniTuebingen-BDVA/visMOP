@@ -12,6 +12,7 @@ import drawHover from "./customHoverRenderer";
 import { animateNodes } from "sigma/utils/animate";
 import { PlainObject } from "sigma/types";
 
+
 export function mainGraph(elemID: string, graphData: graphData): Sigma {
     console.log(graphData)
     const elem = document.getElementById(elemID) as HTMLElement;
@@ -86,7 +87,9 @@ export function mainGraph(elemID: string, graphData: graphData): Sigma {
         renderer.refresh();
       });
 
-
+    renderer.on("clickNode",({ node }) => {
+        console.log("clicking Node: ", node);
+      });
 
     return renderer
 }
@@ -183,6 +186,7 @@ export function relaxLayout(renderer: Sigma){
         attributes.fixed =  false,
         attributes.color = attributes.nonFadeColor as string
         attributes.secondaryColor = attributes.nonFadeColorSecondary as string
+        attributes.outlineColor = "rgba(30,30,30,1.0)"
         attributes.z = 1
 
     })

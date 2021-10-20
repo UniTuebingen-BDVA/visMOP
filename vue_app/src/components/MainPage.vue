@@ -69,46 +69,74 @@
       <!-- Network -->
       <v-col cols="7" class="d-flex flex-column mb-2">
         <v-card>
-        <v-tabs
-          v-model="selectedTabNetwork"
-          background-color="blue lighten-2"
-          dark
-          center-active
-          next-icon="mdi-arrow-right-bold-box-outline"
-          prev-icon="mdi-arrow-left-bold-box-outline"
-          show-arrows
-        >
-          <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
-          <v-tab href="#overviewNetwork">Overview</v-tab>
-          <v-tab href="#detailNetwork">Detail</v-tab>
-        </v-tabs>
+          <v-tabs
+            v-model="selectedTabNetwork"
+            background-color="blue lighten-2"
+            dark
+            center-active
+            next-icon="mdi-arrow-right-bold-box-outline"
+            prev-icon="mdi-arrow-left-bold-box-outline"
+            show-arrows
+          >
+            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
+            <v-tab href="#overviewNetwork">Overview</v-tab>
+            <v-tab href="#detailNetwork">Detail</v-tab>
+          </v-tabs>
 
-        <v-tabs-items :value="selectedTabNetwork">
-          <v-tab-item value="overviewNetwork">
-            <keep-alive>
-            <overview-component
-              contextID="overviewContext"
-              :transcriptomicsSelection="transcriptomicsSelectionData"
-              :proteomicsSelection="proteomicsSelectionData"
-              :isActive="activeOverview"
-            >
-            </overview-component>
-            </keep-alive>
-          </v-tab-item>
+          <v-tabs-items :value="selectedTabNetwork">
+            <v-tab-item value="overviewNetwork">
+              <keep-alive>
+                <overview-component
+                  contextID="overviewContext"
+                  :transcriptomicsSelection="transcriptomicsSelectionData"
+                  :proteomicsSelection="proteomicsSelectionData"
+                  :isActive="activeOverview"
+                >
+                </overview-component>
+              </keep-alive>
+            </v-tab-item>
 
-          <v-tab-item value="detailNetwork">
-            <keep-alive>
-            <network-graph-component
-              contextID="detailContext"
-              :transcriptomicsSelection="transcriptomicsSelectionData"
-              :proteomicsSelection="proteomicsSelectionData"
-              :isActive="activeDetail"
-            >
-            </network-graph-component>
-            </keep-alive>
-          </v-tab-item>
-        </v-tabs-items>
+            <v-tab-item value="detailNetwork">
+              <keep-alive>
+                <network-graph-component
+                  contextID="detailContext"
+                  :transcriptomicsSelection="transcriptomicsSelectionData"
+                  :proteomicsSelection="proteomicsSelectionData"
+                  :isActive="activeDetail"
+                >
+                </network-graph-component>
+              </keep-alive>
+            </v-tab-item>
+          </v-tabs-items>
         </v-card>
+      </v-col>
+      <!-- Data Table-->
+      <v-col cols="2" class="mb-2" id="selectedTable">
+        <div>
+          <v-card>
+            <v-card-title>
+              Selected Nodes
+              <v-spacer></v-spacer>
+              <v-text-field
+                v-model="tableSearch"
+                append-icon="mdi-magnify"
+                label="Search"
+                single-line
+                hide-details
+              ></v-text-field>
+            </v-card-title>
+
+            <v-data-table
+              dense
+              :headers="selectedNodesHeader"
+              :items="clickedNodes"
+              :items-per-page="5"
+              :search="tableSearch"
+              class="elevation-1"
+              id="selectedNodes"
+            ></v-data-table>
+          </v-card>
+        </div>
       </v-col>
     </v-row>
     <div class="text-center">
@@ -135,6 +163,7 @@ export default {
     transcriptomicsSelectionData: "",
     proteomicsSelectionData: "",
     pathwaySelection: "",
+    selectedNodesHeader: [{"value": "id", "text": "Kegg ID"},{"value": "name", "text": "Name"}]
   }),
 
   computed: {
@@ -149,17 +178,18 @@ export default {
       usedSymbolCols: (state) => state.usedSymbolCols,
       overlay: (state) => state.overlay,
       pathwayLayouting: (state) => state.pathwayLayouting,
+      clickedNodes: (state) => state.clickedNodes,
     }),
-    activeOverview:{
-      get: function(){
-        return this.selectedTabNetwork == "overviewNetwork"
-      }
+    activeOverview: {
+      get: function () {
+        return this.selectedTabNetwork == "overviewNetwork";
+      },
     },
-    activeDetail:{
-      get: function(){
-        return this.selectedTabNetwork == "detailNetwork"
-      }
-    }
+    activeDetail: {
+      get: function () {
+        return this.selectedTabNetwork == "detailNetwork";
+      },
+    },
   },
   watch: {},
 

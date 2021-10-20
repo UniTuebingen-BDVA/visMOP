@@ -188,7 +188,7 @@ def kegg_parsing():
         kegg_kgml = query_kgmls(unique_pathways, data_path / 'kegg_cache/kgml_cache.json')
         parsed_pathways = []
         print("Len unique pws: ", len(unique_pathways))
-        for pathwayID in unique_pathways:
+        for pathwayID in unique_pathways[0:15]:
             if "01100" in pathwayID:
                 print("Skipping map01100, general overview")
             else:
