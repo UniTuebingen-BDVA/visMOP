@@ -73,13 +73,13 @@
 
   </v-app>
 </template>
+<script lang="ts">
+import { mapState } from 'vuex'
 
-<script>
-import { mapState } from "vuex";
-
-import MainPage from "./components/MainPage.vue"
-import SideBar from './components/Sidebar'
-export default {
+import Vue from 'vue'
+import MainPage from './components/MainPage.vue'
+import SideBar from './components/Sidebar.vue'
+export default Vue.extend({
   name: 'App',
 
   components: {
@@ -87,25 +87,21 @@ export default {
     SideBar
   },
 
-
   data: () => ({
     drawer: true,
     navbarKey: true,
-    dialog : false,
+    dialog: false
   }),
   computed: {
     ...mapState({
     }),
-  sideBarExpand:{
-    get(){return this.$store.state.sideBarExpand},
-    set(val){this.$store.commit("setSideBarExpand", val)}
-  } 
-
-  },
-};
-
-
+    sideBarExpand: {
+      get () { return this.$store.state.sideBarExpand },
+      set (val) { this.$store.commit('setSideBarExpand', val) }
+    }
+  }
+})
 </script>
 <style>
-@import 'assets/css/networkGraph.css';
+@import './css/networkGraph.css';
 </style>

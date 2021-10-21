@@ -1,12 +1,9 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import App from './App.vue'
-import vuetify from './plugins/vuetify';
-import _ from 'lodash'
 
-Vue.config.productionTip = false
 Vue.use(Vuex)
-export const store = new Vuex.Store({
+
+export default new Vuex.Store({
   state: {
     sideBarExpand: true,
     overviewData: null,
@@ -30,7 +27,7 @@ export const store = new Vuex.Store({
   },
   mutations: {
     addClickedNode(state, val) {
-      const tableEntry = {"id": val, "name": state.proteomicsSymbolDict[val]}
+      const tableEntry = { "id": val, "name": state.proteomicsSymbolDict[val] }
       state.clickedNodes.push(tableEntry)
     },
     removeClickedNode(state, val) {
@@ -86,11 +83,9 @@ export const store = new Vuex.Store({
     setPathwayLayouting(state, val) {
       state.pathwayLayouting = val
     }
+  },
+  actions: {
+  },
+  modules: {
   }
 })
-new Vue({
-  vuetify,
-  store: store,
-  render: h => h(App)
-}).$mount('#app')
-

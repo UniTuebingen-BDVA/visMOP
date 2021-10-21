@@ -1,4 +1,4 @@
-import { Attributes } from "graphology-types";
+import { Attributes } from 'graphology-types'
 
 export interface edgeAttr extends Attributes{
         sourceColor: string,
@@ -13,7 +13,7 @@ export interface edge {
     key: string,
     source: string,
     target: string,
-    attributes:  edgeAttr,
+    attributes: edgeAttr,
 }
 export interface nodeAttr extends Attributes{
     name: string,
@@ -28,8 +28,8 @@ export interface nodeAttr extends Attributes{
     outlineColor: string
     nonFadeColor: string,
     nonFadeColorSecondary: string,
-    fadeColor: string ,
-    fadeColorSecondary: string ,
+    fadeColor: string,
+    fadeColorSecondary: string,
     size: number,
     fixed: boolean,
     type: string
@@ -53,4 +53,3 @@ export interface entry {
     label: string,
     orig_pos: { [key: string]: number[] }
 }
-

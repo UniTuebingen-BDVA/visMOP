@@ -12,7 +12,7 @@ import json
 import sys
 import snappy
 
-app = Flask(__name__, static_folder = "../dist/assets", template_folder="../dist")
+app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
 
 transcriptomics_df_global = None
 
