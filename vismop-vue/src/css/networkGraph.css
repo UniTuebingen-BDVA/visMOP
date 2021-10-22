@@ -1,108 +1,103 @@
-
-
 .webglContainer {
-    height: 75vh;
-    display: block;
-    z-index: 2;
+  height: 75vh;
+  display: block;
+  z-index: 2;
 }
 #interactionGraph {
-    height: 75vh;
-    display: block;
+  height: 75vh;
+  display: block;
 }
 
 #locGraph {
-    height: 75vh;
-    display: block;
+  height: 75vh;
+  display: block;
 }
 
 #inputTable {
-    height: 75vh;
-    display: block;
+  height: 75vh;
+  display: block;
 }
 
 #legend {
-    display: none;
-    z-index: 1;
-    background-color: white;
-    position: absolute;
-    width: 150px;
-    box-shadow: 0 2px 6px 0 rgba(0,0,0,0.5), 0 1px 3px 0 rgba(0,0,0,0.19);
+  display: none;
+  z-index: 1;
+  background-color: white;
+  position: absolute;
+  width: 150px;
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.5), 0 1px 3px 0 rgba(0, 0, 0, 0.19);
 }
 
 #transcriptTable tbody tr:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 #proteomicsTable tbody tr:hover {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 #proteinBox {
-    height: 75vh;
-    display: block;
+  height: 75vh;
+  display: block;
 }
 
-
 .prot {
-    /*border: 1px solid #ccc;*/
-    display: block;
-    padding: 10px;
-    box-sizing: border-box;
-
+  /*border: 1px solid #ccc;*/
+  display: block;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 #proteinInfo {
-    overflow-y: scroll;
-    overflow-x: scroll;
-    white-space: nowrap;
-    max-height: 75vh;
+  overflow-y: scroll;
+  overflow-x: scroll;
+  white-space: nowrap;
+  max-height: 75vh;
 }
 
 .buttons {
-    float: bottom;
-    background-color: #e7e7e7;
-    color: black;
-    text-align: center;
-    font-size: 12px;
-    padding: 3px;
-    border: none;
-    border-radius: 4px;
-    display: inline-block;
-    margin: 2px;
-    box-shadow: 0 2px 6px 0 rgba(0,0,0,0.5), 0 1px 3px 0 rgba(0,0,0,0.19);
+  float: bottom;
+  background-color: #e7e7e7;
+  color: black;
+  text-align: center;
+  font-size: 12px;
+  padding: 3px;
+  border: none;
+  border-radius: 4px;
+  display: inline-block;
+  margin: 2px;
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.5), 0 1px 3px 0 rgba(0, 0, 0, 0.19);
 }
 
 .buttons:hover {
-   background-color: darkgrey;
+  background-color: darkgrey;
 }
-
 
 /*
 Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 */
 .range-wrap {
-    position: relative;
-    margin: 0 auto 3rem;
+  position: relative;
+  margin: 0 auto 3rem;
 }
 .range {
-    width: 50%;
+  width: 50%;
 }
 .bubble {
-    background: #A8BFFF;
-    color: black;
-    padding: 5px;
-    border-radius: 4px;
-    margin-left: 10px;
-    margin-bottom: 3px;
+  background: #a8bfff;
+  color: black;
+  padding: 5px;
+  border-radius: 4px;
+  margin-left: 10px;
+  margin-bottom: 3px;
 }
 
 .bubble::after {
-    content: "";
-    width: 2px;
-    height: 2px;
-    background: #A8BFFF;
+  content: "";
+  width: 2px;
+  height: 2px;
+  background: #a8bfff;
 }
 
-#range-wrap{
-    display: none;
+#range-wrap {
+  display: none;
 }

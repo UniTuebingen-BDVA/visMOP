@@ -147,25 +147,28 @@
   </v-container>
 </template>
 <script>
-import { mapState } from 'vuex'
-import NetworkGraphComponent from './NetworkGraphComponent.vue'
-import OverviewComponent from './OverviewComponent.vue'
-import Vue from 'vue'
+import { mapState } from "vuex";
+import NetworkGraphComponent from "./NetworkGraphComponent.vue";
+import OverviewComponent from "./OverviewComponent.vue";
+import Vue from "vue";
 
 export default Vue.extend({
   components: { NetworkGraphComponent, OverviewComponent },
   // name of the component
-  name: 'MainPage',
+  name: "MainPage",
 
   // data section of the Vue component. Access via this.<varName> .
   data: () => ({
-    tableSearch: '',
-    selectedTabTable: 'transcriptomics',
-    selectedTabNetwork: 'detailNetwork',
-    transcriptomicsSelectionData: '',
-    proteomicsSelectionData: '',
-    pathwaySelection: '',
-    selectedNodesHeader: [{ value: 'id', text: 'Kegg ID' }, { value: 'name', text: 'Name' }]
+    tableSearch: "",
+    selectedTabTable: "transcriptomics",
+    selectedTabNetwork: "detailNetwork",
+    transcriptomicsSelectionData: "",
+    proteomicsSelectionData: "",
+    pathwaySelection: "",
+    selectedNodesHeader: [
+      { value: "id", text: "Kegg ID" },
+      { value: "name", text: "Name" },
+    ],
   }),
 
   computed: {
@@ -180,30 +183,30 @@ export default Vue.extend({
       usedSymbolCols: (state) => state.usedSymbolCols,
       overlay: (state) => state.overlay,
       pathwayLayouting: (state) => state.pathwayLayouting,
-      clickedNodes: (state) => state.clickedNodes
+      clickedNodes: (state) => state.clickedNodes,
     }),
     activeOverview: {
       get: function () {
-        return this.selectedTabNetwork === 'overviewNetwork'
-      }
+        return this.selectedTabNetwork === "overviewNetwork";
+      },
     },
     activeDetail: {
       get: function () {
-        return this.selectedTabNetwork === 'detailNetwork'
-      }
-    }
+        return this.selectedTabNetwork === "detailNetwork";
+      },
+    },
   },
-  //watch: {},
+  // watch: {},
 
-  //mounted () {},
+  // mounted () {},
 
   methods: {
-    transcriptomicsSelection (val) {
-      this.transcriptomicsSelectionData = val
+    transcriptomicsSelection(val) {
+      this.transcriptomicsSelectionData = val;
     },
-    proteomicsSelection (val) {
-      this.proteomicsSelectionData = val
-    }
-  }
-})
+    proteomicsSelection(val) {
+      this.proteomicsSelectionData = val;
+    },
+  },
+});
 </script>

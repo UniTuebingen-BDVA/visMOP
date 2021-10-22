@@ -6,53 +6,47 @@
       :expand-on-hover="sideBarExpand"
       color="primary"
       dense
-      width=512
+      width="512"
       id="ddd"
       hide-overlay
       temporary
       permanent
       absolute
     >
-    <v-list-item class="px-2">
-      <v-btn
-      elevation="2"
-      fab
-      small
-      @click.stop="sideBarExpand = !sideBarExpand"
-      >
-        <v-app-bar-nav-icon></v-app-bar-nav-icon>
-      </v-btn>
+      <v-list-item class="px-2">
+        <v-btn
+          elevation="2"
+          fab
+          small
+          @click.stop="sideBarExpand = !sideBarExpand"
+        >
+          <v-app-bar-nav-icon></v-app-bar-nav-icon>
+        </v-btn>
 
-      <div class="d-flex align-center">
-        <v-img
-          class="shrink mr-2"
-          contain
-          :src="require('./assets/vmod_icon.svg')"
-          transition="scale-transition"
-          width="40"
-        />
+        <div class="d-flex align-center">
+          <v-img
+            class="shrink mr-2"
+            contain
+            :src="require('./assets/vmod_icon.svg')"
+            transition="scale-transition"
+            width="40"
+          />
 
-        <span class="mr-2">SAMPLE APP</span>
-      </div>
-    </v-list-item>
-    <v-list dense>
-      <v-list-item>
-        <v-list-item-icon>
-          <p></p>
-        </v-list-item-icon>
-        <v-list-item-content>
-          <SideBar></SideBar>
-        </v-list-item-content>
+          <span class="mr-2">SAMPLE APP</span>
+        </div>
       </v-list-item>
-
-    </v-list>
-
+      <v-list dense>
+        <v-list-item>
+          <v-list-item-icon>
+            <p></p>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <SideBar></SideBar>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
     </v-navigation-drawer>
-    <v-app-bar
-      app
-      color="primary"
-      dark
-    >
+    <v-app-bar app color="primary" dark>
       <div class="d-flex align-center pl-12">
         <v-img
           class="shrink mr-2"
@@ -64,44 +58,48 @@
 
         <span class="mr-2">VisMOP</span>
       </div>
-
     </v-app-bar>
 
     <v-main class="pl-12">
-      <MainPage/>
+      <MainPage />
     </v-main>
-
   </v-app>
 </template>
 <script lang="ts">
-import { mapState } from 'vuex'
 
-import Vue from 'vue'
-import MainPage from './components/MainPage.vue'
-import SideBar from './components/Sidebar.vue'
+import Vue from "vue";
+import MainPage from "./components/MainPage.vue";
+import SideBar from "./components/Sidebar.vue";
 export default Vue.extend({
-  name: 'App',
+  name: "App",
 
   components: {
     MainPage,
-    SideBar
+    SideBar,
   },
-
   data: () => ({
     drawer: true,
     navbarKey: true,
-    dialog: false
+    dialog: false,
   }),
-  computed: {
-    ...mapState({
-    }),
-    sideBarExpand: {
-      get () { return this.$store.state.sideBarExpand },
-      set (val) { this.$store.commit('setSideBarExpand', val) }
+  methods:{
+    test(somevar: boolean){
+      this.$store.commit("setSideBarExpand", somevar);
     }
-  }
-})
+  },
+  computed: {
+    sideBarExpand: {
+      get(this): boolean {
+        console.log(this.drawer)
+        return this.$store.state.sideBarExpand;
+      },
+      set(this,val) {
+        this.$store.commit("setSideBarExpand", val);
+      },
+    },
+  },
+});
 </script>
 <style>
-@import './css/networkGraph.css';
+@import "./css/networkGraph.css";
 </style>

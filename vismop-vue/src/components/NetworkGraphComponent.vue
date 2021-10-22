@@ -28,134 +28,158 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script lang="ts">
+import { mapState } from "vuex";
 import {
   mainGraph,
   panToNode,
   layoutToPathway,
-  relaxLayout
-} from '../core/mainNetwork'
-import { generateGraphData } from '../core/graphPreparation'
-import Vue from 'vue'
+  relaxLayout,
+} from "../core/mainNetwork";
+import { generateGraphData } from "../core/graphPreparation";
+import Vue from "vue";
+import Sigma from 'sigma'
 
+interface Data{
+  tableSearch: string
+  selectedTab: string
+  outstandingDraw: boolean
+  networkGraph: (Sigma | undefined)
+}
+
+interface Data{
+  tableSearch: string
+  selectedTab: string
+  outstandingDraw: boolean
+  
+}
 export default Vue.extend({
   // name of the component
-  name: 'NetworkGraphComponent',
-
+  name: "NetworkGraphComponent",
+  
   // data section of the Vue component. Access via this.<varName> .
-  data: () => ({
-    tableSearch: '',
-    selectedTab: 'transcriptomics',
-    outstandingDraw: false
+  data: (): Data => ({
+    tableSearch: "",
+    selectedTab: "transcriptomics",
+    outstandingDraw: false,
+    networkGraph: undefined,
   }),
 
   computed: {
     ...mapState({
-      graphData: (state) => state.graphData,
-      fcs: (state) => state.fcs,
-      transcriptomicsSymbolDict: (state) => state.transcriptomicsSymbolDict,
-      proteomicsSymbolDict: (state) => state.proteomicsSymbolDict,
-      usedSymbolCols: (state) => state.usedSymbolCols,
-      overlay: (state) => state.overlay,
-      pathwayLayouting: (state) => state.pathwayLayouting
-    })
+      sideBarExpand: (state:any) => state.sideBarExpand,
+      graphData: (state:any) => state.graphData,
+      fcs: (state:any) => state.fcs,
+      transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
+      proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict,
+      usedSymbolCols: (state:any) => state.usedSymbolCols,
+      overlay: (state:any) => state.overlay,
+      pathwayLayouting: (state:any) => state.pathwayLayouting,
+    }),
   },
   watch: {
     graphData: function () {
       if (this.isActive) {
-        console.log(this.contextID)
-        this.drawNetwork()
+        console.log(this.contextID);
+        this.drawNetwork();
       } else {
-        console.log(this.contextID, 'outstanding draw')
-        this.outstandingDraw = true
+        console.log(this.contextID, "outstanding draw");
+        this.outstandingDraw = true;
       }
     },
     isActive: function () {
-      console.log(this.contextID, 'isActive: ', this.isActive, this.outstandingDraw)
+      console.log(
+        this.contextID,
+        "isActive: ",
+        this.isActive,
+        this.outstandingDraw
+      );
       if (this.outstandingDraw) {
         setTimeout(() => {
-          this.drawNetwork()
-        }, 1000)
-        this.outstandingDraw = false
+          this.drawNetwork();
+        }, 1000);
+        this.outstandingDraw = false;
       }
     },
     transcriptomicsSelection: function () {
-      this.focusNodeTranscriptomics(this.transcriptomicsSelection)
+      this.focusNodeTranscriptomics(this.transcriptomicsSelection);
     },
     proteomicsSelection: function () {
-      this.focusNodeProteomics(this.proteomicsSelection)
+      this.focusNodeProteomics(this.proteomicsSelection);
     },
-    pathwaySelection: function () {
-      this.selectPathway(this.pathwaySelection)
-    }
   },
 
-  mounted () {
+  mounted() {
     if (this.graphData) {
-      this.drawNetwork()
+      this.drawNetwork();
     }
   },
-  props: ['contextID', 'transcriptomicsSelection', 'proteomicsSelection', 'isActive'],
+  props: {
+    contextID: String,
+    transcriptomicsSelection: {type: Object},
+    proteomicsSelection: {type: Object},
+    isActive: Boolean,
+  },
   methods: {
-    drawNetwork () {
-      const fcExtents = this.calculateCombinedExtent()
-      const networkData = generateGraphData(this.graphData, fcExtents)
-      console.log('base dat', networkData)
-      this.networkGraph = mainGraph(this.contextID, networkData)
+    drawNetwork() {
+
+      const fcExtents = this.calculateCombinedExtent();
+      const networkData = generateGraphData(this.graphData, fcExtents);
+      console.log("base dat", networkData);
+      this.networkGraph = mainGraph(this.contextID, networkData);
     },
-    focusNodeTranscriptomics (row) {
-      const symbol = row[this.usedSymbolCols.transcriptomics]
-      console.log('Symbol', symbol)
-      console.log('dict', this.transcriptomicsSymbolDict)
-      const keggID = this.transcriptomicsSymbolDict[symbol]
-      console.log('ID', keggID)
-      panToNode(this.networkGraph, keggID)
+    focusNodeTranscriptomics(row: {[key: string]: string}) {
+      const symbol = row[this.usedSymbolCols.transcriptomics];
+      console.log("Symbol", symbol);
+      console.log("dict", this.transcriptomicsSymbolDict);
+      const keggID = this.transcriptomicsSymbolDict[symbol];
+      console.log("ID", keggID);
+      panToNode(this.networkGraph as Sigma, keggID);
     },
-    focusNodeProteomics (row) {
-      const symbol = row[this.usedSymbolCols.proteomics]
-      const keggID = this.proteomicsSymbolDict[symbol]
-      panToNode(this.networkGraph, keggID)
+    focusNodeProteomics(row: {[key: string]: string}) {
+      const symbol = row[this.usedSymbolCols.proteomics];
+      const keggID = this.proteomicsSymbolDict[symbol];
+      panToNode(this.networkGraph as Sigma, keggID);
     },
-    selectPathway (key) {
-      console.log('KEY', key)
+    selectPathway(key: string) {
+      console.log("KEY", key);
       if (key !== undefined && key !== null) {
-        const nodeList = this.pathwayLayouting.pathway_node_dictionary[key]
-        layoutToPathway(this.networkGraph, key, nodeList)
+        const nodeList = this.pathwayLayouting.pathway_node_dictionary[key];
+        layoutToPathway(this.networkGraph as Sigma, key, nodeList);
       } else {
-        relaxLayout(this.networkGraph)
+        relaxLayout(this.networkGraph as Sigma);
       }
     },
     // basic GET request using fetch
-    calculateCombinedExtent () {
-      console.log('fcs', this.fcs)
-      const fcsNum = []
-      this.fcs.forEach((element) => {
-        if (!(typeof element.transcriptomics === 'string')) {
-          fcsNum.push(element.transcriptomics)
+    calculateCombinedExtent() {
+      console.log("fcs", this.fcs);
+      const fcsNum: number[] = [];
+      this.fcs.forEach((element: {transcriptomics: (string|number), proteomics: (string|number)}) => {
+        if (!(typeof element.transcriptomics === "string")) {
+          fcsNum.push(element.transcriptomics);
         }
-        if (!(typeof element.proteomics === 'string')) {
-          fcsNum.push(element.proteomics)
+        if (!(typeof element.proteomics === "string")) {
+          fcsNum.push(element.proteomics);
         }
-      })
-      const fcsAsc = fcsNum.sort((a, b) => a - b)
+      });
+      const fcsAsc = fcsNum.sort((a, b) => a - b);
 
       // https://stackoverflow.com/a/55297611
-      const quantile = (arr, q) => {
-        const pos = (arr.length - 1) * q
-        const base = Math.floor(pos)
-        const rest = pos - base
+      const quantile = (arr: number[], q:number) => {
+        const pos = (arr.length - 1) * q;
+        const base = Math.floor(pos);
+        const rest = pos - base;
         if (arr[base + 1] !== undefined) {
-          return arr[base] + rest * (arr[base + 1] - arr[base])
+          return arr[base] + rest * (arr[base + 1] - arr[base]);
         } else {
-          return arr[base]
+          return arr[base];
         }
-      }
+      };
 
-      const minVal5 = quantile(fcsAsc, 0.05)
-      const maxVal95 = quantile(fcsAsc, 0.95)
-      return [minVal5, maxVal95]
-    }
-  }
-})
+      const minVal5 = quantile(fcsAsc, 0.05);
+      const maxVal95 = quantile(fcsAsc, 0.95);
+      return [minVal5, maxVal95];
+    },
+  },
+});
 </script>
