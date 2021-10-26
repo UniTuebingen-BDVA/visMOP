@@ -170,29 +170,29 @@ def gene_symbols_to_keggID(gene_symbols, organism, caching_path = None):
             cache_data[organism] = new_results
         cache_kegg_data(caching_path, cache_data)
 
-    kegg_Ids = []
+    keggIDs = []
     symbol_kegg_dict = {}
     for symbol in gene_symbols:
         try:
             keggId = cache_data[organism][symbol]
             symbol_kegg_dict[symbol] = keggId
-            kegg_Ids.append(keggId)
+            keggIDs.append(keggId)
         except:
             print("Couldn't find a matching KeggID ", symbol)
 
-    return kegg_Ids, symbol_kegg_dict 
+    return keggIDs, symbol_kegg_dict 
 
 
-def kegg_get(kegg_IDs=None, kegg_DB=None, options = None, caching_path=None ):
-    """ Gets KEGG entries specified in kegg_IDs from the specified KEGG database 
+def kegg_get(keggIDs=None, kegg_DB=None, options = None, caching_path=None ):
+    """ Gets KEGG entries specified in keggIDs from the specified KEGG database 
     
     for kegg api infos see: https://www.kegg.jp/kegg/rest/keggapi.html
 
     Args:
-        kegg_IDs: One or More Kegg IDs
+        keggIDs: One or More Kegg IDs
 
         kegg_DB: Kegg database as string (e.g. "mmu", "hsa"),
-                if None kegg_IDs are expected to contain the database abbreviation (i.e. "mmu:00000")
+                if None keggIDs are expected to contain the database abbreviation (i.e. "mmu:00000")
                 
         options: options for file output, default is None: returns flat file format
 
@@ -203,9 +203,9 @@ def kegg_get(kegg_IDs=None, kegg_DB=None, options = None, caching_path=None ):
         get_failed: list of accession numbers for which the get request was not successful
     """
     if kegg_DB:
-        format_IDs = ["{}:{}".format(kegg_DB, ID) for ID in kegg_IDs]
+        format_IDs = ["{}:{}".format(kegg_DB, ID) for ID in keggIDs]
     else:
-        format_IDs = [elem for elem in kegg_IDs]
+        format_IDs = [elem for elem in keggIDs]
 
     kegg_get_cache = {}
     if caching_path:
@@ -344,19 +344,19 @@ def query_gene_symbols(gene_symbols, organism):
     return out_dict
 
 
-def parse_get(get_response, kegg_ID):
+def parse_get(get_response, keggID):
     """parses a kegg get response to a KeggGet class-object
 
     Args:
         get_response: a kegg get response as text
-        kegg_ID: kegg id of get response
+        keggID: kegg id of get response
 
     Returns:
         kegg_get: parsed KeggGet class object
     
     """
 
-    kegg_get = KeggGet(kegg_ID)
+    kegg_get = KeggGet(keggID)
     lines = get_response.split("\n")
     in_pathway = False
     for line in lines:
@@ -399,9 +399,9 @@ if __name__ == "__main__":
 
     
     mouse_db = "mmu"
-    kegg_IDs = gene_symbols_to_keggID(["Acot1", "Abcg2", "Acat2", "Acadm"], mouse_db, data_path / 'kegg_cache/gene_symbol_cache.json')
-    print(kegg_IDs)
-    kegg_gets = multiple_query(kegg_get, kegg_IDs=kegg_IDs,caching_path=data_path / 'kegg_cache/kegg_gets.json')
+    keggIDs = gene_symbols_to_keggID(["Acot1", "Abcg2", "Acat2", "Acadm"], mouse_db, data_path / 'kegg_cache/gene_symbol_cache.json')
+    print(keggIDs)
+    kegg_gets = multiple_query(kegg_get, keggIDs=keggIDs,caching_path=data_path / 'kegg_cache/kegg_gets.json')
     print(kegg_gets)
     parsed_gets = [parse_get(v,k) for k,v in kegg_gets.items()]
     unique_pathways = get_unique_pathways(parsed_gets)
@@ -415,7 +415,7 @@ if __name__ == "__main__":
 
     #print(out_dict.values())
 
-    #test = read_into_cache(kegg_get, kegg_IDs=list(out_dict.values()),caching_path=data_path / 'kegg_cache/kegg_gets.json')
+    #test = read_into_cache(kegg_get, keggIDs=list(out_dict.values()),caching_path=data_path / 'kegg_cache/kegg_gets.json')
     #list(out_dict.values()),caching_path=data_path / 'kegg_cache/kgml_gets.json'
 
     #test_key = list(test.keys())[0]
@@ -425,9 +425,9 @@ if __name__ == "__main__":
 
     #unique_pathways = get_unique_pathways(parsed_gets)
 
-    #test = read_into_cache(kegg_get, kegg_IDs=unique_pathways, ,caching_path=data_path) / 'kegg_cache/pathway_kgml.json')
+    #test = read_into_cache(kegg_get, keggIDs=unique_pathways, ,caching_path=data_path) / 'kegg_cache/pathway_kgml.json')
 
-    #kegg_Ids = list(out_dict.values())
+    #keggIDs = list(out_dict.values())
     #not_get = len(out_dict.values())
 
     #kegg_kgml = query_kgmls(unique_pathways, data_path / 'kegg_cache/kgml_cache.json')

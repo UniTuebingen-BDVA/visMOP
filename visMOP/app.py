@@ -147,9 +147,9 @@ def kegg_parsing():
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
                 #print(entry)
-                proteomics_symbol_dict[ID] = entry["kegg_id"]
-                keggIDs_proteomics.append(entry["kegg_id"])
-                fold_changes[entry["kegg_id"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]]}
+                proteomics_symbol_dict[ID] = entry["keggID"]
+                keggIDs_proteomics.append(entry["keggID"])
+                fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]]}
 
         #Handle Transcriptomics
         #TODO Duplicates are dropped how to handle these duplicates?!
@@ -169,14 +169,14 @@ def kegg_parsing():
             except:
                 print("Symbol: {} was not in the kegg dictionary, probably due to it not being found in the kegg DB")
         
-        #kegg_ID_value_dict, value_extent, all_gene_fcs = associacte_value_keggID(transcriptomics_df_global,gene_symbols_col,value_col,symbol_kegg_dict)
-        #print("kegg_IDs: {}".format(kegg_IDs))
+        #keggID_value_dict, value_extent, all_gene_fcs = associacte_value_keggID(transcriptomics_df_global,gene_symbols_col,value_col,symbol_kegg_dict)
+        #print("keggIDs: {}".format(keggIDs))
 
         #combineKeggIDS
         combined_keggIDs = list(set(keggIDs_transcriptomics+keggIDs_proteomics))
-        print("len kegg_IDs: {}".format(len(combined_keggIDs)))
+        print("len keggIDs: {}".format(len(combined_keggIDs)))
 
-        kegg_gets = kegg_get(kegg_IDs=combined_keggIDs,caching_path=data_path / 'kegg_cache/kegg_gets.json')
+        kegg_gets = kegg_get(keggIDs=combined_keggIDs,caching_path=data_path / 'kegg_cache/kegg_gets.json')
         print("kegg_gets: {}".format(len(kegg_gets)))
 
         parsed_gets = [parse_get(v,k) for k,v in kegg_gets.items()]
@@ -226,7 +226,7 @@ def kegg_parsing():
         
         pathway_titles = {}
         for i in parsed_pathways:
-            pathway_titles["path:" + i.kegg_ID] = [i.title]
+            pathway_titles["path:" + i.keggID] = [i.title]
 
 
         pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles)

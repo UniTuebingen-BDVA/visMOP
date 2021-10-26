@@ -67,38 +67,38 @@
 </template>
 <script lang="ts">
 
-import Vue from "vue";
-import MainPage from "./components/MainPage.vue";
-import SideBar from "./components/Sidebar.vue";
+import Vue from 'vue'
+import MainPage from './components/MainPage.vue'
+import SideBar from './components/Sidebar.vue'
 export default Vue.extend({
-  name: "App",
+  name: 'App',
 
   components: {
     MainPage,
-    SideBar,
+    SideBar
   },
   data: () => ({
     drawer: true,
     navbarKey: true,
-    dialog: false,
+    dialog: false
   }),
-  methods:{
-    test(somevar: boolean){
-      this.$store.commit("setSideBarExpand", somevar);
+  methods: {
+    test (somevar: boolean) {
+      this.$store.commit('setSideBarExpand', somevar)
     }
   },
   computed: {
     sideBarExpand: {
-      get(this): boolean {
+      get (this): boolean {
         console.log(this.drawer)
-        return this.$store.state.sideBarExpand;
+        return this.$store.state.sideBarExpand
       },
-      set(this,val) {
-        this.$store.commit("setSideBarExpand", val);
-      },
-    },
-  },
-});
+      set (this, val) {
+        this.$store.commit('setSideBarExpand', val)
+      }
+    }
+  }
+})
 </script>
 <style>
 @import "./css/networkGraph.css";

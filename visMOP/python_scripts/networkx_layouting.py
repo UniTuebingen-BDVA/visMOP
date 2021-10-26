@@ -62,8 +62,8 @@ def add_initial_positions(positions,nodes):
 
     for k, v in positions.items():
 
-        nodes[k]["initial_pos_x"] = v[0]
-        nodes[k]["initial_pos_y"] = v[1]
+        nodes[k]["initialPosX"] = v[0]
+        nodes[k]["initialPosY"] = v[1]
 
 
     return nodes

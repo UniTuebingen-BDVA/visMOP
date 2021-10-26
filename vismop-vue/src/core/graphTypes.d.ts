@@ -1,4 +1,4 @@
-import { Attributes } from "graphology-types";
+import { Attributes } from 'graphology-types'
 
 export interface edgeAttr extends Attributes {
   sourceColor: string;
@@ -35,7 +35,7 @@ export interface nodeAttr extends Attributes {
   type: string;
 }
 export interface node {
-  key: any;
+  key: string;
   attributes: nodeAttr;
 }
 export interface graphData {
@@ -44,22 +44,22 @@ export interface graphData {
   edges: edge[];
 }
 export interface relation {
-  relation_ID: string;
+  relationID: string;
   source: string;
   target: string;
-  relation_type: string;
+  relationType: string;
   edgeType: string;
 }
 export interface entry {
   name: string;
-  entry_type: string;
-  kegg_ID: string;
+  entryType: string;
+  keggID: string;
   isempty: boolean;
-  initial_pos_x: number;
-  initial_pos_y: number;
-  outgoing_edges: relation[];
+  initialPosX: number;
+  initialPosY: number;
+  outgoingEdges: relation[];
   trascriptomicsValue: number | string;
   proteomicsValue: number | string;
   label: string;
-  orig_pos: { [key: string]: number[] };
+  origPos: { [key: string]: number[] };
 }

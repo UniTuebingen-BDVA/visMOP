@@ -7,7 +7,7 @@ def add_incoming_edges(global_nodes):
 
     """
     for key, entry in global_nodes.items():
-            for out_edge in entry.outgoing_edges:
+            for out_edge in entry.outgoingEdges:
                 target = out_edge["target"]
                 global_nodes[target].add_incoming(out_edge)
 
@@ -43,7 +43,7 @@ def generate_networkx_dict(global_nodes):
 
     for key, entry in global_nodes.items():
         curr_node = {}
-        for out_edge in entry['outgoing_edges']:
+        for out_edge in entry['outgoingEdges']:
             curr_node[out_edge['target']] = {}
         out_dict[key] = curr_node
 
@@ -75,9 +75,9 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             except:
                 value = {"transcriptomics": "NA", "proteomics": "NA"}
             current_entry = KeggPathwayEntry(entry_keggID, value)
-            current_entry.entry_type = entry.get('type')
+            current_entry.entryType = entry.get('type')
 
-        if current_entry.entry_type == "group":
+        if current_entry.entryType == "group":
             components = []
             for component in entry.findall('component'):
                 components.append(component.get('id'))
@@ -88,7 +88,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             if(kgml_graphics.get('name')):
                 current_entry.name = kgml_graphics.get('name').split(",")
             if(kgml_graphics.get('x') and kgml_graphics.get('y')):
-                current_entry.add_orig_pos(pathway_ID, [int(kgml_graphics.get('x')), int(kgml_graphics.get('y'))])
+                current_entry.add_origPos(pathway_ID, [int(kgml_graphics.get('x')), int(kgml_graphics.get('y'))])
             #testing
             else:
                 coords = kgml_graphics.get('coords')
@@ -96,15 +96,15 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
                 coords = [int(elem) for elem in coords]
                 x = (coords[0]+coords[1]) / 2
                 y = (coords[2]+coords[3]) / 2
-                current_entry.orig_pos[pathway_ID] = [x, y]    
-            pathway.update_orig_extents(*current_entry.orig_pos[pathway_ID])
+                current_entry.origPos[pathway_ID] = [x, y]    
+            pathway.update_orig_extents(*current_entry.origPos[pathway_ID])
 
             pathway.add_entry(current_entry)
-            entry_keggID_map[entry_ID] = current_entry.kegg_ID
+            entry_keggID_map[entry_ID] = current_entry.keggID
 
     pathway.apply_extents()
     for entry in pathway.entries:
-        global_entry[entry.kegg_ID] = entry
+        global_entry[entry.keggID] = entry
 
     for relation in root.findall('relation'):
         
@@ -190,17 +190,17 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
         r_elem = entry_keggID_map[reaction.get('id')]
         r_type = reaction.get('type')
         for substrate in reaction.findall('substrate'):
-            substrate_kegg_ID = entry_keggID_map[substrate.get('id')]
-            global_entry[substrate_kegg_ID].is_empty = False
+            substrate_keggID = entry_keggID_map[substrate.get('id')]
+            global_entry[substrate_keggID].is_empty = False
             global_entry[r_elem].is_empty = False
-            current_reaction_part = KeggPathwayReaction(substrate_kegg_ID, r_elem, r_type, pathway_ID, pathway.title).asdict()
-            global_entry[substrate_kegg_ID].add_outgoing(current_reaction_part)
+            current_reaction_part = KeggPathwayReaction(substrate_keggID, r_elem, r_type, pathway_ID, pathway.title).asdict()
+            global_entry[substrate_keggID].add_outgoing(current_reaction_part)
 
         for product in reaction.findall('product'):
-            product_kegg_ID = entry_keggID_map[product.get('id')]
-            global_entry[product_kegg_ID].is_empty = False
+            product_keggID = entry_keggID_map[product.get('id')]
+            global_entry[product_keggID].is_empty = False
             global_entry[r_elem].is_empty = False
-            current_reaction_part = KeggPathwayReaction(r_elem, product_kegg_ID, r_type, pathway_ID, pathway.title).asdict()
+            current_reaction_part = KeggPathwayReaction(r_elem, product_keggID, r_type, pathway_ID, pathway.title).asdict()
             global_entry[r_elem].add_outgoing(current_reaction_part)
 
     #if pathway_ID == "mmu02010":
@@ -229,9 +229,9 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
 
     for entry in root.findall('entry'):
         current_entry = KeggPathwayEntry(entry.get('id'))
-        current_entry.kegg_ID = entry.get('name').split(" ")
-        current_entry.entry_type = entry.get('type')
-        if current_entry.entry_type == "group":
+        current_entry.keggID = entry.get('name').split(" ")
+        current_entry.entryType = entry.get('type')
+        if current_entry.entryType == "group":
             components = []
             for component in entry.findall('component'):
                 components.append(component.get('id'))
@@ -242,14 +242,14 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             if(kgml_graphics.get('name')):
                 current_entry.name = kgml_graphics.get('name').split(",")
             if(kgml_graphics.get('x') and kgml_graphics.get('y')):   
-                current_entry.orig_pos = [int(kgml_graphics.get('x')), int(kgml_graphics.get('y'))]
+                current_entry.origPos = [int(kgml_graphics.get('x')), int(kgml_graphics.get('y'))]
             #testing
             else:
-                current_entry.orig_pos = [100, 100]    
-            pathway.update_orig_extents(*current_entry.orig_pos)
+                current_entry.origPos = [100, 100]    
+            pathway.update_orig_extents(*current_entry.origPos)
 
             pathway.add_entry(current_entry.asdict())
-            entry_keggID_map[current_entry.entry_ID] = current_entry.kegg_ID[0]
+            entry_keggID_map[current_entry.entry_ID] = current_entry.keggID[0]
 
     for relation in root.findall('relation'):
         

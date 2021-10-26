@@ -106,12 +106,12 @@ def add_uniprot_info(dict):
                     string_id = line.strip().split(';')[1].strip()
                     line = file.readline()
                 if line.startswith('DR') and 'KEGG' in line:
-                    kegg_id = line.strip().split(';')[1].strip()
+                    keggID = line.strip().split(';')[1].strip()
                     line = file.readline()
 
 
         dict[id]['string_id'] = string_id
-        dict[id]['kegg_id'] = kegg_id
+        dict[id]['keggID'] = keggID
         # from textfile split lines to get location name
         try:
 

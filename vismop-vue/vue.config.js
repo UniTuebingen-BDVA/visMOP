@@ -1,26 +1,27 @@
-const path = require("path");
+const path = require('path')
 module.exports = {
-  outputDir: path.resolve(__dirname, "../dist/"),
-  assetsDir: "./static",
+  outputDir: path.resolve(__dirname, '../dist/'),
+  assetsDir: './static',
 
-  transpileDependencies: ["vuetify"],
+  transpileDependencies: ['vuetify'],
   chainWebpack: (config) => {
-    config.resolve.extensions.prepend(...[".ts", ".glsl"]);
+    config.resolve.extensions.prepend(...['.ts', '.glsl'])
     config.module
-      .rule("ts")
+      .rule('ts')
       .test(/\.ts$/)
-      .use("ts-loader")
-      .loader("ts-loader")
+      .use('ts-loader')
+      .loader('ts-loader')
       .options({
-        configFile: "tsconfig.json",
+        configFile: 'tsconfig.json',
         allowTsInNodeModules: true,
+        appendTsSuffixTo: [/\.vue$/]
       })
-      .end();
+      .end()
     config.module
-      .rule("glsl")
+      .rule('glsl')
       .test(/\.glsl$/)
-      .use("raw-loader")
-      .loader("raw-loader")
-      .end();
-  },
-};
+      .use('raw-loader')
+      .loader('raw-loader')
+      .end()
+  }
+}
