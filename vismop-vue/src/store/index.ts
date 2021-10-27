@@ -9,13 +9,13 @@ interface State {
   transcriptomicsTableHeaders: unknown,
   transcriptomicsTableData: unknown,
   transcriptomicsData: unknown,
-  transcriptomicsSymbolDict: unknown,
-  transcriptomicsKeggIDDict: unknown,
+  transcriptomicsSymbolDict: { [key: string]: string },
+  transcriptomicsKeggIDDict: { [key: string]: string },
   proteomicsTableHeaders: unknown,
   proteomicsTableData: unknown,
   clickedNodes: { id: string, name: string }[],
   proteomicsData: unknown,
-  proteomicsSymbolDict: {[key:string]: string},
+  proteomicsSymbolDict: { [key: string]: string },
   usedSymbolCols: unknown,
   overlay: unknown,
   graphData: unknown,
@@ -46,64 +46,124 @@ export default new Vuex.Store({
     }
   } as State,
   mutations: {
-    addClickedNode (state, val) {
-      const tableEntry = { id: val, name: state.proteomicsSymbolDict[val] }
-      state.clickedNodes.push(tableEntry)
+    APPEND_CLICKEDNODE (state, val) {
+      state.clickedNodes.push(val)
     },
-    removeClickedNode (state, val) {
-      const indexNode = state.clickedNodes.indexOf(val)
-      if (indexNode > -1) {
-        state.clickedNodes.splice(indexNode, 1)
-      }
+    REMOVE_CLICKEDNODE (state, val) {
+      state.clickedNodes.splice(val, 1)
     },
-    setSideBarExpand (state, val) {
+    SET_SIDEBAREXPAND (state, val) {
       state.sideBarExpand = val
     },
-    setOverviewData (state, val) {
+    SET_OVERVIEWDATA (state, val) {
       state.overviewData = val
     },
-    setTranscriptomicsTableHeaders (state, val) {
+    SET_TRANSCRIPTOMICSTABLEHEADERS (state, val) {
       state.transcriptomicsTableHeaders = val
-      console.log(state.transcriptomicsTableHeaders)
     },
-    setTranscriptomicsTableData (state, val) {
+    SET_TRANSCRIPTOMICSTABLEDATA (state, val) {
       state.transcriptomicsTableData = val
     },
-    setTranscriptomicsData (state, val) {
+    SET_TRANSCRIPTOMICSDATA (state, val) {
       state.transcriptomicsData = val
     },
-    setTranscriptomicsSymbolDict (state, val) {
+    SET_TRANSCRIPTOMICSSYMBOLDICT (state, val) {
       state.transcriptomicsSymbolDict = val
-      state.transcriptomicsKeggIDDict = _.invert(val)
     },
-    setProteomicsTableHeaders (state, val) {
+    SET_TRANSCRIPTOMICSKEGGIDDICT (state, val) {
+      state.transcriptomicsKeggIDDict = val
+    },
+    SET_PROTEOMICSTABLEHEADER (state, val) {
       state.proteomicsTableHeaders = val
     },
-    setProteomicsTableData (state, val) {
+    SET_PROTEOMICSTABLEDATA (state, val) {
       state.proteomicsTableData = val
     },
-    setProteomicsData (state, val) {
+    SET_PROTEOMICSDATA (state, val) {
       state.transcriptomicsData = val
     },
-    setProteomicsSymbolDict (state, val) {
+    SET_PROTEOMICSSYMBOLDICT (state, val) {
       state.proteomicsSymbolDict = val
     },
-    setUsedSymbolCols (state, val) {
+    SET_USEDSYMBOLS (state, val) {
       state.usedSymbolCols = val
     },
-    setOverlay (state, val) {
+    SET_OVERLAY (state, val) {
       state.overlay = val
     },
-    setGraphData (state, val) {
+    SET_GRAPHDATA (state, val) {
       state.graphData = val
     },
-    setFCS (state, val) {
+    SET_FCS (state, val) {
       state.fcs = val
     },
-    setPathwayLayouting (state, val) {
+    SET_PATHWAYLAYOUTING (state, val) {
       state.pathwayLayouting = val
     }
   },
-  actions: {},
+  actions: {
+    addClickedNode ({ commit, state }, val) {
+      const enteredKeys = state.clickedNodes.map(row => { return row.id })
+      if (!enteredKeys.includes(val)) {
+        const tableEntry = { id: val, name: state.transcriptomicsKeggIDDict[val], delete: val }
+        commit('APPEND_CLICKEDNODE', tableEntry)
+      }
+    },
+    removeClickedNode ({ commit, state }, val) {
+      console.log('removedNode', val)
+
+      const indexNode = state.clickedNodes.map(row => { return row.id }).indexOf(val)
+      console.log('removedNode', indexNode)
+      if (indexNode > -1) {
+        commit('REMOVE_CLICKEDNODE', indexNode)
+      }
+    },
+    setSideBarExpand ({ commit }, val) {
+      commit('SET_SIDEBAREXPAND', val)
+    },
+    setOverviewData ({ commit }, val) {
+      commit('SET_OVERVIEWDATA', val)
+    },
+    setTranscriptomicsTableHeaders ({ commit }, val) {
+      commit('SET_TRANSCRIPTOMICSTABLEHEADERS', val)
+    },
+    setTranscriptomicsTableData ({ commit }, val) {
+      commit('SET_TRANSCRIPTOMICSTABLEDATA', val)
+    },
+    setTranscriptomicsData ({ commit }, val) {
+      commit('SET_TRANSCRIPTOMICSDATA', val)
+    },
+    setTranscriptomicsSymbolDict ({ commit }, val) {
+      commit('SET_TRANSCRIPTOMICSSYMBOLDICT', val)
+      commit('SET_TRANSCRIPTOMICSKEGGIDDICT', _.invert(val))
+    },
+    setProteomicsTableHeaders ({ commit }, val) {
+      commit('SET_PROTEOMICSTABLEHEADER', val)
+    },
+    setProteomicsTableData ({ commit }, val) {
+      commit('SET_PROTEOMICSTABLEDATA', val)
+    },
+    setProteomicsData ({ commit }, val) {
+      commit('SET_PROTEOMICSDATA', val)
+    },
+    setProteomicsSymbolDict ({ commit }, val) {
+      commit('SET_PROTEOMICSSYMBOLDICT', val)
+    },
+    setUsedSymbolCols ({ commit }, val) {
+      commit('SET_USEDSYMBOLS', val)
+    },
+    setOverlay ({ commit }, val) {
+      commit('SET_OVERLAY', val)
+    },
+    setGraphData ({ commit }, val) {
+      commit('SET_GRAPHDATA', val)
+    },
+    setFCS ({ commit }, val) {
+      commit('SET_FCS', val)
+    },
+    setPathwayLayouting ({ commit }, val) {
+      commit('SET_PATHWAYLAYOUTING', val)
+    }
+  },
   modules: {}
 })

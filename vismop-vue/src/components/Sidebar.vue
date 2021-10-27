@@ -112,15 +112,15 @@ export default Vue.extend({
         })
           .then((response) => response.json())
           .then((responseContent) => {
-            this.$store.commit(
+            this.$store.dispatch(
               'setTranscriptomicsTableHeaders',
               responseContent.header
             )
-            this.$store.commit(
+            this.$store.dispatch(
               'setTranscriptomicsTableData',
               responseContent.entries
             )
-            this.$store.commit(
+            this.$store.dispatch(
               'setTranscriptomicsData',
               JSON.parse(responseContent.data)
             )
@@ -148,15 +148,15 @@ export default Vue.extend({
           .then((response) => response.json())
 
           .then((responseContent) => {
-            this.$store.commit(
+            this.$store.dispatch(
               'setProteomicsTableHeaders',
               responseContent.protein_table.header
             )
-            this.$store.commit(
+            this.$store.dispatch(
               'setProteomicsTableData',
               responseContent.protein_table.entries
             )
-            this.$store.commit(
+            this.$store.dispatch(
               'setProteomicsData',
               responseContent.protein_dat
             )
@@ -173,7 +173,7 @@ export default Vue.extend({
       }
     },
     generateKGMLs () {
-      this.$store.commit('setOverlay', true)
+      this.$store.dispatch('setOverlay', true)
       const payload = {
         transcriptomics: {
           recieved: this.recievedTranscriptomicsData,
@@ -195,31 +195,31 @@ export default Vue.extend({
       })
         .then((response) => response.json())
         .then((dataContent) => {
-          this.$store.commit('setOverviewData', dataContent.overview_data)
-          this.$store.commit('setGraphData', dataContent.main_data)
-          this.$store.commit('setFCS', dataContent.fcs)
-          this.$store.commit(
+          this.$store.dispatch('setOverviewData', dataContent.overview_data)
+          this.$store.dispatch('setGraphData', dataContent.main_data)
+          this.$store.dispatch('setFCS', dataContent.fcs)
+          this.$store.dispatch(
             'setTranscriptomicsSymbolDict',
             dataContent.transcriptomics_symbol_dict
           )
-          this.$store.commit(
+          this.$store.dispatch(
             'setProteomicsSymbolDict',
             dataContent.proteomics_symbol_dict
           )
-          this.$store.commit('setUsedSymbolCols', dataContent.used_symbol_cols)
-          this.$store.commit(
+          this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
+          this.$store.dispatch(
             'setPathwayLayouting',
             dataContent.pathway_layouting
           )
         })
 
-        .then(() => this.$store.commit('setOverlay', false))
+        .then(() => this.$store.dispatch('setOverlay', false))
     },
     lockHover () {
-      this.$store.commit('setSideBarExpand', false)
+      this.$store.dispatch('setSideBarExpand', false)
     },
     unlockHover () {
-      this.$store.commit('setSideBarExpand', true)
+      this.$store.dispatch('setSideBarExpand', true)
     }
   }
 })

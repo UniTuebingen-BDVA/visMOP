@@ -9,6 +9,7 @@ import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import { animateNodes } from 'sigma/utils/animate'
 import { PlainObject } from 'sigma/types'
+import store from '@/store'
 
 export function mainGraph (elemID: string, graphData: graphData): Sigma {
   console.log(graphData)
@@ -92,6 +93,7 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
 
   renderer.on('clickNode', ({ node }) => {
     console.log('clicking Node: ', node)
+    store.dispatch('addClickedNode', node)
   })
 
   return renderer

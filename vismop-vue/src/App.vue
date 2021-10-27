@@ -83,9 +83,7 @@ export default Vue.extend({
     dialog: false
   }),
   methods: {
-    test (somevar: boolean) {
-      this.$store.commit('setSideBarExpand', somevar)
-    }
+  
   },
   computed: {
     sideBarExpand: {
@@ -93,8 +91,8 @@ export default Vue.extend({
         console.log(this.drawer)
         return this.$store.state.sideBarExpand
       },
-      set (this, val) {
-        this.$store.commit('setSideBarExpand', val)
+      set (this, val: boolean) {
+        this.$store.dispatch('setSideBarExpand', val)
       }
     }
   }

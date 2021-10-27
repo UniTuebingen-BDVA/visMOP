@@ -134,7 +134,13 @@
               :search="tableSearch"
               class="elevation-1"
               id="selectedNodes"
-            ></v-data-table>
+            >
+              <template v-slot:[`item.delete`]="{ item }">
+                <v-icon dark left color="red" @click="deleteRow(item.id)">
+                  mdi-cancel
+                </v-icon>
+              </template>
+            </v-data-table>
           </v-card>
         </div>
       </v-col>
@@ -162,12 +168,13 @@ export default Vue.extend({
     tableSearch: '',
     selectedTabTable: 'transcriptomics',
     selectedTabNetwork: 'detailNetwork',
-    transcriptomicsSelectionData: '',
-    proteomicsSelectionData: '',
+    transcriptomicsSelectionData: {},
+    proteomicsSelectionData: {},
     pathwaySelection: '',
     selectedNodesHeader: [
       { value: 'id', text: 'Kegg ID' },
-      { value: 'name', text: 'Name' }
+      { value: 'name', text: 'Name' },
+      { value: 'delete', text: '' }
     ]
   }),
 
@@ -206,6 +213,9 @@ export default Vue.extend({
     },
     proteomicsSelection (val) {
       this.proteomicsSelectionData = val
+    },
+    deleteRow (val) {
+      this.$store.dispatch('removeClickedNode', val)
     }
   }
 })
