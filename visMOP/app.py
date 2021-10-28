@@ -49,7 +49,7 @@ def data_table_recieve():
     out_data["header"] = generate_vue_table_header(data_table)
     out_data["entries"] = generate_vue_table_entries(data_table)
     out_data["data"] = table_json
-    #debugging
+    #debuggings
     #out_data["header"] = [{"text": 'A', "value": 'a'}, {"text": 'B', "value": 'b'}, {"text": 'C', "value": 'c'}]
     #out_data["entries"] = [{"a": '1', "b": '4',"c": '3'}, {"a": '1', "b": '4',"c": '3'}, {"a": '1', "b": '4',"c": '3'}]
 
@@ -83,7 +83,6 @@ def prot_table_recieve():
     out_data["header"] = generate_vue_table_header(prot_data)
     out_data["entries"] = generate_vue_table_entries(prot_data)
     out_data["data"] = prot_table_json
-
     #out_data["data"] = out_data["data"].replace('\\/', '_')
     #print(out_data["data"])
 
@@ -255,7 +254,7 @@ def kegg_parsing():
         out_dat = {
             "overview_data": pathway_connection_dict,
             "main_data":with_init_pos,
-            "fcs": list(fold_changes.values()),
+            "fcs": fold_changes,
             "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
             "pathway_layouting": {"pathway_list": dropdown_pathways, "pathway_node_dictionary": pathway_node_dict},
             "proteomics_symbol_dict": proteomics_symbol_dict,

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
+    "d3": "^7.1.1",
     "graphology": "^0.21.1",
     "graphology-layout-forceatlas2": "^0.6.1",
     "lodash": "^4.17.20",
@@ -22,6 +23,7 @@
     "vuex": "^3.4.0"
   },
   "devDependencies": {
+    "@types/d3": "^7.1.0",
     "@types/lodash": "^4.14.176",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
@@ -39,8 +41,8 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.0",
     "eslint-plugin-vue": "^6.2.2",
-    "prettier": "2.4.1",
     "graphology-types": "^0.20.1",
+    "prettier": "2.4.1",
     "raw-loader": "^4.0.2",
     "sass": "~1.32.0",
     "sass-loader": "^10.0.0",

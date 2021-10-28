@@ -135,6 +135,16 @@
               class="elevation-1"
               id="selectedNodes"
             >
+              <template v-slot:[`item.fcTranscript`]="{ item }">
+                <v-chip :color="fcScale(item.fcTranscript)" dark>
+                  {{ parseFloat(item.fcTranscript).toFixed(3) }}
+                </v-chip>
+              </template>
+              <template v-slot:[`item.fcProt`]="{ item }">
+                <v-chip :color="fcScale(item.fcProt)" dark>
+                  {{ parseFloat(item.fcProt).toFixed(3) }}
+                </v-chip>
+              </template>
               <template v-slot:[`item.delete`]="{ item }">
                 <v-icon dark left color="red" @click="deleteRow(item.id)">
                   mdi-cancel
@@ -174,6 +184,8 @@ export default Vue.extend({
     selectedNodesHeader: [
       { value: 'id', text: 'Kegg ID' },
       { value: 'name', text: 'Name' },
+      { value: 'fcTranscript', text: 'FC Trans.' },
+      { value: 'fcProt', text: 'FC Prot' },
       { value: 'delete', text: '' }
     ]
   }),
@@ -190,7 +202,8 @@ export default Vue.extend({
       usedSymbolCols: (state) => state.usedSymbolCols,
       overlay: (state) => state.overlay,
       pathwayLayouting: (state) => state.pathwayLayouting,
-      clickedNodes: (state) => state.clickedNodes
+      clickedNodes: (state) => state.clickedNodes,
+      fcScale: (state) => state.fcScale
     }),
     activeOverview: {
       get: function () {

@@ -83,7 +83,7 @@ export default Vue.extend({
     dialog: false
   }),
   methods: {
-  
+
   },
   computed: {
     sideBarExpand: {

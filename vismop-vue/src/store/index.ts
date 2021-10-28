@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import _ from 'lodash'
+import { scaleSequential, interpolateInferno } from 'd3'
 
 Vue.use(Vuex)
 interface State {
@@ -13,13 +14,15 @@ interface State {
   transcriptomicsKeggIDDict: { [key: string]: string },
   proteomicsTableHeaders: unknown,
   proteomicsTableData: unknown,
-  clickedNodes: { id: string, name: string }[],
+  clickedNodes: { id: string, name: string, fcTranscript: number, fcProt: number, delete: unknown }[],
   proteomicsData: unknown,
   proteomicsSymbolDict: { [key: string]: string },
   usedSymbolCols: unknown,
   overlay: unknown,
   graphData: unknown,
-  fcs: unknown,
+  fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number) } },
+  fcQuantiles: [number, number],
+  fcScale: unknown,
   pathwayLayouting: unknown
 }
 export default new Vuex.Store({
@@ -39,7 +42,9 @@ export default new Vuex.Store({
     usedSymbolCols: { transcriptomics: null, proteomics: null },
     overlay: false,
     graphData: null,
-    fcs: null,
+    fcs: {},
+    fcQuantiles: [0, 0],
+    fcScale: null,
     pathwayLayouting: {
       pathway_list: ['empty'],
       pathway_node_dictionary: null
@@ -97,6 +102,12 @@ export default new Vuex.Store({
     SET_FCS (state, val) {
       state.fcs = val
     },
+    SET_FCQUANTILES (state, val) {
+      state.fcQuantiles = val
+    },
+    SET_FCSCALE (state, val) {
+      state.fcScale = val
+    },
     SET_PATHWAYLAYOUTING (state, val) {
       state.pathwayLayouting = val
     }
@@ -105,7 +116,7 @@ export default new Vuex.Store({
     addClickedNode ({ commit, state }, val) {
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
       if (!enteredKeys.includes(val)) {
-        const tableEntry = { id: val, name: state.transcriptomicsKeggIDDict[val], delete: val }
+        const tableEntry = { id: val, name: state.transcriptomicsKeggIDDict[val], fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
         commit('APPEND_CLICKEDNODE', tableEntry)
       }
     },
@@ -160,6 +171,36 @@ export default new Vuex.Store({
     },
     setFCS ({ commit }, val) {
       commit('SET_FCS', val)
+      console.log('fcs', val)
+      const fcsNum: number[] = []
+      for (const key in val) {
+        const entry: { transcriptomics: (string | number), proteomics: (string | number) } = val[key]
+        if (!(typeof entry.transcriptomics === 'string')) {
+          fcsNum.push(entry.transcriptomics)
+        }
+        if (!(typeof entry.proteomics === 'string')) {
+          fcsNum.push(entry.proteomics)
+        }
+      }
+      const fcsAsc = fcsNum.sort((a, b) => a - b)
+
+      // https://stackoverflow.com/a/55297611
+      const quantile = (arr: number[], q: number) => {
+        const pos = (arr.length - 1) * q
+        const base = Math.floor(pos)
+        const rest = pos - base
+        if (arr[base + 1] !== undefined) {
+          return arr[base] + rest * (arr[base + 1] - arr[base])
+        } else {
+          return arr[base]
+        }
+      }
+      const minVal5 = quantile(fcsAsc, 0.05)
+      const maxVal95 = quantile(fcsAsc, 0.95)
+      commit('SET_FCQUANTILES', [minVal5, maxVal95])
+      const scale = scaleSequential().domain([minVal5, maxVal95]).interpolator(interpolateInferno)
+
+      commit('SET_FCSCALE', scale)
     },
     setPathwayLayouting ({ commit }, val) {
       commit('SET_PATHWAYLAYOUTING', val)

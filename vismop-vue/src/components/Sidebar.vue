@@ -98,7 +98,6 @@ export default Vue.extend({
     // this.$vuetify.theme.themes.light.primary = '#2196F3';
   },
 
-  // methods of this vue component access via this.<funcName>
   methods: {
     fetchTranscriptomicsTable (fileInput) {
       if (typeof fileInput !== 'undefined') {
