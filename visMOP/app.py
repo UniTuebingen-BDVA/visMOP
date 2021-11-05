@@ -5,6 +5,7 @@ from python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, ke
 from python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
 from python_scripts.create_overview import get_overview
 from python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info, make_interaction_dict
+from python_scripts.interaction_graph import StringGraph
 import pandas as pd
 import pathlib
 import os
@@ -15,6 +16,7 @@ import snappy
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
 
 transcriptomics_df_global = None
+stringGraph = None
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve().parent
@@ -64,6 +66,10 @@ protein recieve
 @app.route('/proteomics_table', methods=['POST'])
 def prot_table_recieve():
     global prot_table_global
+    global stringGraph
+
+    
+
     transfer_dat = request.files['proteinDat']
     prot_data = create_df(transfer_dat)
 
@@ -89,21 +95,31 @@ def prot_table_recieve():
     # build protein interaction dict
     try:
         script_dir = data_path
-        dest_dir = os.path.join(script_dir, '10090.protein.links.v11.0.txt')  # '10090.protein.links.v11.0.txt'
-        interaction_dict = make_interaction_dict(dest_dir)
+        dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt')  # '10090.protein.links.v11.0.txt'
+        stringGraph = StringGraph(dest_dir)
 
     except FileNotFoundError:
         interaction_dict = {}
-        print("Download 10090.protein.physical.links.v11.0.txt.gz from STRING database.")
+        print("Download 10090.protein.links.v11.5.txt from STRING database.")
 
-   
-    global interaction_dict_global
-    interaction_dict_global= interaction_dict
     #compressed = snappy.compress(json.dumps({"protein_dat": protein_dict, "protein_table": out_data})) # , "interaction_dict": interaction_dict
     #resp = Response(response=compressed, mimetype="application/octet-stream")
     #resp.headers["Content-Type"] = "application/octet-stream; charset=utf-8"
 
     return json.dumps({"protein_table": out_data})
+
+@app.route('/interaction_graph', methods=['POST'])
+def interaction_graph():
+    global stringGraph
+    global prot_dict_global
+    print(request)
+    node_ID = request.json['node']
+    string_ID = prot_dict_global[node_ID]["string_id"]
+    confidence_threshold = request.json['threshold']
+    if confidence_threshold != stringGraph.current_confidence:
+        stringGraph.filter_by_confidence(confidence_threshold)
+    stringGraph.print_info()    
+    return json.dumps({"interaction_graph": stringGraph.query_ego_graph(string_ID, 1)})
 
 def uniprot_access(colname):
      # create dict with additional uniprot data
@@ -261,6 +277,8 @@ def kegg_parsing():
             "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"]}
         }
         return json.dumps(out_dat)#json.dumps(pathway_dicts)
+
+
 
 
 if __name__ == "__main__":

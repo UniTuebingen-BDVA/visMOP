@@ -17,6 +17,7 @@ interface State {
   clickedNodes: { id: string, name: string, fcTranscript: number, fcProt: number, delete: unknown }[],
   proteomicsData: unknown,
   proteomicsSymbolDict: { [key: string]: string },
+  proteomicsKeggDict: { [key: string]: string },
   usedSymbolCols: unknown,
   overlay: unknown,
   graphData: unknown,
@@ -39,6 +40,7 @@ export default new Vuex.Store({
     clickedNodes: [],
     proteomicsData: null,
     proteomicsSymbolDict: {},
+    proteomicsKeggDict: {},
     usedSymbolCols: { transcriptomics: null, proteomics: null },
     overlay: false,
     graphData: null,
@@ -90,6 +92,9 @@ export default new Vuex.Store({
     SET_PROTEOMICSSYMBOLDICT (state, val) {
       state.proteomicsSymbolDict = val
     },
+    SET_PROTEOMICSKEGGDICT (state, val) {
+      state.proteomicsKeggDict = val
+    },
     SET_USEDSYMBOLS (state, val) {
       state.usedSymbolCols = val
     },
@@ -115,6 +120,17 @@ export default new Vuex.Store({
   actions: {
     addClickedNode ({ commit, state }, val) {
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
+      
+      // TESTCODE
+      fetch('/interaction_graph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ node: state.proteomicsKeggDict[val], threshold: 700 })
+      })
+        .then((response) => console.log(response.json()))
+
+      // END TEST
+
       if (!enteredKeys.includes(val)) {
         const tableEntry = { id: val, name: state.transcriptomicsKeggIDDict[val], fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
         commit('APPEND_CLICKEDNODE', tableEntry)
@@ -159,6 +175,7 @@ export default new Vuex.Store({
     },
     setProteomicsSymbolDict ({ commit }, val) {
       commit('SET_PROTEOMICSSYMBOLDICT', val)
+      commit('SET_PROTEOMICSKEGGDICT', _.invert(val))
     },
     setUsedSymbolCols ({ commit }, val) {
       commit('SET_USEDSYMBOLS', val)
