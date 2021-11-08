@@ -24,6 +24,7 @@ interface State {
   fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number) } },
   fcQuantiles: [number, number],
   fcScale: unknown,
+  interactionGraphData: unknown,
   pathwayLayouting: unknown
 }
 export default new Vuex.Store({
@@ -47,6 +48,7 @@ export default new Vuex.Store({
     fcs: {},
     fcQuantiles: [0, 0],
     fcScale: null,
+    interactionGraphData: null,
     pathwayLayouting: {
       pathway_list: ['empty'],
       pathway_node_dictionary: null
@@ -115,26 +117,29 @@ export default new Vuex.Store({
     },
     SET_PATHWAYLAYOUTING (state, val) {
       state.pathwayLayouting = val
+    },
+    SET_INTERACTIONGRAPHDATA (state, val) {
+      state.interactionGraphData = val
     }
   },
   actions: {
     addClickedNode ({ commit, state }, val) {
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
-      
-      // TESTCODE
-      fetch('/interaction_graph', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ node: state.proteomicsKeggDict[val], threshold: 700 })
-      })
-        .then((response) => console.log(response.json()))
-
-      // END TEST
-
       if (!enteredKeys.includes(val)) {
         const tableEntry = { id: val, name: state.transcriptomicsKeggIDDict[val], fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
         commit('APPEND_CLICKEDNODE', tableEntry)
       }
+    },
+    queryEgoGraps ({ commit, state }) {
+      // TESTCODE
+      const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggDict[elem.id] })
+      fetch('/interaction_graph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes: ids, threshold: 700 })
+      })
+        .then((response) => response.json()).then((content) => commit('SET_INTERACTIONGRAPHDATA', content.interaction_graph))
+      // END TEST
     },
     removeClickedNode ({ commit, state }, val) {
       console.log('removedNode', val)

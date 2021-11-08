@@ -13,7 +13,7 @@ export interface edge {
   key: string;
   source: string;
   target: string;
-  attributes: edgeAttr;
+  attributes: Attributes;
 }
 export interface nodeAttr extends Attributes {
   name: string;
@@ -36,7 +36,7 @@ export interface nodeAttr extends Attributes {
 }
 export interface node {
   key: string;
-  attributes: nodeAttr;
+  attributes: Attributes;
 }
 export interface graphData {
   attributes: { name: string };

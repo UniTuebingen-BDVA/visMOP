@@ -3,9 +3,10 @@
   display: block;
   z-index: 2;
 }
-#interactionGraph {
-  height: 75vh;
+.webglContainerSmall {
+  height: 20vh;
   display: block;
+  z-index: 2;
 }
 
 #locGraph {

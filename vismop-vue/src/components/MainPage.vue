@@ -65,6 +65,9 @@
             </v-tabs-items>
           </v-card>
         </div>
+        <interaction-graph
+        contextID="interactionGraph"
+        > </interaction-graph>
       </v-col>
       <!-- Network -->
       <v-col cols="7" class="d-flex flex-column mb-2">
@@ -116,6 +119,8 @@
           <v-card>
             <v-card-title>
               Selected Nodes
+              <v-btn v-on:click="queryEgoGraphs">Plot</v-btn>
+
               <v-spacer></v-spacer>
               <v-text-field
                 v-model="tableSearch"
@@ -166,10 +171,11 @@
 import { mapState } from 'vuex'
 import NetworkGraphComponent from './NetworkGraphComponent.vue'
 import OverviewComponent from './OverviewComponent.vue'
+import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
 
 export default Vue.extend({
-  components: { NetworkGraphComponent, OverviewComponent },
+  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph },
   // name of the component
   name: 'MainPage',
 
@@ -229,6 +235,9 @@ export default Vue.extend({
     },
     deleteRow (val) {
       this.$store.dispatch('removeClickedNode', val)
+    },
+    queryEgoGraphs () {
+      this.$store.dispatch('queryEgoGraps')
     }
   }
 })

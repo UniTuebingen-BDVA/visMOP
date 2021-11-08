@@ -1,16 +1,15 @@
-<!--
+
 <template>
   <div>
     <v-card>
       <v-row justify="space-between">
         <v-card-title>
-          Network Graph
-          <v-spacer></v-spacer>
+          InteractionGraph
         </v-card-title>
       </v-row>
       <v-row>
         <v-col cols="12" class="mb-2">
-          <div :id="contextID" class="webglContainer"></div>
+          <div :id="contextID" class="webglContainerSmall"></div>
         </v-col>
       </v-row>
     </v-card>
@@ -19,14 +18,13 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import { mainGraph } from '../core/mainNetwork'
-import { generateGraphData } from '../core/graphPreparation'
+import { generateInteractionGraph } from '../core/interactionGraph'
 import Vue from 'vue'
 import Sigma from 'sigma'
 
-interface Data{
-  placeHolder: string
-  interactionGraph: (Sigma | undefined)
+interface Data {
+  placeHolder: string;
+  interactionGraph: Sigma | undefined;
 }
 
 export default Vue.extend({
@@ -36,34 +34,27 @@ export default Vue.extend({
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
     placeHolder: '',
-    interactionGraph: undefined,
-
+    interactionGraph: undefined
   }),
 
   computed: {
     ...mapState({
-      overviewData: (state:any) => state.overviewData,
-      fcs: (state:any) => state.fcs,
-      overlay: (state:any) => state.overlay
+      overlay: (state: any) => state.overlay,
+      interactionGraphData: (state: any) => state.interactionGraphData
     })
   },
   watch: {
-  },
-
-  mounted () {
-    console.log('OVDATA', this.overviewData)
-    if (this.overviewData) {
-      this.drawNetwork()
+    interactionGraphData: function () {
+      generateInteractionGraph(this.contextID, this.interactionGraphData)
     }
   },
-  props: ['contextID', 'isActive'],
+
+  // mounted () {},
+  props: ['contextID'],
   methods: {
-    drawNetwork () {
-      const networkData = generateGraphData(this.overviewData, [0, 0])
-      console.log('base dat', networkData)
-      this.networkGraph = mainGraph(this.contextID, networkData)
+    drawInteractionGraph () {
+      console.log('Placeholder')
     }
   }
 })
 </script>
--->

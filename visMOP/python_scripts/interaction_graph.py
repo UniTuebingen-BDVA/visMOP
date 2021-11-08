@@ -1,4 +1,5 @@
 import networkx as nx
+import gzip
 from fa2 import ForceAtlas2
 
 import matplotlib.pyplot as plt
@@ -10,9 +11,10 @@ class StringGraph:
         self.db_path = file_path
         self.completeGraph = None 
         self.filteredGraph = None
+        self.egoGraphs = {}
        
         #todo read compressed file
-        with open(file_path) as f:
+        with gzip.open(file_path, "rt") as f:
             lines = []
             for line in f:
                 if(line[0] != 'p'):
@@ -23,9 +25,7 @@ class StringGraph:
             self.completeGraph = nx.parse_edgelist(lines, create_using=nx.Graph,comments="protein1", data=(("weight", int),))
         self.current_confidence = 700
         self.filter_by_confidence(700)
-        #test = self.query_ego_graph(list(self.completeGraph.nodes)[123], 2, 900)
         print("completeGraph",nx.info(self.completeGraph))
-        #print("NodeLinktest", test)
 
     def filter_by_confidence(self, weight_threshold):
         self.current_confidence = weight_threshold
@@ -39,10 +39,15 @@ class StringGraph:
         #need to filter by weight before computing ego graph
         
         ego_graph = nx.ego_graph(self.filteredGraph, node, undirected=False , radius=radius)
+        nx.set_node_attributes(ego_graph, {node : '#ff0000'}, 'color' )
         #nx.draw(ego_graph); plt.savefig("test.png")
         print("egoGraph: {} with CenterNode: {}".format(nx.info(ego_graph), node))
         #print(list(ego_graph.edges(data=True))[0])
-        return nx.node_link_data(ego_graph)
+        self.egoGraphs[node] = ego_graph
+
+    def get_merged_egoGraph(self):
+        composed_graph = nx.compose_all(list(self.egoGraphs.values()))
+        return nx.node_link_data(composed_graph, attrs=dict(source='source', target='target', name='key', key='entryKey', link='links'))
 
     def print_info(self):
         print("completeGraph",nx.info(self.completeGraph))

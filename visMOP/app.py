@@ -95,12 +95,12 @@ def prot_table_recieve():
     # build protein interaction dict
     try:
         script_dir = data_path
-        dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt')  # '10090.protein.links.v11.0.txt'
+        dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
         stringGraph = StringGraph(dest_dir)
 
     except FileNotFoundError:
         interaction_dict = {}
-        print("Download 10090.protein.links.v11.5.txt from STRING database.")
+        print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
 
     #compressed = snappy.compress(json.dumps({"protein_dat": protein_dict, "protein_table": out_data})) # , "interaction_dict": interaction_dict
     #resp = Response(response=compressed, mimetype="application/octet-stream")
@@ -113,13 +113,15 @@ def interaction_graph():
     global stringGraph
     global prot_dict_global
     print(request)
-    node_ID = request.json['node']
-    string_ID = prot_dict_global[node_ID]["string_id"]
+    node_IDs = request.json['nodes']
+    string_ID = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
     confidence_threshold = request.json['threshold']
     if confidence_threshold != stringGraph.current_confidence:
         stringGraph.filter_by_confidence(confidence_threshold)
-    stringGraph.print_info()    
-    return json.dumps({"interaction_graph": stringGraph.query_ego_graph(string_ID, 1)})
+    stringGraph.print_info()
+    for node in string_ID:
+        stringGraph.query_ego_graph(node, 1)
+    return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph()})
 
 def uniprot_access(colname):
      # create dict with additional uniprot data
