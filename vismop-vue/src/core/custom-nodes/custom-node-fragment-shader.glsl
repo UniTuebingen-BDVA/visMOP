@@ -1,3 +1,5 @@
+//based on sigma src code TODO LICENSE
+
 precision mediump float;
 
 varying vec4 v_color;

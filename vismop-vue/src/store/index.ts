@@ -131,7 +131,6 @@ export default new Vuex.Store({
       }
     },
     queryEgoGraps ({ commit, state }) {
-      // TESTCODE
       const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggDict[elem.id] })
       fetch('/interaction_graph', {
         method: 'POST',
@@ -139,7 +138,6 @@ export default new Vuex.Store({
         body: JSON.stringify({ nodes: ids, threshold: 700 })
       })
         .then((response) => response.json()).then((content) => commit('SET_INTERACTIONGRAPHDATA', content.interaction_graph))
-      // END TEST
     },
     removeClickedNode ({ commit, state }, val) {
       console.log('removedNode', val)

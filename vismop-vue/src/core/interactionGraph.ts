@@ -6,6 +6,7 @@ import Sigma from 'sigma'
 import { MultiGraph } from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import random from 'graphology-layout/random'
+import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program'
 
 export function generateInteractionGraphData (
   nodeLink: { [key: string]: [{ [key: string]: string }] }
@@ -17,10 +18,10 @@ export function generateInteractionGraphData (
     edges: []
   } as graphData
   nodeLink.nodes.forEach(node => {
-    graph.nodes.push({ key: node.key, attributes: { label: node.key, x: 0, y: 0, color: node.color ? node.color : '#0f0f0f' } })
+    graph.nodes.push({ key: node.key, attributes: { label: node.key, x: 0, y: 0, color: node.color ? node.color : '#0f0f0f', size: node.size ? node.size : 2 } })
   })
   nodeLink.links.forEach(edge => {
-    graph.edges.push({ key: edge.source + edge.target, source: edge.source, target: edge.target, attributes: { weight: edge.weight } })
+    graph.edges.push({ key: edge.source + edge.target, source: edge.source, target: edge.target, attributes: { weight: edge.weight, type: edge.edgeType ? 'line' : 'dashed', color: 'rgb(75,75,75)', sourceColor: 'rgb(140,140,140)', targetColor: 'rgb(140,140,140)' } })
   })
   return graph
 }
@@ -35,7 +36,11 @@ export function generateInteractionGraph (elemID: string, nodeLink: { [key: stri
   const start = Date.now()
   forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings })
   const duration = (Date.now() - start) / 1000
-  const renderer = new Sigma(graph, elem)
+  const renderer = new Sigma(graph, elem, {
+    edgeProgramClasses: {
+      dashed: DashedEdgeProgram
+    }
+  })
   console.log(`layoutDuration: ${duration} S`)
   return renderer
 }

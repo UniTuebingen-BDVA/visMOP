@@ -112,7 +112,7 @@ def prot_table_recieve():
 def interaction_graph():
     global stringGraph
     global prot_dict_global
-    print(request)
+    stringGraph.clear_ego_graphs()
     node_IDs = request.json['nodes']
     string_ID = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
     confidence_threshold = request.json['threshold']

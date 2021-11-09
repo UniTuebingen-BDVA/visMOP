@@ -45,7 +45,10 @@ export default Vue.extend({
   },
   watch: {
     interactionGraphData: function () {
-      generateInteractionGraph(this.contextID, this.interactionGraphData)
+      if (this.interactionGraph) {
+        this.interactionGraph.kill()
+      }
+      this.interactionGraph = generateInteractionGraph(this.contextID, this.interactionGraphData)
     }
   },
 

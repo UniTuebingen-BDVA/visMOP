@@ -1,3 +1,5 @@
+//based on sigma src code TODO LICENSE
+
 attribute vec2 a_position;
 attribute float a_size;
 attribute vec4 a_color0;
