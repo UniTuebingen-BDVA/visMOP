@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import store from '@/store'
 import {
   graphData
 } from '@/core/graphTypes'
@@ -18,7 +19,7 @@ export function generateInteractionGraphData (
     edges: []
   } as graphData
   nodeLink.nodes.forEach(node => {
-    graph.nodes.push({ key: node.key, attributes: { label: node.key, x: 0, y: 0, color: node.color ? node.color : '#0f0f0f', size: node.size ? node.size : 2 } })
+    graph.nodes.push({ key: node.key, attributes: { label: node.labelName, x: 0, y: 0, color: node.color ? node.color : '#0f0f0f', size: node.size ? node.size : 2 } })
   })
   nodeLink.links.forEach(edge => {
     graph.edges.push({ key: edge.source + edge.target, source: edge.source, target: edge.target, attributes: { weight: edge.weight, type: edge.edgeType ? 'line' : 'dashed', color: 'rgb(75,75,75)', sourceColor: 'rgb(140,140,140)', targetColor: 'rgb(140,140,140)' } })

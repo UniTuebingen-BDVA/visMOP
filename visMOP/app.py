@@ -17,7 +17,7 @@ app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist
 
 transcriptomics_df_global = None
 stringGraph = None
-
+prot_dict_global = None
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve().parent
 #data_path = pathlib.Path("/var/www/visMOP")
@@ -68,8 +68,6 @@ def prot_table_recieve():
     global prot_table_global
     global stringGraph
 
-    
-
     transfer_dat = request.files['proteinDat']
     prot_data = create_df(transfer_dat)
 
@@ -112,8 +110,10 @@ def prot_table_recieve():
 def interaction_graph():
     global stringGraph
     global prot_dict_global
+
     stringGraph.clear_ego_graphs()
     node_IDs = request.json['nodes']
+    
     string_ID = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
     confidence_threshold = request.json['threshold']
     if confidence_threshold != stringGraph.current_confidence:
@@ -129,8 +129,12 @@ def uniprot_access(colname):
     get_uniprot_entry(protein_dict)
     add_uniprot_info(protein_dict)
     prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
+    print(protein_dict)
     global prot_dict_global
     prot_dict_global= protein_dict
+    global stringGraph
+    stringID_to_name = {v["string_id"]:v["Gene Symbol"][0] for k,v in prot_dict_global.items()}
+    stringGraph.set_string_name_dict(stringID_to_name)
 
 
 """

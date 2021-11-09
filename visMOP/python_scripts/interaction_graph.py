@@ -12,7 +12,7 @@ class StringGraph:
         self.complete_graph = None 
         self.filtered_graph = None
         self.ego_graphs = {}
-       
+        self.name_dict = None
         #todo read compressed file
         with gzip.open(file_path, "rt") as f:
             lines = []
@@ -21,12 +21,13 @@ class StringGraph:
                     splitline = line.split(" ")
                     if int(splitline[2]) > 400:
                         lines.append(line)
-            print(len(lines))
             self.complete_graph = nx.parse_edgelist(lines, create_using=nx.Graph,comments="protein1", data=(("weight", int),))
         self.current_confidence = 900
         self.filter_by_confidence(900)
         print("completeGraph",nx.info(self.complete_graph))
 
+    def set_string_name_dict(self, val):
+        self.name_dict = val
     def filter_by_confidence(self, weight_threshold):
         self.current_confidence = weight_threshold
         copy_graph = self.complete_graph.copy()
@@ -36,13 +37,14 @@ class StringGraph:
     # todo:  "multiego graph"-> two or more ego graphs and their union compose --> networkx compose()
     # shortest path
     def query_ego_graph(self, node, radius):
-        #need to filter by weight before computing ego graph
         
         ego_graph = nx.ego_graph(self.filtered_graph, node, undirected=False , radius=radius)
+
+        nodes_to_update = { node: (self.name_dict[node] if (node in self.name_dict) else node) for node in ego_graph.nodes}
+        nx.set_node_attributes(ego_graph, nodes_to_update, 'labelName')
         nx.set_node_attributes(ego_graph, {node : '#ff0000'}, 'color' )
         nx.set_node_attributes(ego_graph, {node : 5}, 'size' )
         edges_to_update = {(u[0],u[1]): "solid" for u in ego_graph.edges if (u[0] == node or u[1] == node)}
-        print("edge to update", edges_to_update)
         nx.set_edge_attributes(ego_graph, edges_to_update, 'edgeType')
 
         #nx.draw(ego_graph); plt.savefig("test.png")
