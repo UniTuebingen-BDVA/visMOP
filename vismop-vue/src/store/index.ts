@@ -130,12 +130,12 @@ export default new Vuex.Store({
         commit('APPEND_CLICKEDNODE', tableEntry)
       }
     },
-    queryEgoGraps ({ commit, state }) {
+    queryEgoGraps ({ commit, state }, val) {
       const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggDict[elem.id] })
       fetch('/interaction_graph', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodes: ids, threshold: 700 })
+        body: JSON.stringify({ nodes: ids, threshold: val })
       })
         .then((response) => response.json()).then((content) => commit('SET_INTERACTIONGRAPHDATA', content.interaction_graph))
     },

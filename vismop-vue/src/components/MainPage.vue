@@ -118,10 +118,23 @@
         <div>
           <v-card>
             <v-card-title>
-              Selected Nodes
-              <v-btn v-on:click="queryEgoGraphs">Plot</v-btn>
-
-              <v-spacer></v-spacer>
+              <v-row>
+                 <v-col cols="12">Selected Nodes</v-col>
+              </v-row>
+              <v-row>
+                  <v-col cols="4">
+                    <v-btn v-on:click="queryEgoGraphs">Plot</v-btn>
+                  </v-col>
+                <v-col cols="8">
+                  <v-slider
+                    thumb-label
+                    v-model="stringSlider"
+                    min=400
+                    max=1000
+                    hide-details=""
+                  > </v-slider>
+                </v-col>
+              </v-row>
               <v-text-field
                 v-model="tableSearch"
                 append-icon="mdi-magnify"
@@ -181,6 +194,7 @@ export default Vue.extend({
 
   // data section of the Vue component. Access via this.<varName> .
   data: () => ({
+    stringSlider: 900,
     tableSearch: '',
     selectedTabTable: 'transcriptomics',
     selectedTabNetwork: 'detailNetwork',
@@ -237,7 +251,7 @@ export default Vue.extend({
       this.$store.dispatch('removeClickedNode', val)
     },
     queryEgoGraphs () {
-      this.$store.dispatch('queryEgoGraps')
+      this.$store.dispatch('queryEgoGraps', this.stringSlider)
     }
   }
 })
