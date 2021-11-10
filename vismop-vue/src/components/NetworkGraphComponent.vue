@@ -101,6 +101,9 @@ export default Vue.extend({
     },
     proteomicsSelection: function () {
       this.focusNodeProteomics(this.proteomicsSelection)
+    },
+    metabolomicsSelection: function () {
+      this.focusNodeMetabolomics(this.metabolomicsSelection)
     }
   },
 
@@ -113,6 +116,7 @@ export default Vue.extend({
     contextID: String,
     transcriptomicsSelection: { type: Object },
     proteomicsSelection: { type: Object },
+    metabolomicsSelection: { type: Object },
     isActive: Boolean
   },
   methods: {
@@ -134,6 +138,11 @@ export default Vue.extend({
       const symbol = row[this.usedSymbolCols.proteomics]
       const keggID = this.proteomicsSymbolDict[symbol]
       panToNode(this.networkGraph as Sigma, keggID)
+    },
+    focusNodeMetabolomics (row: {[key: string]: string}) {
+      const symbol = row[this.usedSymbolCols.metabolomics]
+      //  const keggID = this.proteomicsSymbolDict[symbol]
+      panToNode(this.networkGraph as Sigma, symbol)
     },
     selectPathway (key: string) {
       console.log('KEY', key)

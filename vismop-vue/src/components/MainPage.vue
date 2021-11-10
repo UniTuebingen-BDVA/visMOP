@@ -60,7 +60,16 @@
               </v-tab-item>
 
               <v-tab-item value="metabol">
-                <v-card-text>Extension for Metabolomics Data</v-card-text>
+                <v-data-table
+                  dense
+                  :headers="metabolomicsTableHeaders"
+                  :items="metabolomicsTableData"
+                  :items-per-page="5"
+                  :search="tableSearch"
+                  class="elevation-1"
+                  id="metabolomicsTable"
+                  @click:row="metabolomicsSelection"
+                ></v-data-table>
               </v-tab-item>
             </v-tabs-items>
           </v-card>
@@ -93,6 +102,7 @@
                   contextID="overviewContext"
                   :transcriptomicsSelection="transcriptomicsSelectionData"
                   :proteomicsSelection="proteomicsSelectionData"
+                  :metabolomicsSelection="metabolomicsSelectionData"
                   :isActive="activeOverview"
                 >
                 </overview-component>
@@ -105,6 +115,7 @@
                   contextID="detailContext"
                   :transcriptomicsSelection="transcriptomicsSelectionData"
                   :proteomicsSelection="proteomicsSelectionData"
+                  :metabolomicsSelection="metabolomicsSelectionData"
                   :isActive="activeDetail"
                 >
                 </network-graph-component>
@@ -115,62 +126,7 @@
       </v-col>
       <!-- Data Table-->
       <v-col cols="2" class="mb-2" id="selectedTable">
-        <div>
-          <v-card>
-            <v-card-title>
-              <v-row>
-                 <v-col cols="12">Selected Nodes</v-col>
-              </v-row>
-              <v-row>
-                  <v-col cols="4">
-                    <v-btn v-on:click="queryEgoGraphs">Plot</v-btn>
-                  </v-col>
-                <v-col cols="8">
-                  <v-slider
-                    thumb-label
-                    v-model="stringSlider"
-                    min=400
-                    max=1000
-                    hide-details=""
-                  > </v-slider>
-                </v-col>
-              </v-row>
-              <v-text-field
-                v-model="tableSearch"
-                append-icon="mdi-magnify"
-                label="Search"
-                single-line
-                hide-details
-              ></v-text-field>
-            </v-card-title>
-
-            <v-data-table
-              dense
-              :headers="selectedNodesHeader"
-              :items="clickedNodes"
-              :items-per-page="5"
-              :search="tableSearch"
-              class="elevation-1"
-              id="selectedNodes"
-            >
-              <template v-slot:[`item.fcTranscript`]="{ item }">
-                <v-chip :color="fcScale(item.fcTranscript)" dark>
-                  {{ parseFloat(item.fcTranscript).toFixed(3) }}
-                </v-chip>
-              </template>
-              <template v-slot:[`item.fcProt`]="{ item }">
-                <v-chip :color="fcScale(item.fcProt)" dark>
-                  {{ parseFloat(item.fcProt).toFixed(3) }}
-                </v-chip>
-              </template>
-              <template v-slot:[`item.delete`]="{ item }">
-                <v-icon dark left color="red" @click="deleteRow(item.id)">
-                  mdi-cancel
-                </v-icon>
-              </template>
-            </v-data-table>
-          </v-card>
-        </div>
+        <interaction-graph-table> </interaction-graph-table>
       </v-col>
     </v-row>
     <div class="text-center">
@@ -180,50 +136,44 @@
     </div>
   </v-container>
 </template>
-<script>
+<script lang="ts">
 import { mapState } from 'vuex'
 import NetworkGraphComponent from './NetworkGraphComponent.vue'
 import OverviewComponent from './OverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
+import InteractionGraphTable from './InteractionGraphTable.vue'
 
 export default Vue.extend({
-  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph },
+  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable },
   // name of the component
   name: 'MainPage',
 
   // data section of the Vue component. Access via this.<varName> .
   data: () => ({
-    stringSlider: 900,
     tableSearch: '',
     selectedTabTable: 'transcriptomics',
     selectedTabNetwork: 'detailNetwork',
     transcriptomicsSelectionData: {},
     proteomicsSelectionData: {},
-    pathwaySelection: '',
-    selectedNodesHeader: [
-      { value: 'id', text: 'Kegg ID' },
-      { value: 'name', text: 'Name' },
-      { value: 'fcTranscript', text: 'FC Trans.' },
-      { value: 'fcProt', text: 'FC Prot' },
-      { value: 'delete', text: '' }
-    ]
+    metabolomicsSelectionData: {},
+    pathwaySelection: ''
   }),
 
   computed: {
     ...mapState({
-      transcriptomicsTableHeaders: (state) => state.transcriptomicsTableHeaders,
-      transcriptomicsTableData: (state) => state.transcriptomicsTableData,
-      proteomicsTableHeaders: (state) => state.proteomicsTableHeaders,
-      proteomicsTableData: (state) => state.proteomicsTableData,
-      fcs: (state) => state.fcs,
-      transcriptomicsSymbolDict: (state) => state.transcriptomicsSymbolDict,
-      proteomicsSymbolDict: (state) => state.proteomicsSymbolDict,
-      usedSymbolCols: (state) => state.usedSymbolCols,
-      overlay: (state) => state.overlay,
-      pathwayLayouting: (state) => state.pathwayLayouting,
-      clickedNodes: (state) => state.clickedNodes,
-      fcScale: (state) => state.fcScale
+      transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
+      transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
+      proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
+      proteomicsTableData: (state: any) => state.proteomicsTableData,
+      metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders,
+      metabolomicsTableData: (state: any) => state.metabolomicsTableData,
+      fcs: (state: any) => state.fcs,
+      transcriptomicsSymbolDict: (state: any) => state.transcriptomicsSymbolDict,
+      proteomicsSymbolDict: (state: any) => state.proteomicsSymbolDict,
+      usedSymbolCols: (state: any) => state.usedSymbolCols,
+      overlay: (state: any) => state.overlay,
+      pathwayLayouting: (state: any) => state.pathwayLayouting
     }),
     activeOverview: {
       get: function () {
@@ -241,17 +191,14 @@ export default Vue.extend({
   // mounted () {},
 
   methods: {
-    transcriptomicsSelection (val) {
+    transcriptomicsSelection (val: string) {
       this.transcriptomicsSelectionData = val
     },
-    proteomicsSelection (val) {
+    proteomicsSelection (val: string) {
       this.proteomicsSelectionData = val
     },
-    deleteRow (val) {
-      this.$store.dispatch('removeClickedNode', val)
-    },
-    queryEgoGraphs () {
-      this.$store.dispatch('queryEgoGraps', this.stringSlider)
+    metabolomicsSelection (val: string) {
+      this.proteomicsSelectionData = val
     }
   }
 })

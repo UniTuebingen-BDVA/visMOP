@@ -18,10 +18,13 @@ interface State {
   proteomicsData: unknown,
   proteomicsSymbolDict: { [key: string]: string },
   proteomicsKeggDict: { [key: string]: string },
+  metabolomicsData: unknown,
+  metabolomicsTableHeaders: unknown,
+  metabolomicsTableData: unknown,
   usedSymbolCols: unknown,
   overlay: unknown,
   graphData: unknown,
-  fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number) } },
+  fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number)} },
   fcQuantiles: [number, number],
   fcScale: unknown,
   interactionGraphData: unknown,
@@ -42,7 +45,10 @@ export default new Vuex.Store({
     proteomicsData: null,
     proteomicsSymbolDict: {},
     proteomicsKeggDict: {},
-    usedSymbolCols: { transcriptomics: null, proteomics: null },
+    metabolomicsTableHeaders: [],
+    metabolomicsTableData: [],
+    metabolomicsData: null,
+    usedSymbolCols: { transcriptomics: null, proteomics: null, metabolomics: null },
     overlay: false,
     graphData: null,
     fcs: {},
@@ -96,6 +102,15 @@ export default new Vuex.Store({
     },
     SET_PROTEOMICSKEGGDICT (state, val) {
       state.proteomicsKeggDict = val
+    },
+    SET_METABOLOMICSTABLEHEADER (state, val) {
+      state.metabolomicsTableHeaders = val
+    },
+    SET_METABOLOMICSTABLEDATA (state, val) {
+      state.metabolomicsTableData = val
+    },
+    SET_METABOLOMICSDATA (state, val) {
+      state.metabolomicsData = val
     },
     SET_USEDSYMBOLS (state, val) {
       state.usedSymbolCols = val
@@ -179,6 +194,15 @@ export default new Vuex.Store({
     setProteomicsSymbolDict ({ commit }, val) {
       commit('SET_PROTEOMICSSYMBOLDICT', val)
       commit('SET_PROTEOMICSKEGGDICT', _.invert(val))
+    },
+    setMetabolomicsTableHeaders ({ commit }, val) {
+      commit('SET_METABOLOMICSTABLEHEADER', val)
+    },
+    setMetabolomicsTableData ({ commit }, val) {
+      commit('SET_METABOLOMICSTABLEDATA', val)
+    },
+    setMetabolomicsData ({ commit }, val) {
+      commit('SET_METABOLOMICSDATA', val)
     },
     setUsedSymbolCols ({ commit }, val) {
       commit('SET_USEDSYMBOLS', val)

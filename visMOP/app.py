@@ -34,10 +34,10 @@ def fav():
     return send_from_directory(os.path.join(app.root_path,'static'), 'favicon.ico')
 
 """
-table recieve
+transcriptomics table recieve
 """
 @app.route('/transcriptomics_table', methods=['POST'])
-def data_table_recieve():
+def transcriptomics_table_recieve():
     global transcriptomics_df_global
     print("table recieve triggered")
     transfer_dat = request.files['dataTable']
@@ -68,7 +68,7 @@ def prot_table_recieve():
     global prot_table_global
     global stringGraph
 
-    transfer_dat = request.files['proteinDat']
+    transfer_dat = request.files['dataTable']
     prot_data = create_df(transfer_dat)
 
    
@@ -104,7 +104,36 @@ def prot_table_recieve():
     #resp = Response(response=compressed, mimetype="application/octet-stream")
     #resp.headers["Content-Type"] = "application/octet-stream; charset=utf-8"
 
-    return json.dumps({"protein_table": out_data})
+    return json.dumps(out_data)
+
+"""
+metabolomics table recieve
+"""
+@app.route('/metabolomics_table', methods=['POST'])
+def metabolomics_table_recieve():
+    print("table recieve triggered")
+    global metabolomics_df_global
+    transfer_dat = request.files['dataTable']
+    #table_raw = transfer_dat.read()
+    data_table = create_df(transfer_dat)
+    metabolomics_df_global = data_table.copy(deep=True)
+
+    print(data_table)
+    table_json = data_table.to_json(orient="columns")
+    entry_IDs = list(data_table.iloc[:,0])
+    out_data =  {}
+    out_data["entry_IDs"] = entry_IDs
+    out_data["header"] = generate_vue_table_header(data_table)
+    out_data["entries"] = generate_vue_table_entries(data_table)
+    out_data["data"] = table_json
+    #debuggings
+    #out_data["header"] = [{"text": 'A', "value": 'a'}, {"text": 'B', "value": 'b'}, {"text": 'C', "value": 'c'}]
+    #out_data["entries"] = [{"a": '1', "b": '4',"c": '3'}, {"a": '1', "b": '4',"c": '3'}, {"a": '1', "b": '4',"c": '3'}]
+
+    json_data = json.dumps(out_data)
+
+    return json_data
+
 
 @app.route('/interaction_graph', methods=['POST'])
 def interaction_graph():
@@ -142,6 +171,8 @@ App route for querying and parsing kegg files
 """
 @app.route('/kegg_parsing', methods=['POST'])
 def kegg_parsing():
+    global metabolomics_df_global
+
     global_entry = {}
     global_relation = {}
     global_reaction = {}
@@ -149,6 +180,7 @@ def kegg_parsing():
     mouse_db = "mmu"
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
+    metabolomics = request.json['metabolomics']
 
 
     #gene_symbols_col = request.json['geneSymbolsCol']
@@ -170,7 +202,18 @@ def kegg_parsing():
                 #print(entry)
                 proteomics_symbol_dict[ID] = entry["keggID"]
                 keggIDs_proteomics.append(entry["keggID"])
-                fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]]}
+                fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
+
+        # Handle Metabolomics if available
+        metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
+        print(metabolomics_dict)
+        metabolomics_IDs = metabolomics_dict.keys()
+        if metabolomics["recieved"]:
+            for elem in metabolomics_IDs:
+                if elem in fold_changes:
+                    fold_changes[elem]["metabolomics"] = metabolomics_dict[elem][metabolomics["value"]]
+                else:
+                    fold_changes[elem] = {"transcriptomics": "NA", "proteomics":"NA", "metabolomics": metabolomics_dict[elem][metabolomics["value"]]}
 
         #Handle Transcriptomics
         #TODO Duplicates are dropped how to handle these duplicates?!
@@ -186,30 +229,38 @@ def kegg_parsing():
                 if keggID in fold_changes:
                     fold_changes[keggID]["transcriptomics"] = transcriptomics_dict[symbol][transcriptomics["value"]]
                 else:
-                    fold_changes[keggID] = {"transcriptomics": transcriptomics_dict[symbol][transcriptomics["value"]], "proteomics": "NA"}
+                    fold_changes[keggID] = {"transcriptomics": transcriptomics_dict[symbol][transcriptomics["value"]], "proteomics": "NA", "metabolomics": "NA"}
             except:
                 print("Symbol: {} was not in the kegg dictionary, probably due to it not being found in the kegg DB")
         
         #keggID_value_dict, value_extent, all_gene_fcs = associacte_value_keggID(transcriptomics_df_global,gene_symbols_col,value_col,symbol_kegg_dict)
         #print("keggIDs: {}".format(keggIDs))
 
-        #combineKeggIDS
-        combined_keggIDs = list(set(keggIDs_transcriptomics+keggIDs_proteomics))
+        # combineKeggIDS from all sources
+        print(metabolomics_IDs)
+        combined_keggIDs = list(set(keggIDs_transcriptomics+keggIDs_proteomics+list(metabolomics_IDs)))
         print("len keggIDs: {}".format(len(combined_keggIDs)))
 
+        # query kegg gets by keggID (using cache)
         kegg_gets = kegg_get(keggIDs=combined_keggIDs,caching_path=data_path / 'kegg_cache/kegg_gets.json')
         print("kegg_gets: {}".format(len(kegg_gets)))
 
+        # parse gets into a usable format
         parsed_gets = [parse_get(v,k) for k,v in kegg_gets.items()]
         print("parsed_gets: {}".format(len(parsed_gets)))
+
         #pathways_per_gene = {elem.geneName : (elem.keggID,elem.pathways) for elem in parsed_gets}
         #print(pathways_per_gene)
+
+        # look through all gets and find unique pathway IDs
         unique_pathways = get_unique_pathways(parsed_gets)
-        #print(unique_pathways)
+        # generate kgml files from unique IDs
         kegg_kgml = query_kgmls(unique_pathways, data_path / 'kegg_cache/kgml_cache.json')
+        # useful since some of the ids might not have been parsed.
+        parsed_IDs = list(kegg_kgml.keys())
         parsed_pathways = []
         print("Len unique pws: ", len(unique_pathways))
-        for pathwayID in unique_pathways[0:15]:
+        for pathwayID in parsed_IDs[0:]:
             if "01100" in pathwayID:
                 print("Skipping map01100, general overview")
             else:
@@ -255,7 +306,7 @@ def kegg_parsing():
         network_ov = generate_networkx_dict(pathway_connection_dict)
         pos_ov = get_spring_layout_pos(network_ov)
         init_pos_ov = add_initial_positions(pos_ov, pathway_connection_dict)
-        print("OVERVIEW",pathway_connection_dict)
+        #print("OVERVIEW",pathway_connection_dict)
 
         # add genes with available fc values to overview_dict
         """
@@ -280,7 +331,7 @@ def kegg_parsing():
             "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
             "pathway_layouting": {"pathway_list": dropdown_pathways, "pathway_node_dictionary": pathway_node_dict},
             "proteomics_symbol_dict": proteomics_symbol_dict,
-            "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"]}
+            "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"], "metabolomics": metabolomics["symbol"]}
         }
         return json.dumps(out_dat)#json.dumps(pathway_dicts)
 

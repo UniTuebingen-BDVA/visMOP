@@ -86,8 +86,9 @@ class KeggPathwayEntry:
     def __init__(self, keggID, values):
         ###self.entry_ID = entry_ID
         self.keggID = keggID
-        self.trascriptomicsValue = values["transcriptomics"]
-        self.proteomicsValue = values["proteomics"]
+        self.trascriptomicsValue = values["transcriptomics"] or "NaN"
+        self.proteomicsValue = values["proteomics"] or "NaN"
+        self.metabolomicsValue = values["metabolomics"] or "nan"
         self.name = None
         self.origPos = {}
         self.entryType = None
@@ -123,6 +124,7 @@ class KeggPathwayEntry:
         'keggID': self.keggID,
         'trascriptomicsValue': self.trascriptomicsValue,
         'proteomicsValue': self.proteomicsValue,
+        'metabolomicsValue': self.metabolomicsValue,
         'name': self.name,
         'origPos': self.origPos,
         'entryType': self.entryType,

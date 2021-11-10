@@ -8,7 +8,7 @@ def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_
         key = "path:" + str(item)
         pathway_connection_dict[key] = {
             'incoming_edges': [], 'outgoingEdges': [], 'entryType': "pathway", 'isempty': False, "name": [key], "keggID": key}
-    print("pathway_connection_dict", pathway_connection_dict)
+    #print("pathway_connection_dict", pathway_connection_dict)
     # Remove compounds from pathway_node_dict --> keep only genes/pathways for finding intersections
     copy_pathway_node_dict = pathway_node_dict.copy()
     for key in pathway_node_dict:
@@ -29,8 +29,8 @@ def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_
             for i in copy_without_empty[key]['outgoingEdges']:
                 if (i['relationType'] == 'maplink'):
                     if (key in pathway_connection_dict.keys() and i["target"] in pathway_connection_dict.keys()):
-                        print("key", key)
-                        print("Maplink",i)
+                        #print("key", key)
+                        #print("Maplink",i)
                         pathway_connection_dict[key]["outgoingEdges"].append(i)
 
     return pathway_connection_dict

@@ -73,7 +73,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             try:
                 value = value_dict[entry_keggID]
             except:
-                value = {"transcriptomics": "NA", "proteomics": "NA"}
+                value = {"transcriptomics": "NA", "proteomics": "NA", "metabolomics":"NA"}
             current_entry = KeggPathwayEntry(entry_keggID, value)
             current_entry.entryType = entry.get('type')
 

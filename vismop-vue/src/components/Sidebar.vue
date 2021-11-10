@@ -39,7 +39,7 @@
           <v-file-input
             v-on:change="fetchProteomicsTable"
             chips
-            label=".xlsx Protein Input"
+            label=".xlsx File Input"
           ></v-file-input>
 
           <v-spacer></v-spacer>
@@ -63,12 +63,42 @@
           ></v-select>
         </v-expansion-panel-content>
       </v-expansion-panel>
+      <v-expansion-panel>
+        <v-expansion-panel-header> Metabolomics Data </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <v-file-input
+            v-on:change="fetchMetabolomicsTable"
+            chips
+            label=".xlsx File Input"
+          ></v-file-input>
+
+          <v-spacer></v-spacer>
+
+          <v-select
+            :items="metabolomicsTableHeaders"
+            v-model="metabolomicsSymbolCol"
+            label="Symbol Col."
+            @click="lockHover"
+            @input="unlockHover"
+          ></v-select>
+
+          <v-spacer></v-spacer>
+
+          <v-select
+            :items="metabolomicsTableHeaders"
+            v-model="metabolomicsValueCol"
+            label="Value Col."
+            @click="lockHover"
+            @input="unlockHover"
+          ></v-select>
+        </v-expansion-panel-content>
+      </v-expansion-panel>
     </v-expansion-panels>
     <v-btn v-on:click="generateKGMLs">Plot</v-btn>
   </v-list>
 </template>
 
-<script>
+<script lang="ts">
 import { mapState } from 'vuex'
 import Vue from 'vue'
 
@@ -77,17 +107,22 @@ export default Vue.extend({
   components: {},
 
   data: () => ({
+    overlay: false,
     transcriptomicsSymbolCol: '',
     transcriptomicsValueCol: '',
     recievedTranscriptomicsData: false,
     proteomicsSymbolCol: '',
     proteomicsValueCol: '',
-    recievedProteomicsData: false
+    recievedProteomicsData: false,
+    metabolomicsSymbolCol: '',
+    metabolomicsValueCol: '',
+    recievedMetabolomicsData: false
   }),
   computed: {
     ...mapState({
-      transcriptomicsTableHeaders: (state) => state.transcriptomicsTableHeaders,
-      proteomicsTableHeaders: (state) => state.proteomicsTableHeaders
+      transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
+      proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
+      metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders
     })
   },
 
@@ -99,7 +134,7 @@ export default Vue.extend({
   },
 
   methods: {
-    fetchTranscriptomicsTable (fileInput) {
+    fetchTranscriptomicsTable (fileInput: File) {
       if (typeof fileInput !== 'undefined') {
         this.overlay = true
         const formData = new FormData()
@@ -131,40 +166,67 @@ export default Vue.extend({
       }
     },
 
-    fetchProteomicsTable (fileInput) {
+    fetchProteomicsTable (fileInput: File) {
       if (typeof fileInput !== 'undefined') {
         this.overlay = true
-        const protData = new FormData()
-        protData.append('proteinDat', fileInput)
+        const formDat = new FormData()
+        formDat.append('dataTable', fileInput)
 
         fetch('/proteomics_table', {
           method: 'POST',
-          headers: {
-            // 'Content-Type': 'file'
-          },
-          body: protData
+          headers: {},
+          body: formDat
+
         })
           .then((response) => response.json())
 
           .then((responseContent) => {
             this.$store.dispatch(
               'setProteomicsTableHeaders',
-              responseContent.protein_table.header
+              responseContent.header
             )
             this.$store.dispatch(
               'setProteomicsTableData',
-              responseContent.protein_table.entries
+              responseContent.entries
             )
             this.$store.dispatch(
               'setProteomicsData',
-              responseContent.protein_dat
+              responseContent.data
             )
             this.recievedProteomicsData = true
-            // this.proteinDat = responseContent.protein_dat;
-            // this.protPandasJSON = JSON.parse(
-            //  responseContent.protein_table["data"]
-            // );
-            // this.stringDBDat = responseContent.interaction_dict;
+          })
+          .then(() => (this.overlay = false))
+      } else {
+        alert('Malformed File!!!')
+      }
+    },
+    fetchMetabolomicsTable (fileInput: File) {
+      if (typeof fileInput !== 'undefined') {
+        this.overlay = true
+        const formDat = new FormData()
+        formDat.append('dataTable', fileInput)
+
+        fetch('/metabolomics_table', {
+          method: 'POST',
+          headers: {},
+          body: formDat
+        })
+          .then((response) => response.json())
+
+          .then((responseContent) => {
+            this.$store.dispatch(
+              'setMetabolomicsTableHeaders',
+              responseContent.header
+            )
+            this.$store.dispatch(
+              'setMetabolomicsTableData',
+              responseContent.entries
+            )
+            this.$store.dispatch(
+              'setMetabolomicsData',
+              responseContent.data
+            )
+            this.recievedMetabolomicsData = true
           })
           .then(() => (this.overlay = false))
       } else {
@@ -183,6 +245,11 @@ export default Vue.extend({
           recieved: this.recievedProteomicsData,
           symbol: this.proteomicsSymbolCol,
           value: this.proteomicsValueCol
+        },
+        metabolomics: {
+          recieved: this.recievedMetabolomicsData,
+          symbol: this.metabolomicsSymbolCol,
+          value: this.metabolomicsValueCol
         }
       }
       fetch('/kegg_parsing', {

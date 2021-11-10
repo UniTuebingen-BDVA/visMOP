@@ -11,6 +11,12 @@ import { animateNodes } from 'sigma/utils/animate'
 import { PlainObject } from 'sigma/types'
 import store from '@/store'
 
+/**
+ * Initializes the omics graph
+ * @param {string} elemID
+ * @param {graphData} graphData
+ * @returns {Sigma} Sigma instance
+ */
 export function mainGraph (elemID: string, graphData: graphData): Sigma {
   console.log(graphData)
   const elem = document.getElementById(elemID) as HTMLElement
@@ -98,7 +104,11 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
 
   return renderer
 }
-
+/**
+ * Pans to the specified Node
+ * @param {Sigma} renderer
+ * @param {string} nodeKey
+ */
 export function panToNode (renderer: Sigma, nodeKey: string): void {
   console.log('pantestNode', {
     ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
@@ -109,7 +119,11 @@ export function panToNode (renderer: Sigma, nodeKey: string): void {
     ratio: 0.05
   })
 }
-
+/**
+ * Pans and zooms to the specified Node
+ * @param {Sigma} renderer
+ * @param {string} nodeKey
+ */
 function panZoomToTarget (
   renderer: Sigma,
   target: { x: number; y: number; ratio: number }
@@ -120,7 +134,12 @@ function panZoomToTarget (
     duration: 1000
   })
 }
-
+/**
+ * Applies a KEGG-Layout to a subset of the nodes
+ * @param {Sigma} renderer
+ * @param {string} pathway
+ * @param {string[]} nodeIDs
+ */
 export function layoutToPathway (
   renderer: Sigma,
   pathway: string,
@@ -196,7 +215,10 @@ export function layoutToPathway (
 
   // forceAtlas2.assign(graph,{iterations:40 , settings: inferredSettings});
 }
-
+/**
+ * Relaxes the layout again using forceAtlas
+ * @param {Sigma} renderer
+ */
 export function relaxLayout (renderer: Sigma): void {
   const graph = renderer.getGraph()
   const inferredSettings = forceAtlas2.inferSettings(graph)
@@ -221,7 +243,7 @@ export function relaxLayout (renderer: Sigma): void {
   }, 5000)
 }
 /**
- *
+ * Function to get center of pathway. Used in conjuntion with panning
  * @param renderer
  * @param graph
  * @param nodeIDs

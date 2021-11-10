@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import { generateColorScale } from '@/core/utils'
 import {
   node,
   edge,
@@ -7,7 +8,12 @@ import {
   relation,
   nodeAttr
 } from '@/core/graphTypes'
-
+/**
+ * Function generating a graph representation of multiomics data, to be used with sigma and graphology
+ * @param nodeList list of node data
+ * @param fcsExtent extent of foldchange values
+ * @returns
+ */
 export function generateGraphData (
   nodeList: { [key: string]: entry },
   fcsExtent: number[]
@@ -36,7 +42,9 @@ export function generateGraphData (
             ? typeof entry.trascriptomicsValue === 'string'
               ? '#808080'
               : colorScale(entry.trascriptomicsValue)
-            : '#808080'
+            : entry.metabolomicsValue
+              ? colorScale(entry.metabolomicsValue)
+              : '#808080'
         const secondaryColor =
           entry.entryType === 'gene'
             ? typeof entry.proteomicsValue === 'string'
@@ -89,9 +97,9 @@ export function generateGraphData (
 }
 
 /**
- * Parses a relation into a cytso
- * @param {Object} relation, relation object
- * @returns {Object}, cytoscape style edge
+ * Parses a kegg relation into an edge representation
+ * @param {relation} relation object
+ * @returns {edge}, edge object
  */
 function generateForceGraphEdge (relation: relation): edge {
   const fadeGray = 'rgba(30,30,30,0.2)'
@@ -144,61 +152,5 @@ function generateForceGraphEdge (relation: relation): edge {
       }
     } as edge
     return edge
-  }
-}
-
-function generateColorScale (minVal: number, maxVal: number) {
-  const steps = 201 // start at 200 so that small values don't appear white
-  const stepsizeSmaller0 = steps / minVal // 0-minval
-  const stepsizeLarger0 = steps / (maxVal - 0)
-
-  return function (val: number) {
-    val = Number(val)
-
-    if (isNaN(val)) {
-      return '#808080'
-    } else if (val < 0 && val > minVal) {
-      const rRGB =
-        200 - Math.round(val * stepsizeSmaller0) < 0
-          ? 0
-          : 200 - Math.round(val * stepsizeSmaller0)
-      const gRGB =
-        200 - Math.round(val * stepsizeSmaller0) < 0
-          ? 0
-          : 200 - Math.round(val * stepsizeSmaller0)
-      const bRGB = 255
-
-      // conversion to keep leading zeros which are cut off by toString for small numbers
-      // https://stackoverflow.com/questions/21408523/tostring16-with-leading-zeroes
-      const rRGBstr = ('00000' + rRGB.toString(16)).substr(-2)
-      const gRGBstr = ('00000' + gRGB.toString(16)).substr(-2)
-      const bRGBstr = ('00000' + bRGB.toString(16)).substr(-2)
-
-      return `#${rRGBstr}${gRGBstr}${bRGBstr}`
-    } else if (val > 0 && val < maxVal) {
-      const rRGB = 255
-      const gRGB =
-        200 - Math.round(val * stepsizeLarger0) < 0
-          ? 0
-          : 200 - Math.round(val * stepsizeLarger0)
-      const bRGB =
-        200 - Math.round(val * stepsizeLarger0) < 0
-          ? 0
-          : 200 - Math.round(val * stepsizeLarger0)
-
-      const rRGBstr = ('00000' + rRGB.toString(16)).substr(-2)
-      const gRGBstr = ('00000' + gRGB.toString(16)).substr(-2)
-      const bRGBstr = ('00000' + bRGB.toString(16)).substr(-2)
-
-      return `#${rRGBstr}${gRGBstr}${bRGBstr}`
-    } else if (val === 0) {
-      return '#DADADA'
-    } else {
-      if (val <= minVal) {
-        return '#0000FF'
-      } else if (val >= maxVal) {
-        return '#FF0000'
-      }
-    }
   }
 }

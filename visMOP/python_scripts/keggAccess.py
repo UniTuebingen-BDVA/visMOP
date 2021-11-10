@@ -274,7 +274,7 @@ def query_kgmls(pathways_ids, caching_path):
     """
 
     not_contained, cache_data = check_cache(caching_path, pathways_ids)
-
+    successful_query = []
     for pathway in not_contained:
         kegg_api_url = "http://rest.kegg.jp/get/{}/kgml".format(pathway)
         try:
@@ -282,6 +282,7 @@ def query_kgmls(pathways_ids, caching_path):
                 api_text_lines = kegg_response.read().decode("utf-8")
                 cache_data[pathway] = api_text_lines
                 print("GET KGML: {}".format(pathway))
+                successful_query.append(pathway)
         except urllib.error.URLError as e:
             print("HTTP ERROR: {}".format(e.__dict__))
         except urllib.error.URLError as e:
@@ -290,7 +291,10 @@ def query_kgmls(pathways_ids, caching_path):
     cache_kegg_data(caching_path, cache_data)
     out_dict = {}
     for ID in pathways_ids:
-        out_dict[ID] = cache_data[ID]
+        try:
+            out_dict[ID] = cache_data[ID]
+        except:
+            print(pathway, "not found in cache, probably it does not exist for target organism" )
     return out_dict
 
 
@@ -377,7 +381,7 @@ def parse_get(get_response, keggID):
 
     return kegg_get    
 
-def get_unique_pathways(list_KeggGets):
+def get_unique_pathways(list_KeggGets, kegg_target_organism='mmu'):
     """Returns a list of unique pathways
 
     Args:
@@ -389,6 +393,7 @@ def get_unique_pathways(list_KeggGets):
     unique_pathways = []
     for entry in list_KeggGets:
         current_pathways = entry.pathways
+        current_pathways = [entry.replace("map", kegg_target_organism) for entry in current_pathways]
         for pathway in current_pathways:
             if pathway not in unique_pathways:
                 unique_pathways.append(pathway)

@@ -1,5 +1,7 @@
 import { Attributes } from 'graphology-types'
-
+/**
+ * Defines a set of edge attributes
+ */
 export interface edgeAttr extends Attributes {
   sourceColor: string;
   targetColor: string;
@@ -8,13 +10,18 @@ export interface edgeAttr extends Attributes {
   nonFadeColor: string;
   type: string;
 }
-
+/**
+ * Defines an edge
+ */
 export interface edge {
   key: string;
   source: string;
   target: string;
   attributes: Attributes;
 }
+/**
+ * Defines a set of node attributes
+ */
 export interface nodeAttr extends Attributes {
   name: string;
   x: number;
@@ -34,15 +41,24 @@ export interface nodeAttr extends Attributes {
   fixed: boolean;
   type: string;
 }
+/**
+ * Defines a node
+ */
 export interface node {
   key: string;
   attributes: Attributes;
 }
+/**
+ * Defines a Graph Data object
+ */
 export interface graphData {
   attributes: { name: string };
   nodes: node[];
   edges: edge[];
 }
+/**
+ * Defines a kegg relation
+ */
 export interface relation {
   relationID: string;
   source: string;
@@ -50,6 +66,9 @@ export interface relation {
   relationType: string;
   edgeType: string;
 }
+/**
+ * Defines an kegg entry
+ */
 export interface entry {
   name: string;
   entryType: string;
@@ -60,6 +79,7 @@ export interface entry {
   outgoingEdges: relation[];
   trascriptomicsValue: number | string;
   proteomicsValue: number | string;
+  metabolomicsValue: number;
   label: string;
   origPos: { [key: string]: number[] };
 }
