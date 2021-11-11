@@ -31,7 +31,7 @@ function drawLabel (
     context.fillText(
       row,
       data.x + data.size + 3,
-      data.y + size / 3 + (i - Math.floor(labelText.length / 2)) * size
+      data.y + size / 3 + (i - (labelText.length / 2 - 0.5)) * size
     )
   })
 }

@@ -42,9 +42,9 @@ export function generateGraphData (
             ? typeof entry.trascriptomicsValue === 'string'
               ? '#808080'
               : colorScale(entry.trascriptomicsValue)
-            : entry.metabolomicsValue
-              ? colorScale(entry.metabolomicsValue)
-              : '#808080'
+            : typeof entry.metabolomicsValue === 'string'
+              ? '#808080'
+              : colorScale(entry.metabolomicsValue)
         const secondaryColor =
           entry.entryType === 'gene'
             ? typeof entry.proteomicsValue === 'string'
@@ -65,8 +65,7 @@ export function generateGraphData (
             nonFadeColorSecondary: secondaryColor,
             fadeColor: fadeGray,
             fadeColorSecondary: fadeGray,
-            label: `Name: ${_.escape(currentNames[0])}\nTrans:${entry.trascriptomicsValue
-              }\nProt: ${entry.proteomicsValue}`,
+            label: generateLabel(_.escape(currentNames[0]), entry),
             x: initPosX,
             y: initPosY,
             z: 1,
@@ -90,10 +89,27 @@ export function generateGraphData (
             addedEdges.push(currentEdge.key)
           }
         }
+        if (currentNames[0] === 'C05125') {
+          console.log('TESTMETA', currentNode)
+          console.log('TESTMETA', entry)
+        }
       }
     }
   }
   return graph
+}
+function generateLabel (name: string, entry: entry): string {
+  const stringContainer: string[] = [`Name: ${name}`]
+  if (entry.trascriptomicsValue !== 'NA') {
+    stringContainer.push(`Trans:\t${entry.trascriptomicsValue}`)
+  }
+  if (entry.proteomicsValue !== 'NA') {
+    stringContainer.push(`Prot:\t${entry.proteomicsValue}`)
+  }
+  if (entry.metabolomicsValue !== 'NA') {
+    stringContainer.push(`Meta:\t${entry.metabolomicsValue}`)
+  }
+  return stringContainer.join('\n')
 }
 
 /**

@@ -40,6 +40,7 @@ export interface nodeAttr extends Attributes {
   size: number;
   fixed: boolean;
   type: string;
+  label: string;
 }
 /**
  * Defines a node
@@ -79,7 +80,7 @@ export interface entry {
   outgoingEdges: relation[];
   trascriptomicsValue: number | string;
   proteomicsValue: number | string;
-  metabolomicsValue: number;
+  metabolomicsValue: number | string;
   label: string;
   origPos: { [key: string]: number[] };
 }

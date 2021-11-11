@@ -71,7 +71,11 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             current_entry = global_entry[entry_keggID]
         else:
             try:
-                value = value_dict[entry_keggID]
+                #replacing probably is a workaround
+                if(entry_keggID == "cpd:C05125"):
+                    print("entryTest", value_dict[entry_keggID.replace("cpd:","").replace("gl:", "")])
+                    print("entryTest", value_dict["C05125"])
+                value = value_dict[entry_keggID.replace("cpd:","").replace("glu:", "")]
             except:
                 value = {"transcriptomics": "NA", "proteomics": "NA", "metabolomics":"NA"}
             current_entry = KeggPathwayEntry(entry_keggID, value)

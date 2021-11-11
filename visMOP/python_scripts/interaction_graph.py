@@ -57,8 +57,36 @@ class StringGraph:
 
     def get_merged_egoGraph(self):
         composed_graph = nx.compose_all(list(self.ego_graphs.values()))
+        """
+        intersections = nx.intersection_all(list(self.ego_graphs.values()))
+        intersection_node_dicts  = {k: 'rgba(30,200,30,1.0)' for k in intersections.nodes}
+        intersection_edge_dicts  = {k: 'rgba(30,200,30,1.0)' for k in intersections.edges}
+        nx.set_node_attributes(composed_graph, intersection_node_dicts, 'color' )
+        nx.set_edge_attributes(composed_graph, intersection_edge_dicts, 'color')
+        """
+        composed_graph.graph["identities"] = len(list(self.ego_graphs.values()))
+        print(composed_graph.graph)
+        intersections = self.calculate_intersections(composed_graph)
+        nx.set_node_attributes(composed_graph, intersections,'identity')
+
+        print(composed_graph.nodes(data="identity"))
+        print(len(composed_graph.nodes(data="identity")))
+        print(len(composed_graph.nodes()))
+
+
         return nx.node_link_data(composed_graph, attrs=dict(source='source', target='target', name='key', key='entryKey', link='links'))
 
+    def calculate_intersections(self, graph):
+        identity_per_node = {}
+        graphs = self.ego_graphs.values()
+        for e in graph.nodes:
+            identity_this_node = []
+            for i,graph in enumerate(graphs):
+                if e in graph.nodes:
+                    identity_this_node.append(i)
+            identity_per_node[e] = identity_this_node
+
+        return identity_per_node
     def print_info(self):
         print("completeGraph",nx.info(self.complete_graph))
         print("FilterGraph: ",nx.info(self.filtered_graph))

@@ -211,9 +211,15 @@ def kegg_parsing():
         if metabolomics["recieved"]:
             for elem in metabolomics_IDs:
                 if elem in fold_changes:
+                    print("meta ", elem)
                     fold_changes[elem]["metabolomics"] = metabolomics_dict[elem][metabolomics["value"]]
+                    print("meta ",  fold_changes[elem]["metabolomics"])
+
                 else:
+                    print("meta ", elem)
                     fold_changes[elem] = {"transcriptomics": "NA", "proteomics":"NA", "metabolomics": metabolomics_dict[elem][metabolomics["value"]]}
+                    print("meta ",  fold_changes[elem]["metabolomics"])
+
 
         #Handle Transcriptomics
         #TODO Duplicates are dropped how to handle these duplicates?!
@@ -260,7 +266,7 @@ def kegg_parsing():
         parsed_IDs = list(kegg_kgml.keys())
         parsed_pathways = []
         print("Len unique pws: ", len(unique_pathways))
-        for pathwayID in parsed_IDs[0:]:
+        for pathwayID in parsed_IDs[0:20]:
             if "01100" in pathwayID:
                 print("Skipping map01100, general overview")
             else:
