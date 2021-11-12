@@ -148,8 +148,8 @@ def interaction_graph():
     if confidence_threshold != stringGraph.current_confidence:
         stringGraph.filter_by_confidence(confidence_threshold)
     stringGraph.print_info()
-    for node in string_ID:
-        stringGraph.query_ego_graph(node, 1)
+    for idx, node in enumerate(string_ID):
+        stringGraph.query_ego_graph(node, idx, 1)
     return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph()})
 
 def uniprot_access(colname):
@@ -204,7 +204,7 @@ def kegg_parsing():
                 keggIDs_proteomics.append(entry["keggID"])
                 fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
 
-        # Handle Metabolomics if available
+        # Handle Metabolomics if available TODO bug when not supplying metabolomics data
         metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
         print(metabolomics_dict)
         metabolomics_IDs = metabolomics_dict.keys()

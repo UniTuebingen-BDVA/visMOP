@@ -57,6 +57,11 @@ export interface graphData {
   nodes: node[];
   edges: edge[];
 }
+export interface networkxNodeLink{
+  graph: {identities: number[]};
+  nodes: [{ [key: string]: string}];
+  links: [{ [key: string]: string}];
+}
 /**
  * Defines a kegg relation
  */

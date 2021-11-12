@@ -36,17 +36,21 @@ class StringGraph:
         self.filtered_graph = copy_graph
     # todo:  "multiego graph"-> two or more ego graphs and their union compose --> networkx compose()
     # shortest path
-    def query_ego_graph(self, node, radius):
+    def query_ego_graph(self, node, ego_index, radius):
         
         ego_graph = nx.ego_graph(self.filtered_graph, node, undirected=False , radius=radius)
 
         nodes_to_update = { node: (self.name_dict[node] if (node in self.name_dict) else node) for node in ego_graph.nodes}
         nx.set_node_attributes(ego_graph, nodes_to_update, 'labelName')
         nx.set_node_attributes(ego_graph, {node : '#ff0000'}, 'color' )
-        nx.set_node_attributes(ego_graph, {node : 5}, 'size' )
-        edges_to_update = {(u[0],u[1]): "solid" for u in ego_graph.edges if (u[0] == node or u[1] == node)}
-        nx.set_edge_attributes(ego_graph, edges_to_update, 'edgeType')
+        nx.set_node_attributes(ego_graph, {node : 8}, 'size' )
+        nx.set_node_attributes(ego_graph, {node : ego_index}, 'egoNode' )
+        #edges_to_update = {(u[0],u[1]): "solid" for u in ego_graph.edges if (u[0] == node or u[1] == node)}
+        edges_to_update = {(u[0],u[1]): ego_index for u in ego_graph.edges if (u[0] == node or u[1] == node)}
 
+        #nx.set_edge_attributes(ego_graph, edges_to_update, 'edgeType')
+        nx.set_edge_attributes(ego_graph, edges_to_update, 'egoEdge')
+        ego_graph.graph["egoNodeID"] = node
         #nx.draw(ego_graph); plt.savefig("test.png")
         print("egoGraph: {} with CenterNode: {}".format(nx.info(ego_graph), node))
         #print(list(ego_graph.edges(data=True))[0])
@@ -64,29 +68,61 @@ class StringGraph:
         nx.set_node_attributes(composed_graph, intersection_node_dicts, 'color' )
         nx.set_edge_attributes(composed_graph, intersection_edge_dicts, 'color')
         """
-        composed_graph.graph["identities"] = len(list(self.ego_graphs.values()))
+        egoID_identity = {egoID: idx for idx, egoID in enumerate(list(self.ego_graphs.keys()))}
+        identity_egoID = {idx: egoID for idx, egoID in enumerate(list(self.ego_graphs.keys()))}
+
+        composed_graph.graph["egoID_identity"] = egoID_identity
+        composed_graph.graph["identity_egoID"] = identity_egoID
+        composed_graph.graph["identities"] = list(range(len(list(self.ego_graphs.values()))))
         print(composed_graph.graph)
-        intersections = self.calculate_intersections(composed_graph)
-        nx.set_node_attributes(composed_graph, intersections,'identity')
+        intersections_node = self.calculate_intersections_nodes(composed_graph)
+        intersections_edge = self.calculate_intersections_edges(composed_graph)
+        shared_ego_edges = self.calculate_ego_ego_edges(composed_graph)
+        nx.set_node_attributes(composed_graph, intersections_node,'identity')
+        nx.set_edge_attributes(composed_graph, intersections_edge,'identity')
+        nx.set_edge_attributes(composed_graph, shared_ego_edges,'egoEgoEdge')
 
         print(composed_graph.nodes(data="identity"))
         print(len(composed_graph.nodes(data="identity")))
         print(len(composed_graph.nodes()))
-
+        print(composed_graph.edges(data="identity"))
+        print(len(composed_graph.edges(data="identity")))
+        print(len(composed_graph.edges()))
 
         return nx.node_link_data(composed_graph, attrs=dict(source='source', target='target', name='key', key='entryKey', link='links'))
 
-    def calculate_intersections(self, graph):
+    def calculate_intersections_nodes(self, graph):
         identity_per_node = {}
         graphs = self.ego_graphs.values()
-        for e in graph.nodes:
+        for node in graph.nodes:
             identity_this_node = []
-            for i,graph in enumerate(graphs):
-                if e in graph.nodes:
+            for i,graphElem in enumerate(graphs):
+                if node in graphElem.nodes:
                     identity_this_node.append(i)
-            identity_per_node[e] = identity_this_node
+            identity_per_node[node] = ";".join(map(str,identity_this_node))
 
         return identity_per_node
+
+    def calculate_intersections_edges(self, graph):
+        identity_per_edge = {}
+        graphs = self.ego_graphs.values()
+        for edge in graph.edges:
+            identity_this_edge = []
+            for i,graph in enumerate(graphs):
+                if edge in graph.edges:
+                    identity_this_edge.append(i)
+            identity_per_edge[edge] = ";".join(map(str,identity_this_edge))
+
+        return identity_per_edge
+
+    def calculate_ego_ego_edges(self, graph):
+        # TODO not working yet
+        ego_edges_color = {}
+        egoIDs = graph.graph["egoID_identity"].keys()
+        for edge in graph.edges:
+            if(edge[0] in egoIDs and edge[1] in egoIDs):
+                ego_edges_color[edge]: [graph.graph["egoID_identity"][edge[0]],graph.graph["egoID_identity"][edge[1]] ]
+        return ego_edges_color
     def print_info(self):
         print("completeGraph",nx.info(self.complete_graph))
         print("FilterGraph: ",nx.info(self.filtered_graph))

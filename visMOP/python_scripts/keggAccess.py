@@ -274,20 +274,22 @@ def query_kgmls(pathways_ids, caching_path):
     """
 
     not_contained, cache_data = check_cache(caching_path, pathways_ids)
+    temporary_blacklist = ["mmu07229", "mmu01120", "mmu04626", "mmu02020"]
     successful_query = []
     for pathway in not_contained:
-        kegg_api_url = "http://rest.kegg.jp/get/{}/kgml".format(pathway)
-        try:
-            with urllib.request.urlopen( kegg_api_url ) as kegg_response:
-                api_text_lines = kegg_response.read().decode("utf-8")
-                cache_data[pathway] = api_text_lines
-                print("GET KGML: {}".format(pathway))
-                successful_query.append(pathway)
-        except urllib.error.URLError as e:
-            print("HTTP ERROR: {}".format(e.__dict__))
-        except urllib.error.URLError as e:
-            print("URL ERROR: {}".format(e.__dict__))    
-        time.sleep(1)
+        if( pathway not in temporary_blacklist):
+            kegg_api_url = "http://rest.kegg.jp/get/{}/kgml".format(pathway)
+            try:
+                with urllib.request.urlopen( kegg_api_url ) as kegg_response:
+                    api_text_lines = kegg_response.read().decode("utf-8")
+                    cache_data[pathway] = api_text_lines
+                    print("GET KGML: {}".format(pathway))
+                    successful_query.append(pathway)
+            except urllib.error.URLError as e:
+                print("HTTP ERROR: {}".format(e.__dict__))
+            except urllib.error.URLError as e:
+                print("URL ERROR: {}".format(e.__dict__))    
+            time.sleep(1)
     cache_kegg_data(caching_path, cache_data)
     out_dict = {}
     for ID in pathways_ids:
