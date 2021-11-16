@@ -20,16 +20,7 @@ const satColors = [
   'rgba(255,255,51,1.0)',
   'rgba(166,86,40,1.0)',
   'rgba(247,129,191,1.0)']
-const colors = [
-  'rgba(228,127,129,1.0)',
-  'rgba(120,155,184,1.0)',
-  'rgba(126,175,125,1.0)',
-  'rgba(157,121,163,1.0)',
-  'rgba(255,191,128,1.0)',
-  'rgba(255,255,153,1.0)',
-  'rgba(166,136,119,1.0)',
-  'rgba(247,187,219,1.0)'
-]
+const colors = ['rgba(248,187,187,1.0)', 'rgba(197,219,238,1.0)', 'rgba(203,233,202,1.0)', 'rgba(227,204,231,1.0)', 'rgba(255,217,179,1.0)', 'rgba(255,255,179,1.0)', 'rgba(241,211,194,1.0)', 'rgba(251,184,219,1.0)']
 
 /**
  * Generates a graph data structure from networkx data to be used with graphology and sigma
@@ -76,8 +67,8 @@ export function generateInteractionGraphData (
           // type: edge.edgeType ? 'line' : 'dashed',
           // color: edge.edgeType ? 'rgb(75,75,75)' : 'rgb(255,75,75)',
           color: edge.color ? edge.color : 'rgb(75,75,75)',
-          sourceColor: edge.egoEgoeEdge ? satColors[parseInt(edge.egoEgoeEdge[0])] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge)] : colors[parseInt(edge.identity)],
-          targetColor: edge.egoEgoeEdge ? satColors[parseInt(edge.egoEgoeEdge[1])] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge)] : colors[parseInt(edge.identity)]
+          sourceColor: edge.egoEgoEdge ? satColors[parseInt(edge.egoEgoEdge[0])] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge)] : colors[parseInt(edge.identity)],
+          targetColor: edge.egoEgoEdge ? satColors[parseInt(edge.egoEgoEdge[1])] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge)] : colors[parseInt(edge.identity)]
         }
     })
   })

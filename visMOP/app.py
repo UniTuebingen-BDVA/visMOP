@@ -75,7 +75,7 @@ def prot_table_recieve():
 
     # shorten protein names a bit
     #not a good idea
-    prot_data['Protein name'] = prot_data['Protein name'].apply(lambda x: x.split("(")[0])
+    #prot_data['Protein name'] = prot_data['Protein name'].apply(lambda x: x.split("(")[0])
     # add location to data table
 
     prot_table_global = prot_data.copy(deep=True)
