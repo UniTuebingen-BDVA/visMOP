@@ -56,7 +56,7 @@ export function generateGraphData (
           // label: "",
           attributes: {
             entryType: _.escape(entry.entryType),
-            type: entry.entryType === 'gene' ? 'splitSquares' : 'circle',
+            type: entry.entryType === 'gene' ? 'splitSquares' : 'outlineCircle',
             name: _.escape(currentNames[0]),
             color: color,
             secondaryColor: secondaryColor,

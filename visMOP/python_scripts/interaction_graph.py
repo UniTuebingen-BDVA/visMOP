@@ -40,7 +40,7 @@ class StringGraph:
         
         ego_graph = nx.ego_graph(self.filtered_graph, node, undirected=False , radius=radius)
 
-        nodes_to_update = { node: (self.name_dict[node] if (node in self.name_dict) else node) for node in ego_graph.nodes}
+        nodes_to_update = { node: self.name_dict[node] for node in ego_graph.nodes if node in self.name_dict}
         nx.set_node_attributes(ego_graph, nodes_to_update, 'labelName')
         nx.set_node_attributes(ego_graph, {node : '#ff0000'}, 'color' )
         nx.set_node_attributes(ego_graph, {node : 8}, 'size' )

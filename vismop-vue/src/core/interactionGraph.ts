@@ -20,7 +20,8 @@ const satColors = [
   'rgba(255,255,51,1.0)',
   'rgba(166,86,40,1.0)',
   'rgba(247,129,191,1.0)']
-const colors = ['rgba(248,187,187,1.0)', 'rgba(197,219,238,1.0)', 'rgba(203,233,202,1.0)', 'rgba(227,204,231,1.0)', 'rgba(255,217,179,1.0)', 'rgba(255,255,179,1.0)', 'rgba(241,211,194,1.0)', 'rgba(251,184,219,1.0)']
+// todo alpha blending still seems to be wrong
+const colors = ['rgba(248,187,187,0.95)', 'rgba(197,219,238,0.95)', 'rgba(203,233,202,0.95)', 'rgba(227,204,231,0.95)', 'rgba(255,217,179,0.95)', 'rgba(255,255,179,0.95)', 'rgba(241,211,194,0.95)', 'rgba(251,184,219,0.95)']
 
 /**
  * Generates a graph data structure from networkx data to be used with graphology and sigma
@@ -44,12 +45,12 @@ export function generateInteractionGraphData (
         key: node.key,
         attributes:
         {
-          label: node.labelName,
+          label: node.labelName ? node.labelName : node.key,
           x: 0,
           y: 0,
           type: 'egoNode' in node ? 'circle' : 'image',
-          image: svgURLs[node.identity],
-          color: 'egoNode' in node ? satColors[parseInt(node.egoNode)] : 'rgba(255,255,255,0.0)',
+          image: node.labelName ? svgURLs.saturated[node.identity] : svgURLs.faded[node.identity],
+          color: 'egoNode' in node ? node.labelName ? satColors[parseInt(node.egoNode) % satColors.length] : colors[parseInt(node.egoNode) % colors.length] : 'rgba(255,255,255,0.0)',
           size: node.size ? node.size : 5
         }
       })
@@ -61,14 +62,15 @@ export function generateInteractionGraphData (
       target: edge.target,
       attributes:
         {
-          zIndex: edge.edgeType ? 1 : 0,
+          zIndex: edge.egoEgoEdge ? 2 : edge.edgeType ? 1 : 0,
           weight: edge.weight,
           type: 'colorFade',
+          size: edge.egoEgoEdge ? 3 : 1,
           // type: edge.edgeType ? 'line' : 'dashed',
           // color: edge.edgeType ? 'rgb(75,75,75)' : 'rgb(255,75,75)',
           color: edge.color ? edge.color : 'rgb(75,75,75)',
-          sourceColor: edge.egoEgoEdge ? satColors[parseInt(edge.egoEgoEdge[0])] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge)] : colors[parseInt(edge.identity)],
-          targetColor: edge.egoEgoEdge ? satColors[parseInt(edge.egoEgoEdge[1])] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge)] : colors[parseInt(edge.identity)]
+          sourceColor: edge.egoEgoEdge ? satColors[parseInt(edge.egoEgoEdge[0]) % satColors.length] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge) % satColors.length] : colors[parseInt(edge.identity) % colors.length],
+          targetColor: edge.egoEgoEdge ? satColors[parseInt(edge.egoEgoEdge[1]) % satColors.length] : 'egoEdge' in edge ? satColors[parseInt(edge.egoEdge) % satColors.length] : colors[parseInt(edge.identity) % colors.length]
         }
     })
   })
@@ -107,19 +109,28 @@ export function generateInteractionGraph (elemID: string, nodeLink: networkxNode
  * @param identities
  * @returns
  */
-function generatePieCharts (identities: number[]): {[key: string]: string} {
-  const pieCharts: {[key: string]: string} = {}
+function generatePieCharts (identities: number[]): {[key: string]:{[key: string]: string}} {
+  const pieCharts: {[key: string]:{[key: string]: string}} = { saturated: {}, faded: {} }
   const combinations = combinationOfArray(identities)
   combinations.forEach(elem => {
     elem.sort()
     const serializer = new XMLSerializer()
-    console.log('pies', elem.length, elem.map(idx => colors[idx]))
+    const pieSVG = generateSinglePieChart(elem.length, elem.map(idx => satColors[idx]), 64)
+    const pieSVGstring = serializer.serializeToString(pieSVG)
+    const svgBlob = new Blob([pieSVGstring], { type: 'image/svg+xml;charset=utf-8' })
+    const svgURL = window.URL.createObjectURL(svgBlob)
+    console.log('pieAccessor: ', elem, elem.join(';'))
+    pieCharts.saturated[elem.join(';')] = svgURL
+  })
+  combinations.forEach(elem => {
+    elem.sort()
+    const serializer = new XMLSerializer()
     const pieSVG = generateSinglePieChart(elem.length, elem.map(idx => colors[idx]), 64)
     const pieSVGstring = serializer.serializeToString(pieSVG)
     const svgBlob = new Blob([pieSVGstring], { type: 'image/svg+xml;charset=utf-8' })
     const svgURL = window.URL.createObjectURL(svgBlob)
     console.log('pieAccessor: ', elem, elem.join(';'))
-    pieCharts[elem.join(';')] = svgURL
+    pieCharts.faded[elem.join(';')] = svgURL
   })
   return pieCharts
 }
@@ -159,7 +170,7 @@ function generateSinglePieChart (segments: number, colors: string[], diameter: n
     .data(pies)
     .join('path')
     .attr('d', arc)
-    .attr('fill', (d, i) => colors[i])
+    .attr('fill', (d, i) => colors[i % colors.length])
 
   console.log('PIECHART', svg.node())
   return svg.node() as SVGElement

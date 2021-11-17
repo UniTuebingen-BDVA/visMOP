@@ -205,10 +205,11 @@ def kegg_parsing():
                 fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
 
         # Handle Metabolomics if available TODO bug when not supplying metabolomics data
-        metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
-        print(metabolomics_dict)
-        metabolomics_IDs = metabolomics_dict.keys()
+        metabolomics_IDs = []
         if metabolomics["recieved"]:
+            metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
+            print(metabolomics_dict)
+            metabolomics_IDs = metabolomics_dict.keys()
             for elem in metabolomics_IDs:
                 if elem in fold_changes:
                     print("meta ", elem)

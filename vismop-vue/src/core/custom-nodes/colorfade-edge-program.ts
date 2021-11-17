@@ -261,7 +261,6 @@ export default class EdgeProgram extends AbstractEdgeProgram {
 
     const program = this.program
     gl.useProgram(program)
-
     // Binding uniforms
     gl.uniform1f(this.scaleLocation, params.scalingRatio)
     gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix)

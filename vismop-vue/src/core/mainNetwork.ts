@@ -5,6 +5,7 @@ import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
 import CustomNodeProgram from '@/core/custom-nodes/custom-node-program'
 import CustomEdgeProgram from '@/core/custom-nodes/colorfade-edge-program'
+import OutlineCircleProgram from '@/core/custom-nodes/circle-outline-node-program'
 import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import { animateNodes } from 'sigma/utils/animate'
@@ -31,9 +32,7 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
 
   const nodeReducer = (node: unknown, data: Attributes) => {
     if (highlighedNodes.has(node)) {
-      return data.type === 'splitSquares'
-        ? { ...data, outlineColor: 'rgba(255,0,0,1.0)', zIndex: 1 }
-        : { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1 }
+      return { ...data, outlineColor: 'rgba(255,0,0,1.0)', zIndex: 1 }
     }
 
     return data
@@ -59,7 +58,8 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
     zIndex: true,
     renderLabels: false,
     nodeProgramClasses: {
-      splitSquares: CustomNodeProgram
+      splitSquares: CustomNodeProgram,
+      outlineCircle: OutlineCircleProgram
     },
     edgeProgramClasses: {
       fadeColor: CustomEdgeProgram
@@ -170,7 +170,7 @@ export function layoutToPathway (
       attributes.color = attributes.nonFadeColor as string
       attributes.secondaryColor = attributes.nonFadeColorSecondary as string
       attributes.outlineColor = 'rgba(30,30,30,1.0)'
-      attributes.z = 2
+      attributes.zIndex = 2
       const origPos = attributes.origPos as { [key: string]: [number, number] }
       newPosisitons[nodeID] = {
         x: centerX + (origPos[pathway][0] - 0.5) * layoutScaling,
@@ -181,25 +181,25 @@ export function layoutToPathway (
       attributes.color = attributes.fadeColor as string
       attributes.secondaryColor = attributes.fadeColorSecondary as string
       attributes.outlineColor = fadeGray as string
-      attributes.z = 1
+      attributes.zIndex = 1
     }
   })
   graph.forEachEdge((edge, attributes, source, target) => {
     if (!(nodeIDs.includes(source) || nodeIDs.includes(target))) {
       attributes.sourceColor = attributes.fadeColor as string
       attributes.targetColor = attributes.fadeColor as string
-      attributes.z = 0
+      attributes.zIndex = 0
     } else if (!nodeIDs.includes(source)) {
       attributes.sourceColor = attributes.fadeColor as string
-      attributes.z = 0
+      attributes.zIndex = 0
     } else if (!nodeIDs.includes(target)) {
       attributes.targetColor = attributes.fadeColor as string
-      attributes.z = 0
+      attributes.zIndex = 0
     } else {
       attributes.sourceColor = attributes.nonFadeColor as string
       attributes.targetColor = attributes.nonFadeColor as string
 
-      attributes.z = 2
+      attributes.zIndex = 2
     }
   })
 
@@ -228,12 +228,12 @@ export function relaxLayout (renderer: Sigma): void {
     attributes.color = attributes.nonFadeColor as string
     attributes.secondaryColor = attributes.nonFadeColorSecondary as string
     attributes.outlineColor = 'rgba(30,30,30,1.0)'
-    attributes.z = 1
+    attributes.zIndex = 1
   })
   graph.forEachEdge((edge, attributes) => {
     attributes.sourceColor = attributes.nonFadeColor as string
     attributes.targetColor = attributes.nonFadeColor as string
-    attributes.z = 2
+    attributes.zIndex = 2
   })
   const fa2Layout = new FA2Layout(graph, { settings: inferredSettings })
   // TODO not yet handling if other animation/layouting is in progess
