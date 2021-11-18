@@ -1,4 +1,5 @@
 def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_titles):
+    # at the moment only maplinks are considered
     print('+++++NOTE: pathways that are not in global_dict_entries are NOT USED!!+++++')
     # Get pathways from dropdown menu --> main pathways for overview
     displayed_pathways = list(pathway_node_dict.keys())
@@ -8,15 +9,7 @@ def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_
         key = "path:" + str(item)
         pathway_connection_dict[key] = {
             'incoming_edges': [], 'outgoingEdges': [], 'entryType': "pathway", 'isempty': False, "name": [key], "keggID": key}
-    #print("pathway_connection_dict", pathway_connection_dict)
-    # Remove compounds from pathway_node_dict --> keep only genes/pathways for finding intersections
-    copy_pathway_node_dict = pathway_node_dict.copy()
-    for key in pathway_node_dict:
-        for item in pathway_node_dict[key]:
-            if item.startswith('cpd'):
-                copy_pathway_node_dict[key].remove(item)
-    
-
+ 
     # remove all genes from the without_empty --> keep only pathways to identify relevant maplinks
     copy_without_empty = without_empty.copy()
     for k in without_empty.keys():

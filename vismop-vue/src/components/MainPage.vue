@@ -153,7 +153,7 @@ export default Vue.extend({
   data: () => ({
     tableSearch: '',
     selectedTabTable: 'transcriptomics',
-    selectedTabNetwork: 'detailNetwork',
+    selectedTabNetwork: 'overviewNetwork',
     transcriptomicsSelectionData: {},
     proteomicsSelectionData: {},
     metabolomicsSelectionData: {},

@@ -20,16 +20,19 @@ import store from '@/store'
  */
 export function mainGraph (elemID: string, graphData: graphData): Sigma {
   console.log(graphData)
+
+  // select target div and initialize graph
   const elem = document.getElementById(elemID) as HTMLElement
   const graph = MultiGraph.from(graphData)
-  console.log('NODES', graph.nodes())
+  // console.log('NODES', graph.nodes())
 
   const inferredSettings = forceAtlas2.inferSettings(graph)
 
-  // from events example:
+  // from events SIGMA2 example, initialze sets for highlight on hover:
   let highlighedNodes = new Set()
   let highlighedEdges = new Set()
 
+  // node reducers change and return nodes based on an accessor function
   const nodeReducer = (node: unknown, data: Attributes) => {
     if (highlighedNodes.has(node)) {
       return { ...data, outlineColor: 'rgba(255,0,0,1.0)', zIndex: 1 }
@@ -38,6 +41,7 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
     return data
   }
 
+  // same for edges
   const edgeReducer = (edge: unknown, data: Attributes) => {
     if (highlighedEdges.has(edge)) {
       return {
@@ -52,11 +56,12 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
   }
   // end example
 
+  // construct Sigma main instance
   const renderer = new Sigma(graph, elem, {
     nodeReducer: nodeReducer,
     edgeReducer: edgeReducer,
-    zIndex: true,
-    renderLabels: false,
+    zIndex: true, // enabling zIndex parameter
+    renderLabels: false, // do not render labels w/o hover
     nodeProgramClasses: {
       splitSquares: CustomNodeProgram,
       outlineCircle: OutlineCircleProgram
@@ -174,7 +179,7 @@ export function layoutToPathway (
       const origPos = attributes.origPos as { [key: string]: [number, number] }
       newPosisitons[nodeID] = {
         x: centerX + (origPos[pathway][0] - 0.5) * layoutScaling,
-        y: centerY + (origPos[pathway][1] - 0.5) * layoutScaling
+        y: centerY - (origPos[pathway][1] - 0.5) * layoutScaling
       }
     } else {
       attributes.fixed = false

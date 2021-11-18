@@ -182,21 +182,3 @@ class KeggPathwayReaction:
             'reaction_type': self.reaction_type,
             'pathway_ID': self.pathway_ID,
             'pathway_name': self.pathway_name}
-
-"""
-OLD FUNCTIONS
-"""
-
-class KeggPathwayReactionOLD:
-    """ Class for a single reaction of the KEGG Pathway KGML
-    """
-    def __init__(self, r_elem, s_elem, p_elem, r_type):
-        self.reaction_elem = r_elem
-        self.substrate_elem = s_elem
-        self.product_elem = p_elem
-        self.reaction_type = r_type
-    def asdict(self):
-        """ return the KeggPathwayReaction  as dictionary 
-        """
-        return {'reaction_elem': self.reaction_elem, 'substrate_elem': self.substrate_elem, 'product_elem': self.product_elem, "reaction_type": self.reaction_type}
-

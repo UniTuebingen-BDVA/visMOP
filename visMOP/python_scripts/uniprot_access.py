@@ -12,21 +12,10 @@ data_path = pathlib.Path().resolve()
 
 def make_protein_dict(df, colname):
     column_names = df.columns
-    '''col_name_change = {}
-    for i in column_names:
-        if "/" in i:
-            col_name_change[i] = i.replace('/', '_')
-            print(i.replace('/', '_'))
-        else:
-            col_name_change[i] = i
-    # set index to 'Uniprot ID'
-
-    df.rename(columns=col_name_change, inplace=True)
-    col_names_new = df.columns'''
 
     df = df.set_index(colname)
 
-    # stores 'Protein name', 'Gene Symbol', 'HED_SED/CON_SED' for each 'Uniprot ID'
+    # stores data for each uniprot ID
 
     prot_dict = df.to_dict('index')
 
