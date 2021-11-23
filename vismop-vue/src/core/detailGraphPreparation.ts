@@ -89,10 +89,6 @@ export function generateGraphData (
             addedEdges.push(currentEdge.key)
           }
         }
-        if (currentNames[0] === 'C05125') {
-          console.log('TESTMETA', currentNode)
-          console.log('TESTMETA', entry)
-        }
       }
     }
   }
@@ -126,6 +122,7 @@ function generateForceGraphEdge (relation: relation): edge {
     GErel: '#008856',
     PCrel: '#875692',
     maplink: '#F3C300',
+    maplinkOnceRemoved: '#FF0000',
     reaction: '#222222',
     pathCon: '#222222'
   }

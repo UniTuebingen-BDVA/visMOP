@@ -18,8 +18,8 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import { mainGraph } from '../core/mainNetwork'
-import { generateGraphData } from '../core/graphPreparation'
+import { mainGraph } from '../core/overviewNetwork'
+import { generateGraphData } from '../core/overviewGraphPreparation'
 import Vue from 'vue'
 import Sigma from 'sigma'
 

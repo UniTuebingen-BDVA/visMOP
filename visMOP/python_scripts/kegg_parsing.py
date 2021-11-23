@@ -45,8 +45,16 @@ def generate_networkx_dict(global_nodes):
         curr_node = {}
         for out_edge in entry['outgoingEdges']:
             curr_node[out_edge['target']] = {}
+        
+        try:
+            for test_edge in entry['outgoingOnceRemoved']:
+                curr_node[test_edge['target']] = {}
+        except:
+            pass
+            
+            
         out_dict[key] = curr_node
-
+        
     return out_dict    
 
 def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction, value_dict):

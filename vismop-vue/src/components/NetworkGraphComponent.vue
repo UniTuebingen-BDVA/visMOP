@@ -1,29 +1,28 @@
 <template>
   <div>
-    <v-card>
-      <v-row justify="space-between">
-        <v-card-title>
-          Network Graph
-          <v-spacer></v-spacer>
-        </v-card-title>
-        <v-col cols="4" class="mb-2">
-          <v-overflow-btn
-            :items="pathwayLayouting.pathway_list"
-            v-on:change="selectPathway"
-            editable
-            clearable
-            label="Focus Pathway"
-            hide-details
-            overflow
-            dense
-          ></v-overflow-btn>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12" class="mb-2">
-          <div :id="contextID" class="webglContainer"></div>
-        </v-col>
-      </v-row>
+    <v-card v-bind:class="[expandButton ? 'detailComponentLarger' : '','detailComponent']">
+      <v-col>
+      <v-overflow-btn
+                    :items="pathwayLayouting.pathwayList"
+                    editable
+                    clearable
+                    label="Focus Pathway"
+                    hide-details
+                    overflow
+                    dense
+                    v-model="pathwaySelection"
+      ></v-overflow-btn>
+      <div :id="contextID" v-bind:class="[expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
+       <v-btn
+        class="mx-2 expandButton"
+        fab
+        dark
+        small
+        bottom
+        left
+        @click="expandComponent"
+      ><v-icon>mdi-arrow-expand</v-icon></v-btn>
+      </v-col>
     </v-card>
   </div>
 </template>
@@ -35,8 +34,8 @@ import {
   panToNode,
   layoutToPathway,
   relaxLayout
-} from '../core/mainNetwork'
-import { generateGraphData } from '../core/graphPreparation'
+} from '../core/detailNetwork'
+import { generateGraphData } from '../core/detailGraphPreparation'
 import Vue from 'vue'
 import Sigma from 'sigma'
 
@@ -45,6 +44,8 @@ interface Data{
   selectedTab: string
   outstandingDraw: boolean
   networkGraph: (Sigma | undefined)
+  pathwaySelection: string
+  expandButton: boolean
 }
 
 export default Vue.extend({
@@ -56,7 +57,10 @@ export default Vue.extend({
     tableSearch: '',
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
-    networkGraph: undefined
+    networkGraph: undefined,
+    pathwaySelection: '',
+    expandButton: false
+
   }),
 
   computed: {
@@ -69,7 +73,9 @@ export default Vue.extend({
       proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict,
       usedSymbolCols: (state:any) => state.usedSymbolCols,
       overlay: (state:any) => state.overlay,
-      pathwayLayouting: (state:any) => state.pathwayLayouting
+      pathwayLayouting: (state: any) => state.pathwayLayouting,
+      pathwayDropdown: (state: any) => state.pathwayDropdown
+
     })
   },
   watch: {
@@ -96,6 +102,9 @@ export default Vue.extend({
         this.outstandingDraw = false
       }
     },
+    pathwaySelection: function () {
+      this.selectPathway(this.pathwaySelection)
+    },
     transcriptomicsSelection: function () {
       this.focusNodeTranscriptomics(this.transcriptomicsSelection)
     },
@@ -104,6 +113,9 @@ export default Vue.extend({
     },
     metabolomicsSelection: function () {
       this.focusNodeMetabolomics(this.metabolomicsSelection)
+    },
+    pathwayDropdown: function () {
+      this.pathwaySelection = this.pathwayDropdown
     }
   },
 
@@ -147,14 +159,15 @@ export default Vue.extend({
     selectPathway (key: string) {
       console.log('KEY', key)
       if (key !== undefined && key !== null) {
-        const nodeList = this.pathwayLayouting.pathway_node_dictionary[key]
+        const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
         layoutToPathway(this.networkGraph as Sigma, key, nodeList)
       } else {
         relaxLayout(this.networkGraph as Sigma)
       }
+    },
+    expandComponent () {
+      this.expandButton = !this.expandButton
     }
-    // basic GET request using fetch
-
   }
 })
 </script>

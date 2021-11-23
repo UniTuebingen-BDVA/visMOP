@@ -272,10 +272,12 @@ def query_kgmls(pathways_ids, caching_path):
         out_dict: dictionary with entries corresponding to the pathway ids
     
     """
-
+    # check which kgmls are already aquired
     not_contained, cache_data = check_cache(caching_path, pathways_ids)
+    # temporary blacklist TODO permanent Blacklist?
     temporary_blacklist = ["mmu07229", "mmu01120", "mmu04626", "mmu02020"]
     successful_query = []
+    # query kgmls 
     for pathway in not_contained:
         if( pathway not in temporary_blacklist):
             kegg_api_url = "http://rest.kegg.jp/get/{}/kgml".format(pathway)

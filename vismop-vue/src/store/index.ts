@@ -28,7 +28,8 @@ interface State {
   fcQuantiles: [number, number],
   fcScale: unknown,
   interactionGraphData: unknown,
-  pathwayLayouting: unknown
+  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string } },
+  pathwayDropdown: string
 }
 export default new Vuex.Store({
   state: {
@@ -56,9 +57,10 @@ export default new Vuex.Store({
     fcScale: null,
     interactionGraphData: null,
     pathwayLayouting: {
-      pathway_list: ['empty'],
-      pathway_node_dictionary: null
-    }
+      pathwayList: [{ text: 'empty', value: 'empty' }],
+      pathwayNodeDictionary: { a: 'b' }
+    },
+    pathwayDropdown: ''
   } as State,
   mutations: {
     APPEND_CLICKEDNODE (state, val) {
@@ -135,6 +137,9 @@ export default new Vuex.Store({
     },
     SET_INTERACTIONGRAPHDATA (state, val) {
       state.interactionGraphData = val
+    },
+    SET_PATHWAYDROPDOWN (state, val) {
+      state.pathwayDropdown = val
     }
   },
   actions: {
@@ -248,6 +253,10 @@ export default new Vuex.Store({
     },
     setPathwayLayouting ({ commit }, val) {
       commit('SET_PATHWAYLAYOUTING', val)
+    },
+    focusPathwayViaOverview ({ commit }, val) {
+      const valClean = val.replace('path:', '')
+      commit('SET_PATHWAYDROPDOWN', valClean)
     }
   },
   modules: {}

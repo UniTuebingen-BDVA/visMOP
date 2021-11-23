@@ -94,6 +94,7 @@ class KeggPathwayEntry:
         self.entryType = None
         self.pathway_edges = {}
         self.outgoingEdges = []
+        self.outgoingOnceRemoved = []
         self.incoming_edges = []
         self.is_empty = False # TODO: only temporary
         self.extent_applied = {}
@@ -130,6 +131,7 @@ class KeggPathwayEntry:
         'entryType': self.entryType,
         'incoming_edges': self.incoming_edges,
         'outgoingEdges': self.outgoingEdges,
+        'outgoingOnceRemoved': self.outgoingOnceRemoved,
         'pathway_edges': self.pathway_edges,
         'isempty': self.is_empty
         }

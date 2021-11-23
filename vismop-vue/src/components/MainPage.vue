@@ -97,29 +97,34 @@
 
           <v-tabs-items :value="selectedTabNetwork">
             <v-tab-item value="overviewNetwork">
-              <keep-alive>
-                <overview-component
-                  contextID="overviewContext"
-                  :transcriptomicsSelection="transcriptomicsSelectionData"
-                  :proteomicsSelection="proteomicsSelectionData"
-                  :metabolomicsSelection="metabolomicsSelectionData"
-                  :isActive="activeOverview"
-                >
-                </overview-component>
-              </keep-alive>
+              <v-row>
+                <v-col cols="12">
+                  <keep-alive>
+                    <overview-component
+                      contextID="overviewContext"
+                      :transcriptomicsSelection="transcriptomicsSelectionData"
+                      :proteomicsSelection="proteomicsSelectionData"
+                      :metabolomicsSelection="metabolomicsSelectionData"
+                      :isActive="activeOverview"
+                    >
+                    </overview-component>
+                  </keep-alive>
+                </v-col>
+                </v-row>
+                  <keep-alive>
+                    <network-graph-component
+                      contextID="detailContext"
+                      :transcriptomicsSelection="transcriptomicsSelectionData"
+                      :proteomicsSelection="proteomicsSelectionData"
+                      :metabolomicsSelection="metabolomicsSelectionData"
+                      :isActive="activeOverview"
+                    >
+                    </network-graph-component>
+                  </keep-alive>
             </v-tab-item>
 
             <v-tab-item value="detailNetwork">
-              <keep-alive>
-                <network-graph-component
-                  contextID="detailContext"
-                  :transcriptomicsSelection="transcriptomicsSelectionData"
-                  :proteomicsSelection="proteomicsSelectionData"
-                  :metabolomicsSelection="metabolomicsSelectionData"
-                  :isActive="activeDetail"
-                >
-                </network-graph-component>
-              </keep-alive>
+              <p> placeholder </p>
             </v-tab-item>
           </v-tabs-items>
         </v-card>
@@ -173,7 +178,8 @@ export default Vue.extend({
       proteomicsSymbolDict: (state: any) => state.proteomicsSymbolDict,
       usedSymbolCols: (state: any) => state.usedSymbolCols,
       overlay: (state: any) => state.overlay,
-      pathwayLayouting: (state: any) => state.pathwayLayouting
+      pathwayLayouting: (state: any) => state.pathwayLayouting,
+      pathwayDropdown: (state: any) => state.pathwayDropdown
     }),
     activeOverview: {
       get: function () {

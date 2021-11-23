@@ -83,6 +83,7 @@ export interface entry {
   initialPosX: number;
   initialPosY: number;
   outgoingEdges: relation[];
+  outgoingOnceRemoved: relation[];
   trascriptomicsValue: number | string;
   proteomicsValue: number | string;
   metabolomicsValue: number | string;

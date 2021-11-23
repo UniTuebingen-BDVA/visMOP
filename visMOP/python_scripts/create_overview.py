@@ -8,14 +8,14 @@ def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_
     for item in displayed_pathways:
         key = "path:" + str(item)
         pathway_connection_dict[key] = {
-            'incoming_edges': [], 'outgoingEdges': [], 'entryType': "pathway", 'isempty': False, "name": [key], "keggID": key}
+            'incoming_edges': [], 'outgoingEdges': [], "outgoingOnceRemoved": [], 'entryType': "pathway", 'isempty': False, "name": [key], "keggID": key}
  
     # remove all genes from the without_empty --> keep only pathways to identify relevant maplinks
     copy_without_empty = without_empty.copy()
     for k in without_empty.keys():
         if not k.startswith('path'):
             copy_without_empty.pop(k)
-
+    # TODO fails if maplink is disconnected i.e. has  no outgoing/incoming edges
     # add pathways with maplink nodes to pathway_connection dict
     for key in copy_without_empty:
         if len(copy_without_empty[key]['outgoingEdges']) > 0:
@@ -25,5 +25,19 @@ def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_
                         #print("key", key)
                         #print("Maplink",i)
                         pathway_connection_dict[key]["outgoingEdges"].append(i)
+
+    # search for connections that are once removed, i.e., having one pathway inbetween
+    
+    for idxOuter, (kOuter,vOuter) in enumerate(pathway_connection_dict.items()):
+        outerOutgoingTars  = [elem['target'] for elem in vOuter['outgoingEdges']]
+        #print("OUTER OUTGOING ", vOuter)
+        for idxInner, (kInner, vInner) in enumerate(pathway_connection_dict.items(), start = idxOuter+1):
+            innerOutgoingTars  = [elem['target'] for elem in vInner['outgoingEdges']]
+            #print("INNER OUTGOING ", innerOutgoingTars)
+
+            if not set(outerOutgoingTars).isdisjoint(innerOutgoingTars):
+                #print("FOUND SOMETHING")
+                pathway_connection_dict[kOuter]["outgoingOnceRemoved"].append({'edgeType': 'relation', 'relationID': kOuter+"+"+kInner, 'source': kOuter, 'target': kInner, 'relationType': 'maplinkOnceRemoved', 'relation_subtype': ['compound'], 'pathway_ID': kOuter, 'pathway_name': ''})
+    
 
     return pathway_connection_dict

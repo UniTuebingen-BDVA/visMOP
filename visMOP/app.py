@@ -283,7 +283,7 @@ def kegg_parsing():
     print("Len unique Pathways: ", len(unique_pathways))
 
     # list accessor is used for test purposes only --> less data = faster
-    for pathwayID in parsed_IDs:
+    for pathwayID in parsed_IDs[0:]:
         # TODO blacklist system?!
         if "01100" in pathwayID:
             print("Skipping map01100, general overview")
@@ -330,10 +330,10 @@ def kegg_parsing():
 
 
     pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles)
-
     network_overview = generate_networkx_dict(pathway_connection_dict)
     pos_overview = get_spring_layout_pos(network_overview)
     init_pos_overview = add_initial_positions(pos_overview, pathway_connection_dict)
+    #print(init_pos_overview)
 
     # add genes with available fc values to overview_dict
     """
@@ -357,7 +357,7 @@ def kegg_parsing():
         "main_data":with_init_pos,
         "fcs": fold_changes,
         "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
-        "pathway_layouting": {"pathway_list": dropdown_pathways, "pathway_node_dictionary": pathway_node_dict},
+        "pathwayLayouting": {"pathwayList": dropdown_pathways, "pathwayNodeDictionary": pathway_node_dict},
         "proteomics_symbol_dict": proteomics_symbol_dict,
         "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"], "metabolomics": metabolomics["symbol"]}
     }

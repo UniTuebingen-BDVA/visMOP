@@ -275,7 +275,7 @@ export default Vue.extend({
           this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
           this.$store.dispatch(
             'setPathwayLayouting',
-            dataContent.pathway_layouting
+            dataContent.pathwayLayouting
           )
         })
 

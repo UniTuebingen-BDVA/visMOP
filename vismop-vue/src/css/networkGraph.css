@@ -3,6 +3,37 @@
   display: block;
   z-index: 2;
 }
+.webglContainerDetail {
+  height: 38vh;
+  width: 38vh;
+  display: block;
+  position: absolute;
+  z-index: 3;
+}
+.detailComponent{
+  position: absolute;
+  height: 45vh;
+  width: 40vh;
+  right: 2vh;
+  top: 2vh;
+  z-index: 3;
+}
+.detailComponentLarger{
+  height: 75vh !important;
+  width: 100vh !important;
+}
+.webglContainerDetailLarger{
+  height: 70vh !important;
+  width: 100vh !important;
+}
+
+.expandButton{
+  z-index:4;
+  position: absolute;
+  bottom: 2vh;
+  left: 2vh;
+}
+
 .webglContainerSmall {
   height: 20vh;
   display: block;

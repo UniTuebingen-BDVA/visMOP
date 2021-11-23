@@ -117,11 +117,11 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
 export function panToNode (renderer: Sigma, nodeKey: string): void {
   console.log('pantestNode', {
     ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
-    ratio: 0.05
+    ratio: 0.7
   })
   panZoomToTarget(renderer, {
     ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
-    ratio: 0.05
+    ratio: 0.7
   })
 }
 /**
@@ -165,11 +165,12 @@ export function layoutToPathway (
   )
   const centerX = graphCenterPos.x
   const centerY = graphCenterPos.y
-  const layoutScaling = 250
+  const layoutScaling = 2500
   const newPosisitons: PlainObject<PlainObject<number>> = {}
   graph.forEachNode((nodeID, attributes) => {
     if (nodeIDs.includes(nodeID)) {
       attributes.fixed = true
+      attributes.hidden = false
       // attributes.x= center_x + (attributes.origPos[pathway][0] - 0.5) * 250
       // attributes.y= center_y + (attributes.origPos[pathway][1] - 0.5) * 250
       attributes.color = attributes.nonFadeColor as string
@@ -182,6 +183,7 @@ export function layoutToPathway (
         y: centerY - (origPos[pathway][1] - 0.5) * layoutScaling
       }
     } else {
+      attributes.hidden = true
       attributes.fixed = false
       attributes.color = attributes.fadeColor as string
       attributes.secondaryColor = attributes.fadeColorSecondary as string
@@ -191,16 +193,20 @@ export function layoutToPathway (
   })
   graph.forEachEdge((edge, attributes, source, target) => {
     if (!(nodeIDs.includes(source) || nodeIDs.includes(target))) {
+      attributes.hidden = true
       attributes.sourceColor = attributes.fadeColor as string
       attributes.targetColor = attributes.fadeColor as string
       attributes.zIndex = 0
     } else if (!nodeIDs.includes(source)) {
+      attributes.hidden = false
       attributes.sourceColor = attributes.fadeColor as string
       attributes.zIndex = 0
     } else if (!nodeIDs.includes(target)) {
+      attributes.hidden = false
       attributes.targetColor = attributes.fadeColor as string
       attributes.zIndex = 0
     } else {
+      attributes.hidden = false
       attributes.sourceColor = attributes.nonFadeColor as string
       attributes.targetColor = attributes.nonFadeColor as string
 
@@ -229,6 +235,7 @@ export function relaxLayout (renderer: Sigma): void {
   const inferredSettings = forceAtlas2.inferSettings(graph)
 
   graph.forEachNode((nodeID, attributes) => {
+    attributes.hidden = false
     attributes.fixed = false
     attributes.color = attributes.nonFadeColor as string
     attributes.secondaryColor = attributes.nonFadeColorSecondary as string
@@ -236,6 +243,7 @@ export function relaxLayout (renderer: Sigma): void {
     attributes.zIndex = 1
   })
   graph.forEachEdge((edge, attributes) => {
+    attributes.hidden = false
     attributes.sourceColor = attributes.nonFadeColor as string
     attributes.targetColor = attributes.nonFadeColor as string
     attributes.zIndex = 2
