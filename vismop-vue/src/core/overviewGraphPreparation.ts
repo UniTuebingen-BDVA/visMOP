@@ -16,13 +16,15 @@ import {
  */
 export function generateGraphData (
   nodeList: { [key: string]: entry },
-  fcsExtent: number[]
+  fcsExtent: number[],
+  glyphs: {[key: string]: string}
 ): graphData {
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
     attributes: { name: 'BaseNetwork' },
     nodes: [],
-    edges: []
+    edges: [],
+    options: []
   } as graphData
   const addedEdges: string[] = []
   console.log('fcsExtent', fcsExtent)
@@ -30,33 +32,28 @@ export function generateGraphData (
   // console.log("NodeList", nodeList)
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey]
-    // console.log("entry", entry)
     if (!entry.isempty) {
       const currentNames = entry.name
       const keggID = entry.keggID
       if (currentNames) {
         const initPosX = entry.initialPosX
         const initPosY = entry.initialPosY
-        const color =
-          entry.entryType === 'gene'
-            ? typeof entry.trascriptomicsValue === 'string'
-              ? '#808080'
-              : colorScale(entry.trascriptomicsValue)
-            : typeof entry.metabolomicsValue === 'string'
-              ? '#808080'
-              : colorScale(entry.metabolomicsValue)
+        const color = '#FFFFFF'
+
         const secondaryColor =
           entry.entryType === 'gene'
             ? typeof entry.proteomicsValue === 'string'
               ? '#808080'
               : colorScale(entry.proteomicsValue)
             : '#808080'
+        console.log('TEST!!!!', glyphs[entryKey])
         const currentNode = {
           key: keggID,
           // label: "",
           attributes: {
             entryType: _.escape(entry.entryType),
-            type: entry.entryType === 'gene' ? 'splitSquares' : 'outlineCircle',
+            type: 'image',
+            image: glyphs[entryKey.replace('path:', '')],
             name: _.escape(currentNames[0]),
             color: color,
             secondaryColor: secondaryColor,
@@ -72,7 +69,7 @@ export function generateGraphData (
             initialX: initPosX,
             initialY: initPosY,
             origPos: entry.origPos,
-            size: 3,
+            size: 10,
             fixed: false // fixed property on nodes excludes nodes from layouting
           } as nodeAttr
         } as node

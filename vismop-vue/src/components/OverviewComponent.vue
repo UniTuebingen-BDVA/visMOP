@@ -20,6 +20,7 @@
 import { mapState } from 'vuex'
 import { mainGraph } from '../core/overviewNetwork'
 import { generateGraphData } from '../core/overviewGraphPreparation'
+import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
 import Vue from 'vue'
 import Sigma from 'sigma'
 
@@ -47,7 +48,9 @@ export default Vue.extend({
     ...mapState({
       overviewData: (state:any) => state.overviewData,
       fcs: (state:any) => state.fcs,
-      overlay: (state:any) => state.overlay
+      overlay: (state:any) => state.overlay,
+      fcQuantiles: (state:any) => state.fcQuantiles
+
     })
   },
   watch: {
@@ -85,7 +88,11 @@ export default Vue.extend({
   props: ['contextID', 'isActive'],
   methods: {
     drawNetwork () {
-      const networkData = generateGraphData(this.overviewData, [0, 0])
+      const fcExtents = this.fcQuantiles
+      const glyphData = generateGlyphData(fcExtents)
+      console.log('GLYPH DATA', glyphData)
+      const glyphs = generateGlyphs(glyphData)
+      const networkData = generateGraphData(this.overviewData, fcExtents, glyphs)
       console.log('base dat', networkData)
       this.networkGraph = mainGraph(this.contextID, networkData)
     }

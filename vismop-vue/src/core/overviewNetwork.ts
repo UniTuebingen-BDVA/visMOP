@@ -2,12 +2,13 @@ import Graph, { MultiGraph } from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
-import CustomNodeProgram from '@/core/custom-nodes/custom-node-program'
+import RectNodeProgram from '@/core/custom-nodes/rectangle-node-program'
+import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
 import CustomEdgeProgram from '@/core/custom-nodes/colorfade-edge-program'
-import OutlineCircleProgram from '@/core/custom-nodes/circle-outline-node-program'
 import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import store from '@/store'
+import { DEFAULT_SETTINGS } from 'sigma/settings'
 
 /**
  * Initializes the omics graph
@@ -60,8 +61,8 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
     zIndex: true, // enabling zIndex parameter
     renderLabels: false, // do not render labels w/o hover
     nodeProgramClasses: {
-      splitSquares: CustomNodeProgram,
-      outlineCircle: OutlineCircleProgram
+      ...DEFAULT_SETTINGS.nodeProgramClasses,
+      image: getNodeProgramImage()
     },
     edgeProgramClasses: {
       fadeColor: CustomEdgeProgram

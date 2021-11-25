@@ -261,6 +261,8 @@ export default Vue.extend({
       })
         .then((response) => response.json())
         .then((dataContent) => {
+          this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
+          this.$store.dispatch('setPathayAmountDict', dataContent.pathways_amount_dict)
           this.$store.dispatch('setOverviewData', dataContent.overview_data)
           this.$store.dispatch('setGraphData', dataContent.main_data)
           this.$store.dispatch('setFCS', dataContent.fcs)

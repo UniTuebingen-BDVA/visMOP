@@ -11,6 +11,7 @@ import ColorFadeEdgeProgram from '@/core/custom-nodes/colorfade-edge-program'
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
 import * as d3 from 'd3'
 import { PieArcDatum } from 'd3-shape'
+import { DEFAULT_SETTINGS } from 'sigma/settings'
 const satColors = [
   'rgba(228,26,28,1.0)',
   'rgba(55,126,184,1.0)',
@@ -37,7 +38,8 @@ export function generateInteractionGraphData (
   const graph = {
     attributes: { name: 'BaseNetwork' },
     nodes: [],
-    edges: []
+    edges: [],
+    options: []
   } as graphData
   nodeLink.nodes.forEach(node => {
     graph.nodes.push(
@@ -95,6 +97,7 @@ export function generateInteractionGraph (elemID: string, nodeLink: networkxNode
   const renderer = new Sigma(graph, elem, {
     zIndex: true,
     nodeProgramClasses: {
+      ...DEFAULT_SETTINGS.nodeProgramClasses,
       image: getNodeProgramImage()
     },
     edgeProgramClasses: {

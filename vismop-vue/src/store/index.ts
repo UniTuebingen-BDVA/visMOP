@@ -28,8 +28,10 @@ interface State {
   fcQuantiles: [number, number],
   fcScale: unknown,
   interactionGraphData: unknown,
-  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string } },
-  pathwayDropdown: string
+  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] } },
+  pathwayDropdown: string,
+  omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
+  pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}}
 }
 export default new Vuex.Store({
   state: {
@@ -58,9 +60,12 @@ export default new Vuex.Store({
     interactionGraphData: null,
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty' }],
-      pathwayNodeDictionary: { a: 'b' }
+      pathwayNodeDictionary: { a: [] }
     },
-    pathwayDropdown: ''
+    pathwayDropdown: '',
+    omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
+    pathayAmountDict: {}
+
   } as State,
   mutations: {
     APPEND_CLICKEDNODE (state, val) {
@@ -140,7 +145,14 @@ export default new Vuex.Store({
     },
     SET_PATHWAYDROPDOWN (state, val) {
       state.pathwayDropdown = val
+    },
+    SET_OMICSRECIEVED (state, val) {
+      state.omicsRecieved = val
+    },
+    SET_PATHWAYAMOUNTDICT (state, val) {
+      state.pathayAmountDict = val
     }
+
   },
   actions: {
     addClickedNode ({ commit, state }, val) {
@@ -257,7 +269,14 @@ export default new Vuex.Store({
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')
       commit('SET_PATHWAYDROPDOWN', valClean)
+    },
+    setOmicsRecieved ({ commit }, val) {
+      commit('SET_OMICSRECIEVED', val)
+    },
+    setPathayAmountDict ({ commit }, val) {
+      commit('SET_PATHWAYAMOUNTDICT', val)
     }
+
   },
   modules: {}
 })

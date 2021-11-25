@@ -1,14 +1,12 @@
 /**
  * programs changed from sigma.js examples //ToDo copyright stuff
  */
-import {
-  AbstractNodeProgram,
-  RenderNodeParams
-} from 'sigma/rendering/webgl/programs/common/node'
+import { AbstractNodeProgram } from 'sigma/rendering/webgl/programs/common/node'
 import { SplitNodeDisplayData } from './types'
 import { floatColor } from 'sigma/utils'
 import vertexShaderSource from './square-node-vertex-shader.glsl'
 import fragmentShaderSource from './square-node-fragment-shader.glsl'
+import { RenderParams } from 'sigma/rendering/webgl/programs/common/program'
 
 const POINTS = 1
 const ATTRIBUTES = 6
@@ -107,16 +105,13 @@ export default class CustomNodeProgram extends AbstractNodeProgram {
     array[i] = color3
   }
 
-  render (params: RenderNodeParams): void {
+  render (params: RenderParams): void {
+    if (this.hasNothingToRender()) return
     const gl = this.gl
-
     const program = this.program
     gl.useProgram(program)
 
-    gl.uniform1f(
-      this.ratioLocation,
-      1 / Math.pow(params.ratio, params.nodesPowRatio)
-    )
+    gl.uniform1f(this.ratioLocation, 1 / Math.sqrt(params.ratio))
     gl.uniform1f(this.scaleLocation, params.scalingRatio)
     gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix)
 

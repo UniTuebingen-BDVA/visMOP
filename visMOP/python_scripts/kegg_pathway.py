@@ -10,6 +10,9 @@ class KeggPathway:
         self.reactions = []
         self.orig_x_extent = [0,0]
         self.orig_y_extent = [0,0]
+        self.amount_genes = 0
+        self.amount_maplinks = 0
+        self.amount_compounds = 0
 
     def add_entry(self, entry):
         """ append entry to entries field
@@ -18,6 +21,12 @@ class KeggPathway:
             entry: entry to be added to the entries field
 
         """
+        if entry.entryType == 'gene':
+            self.amount_genes += 1
+        elif entry.entryType == 'maplink':
+            self.amount_maplinks += 1
+        elif entry.entryType == 'compound':
+            self.amount_compounds += 1        
         self.entries.append(entry)
 
     def add_relation(self, relation):
@@ -71,13 +80,17 @@ class KeggPathway:
         current_entries = [entry.keggID for entry in self.entries if not entry.is_empty]
         return self.keggID, current_entries 
 
+    def return_amounts(self):
+        amounts =  {"genes": self.amount_genes, "maplinks": self.amount_maplinks, "compounds": self.amount_compounds}
+        return self.keggID, amounts
+
     def return_formated_title(self):
         return {"text": self.keggID +" - "+ self.title, "value" : self.keggID}
 
     def asdict(self):
         """ return the KeggPathway  as dictionary 
         """
-        return {'keggID': self.keggID, 'entries': self.entries, 'relations': self.relations, 'reactions': self.reactions,"orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent}        
+        return {'keggID': self.keggID, 'entries': self.entries, 'relations': self.relations, 'reactions': self.reactions,"orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent, "amount_genes": self.amount_genes, "amount_maplinks": self.amount_maplinks, "amount_compounds": self.amount_compounds}        
 
 class KeggPathwayEntry:
     """ Class for a single entry of the KEGG Pathway KGML
@@ -98,6 +111,7 @@ class KeggPathwayEntry:
         self.incoming_edges = []
         self.is_empty = False # TODO: only temporary
         self.extent_applied = {}
+
 
     def add_origPos(self, id, pos):
         self.origPos[id] = pos

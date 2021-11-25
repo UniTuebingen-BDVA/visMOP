@@ -56,6 +56,7 @@ export interface graphData {
   attributes: { name: string };
   nodes: node[];
   edges: edge[];
+  options: unkown
 }
 export interface networkxNodeLink{
   graph: {identities: number[]};

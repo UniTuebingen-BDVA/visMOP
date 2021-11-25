@@ -22,7 +22,8 @@ export function generateGraphData (
   const graph = {
     attributes: { name: 'BaseNetwork' },
     nodes: [],
-    edges: []
+    edges: [],
+    options: []
   } as graphData
   const addedEdges: string[] = []
   console.log('fcsExtent', fcsExtent)

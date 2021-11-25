@@ -26,12 +26,12 @@ import { ColorfadeEdgeDisplayData } from './types'
 import vertexShaderSource from 'sigma/rendering/webgl/shaders/edge.vert.glsl'
 import fragmentShaderSource from 'sigma/rendering/webgl/shaders/edge.frag.glsl'
 import {
-  AbstractEdgeProgram,
-  RenderEdgeParams
+  AbstractEdgeProgram
 } from 'sigma/rendering/webgl/programs/common/edge'
+import { RenderParams } from 'sigma/rendering/webgl/programs/common/program'
 
 const POINTS = 4
-const ATTRIBUTES = 6
+const ATTRIBUTES = 5
 const STRIDE = POINTS * ATTRIBUTES
 
 export default class EdgeProgram extends AbstractEdgeProgram {
@@ -43,12 +43,9 @@ export default class EdgeProgram extends AbstractEdgeProgram {
   positionLocation: GLint;
   colorLocation: GLint;
   normalLocation: GLint;
-  thicknessLocation: GLint;
-  scaleLocation: WebGLUniformLocation;
   matrixLocation: WebGLUniformLocation;
-  cameraRatioLocation: WebGLUniformLocation;
-  viewportRatioLocation: WebGLUniformLocation;
-  thicknessRatioLocation: WebGLUniformLocation;
+  sqrtZoomRatioLocation: WebGLUniformLocation;
+  correctionRatioLocation: WebGLUniformLocation;
 
   constructor (gl: WebGLRenderingContext) {
     super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES)
@@ -62,41 +59,19 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     this.positionLocation = gl.getAttribLocation(this.program, 'a_position')
     this.colorLocation = gl.getAttribLocation(this.program, 'a_color')
     this.normalLocation = gl.getAttribLocation(this.program, 'a_normal')
-    this.thicknessLocation = gl.getAttribLocation(this.program, 'a_thickness')
 
     // Uniform locations
-    const scaleLocation = gl.getUniformLocation(this.program, 'u_scale')
-    if (scaleLocation === null) { throw new Error('EdgeProgram: error while getting scaleLocation') }
-    this.scaleLocation = scaleLocation
-
     const matrixLocation = gl.getUniformLocation(this.program, 'u_matrix')
     if (matrixLocation === null) { throw new Error('EdgeProgram: error while getting matrixLocation') }
     this.matrixLocation = matrixLocation
 
-    const cameraRatioLocation = gl.getUniformLocation(
-      this.program,
-      'u_cameraRatio'
-    )
-    if (cameraRatioLocation === null) { throw new Error('EdgeProgram: error while getting cameraRatioLocation') }
-    this.cameraRatioLocation = cameraRatioLocation
+    const correctionRatioLocation = gl.getUniformLocation(this.program, 'u_correctionRatio')
+    if (correctionRatioLocation === null) throw new Error('EdgeProgram: error while getting correctionRatioLocation')
+    this.correctionRatioLocation = correctionRatioLocation
 
-    const viewportRatioLocation = gl.getUniformLocation(
-      this.program,
-      'u_viewportRatio'
-    )
-    if (viewportRatioLocation === null) { throw new Error('EdgeProgram: error while getting viewportRatioLocation') }
-    this.viewportRatioLocation = viewportRatioLocation
-
-    const thicknessRatioLocation = gl.getUniformLocation(
-      this.program,
-      'u_thicknessRatio'
-    )
-    if (thicknessRatioLocation === null) {
-      throw new Error(
-        'EdgeProgram: error while getting thicknessRatioLocation'
-      )
-    }
-    this.thicknessRatioLocation = thicknessRatioLocation
+    const sqrtZoomRatioLocation = gl.getUniformLocation(this.program, 'u_sqrtZoomRatio')
+    if (sqrtZoomRatioLocation === null) throw new Error('EdgeProgram: error while getting sqrtZoomRatioLocation')
+    this.sqrtZoomRatioLocation = sqrtZoomRatioLocation
 
     // Enabling the OES_element_index_uint extension
     // NOTE: on older GPUs, this means that really large graphs won't
@@ -122,7 +97,6 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     // Bindings
     gl.enableVertexAttribArray(this.positionLocation)
     gl.enableVertexAttribArray(this.normalLocation)
-    gl.enableVertexAttribArray(this.thicknessLocation)
     gl.enableVertexAttribArray(this.colorLocation)
 
     gl.vertexAttribPointer(
@@ -142,20 +116,12 @@ export default class EdgeProgram extends AbstractEdgeProgram {
       8
     )
     gl.vertexAttribPointer(
-      this.thicknessLocation,
-      1,
-      gl.FLOAT,
-      false,
-      ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
-      16
-    )
-    gl.vertexAttribPointer(
       this.colorLocation,
       4,
       gl.UNSIGNED_BYTE,
       true,
       ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
-      20
+      16
     )
   }
 
@@ -215,8 +181,8 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     if (len) {
       len = 1 / Math.sqrt(len)
 
-      n1 = -dy * len
-      n2 = dx * len
+      n1 = -dy * len * thickness
+      n2 = dx * len * thickness
     }
 
     let i = POINTS * ATTRIBUTES * offset
@@ -228,7 +194,6 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     array[i++] = y1
     array[i++] = n1
     array[i++] = n2
-    array[i++] = thickness
     array[i++] = sourceColor
 
     // First point flipped
@@ -236,7 +201,6 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     array[i++] = y1
     array[i++] = -n1
     array[i++] = -n2
-    array[i++] = thickness
     array[i++] = sourceColor
 
     // Second point
@@ -244,7 +208,6 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     array[i++] = y2
     array[i++] = n1
     array[i++] = n2
-    array[i++] = thickness
     array[i++] = targetColor
 
     // Second point flipped
@@ -252,28 +215,20 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     array[i++] = y2
     array[i++] = -n1
     array[i++] = -n2
-    array[i++] = thickness
     array[i] = targetColor
   }
 
-  render (params: RenderEdgeParams): void {
+  render (params: RenderParams): void {
+    if (this.hasNothingToRender()) return
+
     const gl = this.gl
-
     const program = this.program
-    gl.useProgram(program)
-    // Binding uniforms
-    gl.uniform1f(this.scaleLocation, params.scalingRatio)
-    gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix)
-    gl.uniform1f(this.cameraRatioLocation, params.ratio)
-    gl.uniform1f(
-      this.viewportRatioLocation,
-      1 / Math.min(params.width, params.height)
-    )
-    gl.uniform1f(
-      this.thicknessRatioLocation,
-      1 / Math.pow(params.ratio, params.edgesPowRatio)
-    )
 
+    gl.useProgram(program)
+
+    gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix)
+    gl.uniform1f(this.sqrtZoomRatioLocation, Math.sqrt(params.ratio))
+    gl.uniform1f(this.correctionRatioLocation, params.correctionRatio)
     // Drawing:
     gl.drawElements(
       gl.TRIANGLES,

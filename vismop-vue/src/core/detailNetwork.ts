@@ -3,8 +3,8 @@ import FA2Layout from 'graphology-layout-forceatlas2/worker'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
-import CustomNodeProgram from '@/core/custom-nodes/custom-node-program'
-import CustomEdgeProgram from '@/core/custom-nodes/colorfade-edge-program'
+import SquareNodeProgram from '@/core/custom-nodes/square-node-program'
+import ColorFadeEdgeProgram from '@/core/custom-nodes/colorfade-edge-program'
 import OutlineCircleProgram from '@/core/custom-nodes/circle-outline-node-program'
 import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
@@ -63,11 +63,11 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
     zIndex: true, // enabling zIndex parameter
     renderLabels: false, // do not render labels w/o hover
     nodeProgramClasses: {
-      splitSquares: CustomNodeProgram,
+      splitSquares: SquareNodeProgram,
       outlineCircle: OutlineCircleProgram
     },
     edgeProgramClasses: {
-      fadeColor: CustomEdgeProgram
+      fadeColor: ColorFadeEdgeProgram
     },
     hoverRenderer: drawHover
   })

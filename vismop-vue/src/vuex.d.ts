@@ -19,7 +19,7 @@ declare module '@vue/runtime-core' {
     overlay: unknown,
     graphData: unknown,
     fcs: unknown,
-    pathwayLayouting: {pathway_list: [key:string]}
+    pathwayLayouting: {pathwayList: [key:string]}
   }
 
   // provide typings for `this.$store`

@@ -283,7 +283,7 @@ def kegg_parsing():
     print("Len unique Pathways: ", len(unique_pathways))
 
     # list accessor is used for test purposes only --> less data = faster
-    for pathwayID in parsed_IDs[0:]:
+    for pathwayID in parsed_IDs[0:15]:
         # TODO blacklist system?!
         if "01100" in pathwayID:
             print("Skipping map01100, general overview")
@@ -293,6 +293,9 @@ def kegg_parsing():
     # generate dict with k: pathway v: nodes
     pathway_node_dict = {k:v for k,v in (pathway.return_pathway_node_list() for pathway in parsed_pathways)}
     
+    # generate dict with k: pathwy v: {amountGenes, amountCompounds}
+    pathway_amount_dict = {k:v for k,v in (pathway.return_amounts() for pathway in parsed_pathways)}
+
     # generate list of pathways for pathway selection
     dropdown_pathways = [pathway.return_formated_title() for pathway in parsed_pathways]        
     
@@ -353,13 +356,15 @@ def kegg_parsing():
     """
     # prepare json data
     out_dat = {
+        "omicsRecieved": {"transcriptomics": transcriptomics["recieved"], "proteomics": proteomics["recieved"], "metabolomics": metabolomics["recieved"]},
         "overview_data": pathway_connection_dict,
         "main_data":with_init_pos,
         "fcs": fold_changes,
         "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
         "pathwayLayouting": {"pathwayList": dropdown_pathways, "pathwayNodeDictionary": pathway_node_dict},
         "proteomics_symbol_dict": proteomics_symbol_dict,
-        "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"], "metabolomics": metabolomics["symbol"]}
+        "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"], "metabolomics": metabolomics["symbol"]},
+        "pathways_amount_dict": pathway_amount_dict
     }
     return json.dumps(out_dat)#json.dumps(pathway_dicts)
 
