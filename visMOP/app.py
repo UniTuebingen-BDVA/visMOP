@@ -283,7 +283,7 @@ def kegg_parsing():
     print("Len unique Pathways: ", len(unique_pathways))
 
     # list accessor is used for test purposes only --> less data = faster
-    for pathwayID in parsed_IDs[0:15]:
+    for pathwayID in parsed_IDs[0:]:
         # TODO blacklist system?!
         if "01100" in pathwayID:
             print("Skipping map01100, general overview")

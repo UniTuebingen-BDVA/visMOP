@@ -9,7 +9,7 @@ export function generateColorScale (minVal: number, maxVal: number) {
   const stepsizeSmaller0 = steps / minVal // 0-minval
   const stepsizeLarger0 = steps / (maxVal - 0)
 
-  return function (val: number) {
+  return function (val: number): string {
     val = Number(val)
 
     if (isNaN(val)) {
@@ -57,5 +57,7 @@ export function generateColorScale (minVal: number, maxVal: number) {
         return '#FF0000'
       }
     }
+    // failsafe return
+    return '#FFFFFF'
   }
 }
