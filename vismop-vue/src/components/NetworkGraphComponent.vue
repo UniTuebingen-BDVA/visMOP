@@ -154,7 +154,14 @@ export default Vue.extend({
     focusNodeMetabolomics (row: {[key: string]: string}) {
       const symbol = row[this.usedSymbolCols.metabolomics]
       //  const keggID = this.proteomicsSymbolDict[symbol]
-      panToNode(this.networkGraph as Sigma, symbol)
+      let queryString = symbol
+      if (symbol.startsWith('C')) {
+        queryString = 'cpd:' + symbol
+      }
+      if (symbol.startsWith('G')) {
+        queryString = 'gl:' + symbol
+      }
+      panToNode(this.networkGraph as Sigma, queryString)
     },
     selectPathway (key: string) {
       console.log('KEY', key)

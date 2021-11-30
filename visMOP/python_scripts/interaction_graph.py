@@ -2,7 +2,6 @@ import networkx as nx
 import gzip
 from fa2 import ForceAtlas2
 
-import matplotlib.pyplot as plt
 import timeit
 class StringGraph:
     """ class representing the string database"""
@@ -74,7 +73,7 @@ class StringGraph:
         composed_graph.graph["egoID_identity"] = egoID_identity
         composed_graph.graph["identity_egoID"] = identity_egoID
         composed_graph.graph["identities"] = list(range(len(list(self.ego_graphs.values()))))
-        print(composed_graph.graph)
+        #print(composed_graph.graph)
         intersections_node = self.calculate_intersections_nodes(composed_graph)
         intersections_edge = self.calculate_intersections_edges(composed_graph)
         shared_ego_edges = self.calculate_ego_ego_edges(composed_graph)
@@ -88,7 +87,7 @@ class StringGraph:
         #print(composed_graph.edges(data="identity"))
         #print(len(composed_graph.edges(data="identity")))
         #print(len(composed_graph.edges()))
-        print(composed_graph.edges(data="egoEgoEdge"))
+        #print(composed_graph.edges(data="egoEgoEdge"))
 
         return nx.node_link_data(composed_graph, attrs=dict(source='source', target='target', name='key', key='entryKey', link='links'))
 
@@ -124,7 +123,7 @@ class StringGraph:
             if((edge[0] in egoIDs) and (edge[1] in egoIDs)):
                 print("egoegoedge", edge)
                 ego_edges_color[edge]= [graph.graph["egoID_identity"][edge[0]],graph.graph["egoID_identity"][edge[1]] ]
-        print("egoegoedgecolors", ego_edges_color)
+        #print("egoegoedgecolors", ego_edges_color)
         return ego_edges_color
     def print_info(self):
         print("completeGraph",nx.info(self.complete_graph))

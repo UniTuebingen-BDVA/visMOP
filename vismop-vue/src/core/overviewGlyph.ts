@@ -86,7 +86,6 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   const innermostRadius = 4
   const colorScaleRB = d3.scaleSequential(d3.interpolateRdBu).domain([store.state.fcQuantiles[1], store.state.fcQuantiles[0]])
   const colorScalePG = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles)
-  const colorScaleBrBG = d3.scaleSequential(d3.interpolateBrBG).domain([store.state.fcQuantiles[1], store.state.fcQuantiles[0]])
 
   // prepare transcriptomics
   let colorsTranscriptomics: string[] = []
@@ -107,7 +106,7 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   let colorsProteomics: string[] = []
   const proteomicsArcDat = []
   if (glyphDat.proteomics.available) {
-    colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScalePG(elem))
+    colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleRB(elem))
     const angleRangeProteomicsFCs = _.range(0.5 * Math.PI, 1.5 * Math.PI + (Math.PI / colorsProteomics.length), Math.PI / colorsProteomics.length)
     colorsProteomics.forEach((element, idx) => {
       proteomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0 })
@@ -121,7 +120,7 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   let colorsMetabolomics: string[] = []
   const metabolomicsArcDat = []
   if (glyphDat.metabolomics.available) {
-    colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScaleBrBG(elem))
+    colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScalePG(elem))
     const angleRangeMetabolomicsFCs = _.range(1.5 * Math.PI, 2.5 * Math.PI + (Math.PI / colorsMetabolomics.length), Math.PI / colorsMetabolomics.length)
     colorsMetabolomics.forEach((element, idx) => {
       metabolomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0 })

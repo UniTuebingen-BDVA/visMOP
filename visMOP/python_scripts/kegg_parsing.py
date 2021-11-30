@@ -1,5 +1,5 @@
 import xml.etree.cElementTree as cET
-from python_scripts.kegg_pathway import KeggPathway, KeggPathwayEntry, KeggPathwayRelation, KeggPathwayReaction
+from visMOP.python_scripts.kegg_pathway import KeggPathway, KeggPathwayEntry, KeggPathwayRelation, KeggPathwayReaction
 
 
 def add_incoming_edges(global_nodes):

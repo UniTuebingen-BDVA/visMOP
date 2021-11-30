@@ -3,7 +3,7 @@ import json
 import pathlib
 import time
 import re
-from python_scripts.kegg_get_entry import KeggGet
+from visMOP.python_scripts.kegg_get_entry import KeggGet
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()

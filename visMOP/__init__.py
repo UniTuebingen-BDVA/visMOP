@@ -1,17 +1,16 @@
 from flask import Flask, render_template, send_from_directory,request, Response
-from python_scripts.networkx_layouting import get_spring_layout_pos, add_initial_positions, relayout
-from python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty,add_incoming_edges
-from python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls,associacte_value_keggID
-from python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
-from python_scripts.create_overview import get_overview
-from python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info, make_interaction_dict
-from python_scripts.interaction_graph import StringGraph
+from visMOP.python_scripts.networkx_layouting import get_spring_layout_pos, add_initial_positions, relayout
+from visMOP.python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty,add_incoming_edges
+from visMOP.python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls,associacte_value_keggID
+from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
+from visMOP.python_scripts.create_overview import get_overview
+from visMOP.python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info, make_interaction_dict
+from visMOP.python_scripts.interaction_graph import StringGraph
 import pandas as pd
 import pathlib
 import os
 import json
 import sys
-import snappy
 
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
 
@@ -27,7 +26,7 @@ metabolomics_df_global = None
 stringGraph = None
 
 # DATA PATHS: (1) Local, (2) tuevis
-data_path = pathlib.Path().resolve().parent
+data_path = pathlib.Path().resolve()
 #data_path = pathlib.Path("/var/www/visMOP")
 
 """

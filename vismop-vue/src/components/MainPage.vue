@@ -204,7 +204,7 @@ export default Vue.extend({
       this.proteomicsSelectionData = val
     },
     metabolomicsSelection (val: string) {
-      this.proteomicsSelectionData = val
+      this.metabolomicsSelectionData = val
     }
   }
 })
