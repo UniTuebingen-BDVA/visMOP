@@ -4,7 +4,7 @@
       <!-- Data Table-->
       <v-col cols="3" class="mb-2" id="inputTable">
         <div>
-          <v-card>
+          <v-card class="mb-5">
             <v-card-title>
               Data
               <v-spacer></v-spacer>

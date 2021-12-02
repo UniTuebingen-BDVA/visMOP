@@ -8,6 +8,8 @@ import {
   relation,
   nodeAttr
 } from '@/core/graphTypes'
+import store from '@/store'
+
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -39,13 +41,8 @@ export function generateGraphData (
         const initPosX = entry.initialPosX
         const initPosY = entry.initialPosY
         const color = '#FFFFFF'
-
-        const secondaryColor =
-          entry.entryType === 'gene'
-            ? typeof entry.proteomicsValue === 'string'
-              ? '#808080'
-              : colorScale(entry.proteomicsValue)
-            : '#808080'
+        const trueName = store.state.pathwayLayouting.pathwayList.find(elem => elem.value === currentNames[0].replace('path:', ''))?.text
+        const secondaryColor = '#808080'
         console.log('TEST!!!!', glyphs[entryKey])
         const currentNode = {
           key: keggID,
@@ -62,7 +59,7 @@ export function generateGraphData (
             nonFadeColorSecondary: secondaryColor,
             fadeColor: fadeGray,
             fadeColorSecondary: fadeGray,
-            label: generateLabel(_.escape(currentNames[0]), entry),
+            label: `Name: ${_.escape(trueName)}`,
             x: initPosX,
             y: initPosY,
             z: 1,
@@ -101,19 +98,6 @@ export function generateGraphData (
   }
   return graph
 }
-function generateLabel (name: string, entry: entry): string {
-  const stringContainer: string[] = [`Name: ${name}`]
-  if (entry.trascriptomicsValue !== 'NA') {
-    stringContainer.push(`Trans:\t${entry.trascriptomicsValue}`)
-  }
-  if (entry.proteomicsValue !== 'NA') {
-    stringContainer.push(`Prot:\t${entry.proteomicsValue}`)
-  }
-  if (entry.metabolomicsValue !== 'NA') {
-    stringContainer.push(`Meta:\t${entry.metabolomicsValue}`)
-  }
-  return stringContainer.join('\n')
-}
 
 /**
  * Parses a kegg relation into an edge representation
@@ -128,7 +112,7 @@ function generateForceGraphEdge (relation: relation): edge {
     PPrel: '#A1CAF1',
     GErel: '#008856',
     PCrel: '#875692',
-    maplink: '#F3C300',
+    maplink: '#999999',
     maplinkOnceRemoved: '#FF0000',
     reaction: '#222222',
     pathCon: '#222222'

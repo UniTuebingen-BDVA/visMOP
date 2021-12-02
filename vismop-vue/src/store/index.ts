@@ -31,7 +31,8 @@ interface State {
   pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] } },
   pathwayDropdown: string,
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
-  pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}}
+  pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
+  keggIDGenesymbolDict: {[key: string]: string}
 }
 export default new Vuex.Store({
   state: {
@@ -64,7 +65,8 @@ export default new Vuex.Store({
     },
     pathwayDropdown: '',
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
-    pathayAmountDict: {}
+    pathayAmountDict: {},
+    keggIDGenesymbolDict: {}
 
   } as State,
   mutations: {
@@ -151,14 +153,18 @@ export default new Vuex.Store({
     },
     SET_PATHWAYAMOUNTDICT (state, val) {
       state.pathayAmountDict = val
+    },
+    SET_KEGGIDGENESYMBOLDICT (state, val) {
+      state.keggIDGenesymbolDict = val
     }
-
   },
   actions: {
     addClickedNode ({ commit, state }, val) {
+      // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
       if (!enteredKeys.includes(val)) {
-        const tableEntry = { id: val, name: state.transcriptomicsKeggIDDict[val], fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
+        const sybmolName = state.keggIDGenesymbolDict[val]
+        const tableEntry = { id: val, name: sybmolName, fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
         commit('APPEND_CLICKEDNODE', tableEntry)
       }
     },
@@ -179,6 +185,9 @@ export default new Vuex.Store({
       if (indexNode > -1) {
         commit('REMOVE_CLICKEDNODE', indexNode)
       }
+    },
+    setKeggIDGeneSymbolDict ({ commit }, val) {
+      commit('SET_KEGGIDGENESYMBOLDICT', val)
     },
     setSideBarExpand ({ commit }, val) {
       commit('SET_SIDEBAREXPAND', val)

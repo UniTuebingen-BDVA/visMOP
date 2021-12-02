@@ -32,7 +32,7 @@
             width="40"
           />
 
-          <span class="mr-2">SAMPLE APP</span>
+          <span class="mr-2">visMOP</span>
         </div>
       </v-list-item>
       <v-list dense>

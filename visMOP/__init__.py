@@ -331,7 +331,7 @@ def kegg_parsing():
         pathway_titles["path:" + i.keggID] = [i.title]
 
 
-    pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles)
+    pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles, parsed_pathways)
     network_overview = generate_networkx_dict(pathway_connection_dict)
     pos_overview = get_spring_layout_pos(network_overview)
     init_pos_overview = add_initial_positions(pos_overview, pathway_connection_dict)

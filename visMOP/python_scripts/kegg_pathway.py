@@ -10,6 +10,7 @@ class KeggPathway:
         self.reactions = []
         self.orig_x_extent = [0,0]
         self.orig_y_extent = [0,0]
+        self.maplinks = []
         self.amount_genes = 0
         self.amount_maplinks = 0
         self.amount_compounds = 0
@@ -23,8 +24,9 @@ class KeggPathway:
         """
         if entry.entryType == 'gene':
             self.amount_genes += 1
-        elif entry.entryType == 'maplink':
+        elif entry.entryType == 'map':
             self.amount_maplinks += 1
+            self.maplinks.append(entry.keggID)
         elif entry.entryType == 'compound':
             self.amount_compounds += 1        
         self.entries.append(entry)
@@ -90,7 +92,7 @@ class KeggPathway:
     def asdict(self):
         """ return the KeggPathway  as dictionary 
         """
-        return {'keggID': self.keggID, 'entries': self.entries, 'relations': self.relations, 'reactions': self.reactions,"orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent, "amount_genes": self.amount_genes, "amount_maplinks": self.amount_maplinks, "amount_compounds": self.amount_compounds}        
+        return {'keggID': self.keggID, 'entries': self.entries, 'relations': self.relations, 'reactions': self.reactions,"orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent, "maplinks": self.maplinks, "amount_genes": self.amount_genes, "amount_maplinks": self.amount_maplinks, "amount_compounds": self.amount_compounds}        
 
 class KeggPathwayEntry:
     """ Class for a single entry of the KEGG Pathway KGML

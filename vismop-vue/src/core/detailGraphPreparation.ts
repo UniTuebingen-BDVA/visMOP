@@ -8,6 +8,7 @@ import {
   relation,
   nodeAttr
 } from '@/core/graphTypes'
+import store from '@/store'
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -18,6 +19,7 @@ export function generateGraphData (
   nodeList: { [key: string]: entry },
   fcsExtent: number[]
 ): graphData {
+  const keggIDGenesymbolDict : { [key: string]: string } = {}
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
     attributes: { name: 'BaseNetwork' },
@@ -33,6 +35,10 @@ export function generateGraphData (
     const entry = nodeList[entryKey]
     // console.log("entry", entry)
     if (!entry.isempty) {
+      if (entry.name) {
+        keggIDGenesymbolDict[entry.keggID] = entry.name[0]
+      }
+
       const currentNames = entry.name
       const keggID = entry.keggID
       if (currentNames) {
@@ -93,6 +99,7 @@ export function generateGraphData (
       }
     }
   }
+  store.dispatch('setKeggIDGeneSymbolDict', keggIDGenesymbolDict)
   return graph
 }
 function generateLabel (name: string, entry: entry): string {
