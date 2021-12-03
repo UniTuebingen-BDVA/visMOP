@@ -7,7 +7,7 @@ from visMOP.python_scripts.kegg_get_entry import KeggGet
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()
-#data_path = pathlib.Path("/var/www/visMOP")
+#data_path = pathlib.Path("/var/www/vismop")
 
 def associacte_value_keggID(datatable,symbol_col, val_col, symbol_kegg_dict):
     out_dict = {}
@@ -227,7 +227,7 @@ def kegg_get(keggIDs=None, kegg_DB=None, options = None, caching_path=None ):
         print("Querying KEGG Database!!")
         for query_chunk in query_chunks:
             
-            time.sleep(1)
+            time.sleep(.1)
             kegg_api_url = "http://rest.kegg.jp/get/{}".format(query_chunk)
             print(kegg_api_url)
             try:
@@ -291,7 +291,7 @@ def query_kgmls(pathways_ids, caching_path):
                 print("HTTP ERROR: {}".format(e.__dict__))
             except urllib.error.URLError as e:
                 print("URL ERROR: {}".format(e.__dict__))    
-            time.sleep(1)
+            time.sleep(.1)
     cache_kegg_data(caching_path, cache_data)
     out_dict = {}
     for ID in pathways_ids:
@@ -314,7 +314,7 @@ def multiple_query(query_function,**func_options):
     not_get = None
     out_dict = {}
     while True:
-            time.sleep(3)
+            time.sleep(.1)
             try:
                 out_dict, remaining = query_function(**func_options)
                 if len(remaining) == not_get:

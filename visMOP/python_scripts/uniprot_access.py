@@ -8,7 +8,7 @@ import json
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()
-#data_path = pathlib.Path("/var/www/visMOP")
+#data_path = pathlib.Path("/var/www/vismop")
 
 def make_protein_dict(df, colname):
     column_names = df.columns

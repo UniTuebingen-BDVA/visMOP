@@ -27,7 +27,7 @@ stringGraph = None
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()
-#data_path = pathlib.Path("/var/www/visMOP")
+#data_path = pathlib.Path("/var/www/vismop")
 
 """
 Default app routes for index and favicon

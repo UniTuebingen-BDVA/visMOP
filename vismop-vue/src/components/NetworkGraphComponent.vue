@@ -29,12 +29,7 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import {
-  mainGraph,
-  panToNode,
-  layoutToPathway,
-  relaxLayout
-} from '../core/detailNetwork'
+import DetailNetwork from '../core/detailNetwork'
 import { generateGraphData } from '../core/detailGraphPreparation'
 import Vue from 'vue'
 import Sigma from 'sigma'
@@ -43,7 +38,7 @@ interface Data{
   tableSearch: string
   selectedTab: string
   outstandingDraw: boolean
-  networkGraph: (Sigma | undefined)
+  networkGraph: (DetailNetwork | undefined)
   pathwaySelection: string
   expandButton: boolean
 }
@@ -136,7 +131,9 @@ export default Vue.extend({
       const fcExtents = this.fcQuantiles
       const networkData = generateGraphData(this.graphData, fcExtents)
       console.log('base dat', networkData)
-      this.networkGraph = mainGraph(this.contextID, networkData)
+      const key = Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
+      const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
+      this.networkGraph = new DetailNetwork(networkData, this.contextID, key, nodeList)
     },
     focusNodeTranscriptomics (row: {[key: string]: string}) {
       const symbol = row[this.usedSymbolCols.transcriptomics]
@@ -144,12 +141,12 @@ export default Vue.extend({
       console.log('dict', this.transcriptomicsSymbolDict)
       const keggID = this.transcriptomicsSymbolDict[symbol]
       console.log('ID', keggID)
-      panToNode(this.networkGraph as Sigma, keggID)
+      // panToNode(this.networkGraph as Sigma, keggID)
     },
     focusNodeProteomics (row: {[key: string]: string}) {
       const symbol = row[this.usedSymbolCols.proteomics]
       const keggID = this.proteomicsSymbolDict[symbol]
-      panToNode(this.networkGraph as Sigma, keggID)
+      // panToNode(this.networkGraph as Sigma, keggID)
     },
     focusNodeMetabolomics (row: {[key: string]: string}) {
       const symbol = row[this.usedSymbolCols.metabolomics]
@@ -161,15 +158,16 @@ export default Vue.extend({
       if (symbol.startsWith('G')) {
         queryString = 'gl:' + symbol
       }
-      panToNode(this.networkGraph as Sigma, queryString)
+      // panToNode(this.networkGraph as Sigma, queryString)
     },
     selectPathway (key: string) {
       console.log('KEY', key)
       if (key !== undefined && key !== null) {
         const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
-        layoutToPathway(this.networkGraph as Sigma, key, nodeList)
+        this.networkGraph?.selectNewPathway(key, nodeList)
       } else {
-        relaxLayout(this.networkGraph as Sigma)
+        console.log('TEST')
+        // relaxLayout(this.networkGraph as Sigma)
       }
     },
     expandComponent () {
