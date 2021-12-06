@@ -25,7 +25,7 @@ def get_spring_layout_pos(node_dict, init_scale= 20000):
     print("NX Graphparsing took {:.3f} s".format((time2-time1)))
     #pos = nx.spring_layout(G, weight=None, scale=init_scale)
     forceatlas2 = ForceAtlas2()
-    pos = forceatlas2.forceatlas2_networkx_layout(G, pos=None,iterations=75)
+    pos = forceatlas2.forceatlas2_networkx_layout(G, pos=None,iterations=1)
     time3 = time.time()
     print("Spring Layouting took {:.3f} s".format((time3-time2)))
     pos_x = {}

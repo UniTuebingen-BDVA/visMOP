@@ -1,5 +1,6 @@
 const path = require('path')
 module.exports = {
+  "parallel": false,
   outputDir: path.resolve(__dirname, '../dist/'),
   assetsDir: './static',
 

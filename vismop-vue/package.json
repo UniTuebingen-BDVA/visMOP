@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build --mode development",
+    "build-production": "vue-cli-service build --mode production",
     "build-watch": "vue-cli-service build --mode development --watch",
     "lint": "vue-cli-service lint",
     "lint-fix": "vue-cli-service lint --fix"
@@ -65,7 +66,9 @@
     "parserOptions": {
       "ecmaVersion": 2020
     },
-    "rules": {}
+    "rules": {
+      "no-unused-expressions": "off",
+      "@typescript-eslint/no-unused-expressions": 2}
   },
   "browserslist": [
     "> 1%",

@@ -6,7 +6,7 @@ import re
 from visMOP.python_scripts.kegg_get_entry import KeggGet
 
 # DATA PATHS: (1) Local, (2) tuevis
-data_path = pathlib.Path().resolve()
+#data_path = pathlib.Path().resolve()
 #data_path = pathlib.Path("/var/www/vismop")
 
 def associacte_value_keggID(datatable,symbol_col, val_col, symbol_kegg_dict):

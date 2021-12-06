@@ -4,7 +4,7 @@ from visMOP.python_scripts.kegg_parsing import parse_KGML, generate_networkx_dic
 from visMOP.python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls,associacte_value_keggID
 from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
 from visMOP.python_scripts.create_overview import get_overview
-from visMOP.python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info, make_interaction_dict
+from visMOP.python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info
 from visMOP.python_scripts.interaction_graph import StringGraph
 import pandas as pd
 import pathlib
@@ -74,9 +74,8 @@ protein recieve
 """
 @app.route('/proteomics_table', methods=['POST'])
 def prot_table_recieve():
-    # make table and interaction/string graph structure available globally
+    # make table available globally
     global prot_table_global
-    global stringGraph
 
     # aquire table data-blob
     transfer_dat = request.files['dataTable']
@@ -92,16 +91,7 @@ def prot_table_recieve():
     out_data["entries"] = generate_vue_table_entries(prot_data)
     out_data["data"] = prot_table_json
    
-    # build protein interaction graph from string file
-    try:
-        script_dir = data_path
-        dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
-        stringGraph = StringGraph(dest_dir)
-
-    except FileNotFoundError:
-        interaction_dict = {}
-        print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
-
+    
 
     return json.dumps(out_data)
 
@@ -166,7 +156,7 @@ def uniprot_access(colname):
     protein_dict = make_protein_dict(prot_table_global,colname)
 
     # query uniprot for the IDs in the table and add their info to the dictionary
-    get_uniprot_entry(protein_dict)
+    get_uniprot_entry(protein_dict,data_path)
     add_uniprot_info(protein_dict)
     # add location to table
     prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
@@ -187,6 +177,7 @@ App route for querying and parsing kegg files
 @app.route('/kegg_parsing', methods=['POST'])
 def kegg_parsing():
     global metabolomics_df_global
+    global stringGraph
 
     overall_entries = {}
     overall_relations = {}
@@ -211,13 +202,23 @@ def kegg_parsing():
 
     #Handle Proteomics if available
     if proteomics["recieved"]:
-        uniprot_access(proteomics["symbol"])
-        # ID being a Uniprot ID
-        for ID in prot_dict_global:
-            entry = prot_dict_global[ID]
-            proteomics_symbol_dict[ID] = entry["keggID"]
-            proteomics_keggIDs.append(entry["keggID"])
-            fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
+        try:
+            script_dir = data_path
+            dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
+            stringGraph = StringGraph(dest_dir)
+            uniprot_access(proteomics["symbol"])
+            # ID being a Uniprot ID
+            for ID in prot_dict_global:
+                entry = prot_dict_global[ID]
+                proteomics_symbol_dict[ID] = entry["keggID"]
+                proteomics_keggIDs.append(entry["keggID"])
+                fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
+
+        except FileNotFoundError:
+            print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
+          
+            # build protein interaction graph from string file
+        
 
     # Handle Metabolomics if available
     if metabolomics["recieved"]:

@@ -58,6 +58,46 @@
 
         <span class="mr-2">VisMOP</span>
       </div>
+      <v-spacer></v-spacer>
+      <v-dialog
+      v-model="infoDialog"
+      width="500"
+      >
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+              color="primary"
+              v-bind="attrs"
+              v-on="on"
+          >
+            About
+          </v-btn>
+        </template>
+
+        <v-card>
+          <v-card-title>
+            Interaction Network
+            <v-spacer></v-spacer>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-icon
+                  @click="infoDialog = false"
+              >
+                mdi-close-box
+              </v-icon>
+            </v-card-actions>
+
+          </v-card-title>
+
+          <v-card-text>
+            For research use only. See <a href="https://www.kegg.jp/kegg/legal.html" target="_blank">KEGG</a> for more info.<br>
+            Using Data from<br>
+            KEGG: <a href="https://www.kegg.jp/" target="_blank">KEGG</a> <br>
+            Uniprot: <a href="https://www.uniprot.org/" target="_blank">UniProt</a><br>
+            STRING: <a href="https://string-db.org/" target="_blank">STRING</a>
+          </v-card-text>
+
+        </v-card>
+      </v-dialog>
     </v-app-bar>
 
     <v-main class="pl-12">
@@ -80,7 +120,7 @@ export default Vue.extend({
   data: () => ({
     drawer: true,
     navbarKey: true,
-    dialog: false
+    infoDialog: false
   }),
   methods: {
 

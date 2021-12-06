@@ -6,9 +6,6 @@ import os
 import time
 import json
 
-# DATA PATHS: (1) Local, (2) tuevis
-data_path = pathlib.Path().resolve()
-#data_path = pathlib.Path("/var/www/vismop")
 
 def make_protein_dict(df, colname):
     column_names = df.columns
@@ -29,7 +26,7 @@ def make_protein_dict(df, colname):
 '''
 retrieve entry as txt format
 '''
-def get_uniprot_entry(protein_dict):
+def get_uniprot_entry(protein_dict, data_path):
     print("Retrieving Uniprot Data...")
     script_dir = data_path
     dest_dir = os.path.join(script_dir, 'uniprot_files')
@@ -201,7 +198,7 @@ Get interaction data from STRING database:
 file needs to be downloaded (10090.protein.physical.links.v11.0.txt) and filepath needs to be specified
 interaction_dict = {string_id :{string_id_interaction_prot1 : score, string_id_interaction_prot2 : score, ...}}
 '''
-def make_interaction_dict(filepath):
+def make_interaction_dict(filepath, data_path):
     start_time = time.time()
     cache_path = data_path / 'interaction_dict.json'
     print("Parsing interaction dictionary...")
