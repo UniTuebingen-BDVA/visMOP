@@ -2,14 +2,25 @@ import { Attributes } from 'graphology-types'
 /**
  * Defines a set of edge attributes
  */
-export interface edgeAttr extends Attributes {
+export interface fadeEdgeAttr extends Attributes {
   sourceColor: string;
   targetColor: string;
-  z: number;
+  zIndex: number;
   fadeColor: string;
   nonFadeColor: string;
   type: string;
 }
+
+export interface baseEdgeAttr extends Attributes {
+  type: string;
+  zIndex: number;
+  color: string;
+}
+export interface baseEdgeAttr extends Attributes {
+  zIndex: number;
+  color: string;
+}
+
 /**
  * Defines an edge
  */
@@ -22,21 +33,26 @@ export interface edge {
 /**
  * Defines a set of node attributes
  */
-export interface nodeAttr extends Attributes {
-  name: string;
-  x: number;
-  y: number;
-  z: number;
-  initialX: number;
-  initialY: number;
+export interface detailNodeAttr extends baseNodeAttr {
+  
   origPos: { [key: string]: number[] };
-  color: string;
+  
   secondaryColor: string;
   outlineColor: string;
   nonFadeColor: string;
   nonFadeColorSecondary: string;
   fadeColor: string;
   fadeColorSecondary: string;
+  initialX: number;
+  initialY: number;
+}
+
+export interface baseNodeAttr extends Attributes {
+  name: string;
+  x: number;
+  y: number;
+  zIndex: number;
+  color: string;
   size: number;
   fixed: boolean;
   type: string;

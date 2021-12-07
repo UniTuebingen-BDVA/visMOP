@@ -6,7 +6,8 @@ import {
   entry,
   graphData,
   relation,
-  nodeAttr
+  detailNodeAttr,
+  fadeEdgeAttr
 } from '@/core/graphTypes'
 import store from '@/store'
 /**
@@ -75,13 +76,13 @@ export function generateGraphData (
             label: generateLabel(_.escape(currentNames[0]), entry),
             x: initPosX,
             y: initPosY,
-            z: 1,
+            zIndex: 1,
             initialX: initPosX,
             initialY: initPosY,
             origPos: entry.origPos,
             size: 3,
             fixed: false // fixed property on nodes excludes nodes from layouting
-          } as nodeAttr
+          } as detailNodeAttr
         } as node
         // if(entry.entryType == "pathway")
         // {console.log("currentnode",currentNode)}
@@ -146,13 +147,13 @@ function generateForceGraphEdge (relation: relation): edge {
       source: entry1,
       target: entry2,
       attributes: {
-        z: 0,
+        zIndex: 0,
         type: 'fadeColor',
         sourceColor: edgeColors[relationType],
         targetColor: edgeColors[relationType],
         nonFadeColor: edgeColors[relationType],
         fadeColor: fadeGray
-      }
+      } as fadeEdgeAttr
     } as edge
     return edge
   } else {
@@ -164,13 +165,13 @@ function generateForceGraphEdge (relation: relation): edge {
       source: entry1,
       target: entry2,
       attributes: {
-        z: 0,
+        zIndex: 0,
         type: 'fadeColor',
         sourceColor: edgeColors.reaction,
         targetColor: edgeColors.reaction,
         nonFadeColor: edgeColors.reaction,
         fadeColor: fadeGray
-      }
+      } as fadeEdgeAttr
     } as edge
     return edge
   }

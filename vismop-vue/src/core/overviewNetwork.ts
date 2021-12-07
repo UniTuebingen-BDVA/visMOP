@@ -1,9 +1,8 @@
-import Graph, { MultiGraph } from 'graphology'
+import { MultiGraph } from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
-import CustomEdgeProgram from '@/core/custom-nodes/colorfade-edge-program'
 import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import store from '@/store'
@@ -62,9 +61,6 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
     nodeProgramClasses: {
       ...DEFAULT_SETTINGS.nodeProgramClasses,
       image: getNodeProgramImage()
-    },
-    edgeProgramClasses: {
-      fadeColor: CustomEdgeProgram
     },
     hoverRenderer: drawHover
   })

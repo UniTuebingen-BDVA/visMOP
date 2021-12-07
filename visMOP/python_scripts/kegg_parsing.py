@@ -74,6 +74,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
     pathway.title = root.get("title")
     for entry in root.findall('entry'):
         entry_ID = entry.get('id')
+        # TODO this is a problem, if several entities are represented in a single entry!!!!!
         entry_keggID = entry.get('name').split(" ")[0] 
         if entry_keggID in global_entry.keys():
             current_entry = global_entry[entry_keggID]
