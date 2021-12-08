@@ -29,23 +29,26 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
     const proteomicsData = { available: omicsRecieved.proteomics, foldChanges: [], nodeState: { total: 0, regulated: 0 } } as omicsData
     const metabolomicsData = { available: omicsRecieved.metabolomics, foldChanges: [], nodeState: { total: 0, regulated: 0 } } as omicsData
     const currentAmounts = pathwayAmounts[pathway.value]
-    const nodeIDs = pathwayLayouting.pathwayNodeDictionary[pathway.value].map(elem => elem.replace('cpd:', '').replace('gl:', ''))
+    const nodeIDs = pathwayLayouting.pathwayNodeDictionary[pathway.value].map(elem => elem.split(';'))
     nodeIDs.forEach(element => {
-      try {
-        const fcsCurrent = fcs[element]
-        if (typeof fcsCurrent.transcriptomics === 'number') {
-          transcriptomicsData.foldChanges.push(fcsCurrent.transcriptomics)
-          transcriptomicsData.nodeState.regulated += 1
-        }
-        if (typeof fcsCurrent.proteomics === 'number') {
-          proteomicsData.foldChanges.push(fcsCurrent.proteomics)
-          proteomicsData.nodeState.regulated += 1
-        }
-        if (typeof fcsCurrent.metabolomics === 'number') {
-          metabolomicsData.foldChanges.push(fcsCurrent.metabolomics)
-          metabolomicsData.nodeState.regulated += 1
-        }
-      } catch (error) {}
+      element.forEach(entry => {
+        const currentEntry = entry.replace('cpd:', '').replace('gl:', '')
+        try {
+          const fcsCurrent = fcs[currentEntry]
+          if (typeof fcsCurrent.transcriptomics === 'number') {
+            transcriptomicsData.foldChanges.push(fcsCurrent.transcriptomics)
+            transcriptomicsData.nodeState.regulated += 1
+          }
+          if (typeof fcsCurrent.proteomics === 'number') {
+            proteomicsData.foldChanges.push(fcsCurrent.proteomics)
+            proteomicsData.nodeState.regulated += 1
+          }
+          if (typeof fcsCurrent.metabolomics === 'number') {
+            metabolomicsData.foldChanges.push(fcsCurrent.metabolomics)
+            metabolomicsData.nodeState.regulated += 1
+          }
+        } catch (error) {}
+      })
     })
     transcriptomicsData.foldChanges.sort()
     proteomicsData.foldChanges.sort()

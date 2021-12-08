@@ -103,7 +103,7 @@ class KeggPathwayEntry:
         self.keggID = keggID
         self.trascriptomicsValue = values["transcriptomics"] or "NaN"
         self.proteomicsValue = values["proteomics"] or "NaN"
-        self.metabolomicsValue = values["metabolomics"] or "nan"
+        self.metabolomicsValue = values["metabolomics"] or "NaN"
         self.name = None
         self.origPos = {}
         self.entryType = None

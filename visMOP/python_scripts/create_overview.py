@@ -13,7 +13,6 @@ def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_
     # remove all genes from the without_empty --> keep only pathways to identify relevant maplinks
     for pathway in pathway_objs:
         pathwayKey = "path:" + str(pathway.keggID)
-        print(pathway.maplinks)
         for maplink in pathway.maplinks:
             if str(maplink).replace("path:", "")in displayed_pathways :
                 if not(maplink == pathwayKey):

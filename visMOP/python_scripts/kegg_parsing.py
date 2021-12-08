@@ -75,18 +75,21 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
     for entry in root.findall('entry'):
         entry_ID = entry.get('id')
         # TODO this is a problem, if several entities are represented in a single entry!!!!!
-        entry_keggID = entry.get('name').split(" ")[0] 
+        entry_keggID_list = entry.get('name').split(" ")
+        entry_keggID = ";".join(entry_keggID_list)
         if entry_keggID in global_entry.keys():
             current_entry = global_entry[entry_keggID]
         else:
-            try:
-                #replacing probably is a workaround
-                if(entry_keggID == "cpd:C05125"):
-                    print("entryTest", value_dict[entry_keggID.replace("cpd:","").replace("gl:", "")])
-                    print("entryTest", value_dict["C05125"])
-                value = value_dict[entry_keggID.replace("cpd:","").replace("glu:", "")]
-            except:
-                value = {"transcriptomics": "NA", "proteomics": "NA", "metabolomics":"NA"}
+            # TODO atm only the first fc is kept
+            for keggID in entry_keggID_list:
+                value = False
+                try:
+                    #replacing probably is a workaround
+                    value = value_dict[keggID.replace("cpd:","").replace("glu:", "").replace("ko:", "").replace("dr:", "dr")]
+                    print(value)
+                except:
+                    if not value:
+                        value = {"transcriptomics": "NA", "proteomics": "NA", "metabolomics":"NA"}
             current_entry = KeggPathwayEntry(entry_keggID, value)
             current_entry.entryType = entry.get('type')
 

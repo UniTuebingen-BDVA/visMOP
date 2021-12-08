@@ -111,7 +111,6 @@ def metabolomics_table_recieve():
     # parse and create dataframe and prepare json
     data_table = create_df(transfer_dat)
     metabolomics_df_global = data_table.copy(deep=True)
-    print(data_table)
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
     out_data =  {}
