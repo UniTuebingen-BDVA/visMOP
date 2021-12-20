@@ -57,7 +57,7 @@ def generate_networkx_dict(global_nodes):
         
     return out_dict    
 
-def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction, value_dict):
+def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction, value_dict, parsed_gets):
     """ parses kgml file and returns a KeggPathway object
 
     Args:
@@ -73,6 +73,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
     groups = {}
     pathway.title = root.get("title")
     for entry in root.findall('entry'):
+        entry_kegg_gets = []
         entry_ID = entry.get('id')
         # TODO this is a problem, if several entities are represented in a single entry!!!!!
         entry_keggID_list = entry.get('name').split(" ")
@@ -83,10 +84,11 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             # TODO atm only the first fc is kept
             for keggID in entry_keggID_list:
                 value = False
+                entry_kegg_gets.append(parsed_gets[keggID])
                 try:
                     #replacing probably is a workaround
                     value = value_dict[keggID.replace("cpd:","").replace("glu:", "").replace("ko:", "").replace("dr:", "dr")]
-                    print(value)
+                    # print(value)
                 except:
                     if not value:
                         value = {"transcriptomics": "NA", "proteomics": "NA", "metabolomics":"NA"}
@@ -116,6 +118,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             pathway.update_orig_extents(*current_entry.origPos[pathway_ID])
 
             pathway.add_entry(current_entry)
+            pathway.add_kegg_info(entry_kegg_gets)
             entry_keggID_map[entry_ID] = current_entry.keggID
 
     pathway.apply_extents()
