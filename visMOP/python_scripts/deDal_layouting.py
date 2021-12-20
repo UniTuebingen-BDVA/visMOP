@@ -1,0 +1,243 @@
+from networkx.algorithms.assortativity import neighbor_degree
+from networkx.algorithms.isolate import number_of_isolates
+from networkx.readwrite.json_graph.adjacency import adjacency_data
+from numpy.core.fromnumeric import mean
+import networkx as nx
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import math
+from scipy.sparse.linalg import eigs
+import umap
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+# substract row mean and column mean and add the global mean to each table entry
+def double_centring(data_table):
+    global_mean = mean(data_table.values)
+    row_means = data_table.mean(axis=0) + global_mean
+    col_means = data_table.mean(axis=1)
+
+    data_table = data_table.sub(row_means, axis=1)
+    data_table = data_table.sub(col_means, axis=0)
+
+    return data_table
+
+
+# nicht ganz sicher ob das so richtig ist
+def NetworkSmoothing(graph, data_tabel, eigenvec_matrix):
+    num_of_connected_components = nx.number_connected_components(graph)
+    node_names = list(data_tabel.index)
+    num_nodes_in_graph = len(graph.nodes)
+    k = num_nodes_in_graph/2  # num_ofEigenvec_to_spanSubspan
+    smoothingFactor = 1 - (k-(num_of_connected_components+2)) / \
+        (num_nodes_in_graph-(num_of_connected_components+2))
+    print('smootingFoctor', smoothingFactor)
+    num_vars = int((num_of_connected_components + 2) + (smoothingFactor *
+                                                        (num_nodes_in_graph-(num_of_connected_components + 2))*0.5))
+    if num_vars > num_nodes_in_graph:
+        num_vars = num_nodes_in_graph
+    # if EVM not defined calculate it
+    if eigenvec_matrix is None:
+        # weight: edge data key used to provide each value in the matrix. If None, then each edge has weight 1.
+        la_placian_matrix = nx.laplacian_matrix(
+            graph, nodelist=node_names, weight=None).asfptype()
+        _, eigenvec_matrix = eigs(
+            la_placian_matrix.toarray(), k=len(data_tabel.index))
+        eigenvec_matrix = eigenvec_matrix.transpose()
+        print(eigenvec_matrix.shape)
+
+    # project multi-D pathway vectors (stats data) into the subspace spanned by the first smallest k eigenvectors of the graph’s Laplacian
+    # falls ein Wert für einen Pathway nicht da ist den mean von den Nachbarn nehmen? --> project vector on Graph
+    for col_num in range(len(data_tabel.columns)):
+        vec = data_tabel.iloc[:, col_num]
+        #vec = fill_missing_vec_values(graph, node_names, data_tabel.iloc[:, col_num])
+        data_tabel.iloc[:, col_num] = project_vector_on_first_components_of_a_basis(
+            vec, eigenvec_matrix, num_vars, 0)
+    return data_tabel
+
+
+def project_vector_on_first_components_of_a_basis(vec, basis, num_of_first_vectors, start_from):
+    res = np.zeros(len(vec))
+    proj = []
+    nbasis = np.apply_along_axis(lambda x: x/np.linalg.norm(x), 1, basis)
+    for i in range(num_of_first_vectors):
+        proj.append(np.dot(vec, nbasis[i]))
+    for i in range(start_from, num_of_first_vectors):
+        res += nbasis[i]*proj[i]
+    return res
+
+
+def fill_missing_values_with_neighbor_mean(graph_dict, data_table):  # geht noch nicht richtig
+    node_names = list(data_table.index)
+    new_data = {}
+    for node_name in node_names:
+        new_node_vec = []
+        for pos, val in enumerate(data_table.loc[node_name]):
+            new_val = val
+            if val is None:
+                # get Neighbor for nodes
+                neighbor_nodes = graph_dict[node_name]['outgoingEdges']
+                node_vals_not_none = 0
+                calc_node_val = 0
+                for node_info in neighbor_nodes:
+                    neighbor_name = node_info['target']
+                    neighbor_val = data_table.loc[neighbor_name][pos]
+                    if neighbor_val is not None:
+                        calc_node_val += neighbor_val
+                        node_vals_not_none += 1
+                val = calc_node_val/node_vals_not_none if node_vals_not_none != 0 else 0
+            new_node_vec.append(new_val)
+    new_data[node_name] = new_node_vec
+
+    new_data_table = pd.DataFrame.from_dict(new_data, orient='index')
+
+    return new_data_table
+
+
+def get_pca_layout_pos(data_table):
+    pca = PCA(n_components=2)
+    new_pos = pca.fit_transform(data_table)
+    # norm_vals = normalize_all_x_y_to_ndc(new_values, [-1,1])
+    explained_variation = pca.explained_variance_ratio_
+    print("Variance explained by PC1 = " + str(explained_variation[0]))
+    print("Variance explained by PC2 = " + str(explained_variation[1]))
+    pos_xy= new_pos.transpose()
+    plt.scatter(
+        pos_xy[0], pos_xy[1])
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.savefig('plt_layout_pca.png')
+    # pca.calcDispersionsRelative?
+    return new_pos
+
+
+def convert_each_feature_into_z_scores(data_table):
+    # Standardize features by removing the mean and scaling to unit variance.
+    return StandardScaler().fit_transform(data_table)
+
+
+def get_umap_layout_pos(data_table):
+    reducer = umap.UMAP()
+    new_pos = reducer.fit_transform(data_table)
+    plt.scatter(
+        new_pos[:, 0],
+        new_pos[:, 1])
+    plt.gca().set_aspect('equal', 'datalim')
+    plt.savefig('plt_layout_umap.png')
+    return new_pos
+
+def perform_all_dim_reductions(data_table):
+    z_scores = convert_each_feature_into_z_scores(data_table)
+    pos_umap = get_umap_layout_pos(z_scores)
+    print(pos_umap)
+    pos_pca = get_pca_layout_pos(z_scores)
+    pos_dic_pca = {node_name: row for row, node_name in zip(
+        pos_pca, list(data_table.index))}
+    return pos_umap, pos_dic_pca
+
+def normalize_all_x_y_to_ndc(pos_per_node, val_space):
+    x_vals = [val[0] for key, val in pos_per_node.items()]
+    y_vals = [val[1] for key, val in pos_per_node.items()]
+    min_x = min(x_vals[0])
+    max_x = max(x_vals[0])
+    min_y = min(y_vals[1])
+    max_y = max(y_vals[1])
+
+    norm_vals = {node: [normalize_to_ndc(xy[0], min_x, max_x, val_space), normalize_to_ndc(
+        xy[1], min_y, max_y, val_space)] for node, xy in pos_per_node.items()}
+    return norm_vals
+
+
+def normalize_to_ndc(val, min_val, max_val, val_space):
+    numerator = (val_space[1]-val_space[0]) * (val-min_val)
+    devisor = max_val - min_val
+    return numerator/devisor + val_space[0]
+
+
+def morph_layouts(xy_1, xy_2, percentage):
+    new_xy = {node: coordinate_in_morphed_graph(
+        xy_1[node], xy_2[node], percentage) for node in list(xy_1.keys())}
+    return new_xy
+
+
+def coordinate_in_morphed_graph(xy_1, xy_2, percentage):
+    x1, y1, x2, y2 = xy_1[0], xy_1[1], xy_2[0], xy_2[1]
+    e_dist_sq = math.pow(edist(x1, y1, x2, y2), 2)
+
+    z = math.pow(percentage, 2) * e_dist_sq
+    z1 = math.pow(1-percentage, 2) * e_dist_sq
+
+    f = -(2*x1 - 2*x2)
+    h = -(math.pow(x2, 2)) - math.pow(x1, 2) + \
+        math.pow(y2, 2) - math.pow(y1, 2) - z + z1
+    e = 2*y1 - 2*y2
+
+    a = math.pow(e, 2) + math.pow(f, 2)
+    b = -2*math.pow(e, 2)*x2-2*e*f*y2+2*f*h
+    # c = math.pow(e,2) * math.pow(x2,2) + math.pow(h,2) -2*e*h*y2+ math.pow(e,2) * math.pow(y2,2) -math.pow(e,2)*z
+
+    # delta = math.pow(b) -4*a*c
+    x_morphed = -b/(2*a)
+    y_morphed = f*(x_morphed + h) / e
+
+    return [x_morphed, y_morphed]
+
+
+def rotate_to_ref(graph_to_rot, ref_graph, node_list):
+    best_eudistSum = {}
+    best_eudistSum = math.inf
+    best_rot_mir_xy = []
+    best_r = 0
+    for r in range(360):
+        eudistSum_no_mirror, eudistSum_mirror_x, eudistSum_miror_y, eudistSum4_mirror_xy = 0, 0, 0, 0
+        no_m_xy, mx_xy, my_xy, mxy_xy = {}, {}, {}, {}
+        for node in node_list:
+            x_to_rot = graph_to_rot[node]["initialPosX"]
+            y_to_rot = graph_to_rot[node]["initialPosY"]
+            x_ref = ref_graph[node]["initialPosX"]
+            y_ref = ref_graph[node]["initialPosY"]
+
+            # convert degree to radians
+            r_rad = math.radians(r)
+
+            # m0 - no reflection
+            rx = x_to_rot*math.cos(r_rad)-y_to_rot*math.sin(r_rad)
+            ry = x_to_rot*math.sin(r_rad)+y_to_rot*math.cos(r_rad)
+            eudistSum_no_mirror += edist(x_ref, y_ref, rx, ry)
+            no_m_xy[node] = [rx, ry]
+
+            # mx - reflexion x
+            rx_mx = rx
+            ry_mx = -ry
+            eudistSum_mirror_x += edist(x_ref, y_ref, rx_mx, ry_mx)
+            mx_xy[node] = [rx_mx, ry_mx]
+
+            # mx - reflexion y
+            rx_my = -rx
+            ry_my = ry
+            eudistSum_miror_y += edist(x_ref, y_ref, rx_my, ry_my)
+            my_xy[node] = [rx_my, ry_my]
+
+            # mxy - center symmetry
+            rx_mxy = -rx
+            ry_mxy = -ry
+            eudistSum4_mirror_xy += edist(x_ref, y_ref, rx_mxy, ry_mxy)
+            mxy_xy[node] = [rx_mxy, ry_mxy]
+        for eudistSum, xy_vals in zip([eudistSum_no_mirror, eudistSum_mirror_x, eudistSum_miror_y, eudistSum4_mirror_xy], [no_m_xy, mx_xy, my_xy, mxy_xy]):
+            if eudistSum < best_eudistSum:
+                best_eudistSum = eudistSum
+                best_rot_mir_xy = xy_vals
+                best_r = r
+    print('best_eudistSum', best_eudistSum, best_r)
+    return best_rot_mir_xy
+
+
+def edist(x1, y1, x2, y2):
+    return np.linalg.norm(np.array([x1, y1])-np.array([x2, y2]))
+
+
+df = pd.DataFrame([[40, 90], [1, 3], [-33, .455]], columns=['A', 'B'])
+
+for row in df:
+    print(row)
