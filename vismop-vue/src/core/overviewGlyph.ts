@@ -30,22 +30,26 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
     const metabolomicsData = { available: omicsRecieved.metabolomics, foldChanges: [], nodeState: { total: 0, regulated: 0 } } as omicsData
     const currentAmounts = pathwayAmounts[pathway.value]
     const nodeIDs = pathwayLayouting.pathwayNodeDictionary[pathway.value].map(elem => elem.split(';'))
+    const usedIDs: string[] = []
     nodeIDs.forEach(element => {
       element.forEach(entry => {
         const currentEntry = entry.replace('cpd:', '').replace('gl:', '')
         try {
-          const fcsCurrent = fcs[currentEntry]
-          if (typeof fcsCurrent.transcriptomics === 'number') {
-            transcriptomicsData.foldChanges.push(fcsCurrent.transcriptomics)
-            transcriptomicsData.nodeState.regulated += 1
-          }
-          if (typeof fcsCurrent.proteomics === 'number') {
-            proteomicsData.foldChanges.push(fcsCurrent.proteomics)
-            proteomicsData.nodeState.regulated += 1
-          }
-          if (typeof fcsCurrent.metabolomics === 'number') {
-            metabolomicsData.foldChanges.push(fcsCurrent.metabolomics)
-            metabolomicsData.nodeState.regulated += 1
+          if (!(usedIDs.includes(currentEntry))) {
+            const fcsCurrent = fcs[currentEntry]
+            if (typeof fcsCurrent.transcriptomics === 'number') {
+              transcriptomicsData.foldChanges.push(fcsCurrent.transcriptomics)
+              transcriptomicsData.nodeState.regulated += 1
+            }
+            if (typeof fcsCurrent.proteomics === 'number') {
+              proteomicsData.foldChanges.push(fcsCurrent.proteomics)
+              proteomicsData.nodeState.regulated += 1
+            }
+            if (typeof fcsCurrent.metabolomics === 'number') {
+              metabolomicsData.foldChanges.push(fcsCurrent.metabolomics)
+              metabolomicsData.nodeState.regulated += 1
+            }
+            usedIDs.push(currentEntry)
           }
         } catch (error) {}
       })
