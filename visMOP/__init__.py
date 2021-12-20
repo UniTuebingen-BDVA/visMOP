@@ -317,10 +317,10 @@ def kegg_parsing():
 
     print(f"From {len(global_dict_entries)} entries in total, {len(without_empty)} remain after filtering entries without useful edges")
         
-    # generate networkX representation of Data and add force directed layout positions 
-    networkx_parsed = generate_networkx_dict(without_empty)
-    pos = get_spring_layout_pos(networkx_parsed)
-    with_init_pos = add_initial_positions(pos,without_empty)
+    # Not needed atm: generate networkX representation of Data and add force directed layout positions 
+    #networkx_parsed = generate_networkx_dict(without_empty)
+    #pos = get_spring_layout_pos(networkx_parsed)
+    #with_init_pos = add_initial_positions(pos,without_empty)
 
 
     ###########################################################################
@@ -357,7 +357,7 @@ def kegg_parsing():
     out_dat = {
         "omicsRecieved": {"transcriptomics": transcriptomics["recieved"], "proteomics": proteomics["recieved"], "metabolomics": metabolomics["recieved"]},
         "overview_data": pathway_connection_dict,
-        "main_data":with_init_pos,
+        "main_data":without_empty,
         "fcs": fold_changes,
         "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
         "pathwayLayouting": {"pathwayList": dropdown_pathways, "pathwayNodeDictionary": pathway_node_dict},

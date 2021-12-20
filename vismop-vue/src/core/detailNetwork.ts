@@ -20,6 +20,7 @@ export default class pathwayGraph {
   constructor (graphData: graphData, containerID: string, initialPathway: string, initialNodeIds: string[]) {
     this.canvasContainer = document.getElementById(containerID) as HTMLElement
     this.completeGraphModel = MultiGraph.from(graphData)
+    console.log('detail data', graphData)
     this.currentGraphModel = this.layoutToPathway(initialPathway, initialNodeIds)
     this.currentSigma = this.drawCurrentGraph()
   }
@@ -136,7 +137,7 @@ export default class pathwayGraph {
       const origPos = attributes.origPos as { [key: string]: [number, number] }
       newPosisitons[nodeID] = {
         x: (origPos[pathway][0] - 0.5) * layoutScaling,
-        y: (origPos[pathway][1] - 0.5) * layoutScaling
+        y: (-1 * origPos[pathway][1] - 0.5) * layoutScaling
       }
     })
     copyGraph.updateEachNodeAttributes((node, attr) => {

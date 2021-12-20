@@ -92,6 +92,7 @@ export default Vue.extend({
       const glyphData = generateGlyphData(fcExtents)
       console.log('GLYPH DATA', glyphData)
       const glyphs = generateGlyphs(glyphData)
+      console.log('GLYPHs', glyphData)
       const networkData = generateGraphData(this.overviewData, fcExtents, glyphs)
       console.log('base dat', networkData)
       this.networkGraph = mainGraph(this.contextID, networkData)

@@ -43,8 +43,10 @@ export function generateGraphData (
       const currentNames = entry.name
       const keggID = entry.keggID
       if (currentNames) {
-        const initPosX = entry.initialPosX
-        const initPosY = entry.initialPosY
+        // const initPosX = entry.initialPosX
+        // const initPosY = entry.initialPosY
+        const initPosX = (Math.random() * 2 - 1)
+        const initPosY = (Math.random() * 2 - 1)
         const color =
           entry.entryType === 'gene'
             ? typeof entry.trascriptomicsValue === 'string'
