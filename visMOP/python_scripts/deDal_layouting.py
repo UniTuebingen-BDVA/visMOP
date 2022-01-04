@@ -69,14 +69,16 @@ def project_vector_on_first_components_of_a_basis(vec, basis, num_of_first_vecto
     return res
 
 
-def fill_missing_values_with_neighbor_mean(graph_dict, data_table):  # geht noch nicht richtig
+def fill_missing_values_with_neighbor_mean(graph_dict, data_table, recieved_omics, defaul_means):  # geht noch nicht richtig # defold values per omic and pos
+    defaul_means_rec_omic = [default_mean for (default_mean, recieved) in zip(defaul_means, recieved_omics) if recieved]
     node_names = list(data_table.index)
     new_data = {}
     for node_name in node_names:
         new_node_vec = []
         for pos, val in enumerate(data_table.loc[node_name]):
+            default_val = 0 if pos % 1 !=0 or pos % 2 !=0 or pos//7>len(defaul_means_rec_omic)-1 else defaul_means_rec_omic[pos//7]
             new_val = val
-            if val is None:
+            if math.isnan(val):
                 # get Neighbor for nodes
                 neighbor_nodes = graph_dict[node_name]['outgoingEdges']
                 node_vals_not_none = 0
@@ -84,12 +86,12 @@ def fill_missing_values_with_neighbor_mean(graph_dict, data_table):  # geht noch
                 for node_info in neighbor_nodes:
                     neighbor_name = node_info['target']
                     neighbor_val = data_table.loc[neighbor_name][pos]
-                    if neighbor_val is not None:
+                    if not math.isnan(neighbor_val):
                         calc_node_val += neighbor_val
                         node_vals_not_none += 1
-                val = calc_node_val/node_vals_not_none if node_vals_not_none != 0 else 0
+                new_val = calc_node_val/node_vals_not_none if node_vals_not_none != 0 else default_val
             new_node_vec.append(new_val)
-    new_data[node_name] = new_node_vec
+        new_data[node_name] = new_node_vec
 
     new_data_table = pd.DataFrame.from_dict(new_data, orient='index')
 
@@ -99,17 +101,21 @@ def fill_missing_values_with_neighbor_mean(graph_dict, data_table):  # geht noch
 def get_pca_layout_pos(data_table):
     pca = PCA(n_components=2)
     new_pos = pca.fit_transform(data_table)
-    # norm_vals = normalize_all_x_y_to_ndc(new_values, [-1,1])
+    
     explained_variation = pca.explained_variance_ratio_
     print("Variance explained by PC1 = " + str(explained_variation[0]))
     print("Variance explained by PC2 = " + str(explained_variation[1]))
-    pos_xy= new_pos.transpose()
-    plt.scatter(
-        pos_xy[0], pos_xy[1])
-    plt.gca().set_aspect('equal', 'datalim')
-    plt.savefig('plt_layout_pca.png')
+    # pos_xy= new_pos.transpose()
+    # plt.scatter(
+    #     pos_xy[0], pos_xy[1])
+    # plt.gca().set_aspect('equal', 'datalim')
+    # plt.savefig('plt_layout_pca.png')
     # pca.calcDispersionsRelative?
-    return new_pos
+    pos_dic_pca = {node_name: row for row, node_name in zip(
+        new_pos, list(data_table.index))}
+    norm_vals_dict = normalize_all_x_y_to_ndc(pos_dic_pca, [-1,1])
+                    
+    return new_pos, norm_vals_dict
 
 
 def convert_each_feature_into_z_scores(data_table):
@@ -120,17 +126,21 @@ def convert_each_feature_into_z_scores(data_table):
 def get_umap_layout_pos(data_table):
     reducer = umap.UMAP()
     new_pos = reducer.fit_transform(data_table)
-    plt.scatter(
-        new_pos[:, 0],
-        new_pos[:, 1])
-    plt.gca().set_aspect('equal', 'datalim')
-    plt.savefig('plt_layout_umap.png')
-    return new_pos
+    pos_dic = {node_name: row for row, node_name in zip(
+        new_pos, list(data_table.index))}
+    norm_vals_dict = normalize_all_x_y_to_ndc(pos_dic, [-1,1])
+    # plt.scatter(
+    #     new_pos[:, 0],
+    #     new_pos[:, 1])
+    # plt.gca().set_aspect('equal', 'datalim')
+    # plt.savefig('plt_layout_umap.png')
+    return new_pos, norm_vals_dict
 
 def perform_all_dim_reductions(data_table):
     z_scores = convert_each_feature_into_z_scores(data_table)
-    pos_umap = get_umap_layout_pos(z_scores)
-    print(pos_umap)
+    # pos_umap = get_umap_layout_pos(z_scores)
+    pos_umap = []
+    # print(pos_umap)
     pos_pca = get_pca_layout_pos(z_scores)
     pos_dic_pca = {node_name: row for row, node_name in zip(
         pos_pca, list(data_table.index))}
@@ -139,10 +149,10 @@ def perform_all_dim_reductions(data_table):
 def normalize_all_x_y_to_ndc(pos_per_node, val_space):
     x_vals = [val[0] for key, val in pos_per_node.items()]
     y_vals = [val[1] for key, val in pos_per_node.items()]
-    min_x = min(x_vals[0])
-    max_x = max(x_vals[0])
-    min_y = min(y_vals[1])
-    max_y = max(y_vals[1])
+    min_x = min(x_vals)
+    max_x = max(x_vals)
+    min_y = min(y_vals)
+    max_y = max(y_vals)
 
     norm_vals = {node: [normalize_to_ndc(xy[0], min_x, max_x, val_space), normalize_to_ndc(
         xy[1], min_y, max_y, val_space)] for node, xy in pos_per_node.items()}
@@ -184,7 +194,8 @@ def coordinate_in_morphed_graph(xy_1, xy_2, percentage):
     return [x_morphed, y_morphed]
 
 
-def rotate_to_ref(graph_to_rot, ref_graph, node_list):
+def rotate_to_ref(pos_to_rot, ref_pos):
+    node_list = pos_to_rot.keys()
     best_eudistSum = {}
     best_eudistSum = math.inf
     best_rot_mir_xy = []
@@ -193,10 +204,10 @@ def rotate_to_ref(graph_to_rot, ref_graph, node_list):
         eudistSum_no_mirror, eudistSum_mirror_x, eudistSum_miror_y, eudistSum4_mirror_xy = 0, 0, 0, 0
         no_m_xy, mx_xy, my_xy, mxy_xy = {}, {}, {}, {}
         for node in node_list:
-            x_to_rot = graph_to_rot[node]["initialPosX"]
-            y_to_rot = graph_to_rot[node]["initialPosY"]
-            x_ref = ref_graph[node]["initialPosX"]
-            y_ref = ref_graph[node]["initialPosY"]
+            x_to_rot = pos_to_rot[node][0]
+            y_to_rot = pos_to_rot[node][1]
+            x_ref = ref_pos[node][0]
+            y_ref = ref_pos[node][1]
 
             # convert degree to radians
             r_rad = math.radians(r)
@@ -229,15 +240,11 @@ def rotate_to_ref(graph_to_rot, ref_graph, node_list):
                 best_eudistSum = eudistSum
                 best_rot_mir_xy = xy_vals
                 best_r = r
+    best_rot_mir_xy_nor = normalize_all_x_y_to_ndc(best_rot_mir_xy, [-1,1])    
     print('best_eudistSum', best_eudistSum, best_r)
-    return best_rot_mir_xy
+    return best_rot_mir_xy_nor
 
 
 def edist(x1, y1, x2, y2):
     return np.linalg.norm(np.array([x1, y1])-np.array([x2, y2]))
 
-
-df = pd.DataFrame([[40, 90], [1, 3], [-33, .455]], columns=['A', 'B'])
-
-for row in df:
-    print(row)

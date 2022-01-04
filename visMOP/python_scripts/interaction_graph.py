@@ -24,6 +24,9 @@ class StringGraph:
         self.current_confidence = 900
         self.filter_by_confidence(900)
         print("completeGraph",nx.info(self.complete_graph))
+        print("completeGraph",nx.info(self.complete_graph))
+        print(self.complete_graph.edges('10090.ENSMUSP00000137402', data=True))
+        print({edgeProts[1]:edgeProts[2]['weight'] for edgeProts in self.complete_graph.edges('10090.ENSMUSP00000137402', data=True)})
 
     def set_string_name_dict(self, val):
         self.name_dict = val
