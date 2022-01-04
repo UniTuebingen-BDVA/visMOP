@@ -1,3 +1,4 @@
+import random
 class KeggPathway:
     """ Class representing a KEGG pathway
 
@@ -17,7 +18,13 @@ class KeggPathway:
         self.amount_compounds = 0
         self.all_values = {'transcriptomics': [],
                            'proteomics': [], 'metabolomics': []}
-        self.kos = {}
+        self.all_brite_ids = {}
+        self.KO_level_1 = {}
+        self.KO_other_level = {}
+        self.lowest_level = {}
+        self.other_ontologys = {}
+        self.prot_in_pathway_StringIds = []
+        self.num_entry_with_kegg_get = 0
 
     def add_entry(self, entry):
         """ append entry to entries field
@@ -39,8 +46,18 @@ class KeggPathway:
         self.entries.append(entry)
 
     def add_kegg_info(self, kegg_gets):
-        for kegg_get in kegg_gets:
-
+        # print(kegg_gets,self.kos)
+        if len(kegg_gets)>0:
+            for kegg_get in kegg_gets:
+                self.num_entry_with_kegg_get += 1
+                for category_entry, category_pathway in zip([kegg_get.all_brite_ids,kegg_get.KO_level_1 ,kegg_get.KO_other_level, kegg_get.lowest_level, kegg_get.other_ontologys],[self.all_brite_ids,self.KO_level_1 ,self.KO_other_level, self.lowest_level, self.other_ontologys]):
+                    for brite_id in category_entry:
+                        if brite_id in category_pathway:
+                            category_pathway[brite_id] += 1
+                        else:
+                            category_pathway[brite_id] = 1
+    def add_stringIds(self, stringIDs):
+        self.prot_in_pathway_StringIds += stringIDs
 
     def redo_all_values_dic(self):
         self.all_values = {'transcriptomics': [],
@@ -50,37 +67,42 @@ class KeggPathway:
                 if not isinstance(val, str):
                     self.all_values[omic].append(val)
 
-    def get_PathwaySummaryData(self, limits_transriptomics, limits_proteomics, limits_metabolomics):
+    def get_PathwaySummaryData(self, recieved_omics, omic_limits):
+        dummy_val = float('nan')
         pathway_summary_data = []
         num_values = 0
-        for omic, limits in zip(self.all_values.keys(), [limits_transriptomics, limits_proteomics, limits_metabolomics]):
-            num_values += len(self.all_values[omic])
-            num_entries = len(self.entries)
-            # statistics for mRNAs, proteins, metabolits which have been produced in a significant higher amount
-            vals_higher_ul = [
-                val for val in self.all_values[omic] if val > limits[1]]
-            mean_val_higher_ul = sum(
-                vals_higher_ul) / len(vals_higher_ul) / num_entries if len(vals_higher_ul) > 0 else 0
-            pc_vals_higher_ul = len(vals_higher_ul) / num_entries
+        num_entries = len(self.entries)
+        for recieved, omic, limits in zip(recieved_omics, self.all_values.keys(), omic_limits):
+            if recieved:
+                num_val_omic = len(self.all_values[omic])
+                num_values += num_val_omic
+                # print(omic,  self.all_values[omic])
+                # statistics for mRNAs, proteins, metabolits which have been produced in a significant higher amount
+                vals_higher_ul = [val for val in self.all_values[omic] if val > limits[1]]
+                mean_val_higher_ul = sum(
+                    vals_higher_ul) / len(vals_higher_ul)  if len(vals_higher_ul) > 0 else dummy_val
+                pc_vals_higher_ul = len(vals_higher_ul) / num_val_omic if num_val_omic!=0 else dummy_val
+                # print(vals_higher_ul, mean_val_higher_ul, pc_vals_higher_ul)
 
-            # statistics for mRNAs, proteins, metabolits which have been produced in a significant smaller amount
-            vals_smaller_ll = [
-                val for val in self.all_values[omic] if val < limits[0]]
-            mean_val_smaller_ll = sum(
-                vals_smaller_ll) / len(vals_smaller_ll) / num_entries if len(vals_smaller_ll) > 0 else 0
-            pc_vals_smaller_ll = len(vals_smaller_ll) / num_entries
+                # statistics for mRNAs, proteins, metabolits which have been produced in a significant smaller amount
+                vals_smaller_ll = [val for val in self.all_values[omic] if val < limits[0]]
+                mean_val_smaller_ll = sum(
+                    vals_smaller_ll) / len(vals_smaller_ll) if len(vals_smaller_ll) > 0 else dummy_val
+                pc_vals_smaller_ll = len(vals_smaller_ll) / num_val_omic if num_val_omic!=0 else dummy_val
 
-            # procentage of mRNAs, proteins, metabolits which have been produced in a significant differnt (higher or smaller) amount
-            pcReg = sum(val > limits[1] and val <
-                        limits[0] for val in self.all_values[omic]) / num_entries
-            # procentage of mRNAs, proteins, metabolits which have not been produced in a significant differnt (higher or smaller) amount
-            pcUnReg = sum(val < limits[1] and val >
-                          limits[0] for val in self.all_values[omic]) / num_entries
-            pathway_summary_data += [num_values, mean_val_higher_ul,
-                                     mean_val_smaller_ll, pcReg, pc_vals_higher_ul, pc_vals_smaller_ll, pcUnReg]
+                # procentage of mRNAs, proteins, metabolits which have been produced in a significant differnt (higher or smaller) amount
+                pcReg = sum(val > limits[1] and val < limits[0] for val in self.all_values[omic]) / num_val_omic if num_val_omic!=0 else dummy_val
+                # pcReg = pcReg if num_values !=  
+                # procentage of mRNAs, proteins, metabolits which have not been produced in a significant differnt (higher or smaller) amount
+                pcUnReg = sum(val < limits[1] and val > limits[0] for val in self.all_values[omic]) / num_val_omic if num_val_omic!=0 else dummy_val
+                pathway_summary_data += [num_val_omic, mean_val_higher_ul,
+                                        mean_val_smaller_ll, pcReg, pc_vals_higher_ul, pc_vals_smaller_ll, pcUnReg]
+                
 
         pc_entries_with_value = num_values / (3*num_entries)
         pathway_summary_data.append(pc_entries_with_value)
+        # pathway_summary_data = random.sample(range(0, 100),15)
+
         return pathway_summary_data
 
     def add_relation(self, relation):
@@ -133,6 +155,9 @@ class KeggPathway:
         current_entries = [
             entry.keggID for entry in self.entries if not entry.is_empty]
         return self.keggID, current_entries
+
+    def return_pathway_kegg_String_info_dict(self):
+        return self.keggID, {'prot_in_pathway_StringIds': self.prot_in_pathway_StringIds ,'all_brite_ids': self.all_brite_ids, 'KO_level_1': self.KO_level_1, 'KO_other_level': self.KO_other_level, 'lowest_level':  self.lowest_level, 'other_ontologys': self.other_ontologys}
 
     def return_amounts(self):
         amounts = {"genes": self.amount_genes,

@@ -1,6 +1,8 @@
 import xml.etree.cElementTree as cET
 from visMOP.python_scripts.kegg_pathway import KeggPathway, KeggPathwayEntry, KeggPathwayRelation, KeggPathwayReaction
-
+from visMOP.python_scripts.keggAccess import kegg_get, parse_get
+import pathlib
+data_path = pathlib.Path().resolve()
 
 def add_incoming_edges(global_nodes):
     """ adds incoming edges to all nodes 
@@ -57,7 +59,7 @@ def generate_networkx_dict(global_nodes):
         
     return out_dict    
 
-def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction, value_dict, parsed_gets):
+def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction, value_dict, parsed_gets, keggID_to_stringID):
     """ parses kgml file and returns a KeggPathway object
 
     Args:
@@ -74,6 +76,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
     pathway.title = root.get("title")
     for entry in root.findall('entry'):
         entry_kegg_gets = []
+        string_id_prot = []
         entry_ID = entry.get('id')
         # TODO this is a problem, if several entities are represented in a single entry!!!!!
         entry_keggID_list = entry.get('name').split(" ")
@@ -84,7 +87,21 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             # TODO atm only the first fc is kept
             for keggID in entry_keggID_list:
                 value = False
-                entry_kegg_gets.append(parsed_gets[keggID])
+                try: 
+                    string_id_prot.append(keggID_to_stringID[keggID])
+                except:
+                    asdasda=0
+                try:
+                    entry_kegg_gets.append(parsed_gets[keggID])
+                    # print('success')
+                except:
+                    x=0
+                    #print('keggID:',keggID)
+                    # new_kegg_get = kegg_get(keggIDs=[keggID], caching_path=data_path / 'kegg_cache/kegg_gets.json')
+                    # if len(new_kegg_get)>0:
+                    #     new_parsed_get = parse_get(new_kegg_get[keggID],keggID)
+                    #     parsed_gets[keggID] = new_parsed_get
+                    #     entry_kegg_gets.append(new_parsed_get)
                 try:
                     #replacing probably is a workaround
                     value = value_dict[keggID.replace("cpd:","").replace("glu:", "").replace("ko:", "").replace("dr:", "dr")]
@@ -118,7 +135,10 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             pathway.update_orig_extents(*current_entry.origPos[pathway_ID])
 
             pathway.add_entry(current_entry)
+            pathway.add_stringIds(string_id_prot)
             pathway.add_kegg_info(entry_kegg_gets)
+            # print(pathway.prot_in_pathway_StringIds)
+            # print('pathway done: ', pathway.all_brite_ids, pathway.KO_level_1, pathway.KO_other_level, pathway.lowest_level, pathway.other_ontologys)
             entry_keggID_map[entry_ID] = current_entry.keggID
 
     pathway.apply_extents()
