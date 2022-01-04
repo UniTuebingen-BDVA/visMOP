@@ -384,7 +384,7 @@ def parse_get(get_response, keggID):
     for line in lines:
         line_header = line[0:12].strip()
         line_content = line[12:]
-
+        
         if line_header == "NAME":
             kegg_get.geneName = line_content.split(",")[0]
         elif line_header == "PATHWAY":
@@ -427,7 +427,6 @@ def filter_brite_info(current_brite, prev_brite, prev_num_spaces, header_0, kegg
         header_0 = ""
     elif prev_num_spaces > curr_num_leading_spaces:
         kegg_get.add_brite(prev_brite,3)
-        brite_hierarchies = False
     elif prev_num_spaces > 0:
         if header_0 == "KEGG Orthology (KO) [BR:mmu00001]":
             if prev_brite != "09180 Brite Hierarchies" and prev_num_spaces==1:
