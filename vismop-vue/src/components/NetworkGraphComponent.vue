@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card v-bind:class="[expandButton ? 'detailComponentLarger' : '','detailComponent']">
+    <v-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
       <v-col>
       <v-overflow-btn
                     :items="pathwayLayouting.pathwayList"
@@ -12,7 +12,7 @@
                     dense
                     v-model="pathwaySelection"
       ></v-overflow-btn>
-      <div :id="contextID" v-bind:class="[expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
+      <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
        <v-btn
         class="mx-2 expandButton"
         fab
@@ -21,6 +21,15 @@
         bottom
         left
         @click="expandComponent"
+      ><v-icon>mdi-arrow-expand</v-icon></v-btn>
+      <v-btn
+      class="mx-2 minimizeButton"
+      fab
+      dark
+      small
+      top
+      right
+      @click="minimizeComponent"
       ><v-icon>mdi-arrow-expand</v-icon></v-btn>
       </v-col>
     </v-card>
@@ -41,6 +50,7 @@ interface Data{
   networkGraph: (DetailNetwork | undefined)
   pathwaySelection: string
   expandButton: boolean
+  minimizeButton: boolean
 }
 
 export default Vue.extend({
@@ -54,7 +64,8 @@ export default Vue.extend({
     outstandingDraw: false,
     networkGraph: undefined,
     pathwaySelection: '',
-    expandButton: false
+    expandButton: false,
+    minimizeButton: false
 
   }),
 
@@ -172,6 +183,9 @@ export default Vue.extend({
     },
     expandComponent () {
       this.expandButton = !this.expandButton
+    },
+    minimizeComponent () {
+      this.minimizeButton = !this.minimizeButton
     }
   }
 })
