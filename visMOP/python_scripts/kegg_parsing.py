@@ -114,7 +114,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
                 y = (coords[2]+coords[3]) / 2
                 current_entry.origPos[pathway_ID] = [x, y]    
             pathway.update_orig_extents(*current_entry.origPos[pathway_ID])
-
+            # TODO can lead to duplicates!! FIX! update instead of adding
             pathway.add_entry(current_entry)
             entry_keggID_map[entry_ID] = current_entry.keggID
 

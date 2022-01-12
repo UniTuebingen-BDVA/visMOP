@@ -73,7 +73,7 @@ export function generateGlyphs (inputData: { [key: string]: glyphData }): { [key
   for (const key in inputData) {
     const glyphData = inputData[key]
     const serializer = new XMLSerializer()
-    const glyphSVG = generateGlyph(glyphData)
+    const glyphSVG = generateGlyphVariation(glyphData)
     const glyphSVGstring = serializer.serializeToString(glyphSVG)
     const svgBlob = new Blob([glyphSVGstring], { type: 'image/svg+xml;charset=utf-8' })
     const svgURL = window.URL.createObjectURL(svgBlob)
@@ -167,5 +167,100 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
     .append('path')
     .attr('d', arcInner)
     .attr('fill', (d, i) => colorsMetabolomics[i])
+  return svg.node() as SVGElement
+}
+
+function generateGlyphVariation (glyphDat: glyphData): SVGElement {
+  const thirdCircle = 2 * (Math.PI / 3)
+  const thirdCirclePadded = 1.8 * (Math.PI / 3)
+  const diameter = 50
+  const width = diameter + 2
+  const height = diameter + 2
+  const outermostRadius = 25
+  const firstLayer = 18
+  const secondLayer = 11
+  const innermostRadius = 4
+  const colorScaleRB = d3.scaleSequential(d3.interpolateRdBu).domain([store.state.fcQuantiles[1], store.state.fcQuantiles[0]])
+  const colorScalePG = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles)
+
+  const outerArcDat: {
+    data: number;
+    value: number;
+    index: number;
+    startAngle: number;
+    endAngle: number;
+    padAngle: number;
+  }[] = []
+  const innerArcDat = []
+  const outerColors : string[] = []
+  const innerColors : string[] = []
+
+  // prepare transcriptomics
+
+  if (glyphDat.transcriptomics.available) {
+    const colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleRB(elem))
+    outerColors.push(...colorsTranscriptomics)
+    const angleRangeTranscriptomicsFCs = _.range(0, thirdCirclePadded + (thirdCirclePadded / colorsTranscriptomics.length), thirdCirclePadded / colorsTranscriptomics.length)
+    colorsTranscriptomics.forEach((element, idx) => {
+      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0 }
+      outerArcDat.push(pushDat)
+    })
+    const transcriptomicsRegulatedQuotient = glyphDat.transcriptomics.nodeState.regulated / glyphDat.transcriptomics.nodeState.total
+    innerArcDat.push({ data: 1, value: 1, index: 0, startAngle: 0, endAngle: thirdCirclePadded * transcriptomicsRegulatedQuotient, padAngle: 0 })
+    innerArcDat.push({ data: 2, value: 2, index: 1, startAngle: thirdCirclePadded * transcriptomicsRegulatedQuotient, endAngle: thirdCirclePadded, padAngle: 0 })
+    innerColors.push('black', 'gray')
+  }
+
+  // prepare proteomics
+  if (glyphDat.proteomics.available) {
+    const colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleRB(elem))
+    outerColors.push(...colorsProteomics)
+
+    const angleRangeProteomicsFCs = _.range(thirdCircle, thirdCircle + thirdCirclePadded + (thirdCirclePadded / colorsProteomics.length), thirdCirclePadded / colorsProteomics.length)
+    colorsProteomics.forEach((element, idx) => {
+      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0 })
+    })
+    const proteomicsRegulatedQuotient = glyphDat.proteomics.nodeState.regulated / glyphDat.proteomics.nodeState.total
+    innerArcDat.push({ data: 1, value: 1, index: 0, startAngle: thirdCircle, endAngle: thirdCircle + thirdCirclePadded * proteomicsRegulatedQuotient, padAngle: 0 })
+    innerArcDat.push({ data: 2, value: 2, index: 1, startAngle: thirdCircle + thirdCirclePadded * proteomicsRegulatedQuotient, endAngle: thirdCircle + thirdCirclePadded, padAngle: 0 })
+    innerColors.push('black', 'gray')
+  }
+  // prepare metabolomics
+  if (glyphDat.metabolomics.available) {
+    const colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScalePG(elem))
+    outerColors.push(...colorsMetabolomics)
+
+    const angleRangeMetabolomicsFCs = _.range(2 * thirdCircle, 2 * thirdCircle + thirdCirclePadded + (thirdCirclePadded / colorsMetabolomics.length), thirdCirclePadded / colorsMetabolomics.length)
+    colorsMetabolomics.forEach((element, idx) => {
+      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0 })
+    })
+    const metabolomicsRegulatedQuotient = glyphDat.metabolomics.nodeState.regulated / glyphDat.metabolomics.nodeState.total
+    innerArcDat.push({ data: 1, value: 1, index: 0, startAngle: 2 * thirdCircle, endAngle: 2 * thirdCircle + thirdCirclePadded * metabolomicsRegulatedQuotient, padAngle: 0 })
+    innerArcDat.push({ data: 2, value: 2, index: 1, startAngle: 2 * thirdCircle + thirdCirclePadded * metabolomicsRegulatedQuotient, endAngle: 2 * thirdCircle + thirdCirclePadded, padAngle: 0 })
+    innerColors.push('black', 'gray')
+  }
+
+  const svg = d3.create('svg')
+    .attr('width', width)
+    .attr('height', height)
+  const g = svg.append('g')
+    .attr('transform', `translate(${width / 2},${height / 2})`)
+
+  const arcOuter = d3.arc<PieArcDatum<number>>().innerRadius(firstLayer).outerRadius(outermostRadius)
+  const arcMiddle = d3.arc<PieArcDatum<number>>().innerRadius(secondLayer).outerRadius(firstLayer)
+
+  // segment order: transcriptomics = outer, proteomics = middle, metabolomics = inner
+  g.selectAll('g')
+    .data(outerArcDat)
+    .enter()
+    .append('path')
+    .attr('d', arcOuter)
+    .attr('fill', (d, i) => outerColors[i])
+  g.selectAll('g')
+    .data(innerArcDat)
+    .enter()
+    .append('path')
+    .attr('d', arcMiddle)
+    .attr('fill', (d, i) => innerColors[i])
   return svg.node() as SVGElement
 }
