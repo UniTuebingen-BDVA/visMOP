@@ -18,7 +18,7 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import { mainGraph } from '../core/overviewNetwork'
+import OverviewGraph from '../core/overviewNetwork'
 import { generateGraphData } from '../core/overviewGraphPreparation'
 import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
 import Vue from 'vue'
@@ -28,7 +28,7 @@ interface Data{
   tableSearch: string
   selectedTab: string
   outstandingDraw: boolean
-  networkGraph: (Sigma | undefined)
+  networkGraph: (OverviewGraph | undefined)
 }
 
 export default Vue.extend({
@@ -49,11 +49,15 @@ export default Vue.extend({
       overviewData: (state:any) => state.overviewData,
       fcs: (state:any) => state.fcs,
       overlay: (state:any) => state.overlay,
-      fcQuantiles: (state:any) => state.fcQuantiles
+      fcQuantiles: (state:any) => state.fcQuantiles,
+      pathwayDropdown: (state:any) => state.pathwayDropdown
 
     })
   },
   watch: {
+    pathwayDropdown: function () {
+      this.networkGraph?.refreshCurrentPathway()
+    },
     overviewData: function () {
       if (this.isActive) {
         console.log(this.contextID)
@@ -95,7 +99,7 @@ export default Vue.extend({
       console.log('GLYPHs', glyphData)
       const networkData = generateGraphData(this.overviewData, fcExtents, glyphs)
       console.log('base dat', networkData)
-      this.networkGraph = mainGraph(this.contextID, networkData)
+      this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }
   }
 })

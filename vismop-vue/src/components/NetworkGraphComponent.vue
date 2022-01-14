@@ -110,6 +110,7 @@ export default Vue.extend({
     },
     pathwaySelection: function () {
       this.selectPathway(this.pathwaySelection)
+      this.$store.dispatch('focusPathwayViaDropdown', this.pathwaySelection)
     },
     transcriptomicsSelection: function () {
       this.focusNodeTranscriptomics(this.transcriptomicsSelection)

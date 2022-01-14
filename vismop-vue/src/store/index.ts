@@ -159,14 +159,21 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    addClickedNode ({ commit, state }, val) {
+    addClickedNode ({ commit, state }, val: string) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
+      // TODO multiIDs will not work at the moment
+      const keggIDs = val.split(';')
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
-      if (!enteredKeys.includes(val)) {
-        const sybmolName = state.keggIDGenesymbolDict[val]
-        const tableEntry = { id: val, name: sybmolName, fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
-        commit('APPEND_CLICKEDNODE', tableEntry)
-      }
+      keggIDs.forEach(element => {
+        try {
+          if (!enteredKeys.includes(element)) {
+            const sybmolName = state.keggIDGenesymbolDict[element]
+            const tableEntry = { id: element, name: sybmolName, fcTranscript: state.fcs[element].transcriptomics, fcProt: state.fcs[element].proteomics, delete: val }
+            commit('APPEND_CLICKEDNODE', tableEntry)
+          }
+        } catch (error) {
+        }
+      })
     },
     queryEgoGraps ({ commit, state }, val) {
       const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggDict[elem.id] })
@@ -278,6 +285,9 @@ export default new Vuex.Store({
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')
       commit('SET_PATHWAYDROPDOWN', valClean)
+    },
+    focusPathwayViaDropdown ({ commit }, val) {
+      commit('SET_PATHWAYDROPDOWN', val)
     },
     setOmicsRecieved ({ commit }, val) {
       commit('SET_OMICSRECIEVED', val)
