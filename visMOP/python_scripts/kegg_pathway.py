@@ -5,7 +5,7 @@ class KeggPathway:
     def __init__(self, pathway_ID):
         self.keggID = pathway_ID
         self.title = ""
-        self.entries = []
+        self.entries = {}
         self.relations = []
         self.reactions = []
         self.orig_x_extent = [0,0]
@@ -22,14 +22,15 @@ class KeggPathway:
             entry: entry to be added to the entries field
 
         """
-        if entry.entryType == 'gene':
-            self.amount_genes += 1
-        elif entry.entryType == 'map':
-            self.amount_maplinks += 1
-            self.maplinks.append(entry.keggID)
-        elif entry.entryType == 'compound':
-            self.amount_compounds += 1        
-        self.entries.append(entry)
+        if(entry.keggID not in self.entries.keys()):
+            if entry.entryType == 'gene':
+                self.amount_genes += 1
+            elif entry.entryType == 'map':
+                self.amount_maplinks += 1
+                self.maplinks.append(entry.keggID)
+            elif entry.entryType == 'compound':
+                self.amount_compounds += 1        
+        self.entries[entry.keggID] = entry
 
     def add_relation(self, relation):
         """ append relation to relations field
@@ -71,7 +72,7 @@ class KeggPathway:
         x_divisor = self.orig_x_extent[1] - self.orig_x_extent[0]
         y_divisor = self.orig_y_extent[1] - self.orig_y_extent[0]
 
-        for entry in self.entries:
+        for entry in self.entries.values():
             if not self.keggID in entry.extent_applied:
                 current_pos = entry.origPos[self.keggID]
                 new_pos = [current_pos[0]/x_divisor, current_pos[1]/y_divisor] 
@@ -79,7 +80,8 @@ class KeggPathway:
                 entry.extent_applied[self.keggID] = True
             
     def return_pathway_node_list(self):
-        current_entries = [entry.keggID for entry in self.entries if not entry.is_empty]
+        #current_entries = [entry.keggID for entry in self.entries if not entry.is_empty]
+        current_entries = list(self.entries.keys())
         return self.keggID, current_entries 
 
     def return_amounts(self):
@@ -92,7 +94,7 @@ class KeggPathway:
     def asdict(self):
         """ return the KeggPathway  as dictionary 
         """
-        return {'keggID': self.keggID, 'entries': self.entries, 'relations': self.relations, 'reactions': self.reactions,"orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent, "maplinks": self.maplinks, "amount_genes": self.amount_genes, "amount_maplinks": self.amount_maplinks, "amount_compounds": self.amount_compounds}        
+        return {'keggID': self.keggID, 'entries': self.entries.values(), 'relations': self.relations, 'reactions': self.reactions,"orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent, "maplinks": self.maplinks, "amount_genes": self.amount_genes, "amount_maplinks": self.amount_maplinks, "amount_compounds": self.amount_compounds}        
 
 class KeggPathwayEntry:
     """ Class for a single entry of the KEGG Pathway KGML

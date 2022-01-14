@@ -178,8 +178,8 @@ function generateGlyphVariation (glyphDat: glyphData): SVGElement {
   if (glyphDat.metabolomics.available) availableOmics += 1
 
   const thirdCircle = 2 * (Math.PI / availableOmics)
-  const thirdCircleElement = availableOmics > 1 ? 1.8 * (Math.PI / availableOmics) : 2 * Math.PI
-  const circlePadding = availableOmics > 1 ? 0.1 * (Math.PI / availableOmics) : 0
+  const thirdCircleElement = 1.8 * (Math.PI / availableOmics)
+  const circlePadding = 0.1 * (Math.PI / availableOmics)
   const diameter = 56
   const layerWidth = diameter / 7
   const width = diameter
