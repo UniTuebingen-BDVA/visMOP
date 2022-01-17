@@ -1,5 +1,5 @@
 from flask import Flask, render_template, send_from_directory,request, Response
-from visMOP.python_scripts.networkx_layouting import force_dir_layout, get_spring_layout_pos, add_initial_positions, relayout, get_networkx_with_edge_weights
+from visMOP.python_scripts.networkx_layouting import force_dir_layout, get_spring_layout_pos, add_initial_positions, relayout, get_networkx_with_edge_weights, get_networkx_with_edge_weights_all_nodes_connected
 from visMOP.python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty,add_incoming_edges
 from visMOP.python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls,associacte_value_keggID
 from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
@@ -12,10 +12,12 @@ import os
 import json
 import sys
 import random
-from visMOP.python_scripts.deDal_layouting import fill_missing_values_with_neighbor_mean, convert_each_feature_into_z_scores, double_centring, normalize_all_x_y_to_ndc, perform_all_dim_reductions, NetworkSmoothing, rotate_to_ref, get_pca_layout_pos, morph_layouts, get_umap_layout_pos
+from visMOP.python_scripts.deDal_layouting import fill_missing_values_with_neighbor_mean, convert_each_feature_into_z_scores, double_centring, normalize_all_x_y_to_ndc, NetworkSmoothing, rotate_to_ref, get_pca_layout_pos, morph_layouts, get_umap_layout_pos
 import networkx as nx
 import copy
 from numpy.core.fromnumeric import mean
+import time
+import pickle
 
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
 
@@ -184,6 +186,7 @@ App route for querying and parsing kegg files
 """
 @app.route('/kegg_parsing', methods=['POST'])
 def kegg_parsing():
+    globalStartTime = time.time()
     global metabolomics_df_global
     global stringGraph
 
@@ -214,12 +217,6 @@ def kegg_parsing():
             script_dir = data_path
             dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.5.txt.gz'# '10090.protein.links.v11.0.txt'
             stringGraph = StringGraph(dest_dir)
-            # stringDB_df = pd.read_csv(dest_dir, sep=" ", header=None, low_memory=False, index_col= [0,1])
-            # print(stringDB_df.head())
-            # stringDB_df_dict = stringDB_df.to_dict(orient='index')
-            # print(stringDB_df_dict)
-            # string_to_uniprot_ids = pd.read_csv(os.path.join(script_dir, 'StringID_to_UniProt.tab'), sep="\t", header=0, low_memory=False)
-            # uniprot_ids = string_to_uniprot_ids.iloc[:,3]
             keggID_to_stringID = uniprot_access(proteomics["symbol"])
             # ID being a Uniprot ID
             for ID in prot_dict_global:
@@ -332,14 +329,18 @@ def kegg_parsing():
     
     # generate dataframe of summary Data for all pathways
     # up_down_reg_limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
+    numValsPerOmic = 8
     up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
     omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
     data_driven_layout_data = pd.DataFrame.from_dict({'path:'+pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
+    pd.set_option("display.max_rows", None, "display.max_columns", None)
 
-
-    print('2 * no outlier + all outlier')
-    # print(data_driven_layout_data.loc[['path:mmu00140', 'path:mmu05150', 'path:mmu00450','path:mmu03030','path:mmu03008','path:mmu03010', 'path:mmu01250','path:mmu01230', 'path:mmu01200', 'path:mmu01240', 'path:mmu00592', 'path:mmu02010', 'path:mmu00983' ]])  
+    print('4 * no outlier + all outlier')
+    # outlier_data = data_driven_layout_data.loc[['path:mmu05135','path:mmu04910','path:mmu04723', 'path:mmu05418', 'path:mmu05215','path:mmu01200','path:mmu00061','path:mmu04060', 'path:mmu05200','path:mmu00190']]
+    outlier_data = data_driven_layout_data.loc[['path:mmu05135','path:mmu04910','path:mmu04723', 'path:mmu05418', 'path:mmu00190','path:mmu05150','path:mmu00280']]
     
+    print(outlier_data)  
+    print(outlier_data.to_latex(index=True))  
 
     # add incoming edges to nodes 
     add_incoming_edges(overall_entries)
@@ -390,12 +391,12 @@ def kegg_parsing():
     print('-------------------------------------------------------------------------------------------')
     up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
     # pd.set_option("display.max_rows", None, "display.max_columns", None)
-    with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data, omics_recieved, up_down_reg_means)
+    with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data, omics_recieved, up_down_reg_means, numValsPerOmic)
     
     # pre_pos_options
-    # z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(with_miss_val_df), index=list(data_driven_layout_data.index))
-    double_centring_df = double_centring(copy.deepcopy(with_miss_val_df))
-    
+    z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data.index))
+    double_centring_df = double_centring(copy.deepcopy(z_score_df))
+    # network_smooting_df = NetworkSmoothing(nx.Graph(network_overview), copy.deepcopy(with_miss_val_df), None)
     
     # PCA --> without normalization
     # _, pos_dict = get_pca_layout_pos(with_miss_val_df)
@@ -404,29 +405,64 @@ def kegg_parsing():
     # _, pos_dict = get_pca_layout_pos(z_score_df)
     
     # PCA --> double centering normalization
-    # _, pos_dict = get_pca_layout_pos(double_centring_df)
+    _, pos_dict = get_pca_layout_pos(double_centring_df)
 
-   
+    # PCA --> network smooting
+    # _, pos_dict = get_pca_layout_pos(network_smooting_df)
+
     
     # umap --> without normalization
-    # _, pos_dict = get_umap_layout_pos(with_miss_val_df)
+    # _, pos_dict1 = get_umap_layout_pos(with_miss_val_df)
 
     # umap --> z-score normalization
     # _, pos_dict = get_umap_layout_pos(z_score_df)
 
     # umap --> double centering normalization
-    # _, pos_dict = get_umap_layout_pos(double_centring_df)
+    # _, pos_dict3 = get_umap_layout_pos(double_centring_df)
 
-    # force directed Layout with additional edge weight
-    print('now my force dir layout')
-    network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
-    pos_dict = force_dir_layout(network_with_edge_weight)
-    pos_dict = normalize_all_x_y_to_ndc(pos_dict, [-1,1])
-    print('finish')
-    # force_dir_w_edgweights_pos = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringDB_df)
+    # umap --> network smooting
+    # _, pos_dict4 = get_umap_layout_pos(network_smooting_df)
+
+    # with open('zs_umap.pkl', "rb") as f:
+    #     pos_dict = pickle.load(f)
+
+    # with open('force_dir.pkl', "rb") as f:
+    #     pos_dict_forc_dir = pickle.load(f)
+
+    # a_file = open("zs_umap.pkl", "wb")
+    # pickle.dump(pos_dict, a_file)
+    # a_file.close()
+    # a_file = open("no_umap.pkl", "wb")
+    # pickle.dump(pos_dict1, a_file)
+    # a_file.close()
+    # a_file = open("ds_umap.pkl", "wb")
+    # pickle.dump(pos_dict3, a_file)
+    # a_file.close()
+    # a_file = open("ns_umap.pkl", "wb")
+    # pickle.dump(pos_dict4, a_file)
+    # a_file.close()
+    
+    
+    
+        # force directed Layout with additional edge weight
+    # print('now my force dir layout')
+    # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
+    # network_with_edge_weight = get_networkx_with_edge_weights_all_nodes_connected(pathway_info_dict, stringGraph)
+
+    # pos_dict_forc_dir = force_dir_layout(network_with_edge_weight)
+    # a_file = open("force_dir.pkl", "wb")
+    # pickle.dump(pos_dict_forc_dir, a_file)
+    # a_file.close()
+
+    # pos_dict_forc_dir = normalize_all_x_y_to_ndc(pos_dict_forc_dir, [-1,1])
+    # print('finish')
 
     # pos_dict = {node_name: [x/100 for x in random.sample(range(0, 100),2)] for node_name in list(data_driven_layout_data.index)}
+    # rot_to_ref = rotate_to_ref(pos_dict_forc_dir, pos_dict)
+    # morph_pos = morph_layouts(pos_dict, rot_to_ref, 0.5)
+    
     pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
+    # pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
     
     # for i in random.sample(range(0, len(pathway_connection_dict_new.keys())-1),3):
     #     key = list(pathway_connection_dict_new.keys())[i]
@@ -485,6 +521,8 @@ def kegg_parsing():
                             init_pos_ov[tmp_key]["available_genes"] = [with_init_pos[i]["name"][0]]
                             init_pos_ov[tmp_key]["available_genes_values"] = [with_init_pos[i]["value"]]
     """
+    globalEndTime = time.time()
+    print("Total time {:.3f} s".format((globalEndTime-globalStartTime)))
     # prepare json data
     out_dat = {
         "omicsRecieved": {"transcriptomics": transcriptomics["recieved"], "proteomics": proteomics["recieved"], "metabolomics": metabolomics["recieved"]},
