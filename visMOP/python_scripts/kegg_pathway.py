@@ -89,7 +89,7 @@ class KeggPathway:
         return self.keggID, amounts
 
     def return_formated_title(self):
-        return {"text": self.keggID +" - "+ self.title, "value" : self.keggID}
+        return {"text": self.keggID +" - "+ self.title, "value" : self.keggID, "title": self.title}
 
     def asdict(self):
         """ return the KeggPathway  as dictionary 

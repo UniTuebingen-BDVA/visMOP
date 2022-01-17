@@ -94,6 +94,7 @@ export default Vue.extend({
     drawNetwork () {
       const fcExtents = this.fcQuantiles
       const glyphData = generateGlyphData(fcExtents)
+      this.$store.dispatch('setGlyphData', glyphData)
       console.log('GLYPH DATA', glyphData)
       const glyphs = generateGlyphs(glyphData)
       console.log('GLYPHs', glyphData)

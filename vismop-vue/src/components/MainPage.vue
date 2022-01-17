@@ -17,6 +17,7 @@
             <v-tab href="#dataTable">Data Table</v-tab>
             <v-tab href="#selectedNodes">Selected Entities</v-tab>
             <v-tab href="#ppiGraph"> Protein-Protein Interaction </v-tab>
+            <v-tab href="#pathwayCompare"> Pathway Compare </v-tab>
             <v-tabs-items :value="selectedTabMisc">
               <v-tab-item value="dataTable">
                 <v-row>
@@ -118,6 +119,16 @@
                   </v-col>
                 </v-row>
               </v-tab-item>
+               <v-tab-item value="pathwayCompare">
+                <v-row>
+                  <v-col cols="12">
+                    <keep-alive>
+                      <pathway-compare>
+                      </pathway-compare>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
+              </v-tab-item>
             </v-tabs-items>
           </v-tabs>
         </v-card>
@@ -188,9 +199,10 @@ import OverviewComponent from './OverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
+import PathwayCompare from './PathwayCompare.vue'
 
 export default Vue.extend({
-  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable },
+  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare },
   // name of the component
   name: 'MainPage',
 

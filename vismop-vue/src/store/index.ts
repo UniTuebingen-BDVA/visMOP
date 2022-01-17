@@ -32,7 +32,9 @@ interface State {
   pathwayDropdown: string,
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
-  keggIDGenesymbolDict: {[key: string]: string}
+  keggIDGenesymbolDict: {[key: string]: string},
+  pathwayCompare: string[],
+  glyphData: unknown
 }
 export default new Vuex.Store({
   state: {
@@ -66,8 +68,9 @@ export default new Vuex.Store({
     pathwayDropdown: '',
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
     pathayAmountDict: {},
-    keggIDGenesymbolDict: {}
-
+    keggIDGenesymbolDict: {},
+    pathwayCompare: [],
+    glyphData: {}
   } as State,
   mutations: {
     APPEND_CLICKEDNODE (state, val) {
@@ -156,6 +159,15 @@ export default new Vuex.Store({
     },
     SET_KEGGIDGENESYMBOLDICT (state, val) {
       state.keggIDGenesymbolDict = val
+    },
+    APPEND_PATHWAYCOMPARE (state, val) {
+      state.pathwayCompare.push(val)
+    },
+    REMOVE_PATHWAYCOMPARE (state, val) {
+      state.pathwayCompare.splice(val, 1)
+    },
+    SET_GLYPHDATA (state, val) {
+      state.glyphData = val
     }
   },
   actions: {
@@ -289,11 +301,22 @@ export default new Vuex.Store({
     focusPathwayViaDropdown ({ commit }, val) {
       commit('SET_PATHWAYDROPDOWN', val)
     },
+    selectPathwayCompare ({ commit, state }, val) {
+      const valClean = val.replace('path:', '')
+      if (!state.pathwayCompare.includes(valClean)) commit('APPEND_PATHWAYCOMPARE', valClean)
+    },
+    removePathwayCompare ({ commit, state }, val) {
+      const idx = state.pathwayCompare.indexOf(val)
+      commit('REMOVE_PATHWAYCOMPARE', idx)
+    },
     setOmicsRecieved ({ commit }, val) {
       commit('SET_OMICSRECIEVED', val)
     },
     setPathayAmountDict ({ commit }, val) {
       commit('SET_PATHWAYAMOUNTDICT', val)
+    },
+    setGlyphData ({ commit }, val) {
+      commit('SET_GLYPHDATA', val)
     }
 
   },
