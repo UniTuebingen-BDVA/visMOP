@@ -1,82 +1,126 @@
 <template>
   <v-container fluid>
     <v-row>
-      <!-- Data Table-->
-      <v-col cols="3" class="mb-2" id="inputTable">
-        <div>
-          <v-card class="mb-5">
-            <v-card-title>
-              Data
-              <v-spacer></v-spacer>
-              <v-text-field
-                v-model="tableSearch"
-                append-icon="mdi-magnify"
-                label="Search"
-                single-line
-                hide-details
-              ></v-text-field>
-            </v-card-title>
+      <!-- Misc. Tabs -->
+      <v-col cols="5" class="d-flex flex-column mb-2">
+        <v-card>
+          <v-tabs
+            v-model="selectedTabMisc"
+            background-color="blue lighten-2"
+            dark
+            center-active
+            next-icon="mdi-arrow-right-bold-box-outline"
+            prev-icon="mdi-arrow-left-bold-box-outline"
+            show-arrows
+          >
+            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
+            <v-tab href="#dataTable">Data Table</v-tab>
+            <v-tab href="#selectedNodes">Selected Entities</v-tab>
+            <v-tab href="#ppiGraph"> Protein-Protein Interaction </v-tab>
+            <v-tabs-items :value="selectedTabMisc">
+              <v-tab-item value="dataTable">
+                <v-row>
+                  <v-col cols="12" id="inputTable">
+                    <keep-alive>
+                      <div>
+                        <v-card class="mb-5">
+                          <v-card-title>
+                            Data
+                            <v-spacer></v-spacer>
+                            <v-text-field
+                              class="pt-0"
+                              v-model="tableSearch"
+                              append-icon="mdi-magnify"
+                              label="Search"
+                              single-line
+                              hide-details
+                            ></v-text-field>
+                          </v-card-title>
 
-            <v-tabs
-              v-model="selectedTabTable"
-              background-color="blue lighten-2"
-              dark
-              center-active
-              next-icon="mdi-arrow-right-bold-box-outline"
-              prev-icon="mdi-arrow-left-bold-box-outline"
-              show-arrows
-            >
-              <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
-              <v-tab href="#transcriptomics">Transcriptomics</v-tab>
-              <v-tab href="#proteome">Proteomics</v-tab>
-              <v-tab href="#metabol">Metabolomics</v-tab>
-            </v-tabs>
+                          <v-tabs
+                            v-model="selectedTabTable"
+                            background-color="blue lighten-2"
+                            dark
+                            center-active
+                            next-icon="mdi-arrow-right-bold-box-outline"
+                            prev-icon="mdi-arrow-left-bold-box-outline"
+                            show-arrows
+                          >
+                            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
+                            <v-tab href="#transcriptomics">Transcriptomics</v-tab>
+                            <v-tab href="#proteome">Proteomics</v-tab>
+                            <v-tab href="#metabol">Metabolomics</v-tab>
+                          </v-tabs>
 
-            <v-tabs-items :value="selectedTabTable">
-              <v-tab-item value="transcriptomics">
-                <v-data-table
-                  dense
-                  :headers="transcriptomicsTableHeaders"
-                  :items="transcriptomicsTableData"
-                  :items-per-page="5"
-                  :search="tableSearch"
-                  class="elevation-1"
-                  id="transcriptomics"
-                  @click:row="transcriptomicsSelection"
-                ></v-data-table>
+                          <v-tabs-items :value="selectedTabTable">
+                            <v-tab-item value="transcriptomics">
+                              <v-data-table
+                                dense
+                                :headers="transcriptomicsTableHeaders"
+                                :items="transcriptomicsTableData"
+                                :items-per-page="5"
+                                :search="tableSearch"
+                                class="elevation-1"
+                                id="transcriptomics"
+                                @click:row="transcriptomicsSelection"
+                              ></v-data-table>
+                            </v-tab-item>
+
+                            <v-tab-item value="proteome">
+                              <v-data-table
+                                dense
+                                :headers="proteomicsTableHeaders"
+                                :items="proteomicsTableData"
+                                :items-per-page="5"
+                                :search="tableSearch"
+                                class="elevation-1"
+                                id="proteomicsTable"
+                                @click:row="proteomicsSelection"
+                              ></v-data-table>
+                            </v-tab-item>
+
+                            <v-tab-item value="metabol">
+                              <v-data-table
+                                dense
+                                :headers="metabolomicsTableHeaders"
+                                :items="metabolomicsTableData"
+                                :items-per-page="5"
+                                :search="tableSearch"
+                                class="elevation-1"
+                                id="metabolomicsTable"
+                                @click:row="metabolomicsSelection"
+                              ></v-data-table>
+                            </v-tab-item>
+                          </v-tabs-items>
+                        </v-card>
+                      </div>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
               </v-tab-item>
-
-              <v-tab-item value="proteome">
-                <v-data-table
-                  dense
-                  :headers="proteomicsTableHeaders"
-                  :items="proteomicsTableData"
-                  :items-per-page="5"
-                  :search="tableSearch"
-                  class="elevation-1"
-                  id="proteomicsTable"
-                  @click:row="proteomicsSelection"
-                ></v-data-table>
+              <v-tab-item value="selectedNodes">
+                <v-row>
+                  <v-col cols="12" id="selectedTable">
+                    <keep-alive>
+                       <interaction-graph-table> </interaction-graph-table>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
               </v-tab-item>
-
-              <v-tab-item value="metabol">
-                <v-data-table
-                  dense
-                  :headers="metabolomicsTableHeaders"
-                  :items="metabolomicsTableData"
-                  :items-per-page="5"
-                  :search="tableSearch"
-                  class="elevation-1"
-                  id="metabolomicsTable"
-                  @click:row="metabolomicsSelection"
-                ></v-data-table>
+              <v-tab-item value="ppiGraph">
+                <v-row>
+                  <v-col cols="12">
+                    <keep-alive>
+                       <interaction-graph
+                        contextID="interactionGraph"
+                        > </interaction-graph>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
               </v-tab-item>
             </v-tabs-items>
-          </v-card>
-        </div>
-        <interaction-graph
-        contextID="interactionGraph"
-        > </interaction-graph>
+          </v-tabs>
+        </v-card>
       </v-col>
       <!-- Network -->
       <v-col cols="7" class="d-flex flex-column mb-2">
@@ -129,10 +173,6 @@
           </v-tabs-items>
         </v-card>
       </v-col>
-      <!-- Data Table-->
-      <v-col cols="2" class="mb-2" id="selectedTable">
-        <interaction-graph-table> </interaction-graph-table>
-      </v-col>
     </v-row>
     <div class="text-center">
       <v-overlay :value="overlay">
@@ -159,6 +199,7 @@ export default Vue.extend({
     tableSearch: '',
     selectedTabTable: 'transcriptomics',
     selectedTabNetwork: 'overviewNetwork',
+    selectedTabMisc: 'dataTable',
     transcriptomicsSelectionData: {},
     proteomicsSelectionData: {},
     metabolomicsSelectionData: {},

@@ -153,4 +153,9 @@ export default class pathwayGraph {
     this.currentGraphModel = this.layoutToPathway(pathway, nodeIDs)
     this.currentSigma = this.drawCurrentGraph()
   }
+
+  public refresh () {
+    this.currentSigma.refresh()
+    this.currentSigma.resize()
+  }
 }

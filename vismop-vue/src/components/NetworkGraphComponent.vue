@@ -13,24 +13,22 @@
                     v-model="pathwaySelection"
       ></v-overflow-btn>
       <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
-       <v-btn
-        class="mx-2 expandButton"
-        fab
-        dark
-        small
-        bottom
-        left
-        @click="expandComponent"
-      ><v-icon>mdi-arrow-expand</v-icon></v-btn>
-      <v-btn
-      class="mx-2 minimizeButton"
-      fab
-      dark
-      small
-      top
-      right
-      @click="minimizeComponent"
-      ><v-icon>mdi-arrow-expand</v-icon></v-btn>
+      <v-card-actions>
+        <v-btn
+          class="mx-2 expandButton"
+          fab
+          dark
+          small
+          @click="expandComponent"
+        ><v-icon>mdi-arrow-expand</v-icon></v-btn>
+          <v-btn
+          class="mx-2 minimizeButton"
+          fab
+          dark
+          small
+          @click="minimizeComponent"
+        ><v-icon>mdi-window-minimize</v-icon></v-btn>
+      </v-card-actions>
       </v-col>
     </v-card>
   </div>
@@ -44,6 +42,7 @@ import Vue from 'vue'
 import Sigma from 'sigma'
 
 interface Data{
+  mutationObserver: (MutationObserver | undefined)
   tableSearch: string
   selectedTab: string
   outstandingDraw: boolean
@@ -59,6 +58,7 @@ export default Vue.extend({
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
+    mutationObserver: undefined,
     tableSearch: '',
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
@@ -127,6 +127,10 @@ export default Vue.extend({
   },
 
   mounted () {
+    this.mutationObserver = new MutationObserver(this.refreshGraph)
+    const config = { attributes: true }
+    const tar = document.getElementById(this.contextID)
+    if (tar) this.mutationObserver.observe(tar, config)
     if (this.graphData) {
       this.drawNetwork()
     }
@@ -184,10 +188,16 @@ export default Vue.extend({
     },
     expandComponent () {
       this.expandButton = !this.expandButton
+      this.networkGraph?.refresh()
     },
     minimizeComponent () {
       this.minimizeButton = !this.minimizeButton
+      this.networkGraph?.refresh()
+    },
+    refreshGraph () {
+      this.networkGraph?.refresh()
     }
+
   }
 })
 </script>

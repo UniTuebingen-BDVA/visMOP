@@ -37,15 +37,15 @@
 }
 .expandButton{
   z-index:4;
-  position: absolute;
+  /*position: absolute;
   bottom: 2vh;
-  left: 2vh;
+  left: 2vh;*/
 }
 .minimizeButton{
   z-index:4;
-  position: absolute;
+  /*position: absolute;
   top: 8vh;
-  right: 2vh;
+  right: 2vh;*/
 }
 .webglContainerSmall {
   height: 20vh;
