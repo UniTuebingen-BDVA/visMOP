@@ -111,16 +111,16 @@
                   </keep-alive>
                 </v-col>
                 </v-row>
-                  <!-- <keep-alive>
-                    <network-graph-component
+                  <keep-alive>
+                    <!-- <network-graph-component
                       contextID="detailContext"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
                       :isActive="activeOverview"
                     >
-                    </network-graph-component>
-                  </keep-alive> -->
+                    </network-graph-component> -->
+                  </keep-alive>
             </v-tab-item>
 
             <v-tab-item value="detailNetwork">

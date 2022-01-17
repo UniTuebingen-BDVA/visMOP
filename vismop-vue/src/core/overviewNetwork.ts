@@ -1,5 +1,5 @@
 import { MultiGraph } from 'graphology'
-// import forceAtlas2 from 'graphology-layout-forceatlas2'
+import forceAtlas2 from 'graphology-layout-forceatlas2'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
@@ -22,7 +22,7 @@ export function mainGraph (elemID: string, graphData: graphData): Sigma {
   const graph = MultiGraph.from(graphData)
   // console.log('NODES', graph.nodes())
 
-  // const inferredSettings = forceAtlas2.inferSettings(graph)
+  const inferredSettings = forceAtlas2.inferSettings(graph)
 
   // from events SIGMA2 example, initialze sets for highlight on hover:
   let highlighedNodes = new Set()
