@@ -69,14 +69,14 @@ def project_vector_on_first_components_of_a_basis(vec, basis, num_of_first_vecto
     return res
 
 
-def fill_missing_values_with_neighbor_mean(graph_dict, data_table, recieved_omics, defaul_means):  # geht noch nicht richtig # defold values per omic and pos
+def fill_missing_values_with_neighbor_mean(graph_dict, data_table, recieved_omics, defaul_means, numValsPerOmic):  # geht noch nicht richtig # defold values per omic and pos
     defaul_means_rec_omic = [default_mean for (default_mean, recieved) in zip(defaul_means, recieved_omics) if recieved]
     node_names = list(data_table.index)
     new_data = {}
     for node_name in node_names:
         new_node_vec = []
         for pos, val in enumerate(data_table.loc[node_name]):
-            default_val = 0 if pos % 1 !=0 or pos % 2 !=0 or pos//7>len(defaul_means_rec_omic)-1 else defaul_means_rec_omic[pos//7]
+            default_val = 0 if pos % 1 !=0 or pos % 2 !=0 or pos//numValsPerOmic>len(defaul_means_rec_omic)-1 else defaul_means_rec_omic[pos//numValsPerOmic]
             new_val = val
             if math.isnan(val):
                 # get Neighbor for nodes
@@ -124,8 +124,9 @@ def convert_each_feature_into_z_scores(data_table):
 
 
 def get_umap_layout_pos(data_table):
-    reducer = umap.UMAP()
-    new_pos = reducer.fit_transform(data_table)
+    # reducer = umap.UMAP(random_state=42,transform_seed=42)
+    # np.random.seed(42)
+    new_pos = umap.UMAP(random_state=2).fit_transform(data_table)
     pos_dic = {node_name: row for row, node_name in zip(
         new_pos, list(data_table.index))}
     norm_vals_dict = normalize_all_x_y_to_ndc(pos_dic, [-1,1])
@@ -136,15 +137,15 @@ def get_umap_layout_pos(data_table):
     # plt.savefig('plt_layout_umap.png')
     return new_pos, norm_vals_dict
 
-def perform_all_dim_reductions(data_table):
-    z_scores = convert_each_feature_into_z_scores(data_table)
-    # pos_umap = get_umap_layout_pos(z_scores)
-    pos_umap = []
-    # print(pos_umap)
-    pos_pca = get_pca_layout_pos(z_scores)
-    pos_dic_pca = {node_name: row for row, node_name in zip(
-        pos_pca, list(data_table.index))}
-    return pos_umap, pos_dic_pca
+# def perform_all_dim_reductions(data_table):
+#     z_scores = convert_each_feature_into_z_scores(data_table)
+#     # pos_umap = get_umap_layout_pos(z_scores)
+#     pos_umap = []
+#     # print(pos_umap)
+#     pos_pca = get_pca_layout_pos(z_scores)
+#     pos_dic_pca = {node_name: row for row, node_name in zip(
+#         pos_pca, list(data_table.index))}
+#     return pos_umap, pos_dic_pca
 
 def normalize_all_x_y_to_ndc(pos_per_node, val_space):
     x_vals = [val[0] for key, val in pos_per_node.items()]
@@ -161,7 +162,9 @@ def normalize_all_x_y_to_ndc(pos_per_node, val_space):
 
 def normalize_to_ndc(val, min_val, max_val, val_space):
     numerator = (val_space[1]-val_space[0]) * (val-min_val)
-    devisor = max_val - min_val
+    devisor = max_val - min_val 
+    if devisor == 0:
+        return val_space[0] 
     return numerator/devisor + val_space[0]
 
 
@@ -170,28 +173,34 @@ def morph_layouts(xy_1, xy_2, percentage):
         xy_1[node], xy_2[node], percentage) for node in list(xy_1.keys())}
     return new_xy
 
-
 def coordinate_in_morphed_graph(xy_1, xy_2, percentage):
     x1, y1, x2, y2 = xy_1[0], xy_1[1], xy_2[0], xy_2[1]
-    e_dist_sq = math.pow(edist(x1, y1, x2, y2), 2)
-
-    z = math.pow(percentage, 2) * e_dist_sq
-    z1 = math.pow(1-percentage, 2) * e_dist_sq
-
-    f = -(2*x1 - 2*x2)
-    h = -(math.pow(x2, 2)) - math.pow(x1, 2) + \
-        math.pow(y2, 2) - math.pow(y1, 2) - z + z1
-    e = 2*y1 - 2*y2
-
-    a = math.pow(e, 2) + math.pow(f, 2)
-    b = -2*math.pow(e, 2)*x2-2*e*f*y2+2*f*h
-    # c = math.pow(e,2) * math.pow(x2,2) + math.pow(h,2) -2*e*h*y2+ math.pow(e,2) * math.pow(y2,2) -math.pow(e,2)*z
-
-    # delta = math.pow(b) -4*a*c
-    x_morphed = -b/(2*a)
-    y_morphed = f*(x_morphed + h) / e
+    
+    x_morphed = percentage * x2 + (1-percentage)*x1
+    y_morphed = percentage * y2 + (1-percentage)*y1
 
     return [x_morphed, y_morphed]
+
+# def coordinate_in_morphed_graph(xy_1, xy_2, percentage):
+#     x1, y1, x2, y2 = xy_1[0], xy_1[1], xy_2[0], xy_2[1]
+#     e_dist_sq = math.pow(edist(x1, y1, x2, y2), 2)
+
+#     z = math.pow(percentage, 2) * e_dist_sq
+#     z1 = math.pow(1-percentage, 2) * e_dist_sq
+
+#     f = -(2*x1 - 2*x2)
+#     h = -(math.pow(x2, 2)) - math.pow(x1, 2) + math.pow(y2, 2) - math.pow(y1, 2) - z + z1
+#     e = 2*y1 - 2*y2
+
+#     a = math.pow(e, 2) + math.pow(f, 2)
+#     b = -2*math.pow(e, 2)*x2-2*e*f*y2+2*f*h
+#     # c = math.pow(e,2) * math.pow(x2,2) + math.pow(h,2) -2*e*h*y2+ math.pow(e,2) * math.pow(y2,2) -math.pow(e,2)*z
+
+#     # delta = math.pow(b) -4*a*c
+#     x_morphed = -b/(2*a)
+#     y_morphed = f*(x_morphed + h) / e
+
+#     return [x_morphed, y_morphed]
 
 
 def rotate_to_ref(pos_to_rot, ref_pos):
@@ -247,4 +256,7 @@ def rotate_to_ref(pos_to_rot, ref_pos):
 
 def edist(x1, y1, x2, y2):
     return np.linalg.norm(np.array([x1, y1])-np.array([x2, y2]))
+
+
+# post prosessing methods!!!!!
 
