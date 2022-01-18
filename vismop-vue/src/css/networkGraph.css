@@ -146,3 +146,18 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 #range-wrap {
   display: none;
 }
+
+.centeredGlyphs {
+  width: 60%;
+  display: block;
+  margin: 0 auto;
+}
+
+.glyphText{
+  font-family: "Roboto", sans-serif;
+  font-size: .25rem;
+}
+
+.positionCardTitle{
+  height: 15%;
+}

@@ -39,7 +39,7 @@
               </template>
               <template v-slot:[`item.delete`]="{ item }">
                 <v-icon dark left color="red" @click="deleteRow(item.id)">
-                  mdi-cancel
+                  mdi-close
                 </v-icon>
               </template>
             </v-data-table>

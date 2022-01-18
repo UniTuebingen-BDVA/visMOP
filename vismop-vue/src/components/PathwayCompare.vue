@@ -16,25 +16,31 @@
                     v-slot="{ active }"
                     >
                     <v-card
-                        :color="active ? 'primary' : 'grey lighten-1'"
-                        class="ma-4"
-                        height="90%"
-                        width="180"
+                        :color="active ? 'primary' : 'grey lighten-4'"
+                        class="ma-1"
+                        height="95%"
+                        width="220"
                         >
-                        <v-card-actions>
-                            <v-btn
-                                class="mx-2 expandButton"
-                                dark
-                                small
-                                @click="removeCard(pathway)"
-                            ><v-icon>mdi-close</v-icon></v-btn>
-                        </v-card-actions>
-                        <v-card-title>
-                            {{ pathwayLayouting.pathwayList.find(elem => elem.value === pathway).value }}
-                        </v-card-title>
-                        <v-card-subtitle>
+                        <v-row>
+                          <v-card-actions>
+                              <v-btn
+                                  fab
+                                  class="mx-2 expandButton"
+                                  dark
+                                  small
+                                  @click="removeCard(pathway)"
+                              ><v-icon>mdi-close</v-icon></v-btn>
+                          </v-card-actions>
+                          <v-card-title >
+                              {{ pathwayLayouting.pathwayList.find(elem => elem.value === pathway).value }}
+                          </v-card-title>
+                        </v-row>
+                        <v-card-subtitle class="positionCardTitle">
                             {{ pathwayLayouting.pathwayList.find(elem => elem.value === pathway).title }}
                         </v-card-subtitle>
+                        <div>
+                          <div class="centeredGlyphs" v-html="glyphs.svg[pathway]"> </div>
+                        </div>
                         <v-card-text>
                           <table>
 
@@ -84,7 +90,8 @@ export default Vue.extend({
       pathwayCompare: (state: any) => state.pathwayCompare,
       overlay: (state: any) => state.overlay,
       glyphData: (state: any) => state.glyphData,
-      pathwayLayouting: (state: any) => state.pathwayLayouting
+      pathwayLayouting: (state: any) => state.pathwayLayouting,
+      glyphs: (state: any) => state.glyphs
     })
   },
   // watch: {},

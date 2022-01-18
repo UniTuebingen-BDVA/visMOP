@@ -34,7 +34,8 @@ interface State {
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
   keggIDGenesymbolDict: {[key: string]: string},
   pathwayCompare: string[],
-  glyphData: unknown
+  glyphData: unknown,
+  glyphs: { url: { [key: string]: string }, svg: { [key: string]: SVGElement }}
 }
 export default new Vuex.Store({
   state: {
@@ -70,7 +71,8 @@ export default new Vuex.Store({
     pathayAmountDict: {},
     keggIDGenesymbolDict: {},
     pathwayCompare: [],
-    glyphData: {}
+    glyphData: {},
+    glyphs: { url: {}, svg: {} }
   } as State,
   mutations: {
     APPEND_CLICKEDNODE (state, val) {
@@ -168,6 +170,9 @@ export default new Vuex.Store({
     },
     SET_GLYPHDATA (state, val) {
       state.glyphData = val
+    },
+    SET_GLYPHS (state, val) {
+      state.glyphs = val
     }
   },
   actions: {
@@ -317,6 +322,9 @@ export default new Vuex.Store({
     },
     setGlyphData ({ commit }, val) {
       commit('SET_GLYPHDATA', val)
+    },
+    setGlyphs ({ commit }, val) {
+      commit('SET_GLYPHS', val)
     }
 
   },

@@ -66,21 +66,27 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
   return outGlyphData
 }
 
-// glyph data in the future
-export function generateGlyphs (inputData: { [key: string]: glyphData }): { [key: string]: string } {
-  const outObj: { [key: string]: string } = {}
+export function generateGlyphs (inputData: { [key: string]: glyphData }): { url: { [key: string]: string }, svg: { [key: string]: string }} {
+  const outObjURL: { [key: string]: string } = {}
+  const outObjSVG: { [key: string]: string } = {}
 
   for (const key in inputData) {
     const glyphData = inputData[key]
     const serializer = new XMLSerializer()
-    const glyphSVG = generateGlyphVariation(glyphData)
+    const glyphSVG = generateGlyphVariation(glyphData, false)
     const glyphSVGstring = serializer.serializeToString(glyphSVG)
     const svgBlob = new Blob([glyphSVGstring], { type: 'image/svg+xml;charset=utf-8' })
     const svgURL = window.URL.createObjectURL(svgBlob)
-    outObj[key] = svgURL
+
+    const glyphSVGlegend = generateGlyphVariation(glyphData, true)
+    const glyphSVGstringlegend = serializer.serializeToString(glyphSVGlegend)
+    const svgBloblegend = new Blob([glyphSVGstringlegend], { type: 'image/svg+xml;charset=utf-8' })
+    const svgURLlegend = window.URL.createObjectURL(svgBloblegend)
+    outObjURL[key] = svgURL
+    outObjSVG[key] = glyphSVGstringlegend
   }
 
-  return outObj
+  return { url: outObjURL, svg: outObjSVG }
 }
 
 function generateGlyph (glyphDat: glyphData): SVGElement {
@@ -171,7 +177,7 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   return svg.node() as SVGElement
 }
 
-function generateGlyphVariation (glyphDat: glyphData): SVGElement {
+function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGElement {
   let availableOmics = 0
   if (glyphDat.transcriptomics.available) availableOmics += 1
   if (glyphDat.proteomics.available) availableOmics += 1
@@ -253,12 +259,23 @@ function generateGlyphVariation (glyphDat: glyphData): SVGElement {
     addedElements += 1
   }
 
-  const svg = d3.create('svg')
-    .attr('width', width)
-    .attr('height', height)
-  const g = svg.append('g')
-    .attr('transform', `translate(${width / 2},${height / 2})`)
+  let svg
+  let g
 
+  if (drawLabels) {
+    svg = d3.create('svg')
+      .attr('viewBox', `0 0 ${diameter} ${diameter}`)
+      .attr('width', '100%')
+      .attr('height', '100%')
+    g = svg.append('g')
+      .attr('transform', `translate(${width / 2},${height / 2})`)
+  } else {
+    svg = d3.create('svg')
+      .attr('width', width)
+      .attr('height', height)
+    g = svg.append('g')
+      .attr('transform', `translate(${width / 2},${height / 2})`)
+  }
   const arcOuter = d3.arc<PieArcDatum<number>>().innerRadius(firstLayer).outerRadius(outermostRadius)
   const arcMiddle = d3.arc<PieArcDatum<number>>().innerRadius(secondLayer).outerRadius(firstLayer)
 
@@ -275,5 +292,16 @@ function generateGlyphVariation (glyphDat: glyphData): SVGElement {
     .append('path')
     .attr('d', arcMiddle)
     .attr('fill', (d, i) => innerColors[i])
+  if (drawLabels) {
+    const labelArc = d3.arc<PieArcDatum<number>>().innerRadius(secondLayer).outerRadius(secondLayer)
+
+    g.selectAll('labels')
+      .data(innerArcDat)
+      .enter()
+      .append('text')
+      .text('A')
+      .attr('class', 'glyphText')
+      .attr('transform', (d) => `translate(${labelArc.centroid(d)})`)
+  }
   return svg.node() as SVGElement
 }

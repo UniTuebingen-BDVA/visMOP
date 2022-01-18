@@ -96,9 +96,11 @@ export default Vue.extend({
       const glyphData = generateGlyphData(fcExtents)
       this.$store.dispatch('setGlyphData', glyphData)
       console.log('GLYPH DATA', glyphData)
-      const glyphs = generateGlyphs(glyphData)
-      console.log('GLYPHs', glyphData)
-      const networkData = generateGraphData(this.overviewData, fcExtents, glyphs)
+      const generatedGlyphs = generateGlyphs(glyphData)
+      this.$store.dispatch('setGlyphs', generatedGlyphs)
+      const glyphsURL = generatedGlyphs.url
+      console.log('GLYPHs', this.$store.state.glyphs)
+      const networkData = generateGraphData(this.overviewData, fcExtents, glyphsURL)
       console.log('base dat', networkData)
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }
