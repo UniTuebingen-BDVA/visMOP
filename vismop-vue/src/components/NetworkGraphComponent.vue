@@ -153,10 +153,10 @@ export default Vue.extend({
     },
     focusNodeTranscriptomics (row: {[key: string]: string}) {
       const symbol = row[this.usedSymbolCols.transcriptomics]
-      console.log('Symbol', symbol)
-      console.log('dict', this.transcriptomicsSymbolDict)
-      const keggID = this.transcriptomicsSymbolDict[symbol]
-      console.log('ID', keggID)
+      // console.log('Symbol', symbol)
+      // console.log('dict', this.transcriptomicsSymbolDict)
+      // const keggID = this.transcriptomicsSymbolDict[symbol]
+      // console.log('ID', keggID)
       // panToNode(this.networkGraph as Sigma, keggID)
     },
     focusNodeProteomics (row: {[key: string]: string}) {

@@ -10,13 +10,25 @@ interface State {
   transcriptomicsTableHeaders: unknown,
   transcriptomicsTableData: unknown,
   transcriptomicsData: unknown,
+  /**
+   * KEY: Symbol -> VAL: KEGGID
+   */
   transcriptomicsSymbolDict: { [key: string]: string },
+  /**
+   * KEY: KEGGID -> VAL: SYMBOL
+   */
   transcriptomicsKeggIDDict: { [key: string]: string },
   proteomicsTableHeaders: unknown,
   proteomicsTableData: unknown,
   clickedNodes: { id: string, name: string, fcTranscript: number, fcProt: number, delete: unknown }[],
   proteomicsData: unknown,
+  /**
+   * KEY: Symbol -> VAL: KEGGID
+   */
   proteomicsSymbolDict: { [key: string]: string },
+  /**
+   * KEY: KEGGID -> VAL: SYMBOL
+   */
   proteomicsKeggDict: { [key: string]: string },
   metabolomicsData: unknown,
   metabolomicsTableHeaders: unknown,
@@ -28,7 +40,7 @@ interface State {
   fcQuantiles: [number, number],
   fcScale: unknown,
   interactionGraphData: unknown,
-  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] } },
+  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]} },
   pathwayDropdown: string,
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
@@ -64,7 +76,8 @@ export default new Vuex.Store({
     interactionGraphData: null,
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty' }],
-      pathwayNodeDictionary: { a: [] }
+      pathwayNodeDictionary: { },
+      nodePathwayDictionary: { }
     },
     pathwayDropdown: '',
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
@@ -296,8 +309,21 @@ export default new Vuex.Store({
 
       commit('SET_FCSCALE', scale)
     },
-    setPathwayLayouting ({ commit }, val) {
-      commit('SET_PATHWAYLAYOUTING', val)
+    setPathwayLayouting ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
+      const nodePathwayDict: {[key: string]: string[]} = {}
+      Object.keys(val.pathwayNodeDictionary).forEach(pathwayID => {
+        val.pathwayNodeDictionary[pathwayID].forEach(nodeIDstr => {
+          const nodeIDs = nodeIDstr.split(';')
+          nodeIDs.forEach(nodeID => {
+            if (Object.keys(nodePathwayDict).includes(nodeID)) {
+              nodePathwayDict[nodeID].push(pathwayID)
+            } else {
+              nodePathwayDict[nodeID] = [pathwayID]
+            }
+          })
+        })
+      })
+      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict })
     },
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')

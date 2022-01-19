@@ -38,23 +38,20 @@
                         <v-card-subtitle class="positionCardTitle">
                             {{ pathwayLayouting.pathwayList.find(elem => elem.value === pathway).title }}
                         </v-card-subtitle>
-                        <div>
-                          <div class="centeredGlyphs" v-html="glyphs.svg[pathway]"> </div>
+                        <div class="centeredGlyphs">
+                          <div :id="'glyph'+pathway"> </div>
                         </div>
+                        {{ appendGlyph(pathway) }}
                         <v-card-text>
                           <table>
+                          <tr> <td>Transcriptomics:</td> <td> {{ glyphData[pathway]["transcriptomics"]["nodeState"]["regulated"] }} of {{ glyphData[pathway]["transcriptomics"]["nodeState"]["total"] }}</td> </tr>
+                          <tr> <td>Avg. FC:</td> <td>{{ glyphData[pathway]["transcriptomics"]["meanFoldchange"].toFixed(3) }}</td> </tr>
 
-                          <tr> <td>Transcriptomics:</td> </tr>
-                          <tr> <td>Total Nodes:</td> <td>{{ glyphData[pathway]["transcriptomics"]["nodeState"]["total"] }}</td> </tr>
-                          <tr> <td>Regulated Nodes:</td> <td>{{ glyphData[pathway]["transcriptomics"]["nodeState"]["regulated"] }}</td> </tr>
+                          <tr> <td>Proteomics:</td> <td> {{ glyphData[pathway]["proteomics"]["nodeState"]["regulated"] }} of {{ glyphData[pathway]["proteomics"]["nodeState"]["total"] }}</td> </tr>
+                          <tr> <td>Avg. FC:</td> <td>{{ glyphData[pathway]["proteomics"]["meanFoldchange"].toFixed(3) }}</td> </tr>
 
-                          <tr> <td>Proteomics:</td> </tr>
-                          <tr> <td>Total Nodes:</td> <td>{{ glyphData[pathway]["proteomics"]["nodeState"]["total"] }}</td> </tr>
-                          <tr> <td>Regulated Nodes:</td> <td>{{ glyphData[pathway]["proteomics"]["nodeState"]["regulated"] }}</td> </tr>
-
-                          <tr> <td>Metabolomics:</td> </tr>
-                          <tr> <td>Total Nodes:</td> <td>{{ glyphData[pathway]["metabolomics"]["nodeState"]["total"] }}</td> </tr>
-                          <tr> <td>Regulated Nodes:</td> <td>{{ glyphData[pathway]["metabolomics"]["nodeState"]["regulated"] }}</td> </tr>
+                          <tr> <td>Metabolomics:</td> <td> {{ glyphData[pathway]["metabolomics"]["nodeState"]["regulated"] }} of {{ glyphData[pathway]["metabolomics"]["nodeState"]["total"] }}</td> </tr>
+                          <tr> <td>Avg. FC:</td> <td>{{ glyphData[pathway]["metabolomics"]["meanFoldchange"].toFixed(3) }}</td> </tr>
                           </table>
                         </v-card-text>
                     </v-card>
@@ -67,6 +64,7 @@
 <script lang="ts">
 import { mapState } from 'vuex'
 import Vue from 'vue'
+import * as d3 from 'd3'
 
 interface Data {
   tableSearch: string;
@@ -100,6 +98,11 @@ export default Vue.extend({
     removeCard (val: string) {
       console.log('remove Card', val)
       this.$store.dispatch('removePathwayCompare', val)
+    },
+    appendGlyph (pathway: string) {
+      this.$nextTick(() => {
+        const test = d3.select(`#glyph${pathway}`).append(() => this.glyphs.svg[pathway])
+      })
     }
   }
 })

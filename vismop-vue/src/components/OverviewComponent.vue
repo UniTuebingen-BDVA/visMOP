@@ -50,11 +50,31 @@ export default Vue.extend({
       fcs: (state:any) => state.fcs,
       overlay: (state:any) => state.overlay,
       fcQuantiles: (state:any) => state.fcQuantiles,
-      pathwayDropdown: (state:any) => state.pathwayDropdown
-
+      pathwayDropdown: (state:any) => state.pathwayDropdown,
+      pathwayLayouting: (state: any) => state.pathwayLayouting,
+      usedSymbolCols: (state: any) => state.usedSymbolCols,
+      transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
+      proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict
     })
   },
   watch: {
+    transcriptomicsSelection: function () {
+      const symbol = this.transcriptomicsSelection[this.usedSymbolCols.transcriptomics]
+      const keggID = this.transcriptomicsSymbolDict[symbol]
+      console.log('SYMBOL OVERVIEW', symbol)
+      console.log('KEGGID OVERVIEW', keggID)
+      console.log('nodePathwayDictionary', this.pathwayLayouting.nodePathwayDictionary)
+      console.log('CLICKTEST', this.pathwayLayouting.nodePathwayDictionary[keggID])
+    },
+    proteomicsSelection: function () {
+      const symbol = this.proteomicsSelection[this.usedSymbolCols.proteomics]
+      const keggID = this.proteomicsSymbolDict[symbol]
+      console.log('CLICKTEST', this.pathwayLayouting.nodePathwayDictionary[keggID])
+    },
+    metabolomicsSelection: function () {
+      const symbol = this.metabolomicsSelection[this.usedSymbolCols.metabolomics]
+      console.log('CLICKTEST', this.pathwayLayouting.nodePathwayDictionary[symbol])
+    },
     pathwayDropdown: function () {
       this.networkGraph?.refreshCurrentPathway()
     },
@@ -89,7 +109,13 @@ export default Vue.extend({
       this.drawNetwork()
     }
   },
-  props: ['contextID', 'isActive'],
+  props: {
+    contextID: String,
+    transcriptomicsSelection: { type: Object },
+    proteomicsSelection: { type: Object },
+    metabolomicsSelection: { type: Object },
+    isActive: Boolean
+  },
   methods: {
     drawNetwork () {
       const fcExtents = this.fcQuantiles
