@@ -273,10 +273,10 @@ export default Vue.extend({
       this.transcriptomicsSelectionData = (this.selectedTranscriptomics)
     },
     selectedProteomics: function () {
-      console.log(this.selectedProteomics)
+      this.proteomicsSelectionData = (this.selectedProteomics)
     },
     selectedMetabolomics: function () {
-      console.log(this.selectedMetabolomics)
+      this.metabolomicsSelectionData = (this.selectedMetabolomics)
     }
   },
 

@@ -29,6 +29,9 @@ interface Data{
   selectedTab: string
   outstandingDraw: boolean
   networkGraph: (OverviewGraph | undefined)
+  transcriptomicsIntersection: string[]
+  proteomicsIntersection: string[]
+  metabolomicsIntersection: string[]
 }
 
 export default Vue.extend({
@@ -40,7 +43,10 @@ export default Vue.extend({
     tableSearch: '',
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
-    networkGraph: undefined
+    networkGraph: undefined,
+    transcriptomicsIntersection: [],
+    proteomicsIntersection: [],
+    metabolomicsIntersection: []
 
   }),
 
@@ -55,9 +61,22 @@ export default Vue.extend({
       usedSymbolCols: (state: any) => state.usedSymbolCols,
       transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
       proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict
-    })
+    }),
+    combinedIntersection: {
+      get: function (): string[] {
+        const combinedElements = []
+        if (this.transcriptomicsIntersection.length > 0) combinedElements.push(this.transcriptomicsIntersection)
+        if (this.proteomicsIntersection.length > 0) combinedElements.push(this.proteomicsIntersection)
+        if (this.metabolomicsIntersection.length > 0) combinedElements.push(this.metabolomicsIntersection)
+        const intersection = combinedElements.length > 0 ? combinedElements.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+        return intersection
+      }
+    }
   },
   watch: {
+    combinedIntersection: function () {
+      this.networkGraph?.setPathwaysContainingSelection(this.combinedIntersection)
+    },
     transcriptomicsSelection: function () {
       const foundPathways: string[][] = []
       this.transcriptomicsSelection.forEach((element: { [key: string]: string}) => {
@@ -68,28 +87,32 @@ export default Vue.extend({
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
-      this.networkGraph?.setPathwaysContainingSelection(intersection)
+      this.transcriptomicsIntersection = intersection
+      // this.networkGraph?.setPathwaysContainingSelection(intersection)
     },
     proteomicsSelection: function () {
       const foundPathways: string[][] = []
-      this.transcriptomicsSelection.forEach((element: { [key: string]: string}) => {
+      this.proteomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.proteomics]
         const keggID = this.proteomicsSymbolDict[symbol]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
+      console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
-      this.networkGraph?.setPathwaysContainingSelection(intersection)
+      this.proteomicsIntersection = intersection
+      // this.networkGraph?.setPathwaysContainingSelection(intersection)
     },
     metabolomicsSelection: function () {
       const foundPathways: string[][] = []
-      this.transcriptomicsSelection.forEach((element: { [key: string]: string}) => {
+      this.metabolomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.metabolomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
-      this.networkGraph?.setPathwaysContainingSelection(intersection)
+      this.metabolomicsIntersection = intersection
+      // this.networkGraph?.setPathwaysContainingSelection(intersection)
     },
     pathwayDropdown: function () {
       this.networkGraph?.refreshCurrentPathway()

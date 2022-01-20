@@ -315,10 +315,11 @@ export default new Vuex.Store({
         val.pathwayNodeDictionary[pathwayID].forEach(nodeIDstr => {
           const nodeIDs = nodeIDstr.split(';')
           nodeIDs.forEach(nodeID => {
-            if (Object.keys(nodePathwayDict).includes(nodeID)) {
-              nodePathwayDict[nodeID].push(pathwayID)
+            const nodeIDreplace = nodeID.replace('cpd:', '').replace('gl:', '')
+            if (Object.keys(nodePathwayDict).includes(nodeIDreplace)) {
+              nodePathwayDict[nodeIDreplace].push(pathwayID)
             } else {
-              nodePathwayDict[nodeID] = [pathwayID]
+              nodePathwayDict[nodeIDreplace] = [pathwayID]
             }
           })
         })
