@@ -113,13 +113,13 @@ export default Vue.extend({
       this.$store.dispatch('focusPathwayViaDropdown', this.pathwaySelection)
     },
     transcriptomicsSelection: function () {
-      this.focusNodeTranscriptomics(this.transcriptomicsSelection)
+      // this.focusNodeTranscriptomics(this.transcriptomicsSelection)
     },
     proteomicsSelection: function () {
-      this.focusNodeProteomics(this.proteomicsSelection)
+      // this.focusNodeProteomics(this.proteomicsSelection)
     },
     metabolomicsSelection: function () {
-      this.focusNodeMetabolomics(this.metabolomicsSelection)
+      // this.focusNodeMetabolomics(this.metabolomicsSelection)
     },
     pathwayDropdown: function () {
       this.pathwaySelection = this.pathwayDropdown
@@ -137,9 +137,9 @@ export default Vue.extend({
   },
   props: {
     contextID: String,
-    transcriptomicsSelection: { type: Object },
-    proteomicsSelection: { type: Object },
-    metabolomicsSelection: { type: Object },
+    transcriptomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    proteomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    metabolomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
     isActive: Boolean
   },
   methods: {

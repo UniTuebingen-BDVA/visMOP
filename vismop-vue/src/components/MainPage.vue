@@ -57,6 +57,8 @@
                             <v-tab-item value="transcriptomics">
                               <v-data-table
                                 dense
+                                v-model="selectedTranscriptomics"
+                                show-select
                                 :headers="transcriptomicsTableHeaders"
                                 :items="transcriptomicsTableData"
                                 :items-per-page="5"
@@ -70,6 +72,8 @@
                             <v-tab-item value="proteome">
                               <v-data-table
                                 dense
+                                v-model="selectedProteomics"
+                                show-select
                                 :headers="proteomicsTableHeaders"
                                 :items="proteomicsTableData"
                                 :items-per-page="5"
@@ -83,6 +87,8 @@
                             <v-tab-item value="metabol">
                               <v-data-table
                                 dense
+                                v-model="selectedMetabolomics"
+                                show-select
                                 :headers="metabolomicsTableHeaders"
                                 :items="metabolomicsTableData"
                                 :items-per-page="5"
@@ -201,21 +207,38 @@ import Vue from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
 import PathwayCompare from './PathwayCompare.vue'
 
+interface Data{
+  tableSearch: string
+  selectedTabTable: string
+  selectedTabNetwork: string
+  selectedTabMisc: string
+  transcriptomicsSelectionData: { [key: string]: string }[],
+  proteomicsSelectionData: { [key: string]: string }[],
+  metabolomicsSelectionData: { [key: string]: string }[],
+  pathwaySelection: string,
+  selectedTranscriptomics: { [key: string]: string }[],
+  selectedProteomics: { [key: string]: string }[],
+  selectedMetabolomics: { [key: string]: string }[]
+}
+
 export default Vue.extend({
   components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare },
   // name of the component
   name: 'MainPage',
 
   // data section of the Vue component. Access via this.<varName> .
-  data: () => ({
+  data: (): Data => ({
     tableSearch: '',
     selectedTabTable: 'transcriptomics',
     selectedTabNetwork: 'overviewNetwork',
     selectedTabMisc: 'dataTable',
-    transcriptomicsSelectionData: {},
-    proteomicsSelectionData: {},
-    metabolomicsSelectionData: {},
-    pathwaySelection: ''
+    transcriptomicsSelectionData: [{}],
+    proteomicsSelectionData: [{}],
+    metabolomicsSelectionData: [{}],
+    pathwaySelection: '',
+    selectedTranscriptomics: [],
+    selectedProteomics: [],
+    selectedMetabolomics: []
   }),
 
   computed: {
@@ -245,19 +268,29 @@ export default Vue.extend({
       }
     }
   },
-  // watch: {},
+  watch: {
+    selectedTranscriptomics: function () {
+      this.transcriptomicsSelectionData = (this.selectedTranscriptomics)
+    },
+    selectedProteomics: function () {
+      console.log(this.selectedProteomics)
+    },
+    selectedMetabolomics: function () {
+      console.log(this.selectedMetabolomics)
+    }
+  },
 
   // mounted () {},
 
   methods: {
-    transcriptomicsSelection (val: string) {
-      this.transcriptomicsSelectionData = val
+    transcriptomicsSelection (val: { [key: string]: string }) {
+      // this.transcriptomicsSelectionData = val
     },
-    proteomicsSelection (val: string) {
-      this.proteomicsSelectionData = val
+    proteomicsSelection (val: { [key: string]: string }) {
+      // this.proteomicsSelectionData = val
     },
-    metabolomicsSelection (val: string) {
-      this.metabolomicsSelectionData = val
+    metabolomicsSelection (val: { [key: string]: string }) {
+      // this.metabolomicsSelectionData = val
     }
   }
 })

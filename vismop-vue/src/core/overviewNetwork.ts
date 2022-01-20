@@ -10,6 +10,7 @@ import { DEFAULT_SETTINGS } from 'sigma/settings'
 
 export default class overviewGraph {
   private currentPathway = '';
+  private pathwaysContainingSelection: string[] = []
   private renderer;
 
   constructor (containerID: string, graphData: graphData) {
@@ -40,6 +41,9 @@ export default class overviewGraph {
     const nodeReducer = (node: string, data: Attributes) => {
       if (this.currentPathway === node.replace('path:', '')) {
         return { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1 }
+      }
+      if (this.pathwaysContainingSelection.includes(node.replace('path:', ''))) {
+        return { ...data, color: 'rgba(0,255,0,1.0)', zIndex: 1 }
       }
 
       return data
@@ -147,6 +151,11 @@ export default class overviewGraph {
 
   public refreshCurrentPathway () {
     this.currentPathway = store.state.pathwayDropdown
+    this.renderer.refresh()
+  }
+
+  public setPathwaysContainingSelection (val: string[] = []) {
+    this.pathwaysContainingSelection = val
     this.renderer.refresh()
   }
 }

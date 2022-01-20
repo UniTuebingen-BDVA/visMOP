@@ -9,9 +9,14 @@ def create_df(file_type):
     """
     read_table = pd.read_excel(file_type, header = None, engine='openpyxl')
     read_table = read_table.dropna(how='all')
+    print(read_table)
     read_table = read_table.rename(columns=read_table.iloc[0])
+    print(read_table)
     read_table = read_table.drop(read_table.index[0])
+    print(read_table)
     read_table = read_table.fillna(value = "None")
+    read_table['id'] = read_table.index
+    print(read_table)
     return read_table
 
 def generate_vue_table_header(df):
@@ -25,10 +30,11 @@ def generate_vue_table_header(df):
     vue_headers = []
 
     for entry in header:
-        vue_header = {}
-        vue_header['text'] = entry
-        vue_header['value'] = entry
-        vue_headers.append(vue_header)
+        if entry != "id":
+            vue_header = {}
+            vue_header['text'] = entry
+            vue_header['value'] = entry
+            vue_headers.append(vue_header)
     return vue_headers
 
 def generate_vue_table_entries(df):
