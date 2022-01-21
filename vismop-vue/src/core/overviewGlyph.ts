@@ -67,28 +67,28 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
 
     outGlyphData[pathway.value] = { pathwayID: pathway.value, transcriptomics: transcriptomicsData, proteomics: proteomicsData, metabolomics: metabolomicsData }
   }
-  console.log('TSD', store.state.transcriptomicsSymbolDict)
   return outGlyphData
 }
 
 export function generateGlyphs (inputData: { [key: string]: glyphData }): { url: { [key: string]: string }, svg: { [key: string]: unknown }} {
   const outObjURL: { [key: string]: string } = {}
   const outObjSVG: { [key: string]: unknown } = {}
-
+  let idx = 0
   for (const key in inputData) {
     const glyphData = inputData[key]
     const serializer = new XMLSerializer()
-    const glyphSVG = generateGlyphVariation(glyphData, false) as SVGElement
+    const glyphSVG = generateGlyphVariation(glyphData, false, idx) as SVGElement
     const glyphSVGstring = serializer.serializeToString(glyphSVG)
     const svgBlob = new Blob([glyphSVGstring], { type: 'image/svg+xml;charset=utf-8' })
     const svgURL = window.URL.createObjectURL(svgBlob)
 
-    const glyphSVGlegend = generateGlyphVariation(glyphData, true)
+    const glyphSVGlegend = generateGlyphVariation(glyphData, true, idx)
     // const glyphSVGstringlegend = serializer.serializeToString(glyphSVGlegend)
     // const svgBloblegend = new Blob([glyphSVGstringlegend], { type: 'image/svg+xml;charset=utf-8' })
     // const svgURLlegend = window.URL.createObjectURL(svgBloblegend)
     outObjURL[key] = svgURL
     outObjSVG[key] = glyphSVGlegend
+    idx += 1
   }
 
   return { url: outObjURL, svg: outObjSVG }
@@ -182,7 +182,7 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   return svg.node() as SVGElement
 }
 
-function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGElement {
+function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyphIdx: number): SVGElement {
   let availableOmics = 0
   if (glyphDat.transcriptomics.available) availableOmics += 1
   if (glyphDat.proteomics.available) availableOmics += 1
@@ -201,6 +201,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
   const innermostRadius = secondLayer - layerWidth
   const colorScaleRB = d3.scaleSequential(d3.interpolateRdBu).domain([store.state.fcQuantiles[1], store.state.fcQuantiles[0]])
   const colorScalePG = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles)
+  let highlightSection = 0
 
   const outerArcDat: {
     data: number;
@@ -209,7 +210,8 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
     startAngle: number;
     endAngle: number;
     padAngle: number;
-    hoverData: string;
+    symbol: string;
+    fc: number
   }[] = []
   const innerArcDat = []
   const outerColors : string[] = []
@@ -221,12 +223,14 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
 
   // prepare transcriptomics
   let addedElements = 0
+  let totalNodes = 0
   if (glyphDat.transcriptomics.available) {
+    totalNodes += glyphDat.transcriptomics.nodeState.total
     const colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleRB(elem.value))
     outerColors.push(...colorsTranscriptomics)
     const angleRangeTranscriptomicsFCs = _.range(circlePadding, circlePadding + thirdCircleElement + (thirdCircleElement / colorsTranscriptomics.length), thirdCircleElement / colorsTranscriptomics.length)
     colorsTranscriptomics.forEach((element, idx) => {
-      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0, hoverData: `${glyphDat.transcriptomics.foldChanges[idx].symbol}\nFC: ${glyphDat.transcriptomics.foldChanges[idx].value.toFixed(3)}` }
+      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0, symbol: glyphDat.transcriptomics.foldChanges[idx].symbol, fc: glyphDat.transcriptomics.foldChanges[idx].value }
       outerArcDat.push(pushDat)
     })
     const transcriptomicsRegulatedQuotient = glyphDat.transcriptomics.nodeState.regulated / glyphDat.transcriptomics.nodeState.total
@@ -239,23 +243,24 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
       if (availableOmics === 1) {
         labelArcData.push({ data: 1, value: 1, index: 0, startAngle: circlePadding + thirdCircleElement, endAngle: circlePadding, padAngle: 0 })
         labelTextOffset.push('3.5%')
+        labelTexts.push('+ ← Transcriptomics ← -')
       } else {
         labelArcData.push({ data: 1, value: 1, index: 0, startAngle: circlePadding, endAngle: circlePadding + thirdCircleElement, padAngle: 0 })
         labelTextOffset.push('0')
+        labelTexts.push('- → Transcriptomics → +')
       }
-      labelTexts.push('Transcriptomics')
     }
   }
-
   // prepare proteomics
   if (glyphDat.proteomics.available) {
+    totalNodes += glyphDat.proteomics.nodeState.total
     const colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleRB(elem.value))
     outerColors.push(...colorsProteomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
 
     const angleRangeProteomicsFCs = _.range(startAngleVal, startAngleVal + thirdCircleElement + (thirdCircleElement / colorsProteomics.length), thirdCircleElement / colorsProteomics.length)
     colorsProteomics.forEach((element, idx) => {
-      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0, hoverData: `${glyphDat.proteomics.foldChanges[idx].symbol}\nFC: ${glyphDat.proteomics.foldChanges[idx].value.toFixed(3)}` })
+      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0, symbol: glyphDat.proteomics.foldChanges[idx].symbol, fc: glyphDat.proteomics.foldChanges[idx].value })
     })
     const proteomicsRegulatedQuotient = glyphDat.proteomics.nodeState.regulated / glyphDat.proteomics.nodeState.total
     innerArcDat.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal, endAngle: startAngleVal + thirdCircleElement * proteomicsRegulatedQuotient, padAngle: 0, hoverData: '' })
@@ -267,22 +272,24 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
       if (availableOmics === 1 || availableOmics === 3) {
         labelArcData.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal + thirdCircleElement, endAngle: startAngleVal, padAngle: 0 })
         labelTextOffset.push('3.5%')
+        labelTexts.push('+ ← Proteomics ← -')
       } else {
         labelArcData.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal, endAngle: startAngleVal + thirdCircleElement, padAngle: 0 })
         labelTextOffset.push('0')
+        labelTexts.push('- → Proteomics → +')
       }
-      labelTexts.push('Proteomics')
     }
   }
   // prepare metabolomics
   if (glyphDat.metabolomics.available) {
+    totalNodes += glyphDat.metabolomics.nodeState.total
     const colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScalePG(elem.value))
     outerColors.push(...colorsMetabolomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
 
     const angleRangeMetabolomicsFCs = _.range(startAngleVal, startAngleVal + thirdCircleElement + (thirdCircleElement / colorsMetabolomics.length), thirdCircleElement / colorsMetabolomics.length)
     colorsMetabolomics.forEach((element, idx) => {
-      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0, hoverData: `${glyphDat.metabolomics.foldChanges[idx].symbol}\nFC: ${glyphDat.metabolomics.foldChanges[idx].value.toFixed(3)}` })
+      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0, symbol: glyphDat.metabolomics.foldChanges[idx].symbol, fc: glyphDat.metabolomics.foldChanges[idx].value })
     })
     const metabolomicsRegulatedQuotient = glyphDat.metabolomics.nodeState.regulated / glyphDat.metabolomics.nodeState.total
     innerArcDat.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal, endAngle: startAngleVal + thirdCircleElement * metabolomicsRegulatedQuotient, padAngle: 0, hoverData: `${glyphDat.metabolomics.nodeState.regulated} / ${glyphDat.metabolomics.nodeState.total}` })
@@ -295,16 +302,17 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
       if (availableOmics === 1) {
         labelArcData.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal + thirdCircleElement, endAngle: startAngleVal, padAngle: 0 })
         labelTextOffset.push('3.5%')
+        labelTexts.push('+ ← Metabolomics ← -')
       } else {
         labelArcData.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal, endAngle: startAngleVal + thirdCircleElement, padAngle: 0 })
         labelTextOffset.push('0')
+        labelTexts.push('- → Metabolomics → +')
       }
-      labelTexts.push('Metabolomics')
     }
   }
 
   let svg
-  let g
+  let g: d3.Selection<any, any, any, any>
 
   if (drawLabels) {
     svg = d3.create('svg')
@@ -312,11 +320,52 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
       .attr('width', '100%')
       .attr('height', '100%')
     g = svg.append('g')
+      .attr('id', `glyph${glyphIdx}`)
       .attr('transform', `translate(${width / 2},${height / 2})`)
+    // DOMMouseScroll seems to work in FF
+    g.on('mouseenter', (d, event) => {
+      const amtElems = d3.select(`#glyph${glyphIdx}`).selectAll('.foldArc').size()
+      highlightSection = 0 % amtElems
+      d3.select(`#glyph${glyphIdx}`)
+        .selectAll('.foldArc')
+        .data(outerArcDat)
+        .attr('fill-opacity', (d, i) => {
+          if (i === highlightSection) {
+            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol)
+            d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(d.fc.toFixed(3))
+            return 1.0
+          } else return 0.2
+        })
+    })
+    g.on('mouseleave', (d, event) => {
+      highlightSection = 0
+      d3.select(`#glyph${glyphIdx}`)
+        .selectAll('.foldArc')
+        .attr('fill-opacity', (d, i) => {
+          d3.select(`#glyph${glyphIdx}`).select('#tspan1').text('Total:')
+          d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(totalNodes)
+          return 1.0
+        })
+    })
+    g.on('DOMMouseScroll', (d, event) => {
+      const amtElems = d3.select(`#glyph${glyphIdx}`).selectAll('.foldArc').size()
+      highlightSection = ((highlightSection + ((d.detail > 0) ? 1 : -1)) % amtElems + amtElems) % amtElems
+      d3.select(`#glyph${glyphIdx}`)
+        .selectAll('.foldArc')
+        .data(outerArcDat)
+        .attr('fill-opacity', (d, i) => {
+          if (i === highlightSection) {
+            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol)
+            d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(d.fc.toFixed(3))
+            return 1.0
+          } else return 0.2
+        })
+    })
   } else {
     svg = d3.create('svg')
       .attr('width', width)
       .attr('height', height)
+
     g = svg.append('g')
       .attr('transform', `translate(${width / 2},${height / 2})`)
   }
@@ -330,8 +379,10 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
     .append('path')
     .attr('d', arcOuter)
     .attr('fill', (d, i) => outerColors[i])
+    .attr('class', 'foldArc')
+    .attr('strokewidth', -2)
     .append('title')
-    .text((d) => d.hoverData)
+    .text((d) => d.symbol + '\n' + d.fc.toFixed(3))
   const graySegments = g.selectAll('g')
     .data(innerArcDat)
     .enter()
@@ -344,7 +395,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
     // .text((d) => d.hoverData)
 
   if (drawLabels) {
-    const labelArcOmics = d3.arc<PieArcDatum<number>>().innerRadius(outermostRadius + 1).outerRadius(outermostRadius + 1)
+    const labelArcOmics = d3.arc<PieArcDatum<number>>().innerRadius(outermostRadius + 2).outerRadius(outermostRadius + 2)
     const labelArcRegulated = d3.arc<PieArcDatum<number>>().innerRadius((firstLayer + secondLayer) * 0.5).outerRadius((firstLayer + secondLayer) * 0.5)
 
     g.selectAll('labels')
@@ -359,7 +410,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
       .data(labelArcData)
       .enter()
       .append('text')
-      .attr('dy', (d, i) => labelTextOffset[i])
+      // .attr('dy', (d, i) => labelTextOffset[i])
       .append('textPath')
       .text((d, i) => labelRegTexts[i])
       .attr('startOffset', '25%')
@@ -388,14 +439,28 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean): SVGE
       .data(labelArcData)
       .enter()
       .append('text')
-      .attr('dy', (d, i) => labelTextOffset[i])
+      // .attr('dy', (d, i) => labelTextOffset[i])
       .append('textPath')
       .text((d, i) => labelTexts[i])
       .attr('startOffset', '25%')
-      .style('text-anchor', 'middle')
       .attr('class', 'glyphText')
       .attr('href', (d, i) => `#labelArc${i}`)
       // .attr('transform', (d) => `translate(${labelArc.centroid(d)})`)
+    const text = g
+      .append('text')
+      .attr('class', 'glyphText centeredText')
+
+    text.append('tspan')
+      .attr('id', 'tspan1')
+      .attr('x', 0)
+      .attr('dy', '-0.5em')
+      .text('Total:')
+
+    text.append('tspan')
+      .attr('id', 'tspan2')
+      .attr('x', 0)
+      .attr('dy', '1em')
+      .text(totalNodes)
   }
   return svg.node() as SVGElement
 }
