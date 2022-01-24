@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import _ from 'lodash'
-import { scaleSequential, interpolateInferno, ScaleSequential } from 'd3'
+import * as d3 from 'd3'
 
 Vue.use(Vuex)
 interface State {
@@ -38,6 +38,7 @@ interface State {
   graphData: unknown,
   fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number)} },
   fcQuantiles: {transcriptomics: [number, number], proteomics: [number, number], metabolomics: [number, number]},
+  fcScales: {transcriptomics: d3.ScaleSequential<string, never>, proteomics: d3.ScaleSequential<string, never>, metabolomics: d3.ScaleSequential<string, never>}
   interactionGraphData: unknown,
   pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]} },
   pathwayDropdown: string,
@@ -71,6 +72,7 @@ export default new Vuex.Store({
     graphData: null,
     fcs: {},
     fcQuantiles: { transcriptomics: [0, 0], proteomics: [0, 0], metabolomics: [0, 0] },
+    fcScales: { transcriptomics: d3.scaleSequential(), proteomics: d3.scaleSequential(), metabolomics: d3.scaleSequential() },
     interactionGraphData: null,
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty' }],
@@ -151,6 +153,9 @@ export default new Vuex.Store({
     },
     SET_FCQUANTILES (state, val) {
       state.fcQuantiles = val
+    },
+    SET_FCSCALES (state, val) {
+      state.fcScales = val
     },
     SET_PATHWAYLAYOUTING (state, val) {
       state.pathwayLayouting = val
@@ -309,7 +314,12 @@ export default new Vuex.Store({
       const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
       const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
+      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain(quantTranscriptomics)
+      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain(quantProteomics)
+      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
+      commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
     },
     setPathwayLayouting ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
       const nodePathwayDict: {[key: string]: string[]} = {}

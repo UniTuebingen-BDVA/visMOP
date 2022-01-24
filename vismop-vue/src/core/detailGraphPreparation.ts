@@ -30,9 +30,9 @@ export function generateGraphData (
   } as graphData
   const addedEdges: string[] = []
   console.log('fcsExtent', fcsExtent)
-  const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain(fcsExtent.transcriptomics)
-  const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain(fcsExtent.proteomics)
-  const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(fcsExtent.metabolomics)
+  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
+  const colorScaleProteomics = store.state.fcScales.proteomics
+  const colorScaleMetabolomics = store.state.fcScales.metabolomics
 
   // console.log("NodeList", nodeList)
   for (const entryKey in nodeList) {

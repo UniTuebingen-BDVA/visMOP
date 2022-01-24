@@ -21,7 +21,7 @@
             <v-tabs-items :value="selectedTabMisc">
               <v-tab-item value="dataTable">
                 <v-row>
-                  <v-col cols="12" id="inputTable">
+                  <v-col cols="12" class="inputTable">
                     <keep-alive>
                       <div>
                         <v-card class="mb-5">
@@ -59,11 +59,12 @@
                                 dense
                                 v-model="selectedTranscriptomics"
                                 show-select
+                                fixed-header
                                 :headers="transcriptomicsTableHeaders"
                                 :items="transcriptomicsTableData"
                                 :items-per-page="5"
                                 :search="tableSearch"
-                                class="elevation-1"
+                                class="elevation-1 scrollableTable"
                                 id="transcriptomics"
                                 @click:row="transcriptomicsSelection"
                               ></v-data-table>
@@ -74,26 +75,28 @@
                                 dense
                                 v-model="selectedProteomics"
                                 show-select
+                                fixed-header
                                 :headers="proteomicsTableHeaders"
                                 :items="proteomicsTableData"
                                 :items-per-page="5"
                                 :search="tableSearch"
-                                class="elevation-1"
+                                class="elevation-1 scrollableTable"
                                 id="proteomicsTable"
                                 @click:row="proteomicsSelection"
                               ></v-data-table>
                             </v-tab-item>
 
-                            <v-tab-item value="metabol">
+                            <v-tab-item value="metabol" >
                               <v-data-table
                                 dense
                                 v-model="selectedMetabolomics"
                                 show-select
+                                fixed-header
                                 :headers="metabolomicsTableHeaders"
                                 :items="metabolomicsTableData"
                                 :items-per-page="5"
                                 :search="tableSearch"
-                                class="elevation-1"
+                                class="elevation-1 scrollableTable"
                                 id="metabolomicsTable"
                                 @click:row="metabolomicsSelection"
                               ></v-data-table>
@@ -107,7 +110,7 @@
               </v-tab-item>
               <v-tab-item value="selectedNodes">
                 <v-row>
-                  <v-col cols="12" id="selectedTable">
+                  <v-col cols="12">
                     <keep-alive>
                        <interaction-graph-table> </interaction-graph-table>
                     </keep-alive>

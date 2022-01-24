@@ -1,7 +1,7 @@
 
 <template>
         <div>
-          <v-card>
+          <v-card class="inputTable">
             <v-card-title>
               <v-row align="center">
                  <v-col cols="5">Selected Nodes</v-col>
@@ -24,16 +24,16 @@
               :items="clickedNodes"
               :items-per-page="5"
               :search="tableSearch"
-              class="elevation-1"
+              class="elevation-1 scrollableTable"
               id="selectedNodes"
             >
               <template v-slot:[`item.fcTranscript`]="{ item }">
-                <v-chip :color="fcScale(item.fcTranscript)" dark>
+                <v-chip :color="fcScales.transcriptomics(item.fcTranscript)" dark>
                   {{ parseFloat(item.fcTranscript).toFixed(3) }}
                 </v-chip>
               </template>
               <template v-slot:[`item.fcProt`]="{ item }">
-                <v-chip :color="fcScale(item.fcProt)" dark>
+                <v-chip :color="fcScales.proteomics(item.fcProt)" dark>
                   {{ parseFloat(item.fcProt).toFixed(3) }}
                 </v-chip>
               </template>
@@ -77,7 +77,7 @@ export default Vue.extend({
     ...mapState({
       clickedNodes: (state: any) => state.clickedNodes,
       overlay: (state: any) => state.overlay,
-      fcScale: (state: any) => state.fcScale
+      fcScales: (state: any) => state.fcScales
 
     })
   },

@@ -58,8 +58,8 @@
   display: block;
 }
 
-#inputTable {
-  height: 75vh;
+.inputTable {
+  max-height: 80%;
   display: block;
 }
 
@@ -162,4 +162,10 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 
 .positionCardTitle{
   height: 15%;
+}
+
+.scrollableTable .v-data-table__wrapper{
+  scrollbar-width: thin;
+  overflow-y: scroll;
+  max-height: 60vh;
 }
