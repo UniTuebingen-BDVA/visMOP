@@ -24,7 +24,6 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
   const fcs = store.state.fcs
   const omicsRecieved = store.state.omicsRecieved
   const pathwayAmounts = store.state.pathayAmountDict
-  // const colorScale = generateColorScale(fcsExtent[0], fcsExtent[1])
   for (const pathway of pathwayLayouting.pathwayList) {
     const transcriptomicsData = { available: omicsRecieved.transcriptomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
     const proteomicsData = { available: omicsRecieved.proteomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
