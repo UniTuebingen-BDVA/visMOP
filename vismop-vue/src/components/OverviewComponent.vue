@@ -117,7 +117,7 @@ export default Vue.extend({
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
-      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set(...a, ...b)]) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
       this.proteomicsIntersection = intersection
       this.proteomicsUnion = union
       // this.networkGraph?.setPathwaysContainingSelection(intersection)
@@ -130,7 +130,7 @@ export default Vue.extend({
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
-      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set(...a, ...b)]) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
       this.metabolomicsIntersection = intersection
       this.metabolomicsUnion = union
       // this.networkGraph?.setPathwaysContainingSelection(intersection)
