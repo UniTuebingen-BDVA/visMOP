@@ -169,3 +169,12 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
   overflow-y: scroll;
   max-height: 60vh;
 }
+
+.rowstyle-available{
+  background-color: white;
+}
+
+.rowstyle-notAvailable{
+  background-color: white;
+  color:rgb(207, 207, 207)
+}

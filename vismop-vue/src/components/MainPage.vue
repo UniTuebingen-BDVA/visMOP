@@ -61,6 +61,7 @@
                                 show-select
                                 fixed-header
                                 :headers="transcriptomicsTableHeaders"
+                                :item-class="itemRowColor"
                                 :items="transcriptomicsTableData"
                                 :items-per-page="5"
                                 :search="tableSearch"
@@ -77,6 +78,7 @@
                                 show-select
                                 fixed-header
                                 :headers="proteomicsTableHeaders"
+                                :item-class="itemRowColor"
                                 :items="proteomicsTableData"
                                 :items-per-page="5"
                                 :search="tableSearch"
@@ -93,6 +95,7 @@
                                 show-select
                                 fixed-header
                                 :headers="metabolomicsTableHeaders"
+                                :item-class="itemRowColor"
                                 :items="metabolomicsTableData"
                                 :items-per-page="5"
                                 :search="tableSearch"
@@ -272,6 +275,30 @@ export default Vue.extend({
     }
   },
   watch: {
+    pathwayLayouting: function () {
+      this.transcriptomicsTableData.forEach((row: {[key: string]: string }) => {
+        const symbol = row[this.usedSymbolCols.transcriptomics]
+        const keggID = this.transcriptomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        row.available = (pathwaysContaining) ? 'Yes' : 'No'
+      })
+      this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
+
+      this.proteomicsTableData.forEach((row: {[key: string]: string }) => {
+        const symbol = row[this.usedSymbolCols.proteomics]
+        const keggID = this.proteomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        row.available = (pathwaysContaining) ? 'Yes' : 'No'
+      })
+      this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
+
+      this.metabolomicsTableData.forEach((row: {[key: string]: string }) => {
+        const symbol = row[this.usedSymbolCols.metabolomics]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        row.available = (pathwaysContaining) ? 'Yes' : 'No'
+      })
+      this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
+    },
     selectedTranscriptomics: function () {
       this.transcriptomicsSelectionData = (this.selectedTranscriptomics)
     },
@@ -294,6 +321,9 @@ export default Vue.extend({
     },
     metabolomicsSelection (val: { [key: string]: string }) {
       // this.metabolomicsSelectionData = val
+    },
+    itemRowColor (item: {[key:string]: string}) {
+      return (item.available === 'Yes') ? 'rowstyle-available' : 'rowstyle-notAvailable'
     }
   }
 })

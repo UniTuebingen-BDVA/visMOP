@@ -16,6 +16,7 @@ def create_df(file_type, sheet_no):
     print(read_table)
     read_table = read_table.fillna(value = "None")
     read_table['id'] = read_table.index
+    read_table['available'] = 'No'
     print(read_table)
     return read_table
 
