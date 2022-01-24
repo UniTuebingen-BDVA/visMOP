@@ -30,8 +30,11 @@ interface Data{
   outstandingDraw: boolean
   networkGraph: (OverviewGraph | undefined)
   transcriptomicsIntersection: string[]
+  transcriptomicsUnion: string[]
   proteomicsIntersection: string[]
+  proteomicsUnion: string[]
   metabolomicsIntersection: string[]
+  metabolomicsUnion: string[]
 }
 
 export default Vue.extend({
@@ -45,9 +48,11 @@ export default Vue.extend({
     outstandingDraw: false,
     networkGraph: undefined,
     transcriptomicsIntersection: [],
+    transcriptomicsUnion: [],
     proteomicsIntersection: [],
-    metabolomicsIntersection: []
-
+    proteomicsUnion: [],
+    metabolomicsIntersection: [],
+    metabolomicsUnion: []
   }),
 
   computed: {
@@ -68,14 +73,24 @@ export default Vue.extend({
         if (this.transcriptomicsIntersection.length > 0) combinedElements.push(this.transcriptomicsIntersection)
         if (this.proteomicsIntersection.length > 0) combinedElements.push(this.proteomicsIntersection)
         if (this.metabolomicsIntersection.length > 0) combinedElements.push(this.metabolomicsIntersection)
-        const intersection = combinedElements.length > 0 ? combinedElements.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+        let intersection = combinedElements.length > 0 ? combinedElements.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+
+        intersection = [...new Set([...intersection])]
         return intersection
+      }
+    },
+    combinedUnion: {
+      get: function (): string[] {
+        return [...new Set([...this.transcriptomicsUnion, ...this.proteomicsUnion, ...this.metabolomicsUnion])]
       }
     }
   },
   watch: {
     combinedIntersection: function () {
-      this.networkGraph?.setPathwaysContainingSelection(this.combinedIntersection)
+      this.networkGraph?.setPathwaysContainingIntersecion(this.combinedIntersection)
+    },
+    combinedUnion: function () {
+      this.networkGraph?.setPathwaysContainingUnion(this.combinedUnion)
     },
     transcriptomicsSelection: function () {
       const foundPathways: string[][] = []
@@ -87,7 +102,9 @@ export default Vue.extend({
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
       this.transcriptomicsIntersection = intersection
+      this.transcriptomicsUnion = union
       // this.networkGraph?.setPathwaysContainingSelection(intersection)
     },
     proteomicsSelection: function () {
@@ -100,7 +117,9 @@ export default Vue.extend({
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set(...a, ...b)]) : []
       this.proteomicsIntersection = intersection
+      this.proteomicsUnion = union
       // this.networkGraph?.setPathwaysContainingSelection(intersection)
     },
     metabolomicsSelection: function () {
@@ -111,7 +130,9 @@ export default Vue.extend({
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set(...a, ...b)]) : []
       this.metabolomicsIntersection = intersection
+      this.metabolomicsUnion = union
       // this.networkGraph?.setPathwaysContainingSelection(intersection)
     },
     pathwayDropdown: function () {

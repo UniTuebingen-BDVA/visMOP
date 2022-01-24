@@ -10,7 +10,8 @@ import { DEFAULT_SETTINGS } from 'sigma/settings'
 
 export default class overviewGraph {
   private currentPathway = '';
-  private pathwaysContainingSelection: string[] = []
+  private pathwaysContainingIntersection: string[] = []
+  private pathwaysContainingUnion: string[] = []
   private renderer;
 
   constructor (containerID: string, graphData: graphData) {
@@ -42,10 +43,12 @@ export default class overviewGraph {
       if (this.currentPathway === node.replace('path:', '')) {
         return { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1 }
       }
-      if (this.pathwaysContainingSelection.includes(node.replace('path:', ''))) {
+      if (this.pathwaysContainingIntersection.includes(node.replace('path:', ''))) {
         return { ...data, color: 'rgba(0,255,0,1.0)', zIndex: 1 }
       }
-
+      if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
+        return { ...data, color: 'rgba(0,0,255,1.0)', zIndex: 1 }
+      }
       return data
     }
 
@@ -154,8 +157,13 @@ export default class overviewGraph {
     this.renderer.refresh()
   }
 
-  public setPathwaysContainingSelection (val: string[] = []) {
-    this.pathwaysContainingSelection = val
+  public setPathwaysContainingIntersecion (val: string[] = []) {
+    this.pathwaysContainingIntersection = val
+    this.renderer.refresh()
+  }
+
+  public setPathwaysContainingUnion (val: string[] = []) {
+    this.pathwaysContainingUnion = val
     this.renderer.refresh()
   }
 }
