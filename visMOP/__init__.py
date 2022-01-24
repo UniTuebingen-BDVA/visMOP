@@ -152,8 +152,8 @@ def interaction_graph():
 
 def uniprot_access(colname):
     # create dict from protein dataframe
+    global prot_table_global
     protein_dict = make_protein_dict(prot_table_global,colname)
-
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
     add_uniprot_info(protein_dict)
@@ -222,7 +222,7 @@ def kegg_parsing():
     # Handle Metabolomics if available
     if metabolomics["recieved"]:
         metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
-        metabolomics_keggIDs = metabolomics_dict.keys()
+        metabolomics_keggIDs =  list(metabolomics_dict.keys())
         for elem in metabolomics_keggIDs:
             if elem in fold_changes:
                 fold_changes[elem]["metabolomics"] = metabolomics_dict[elem][metabolomics["value"]]
@@ -256,7 +256,7 @@ def kegg_parsing():
 
     # combineKeggIDS from all sources
     print(metabolomics_keggIDs)
-    combined_keggIDs = list(set(transcriptomics_keggIDs+proteomics_keggIDs+list(metabolomics_keggIDs)))
+    combined_keggIDs = list(set(transcriptomics_keggIDs+proteomics_keggIDs+metabolomics_keggIDs))
     print("len keggIDs: {}".format(len(combined_keggIDs)))
 
     # query kegg gets by keggID (using cache)

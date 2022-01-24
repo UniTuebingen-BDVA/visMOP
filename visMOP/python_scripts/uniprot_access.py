@@ -71,10 +71,10 @@ get location and STRING_ID from uniprot files
 modifies dict inplace
 '''
 def add_uniprot_info(dict):
-    for filename in os.listdir('uniprot_files'):
+    for filename in dict.keys():
         id = filename.split('.')[0]
         loc = ''
-        with open('uniprot_files/' + filename, 'r') as file:
+        with open(pathlib.Path('uniprot_files') / (filename + '.txt'), 'r') as file:
             line = file.readline()
             while line:
                 line = file.readline()
@@ -94,7 +94,6 @@ def add_uniprot_info(dict):
                 if line.startswith('DR') and 'KEGG' in line:
                     keggID = line.strip().split(';')[1].strip()
                     line = file.readline()
-
 
         dict[id]['string_id'] = string_id
         dict[id]['keggID'] = keggID
