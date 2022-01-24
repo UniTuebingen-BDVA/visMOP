@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import _ from 'lodash'
-import { scaleSequential, interpolateInferno } from 'd3'
+import { scaleSequential, interpolateInferno, ScaleSequential } from 'd3'
 
 Vue.use(Vuex)
 interface State {
@@ -37,8 +37,7 @@ interface State {
   overlay: unknown,
   graphData: unknown,
   fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number)} },
-  fcQuantiles: [number, number],
-  fcScale: unknown,
+  fcQuantiles: {transcriptomics: [number, number], proteomics: [number, number], metabolomics: [number, number]},
   interactionGraphData: unknown,
   pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]} },
   pathwayDropdown: string,
@@ -71,8 +70,7 @@ export default new Vuex.Store({
     overlay: false,
     graphData: null,
     fcs: {},
-    fcQuantiles: [0, 0],
-    fcScale: null,
+    fcQuantiles: { transcriptomics: [0, 0], proteomics: [0, 0], metabolomics: [0, 0] },
     interactionGraphData: null,
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty' }],
@@ -153,9 +151,6 @@ export default new Vuex.Store({
     },
     SET_FCQUANTILES (state, val) {
       state.fcQuantiles = val
-    },
-    SET_FCSCALE (state, val) {
-      state.fcScale = val
     },
     SET_PATHWAYLAYOUTING (state, val) {
       state.pathwayLayouting = val
@@ -279,17 +274,25 @@ export default new Vuex.Store({
     setFCS ({ commit }, val) {
       commit('SET_FCS', val)
       console.log('fcs', val)
-      const fcsNum: number[] = []
+      const fcsTranscriptomics: number[] = []
+      const fcsProteomics: number[] = []
+      const fcsMetabolomics: number[] = []
+
       for (const key in val) {
-        const entry: { transcriptomics: (string | number), proteomics: (string | number) } = val[key]
+        const entry: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number) } = val[key]
         if (!(typeof entry.transcriptomics === 'string')) {
-          fcsNum.push(entry.transcriptomics)
+          fcsTranscriptomics.push(entry.transcriptomics)
         }
         if (!(typeof entry.proteomics === 'string')) {
-          fcsNum.push(entry.proteomics)
+          fcsProteomics.push(entry.proteomics)
+        }
+        if (!(typeof entry.metabolomics === 'string')) {
+          fcsMetabolomics.push(entry.metabolomics)
         }
       }
-      const fcsAsc = fcsNum.sort((a, b) => a - b)
+      const fcsTranscriptomicsAsc = fcsTranscriptomics.sort((a, b) => a - b)
+      const fcsProteomicsAsc = fcsProteomics.sort((a, b) => a - b)
+      const fcsMetabolomicsAsc = fcsMetabolomics.sort((a, b) => a - b)
 
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
@@ -302,12 +305,11 @@ export default new Vuex.Store({
           return arr[base]
         }
       }
-      const minVal5 = quantile(fcsAsc, 0.05)
-      const maxVal95 = quantile(fcsAsc, 0.95)
-      commit('SET_FCQUANTILES', [minVal5, maxVal95])
-      const scale = scaleSequential().domain([minVal5, maxVal95]).interpolator(interpolateInferno)
+      const quantTranscriptomics = [quantile(fcsTranscriptomicsAsc, 0.05), quantile(fcsTranscriptomicsAsc, 0.95)]
+      const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
+      const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
-      commit('SET_FCSCALE', scale)
+      commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
     },
     setPathwayLayouting ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
       const nodePathwayDict: {[key: string]: string[]} = {}

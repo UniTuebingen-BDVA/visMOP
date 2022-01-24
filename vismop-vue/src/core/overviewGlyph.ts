@@ -103,14 +103,15 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   const firstLayer = outermostRadius - layerWidth
   const secondLayer = firstLayer - layerWidth
   const innermostRadius = secondLayer - layerWidth
-  const colorScaleRB = d3.scaleSequential(d3.interpolateRdBu).domain([store.state.fcQuantiles[1], store.state.fcQuantiles[0]])
-  const colorScalePG = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles)
+  const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain(store.state.fcQuantiles.transcriptomics)
+  const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain(store.state.fcQuantiles.proteomics)
+  const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles.metabolomics)
 
   // prepare transcriptomics
   let colorsTranscriptomics: string[] = []
   const transcriptomicsArcDat = []
   if (glyphDat.transcriptomics.available) {
-    colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleRB(elem.value))
+    colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleTranscriptomics(elem.value))
     const angleRangeTranscriptomicsFCs = _.range(1.5 * Math.PI, 2.5 * Math.PI + (Math.PI / colorsTranscriptomics.length), Math.PI / colorsTranscriptomics.length)
     colorsTranscriptomics.forEach((element, idx) => {
       transcriptomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0 })
@@ -125,7 +126,7 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   let colorsProteomics: string[] = []
   const proteomicsArcDat = []
   if (glyphDat.proteomics.available) {
-    colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleRB(elem.value))
+    colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleProteomics(elem.value))
     const angleRangeProteomicsFCs = _.range(0.5 * Math.PI, 1.5 * Math.PI + (Math.PI / colorsProteomics.length), Math.PI / colorsProteomics.length)
     colorsProteomics.forEach((element, idx) => {
       proteomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0 })
@@ -139,7 +140,7 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   let colorsMetabolomics: string[] = []
   const metabolomicsArcDat = []
   if (glyphDat.metabolomics.available) {
-    colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScalePG(elem.value))
+    colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScaleMetabolomics(elem.value))
     const angleRangeMetabolomicsFCs = _.range(1.5 * Math.PI, 2.5 * Math.PI + (Math.PI / colorsMetabolomics.length), Math.PI / colorsMetabolomics.length)
     colorsMetabolomics.forEach((element, idx) => {
       metabolomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0 })
@@ -199,8 +200,9 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   const firstLayer = outermostRadius - layerWidth
   const secondLayer = firstLayer - layerWidth
   const innermostRadius = secondLayer - layerWidth
-  const colorScaleRB = d3.scaleSequential(d3.interpolateRdBu).domain([store.state.fcQuantiles[1], store.state.fcQuantiles[0]])
-  const colorScalePG = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles)
+  const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain(store.state.fcQuantiles.transcriptomics)
+  const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain(store.state.fcQuantiles.proteomics)
+  const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles.metabolomics)
   let highlightSection = 0
 
   const outerArcDat: {
@@ -226,7 +228,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   let totalNodes = 0
   if (glyphDat.transcriptomics.available) {
     totalNodes += glyphDat.transcriptomics.nodeState.total
-    const colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleRB(elem.value))
+    const colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleTranscriptomics(elem.value))
     outerColors.push(...colorsTranscriptomics)
     const angleRangeTranscriptomicsFCs = _.range(circlePadding, circlePadding + thirdCircleElement + (thirdCircleElement / colorsTranscriptomics.length), thirdCircleElement / colorsTranscriptomics.length)
     colorsTranscriptomics.forEach((element, idx) => {
@@ -254,7 +256,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   // prepare proteomics
   if (glyphDat.proteomics.available) {
     totalNodes += glyphDat.proteomics.nodeState.total
-    const colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleRB(elem.value))
+    const colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleProteomics(elem.value))
     outerColors.push(...colorsProteomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
 
@@ -283,7 +285,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   // prepare metabolomics
   if (glyphDat.metabolomics.available) {
     totalNodes += glyphDat.metabolomics.nodeState.total
-    const colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScalePG(elem.value))
+    const colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScaleMetabolomics(elem.value))
     outerColors.push(...colorsMetabolomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
 
