@@ -1,13 +1,13 @@
 import pandas as pd
 
-def create_df(file_type):
+def create_df(file_type, sheet_no):
     """creates dataframe from filetype object (i.e. a excel file)
     Args:
         file_type: file-type object
     Return:
         read_table: file as a pandas data frame
     """
-    read_table = pd.read_excel(file_type, header = None, engine='openpyxl')
+    read_table = pd.read_excel(file_type, sheet_name=sheet_no,header = None, engine='openpyxl')
     read_table = read_table.dropna(how='all')
     print(read_table)
     read_table = read_table.rename(columns=read_table.iloc[0])

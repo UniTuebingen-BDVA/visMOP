@@ -52,9 +52,10 @@ def transcriptomics_table_recieve():
     
     # recieve data-blob
     transfer_dat = request.files['dataTable']
+    sheet_no = int(request.form['sheetNumber'])
     
     #create and parse data table and prepare json
-    data_table = create_df(transfer_dat)
+    data_table = create_df(transfer_dat, sheet_no)
     transcriptomics_df_global = data_table.copy(deep=True)
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
@@ -79,9 +80,11 @@ def prot_table_recieve():
 
     # aquire table data-blob
     transfer_dat = request.files['dataTable']
+    sheet_no = int(request.form['sheetNumber'])
+
     
     # parse data table and prepare json
-    prot_data = create_df(transfer_dat)
+    prot_data = create_df(transfer_dat, sheet_no)
     prot_table_global = prot_data.copy(deep=True)
     prot_table_json = prot_data.to_json(orient="columns")
     entry_IDs = list(prot_data.iloc[:, 0])
@@ -107,9 +110,10 @@ def metabolomics_table_recieve():
 
     # recieve table data-blob
     transfer_dat = request.files['dataTable']
+    sheet_no = int(request.form['sheetNumber'])
     
     # parse and create dataframe and prepare json
-    data_table = create_df(transfer_dat)
+    data_table = create_df(transfer_dat, sheet_no)
     metabolomics_df_global = data_table.copy(deep=True)
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
