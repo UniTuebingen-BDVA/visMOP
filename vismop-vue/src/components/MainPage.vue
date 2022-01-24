@@ -280,7 +280,7 @@ export default Vue.extend({
         const symbol = row[this.usedSymbolCols.transcriptomics]
         const keggID = this.transcriptomicsSymbolDict[symbol]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
-        row.available = (pathwaysContaining) ? 'Yes' : 'No'
+        row.available = (pathwaysContaining) ? `Yes: ${pathwaysContaining.length}` : 'No'
       })
       this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
 
@@ -288,14 +288,14 @@ export default Vue.extend({
         const symbol = row[this.usedSymbolCols.proteomics]
         const keggID = this.proteomicsSymbolDict[symbol]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
-        row.available = (pathwaysContaining) ? 'Yes' : 'No'
+        row.available = (pathwaysContaining) ? `Yes: ${pathwaysContaining.length}` : 'No'
       })
       this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
 
       this.metabolomicsTableData.forEach((row: {[key: string]: string }) => {
         const symbol = row[this.usedSymbolCols.metabolomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
-        row.available = (pathwaysContaining) ? 'Yes' : 'No'
+        row.available = (pathwaysContaining) ? `Yes: ${pathwaysContaining.length}` : 'No'
       })
       this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
     },
@@ -323,7 +323,7 @@ export default Vue.extend({
       // this.metabolomicsSelectionData = val
     },
     itemRowColor (item: {[key:string]: string}) {
-      return (item.available === 'Yes') ? 'rowstyle-available' : 'rowstyle-notAvailable'
+      return (item.available !== 'No') ? 'rowstyle-available' : 'rowstyle-notAvailable'
     }
   }
 })
