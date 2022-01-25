@@ -60,10 +60,11 @@
                                 v-model="selectedTranscriptomics"
                                 show-select
                                 fixed-header
+                                hide-default-footer
                                 :headers="transcriptomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="transcriptomicsTableData"
-                                :items-per-page="5"
+                                :items-per-page="-1"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="transcriptomics"
@@ -77,10 +78,11 @@
                                 v-model="selectedProteomics"
                                 show-select
                                 fixed-header
+                                hide-default-footer
                                 :headers="proteomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="proteomicsTableData"
-                                :items-per-page="5"
+                                :items-per-page="-1"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="proteomicsTable"
@@ -94,10 +96,11 @@
                                 v-model="selectedMetabolomics"
                                 show-select
                                 fixed-header
+                                hide-default-footer
                                 :headers="metabolomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="metabolomicsTableData"
-                                :items-per-page="5"
+                                :items-per-page="-1"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="metabolomicsTable"
@@ -276,26 +279,26 @@ export default Vue.extend({
   },
   watch: {
     pathwayLayouting: function () {
-      this.transcriptomicsTableData.forEach((row: {[key: string]: string }) => {
+      this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
         const symbol = row[this.usedSymbolCols.transcriptomics]
         const keggID = this.transcriptomicsSymbolDict[symbol]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
-        row.available = (pathwaysContaining) ? `Yes: ${pathwaysContaining.length}` : 'No'
+        row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
       })
       this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
 
-      this.proteomicsTableData.forEach((row: {[key: string]: string }) => {
+      this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
         const symbol = row[this.usedSymbolCols.proteomics]
         const keggID = this.proteomicsSymbolDict[symbol]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
-        row.available = (pathwaysContaining) ? `Yes: ${pathwaysContaining.length}` : 'No'
+        row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
       })
       this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
 
-      this.metabolomicsTableData.forEach((row: {[key: string]: string }) => {
+      this.metabolomicsTableData.forEach((row: {[key: string]: string | number }) => {
         const symbol = row[this.usedSymbolCols.metabolomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
-        row.available = (pathwaysContaining) ? `Yes: ${pathwaysContaining.length}` : 'No'
+        row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
       })
       this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
     },
