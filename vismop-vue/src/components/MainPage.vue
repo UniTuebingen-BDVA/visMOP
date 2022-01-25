@@ -326,7 +326,13 @@ export default Vue.extend({
       // this.metabolomicsSelectionData = val
     },
     itemRowColor (item: {[key:string]: string}) {
-      return (item.available !== 'No') ? 'rowstyle-available' : 'rowstyle-notAvailable'
+      let keggID = this.transcriptomicsSymbolDict[item[this.usedSymbolCols.transcriptomics]]
+      if (!keggID) { keggID = this.proteomicsSymbolDict[item[this.usedSymbolCols.proteomics]] }
+      if (!keggID) { keggID = item[this.usedSymbolCols.metabolomics] }
+
+      const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(keggID) : false
+
+      return (item.available !== 'No') ? (includedInSelectedPathway ? 'rowstyle-inPathway' : 'rowstyle-available') : 'rowstyle-notAvailable'
     }
   }
 })

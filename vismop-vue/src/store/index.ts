@@ -40,7 +40,7 @@ interface State {
   fcQuantiles: {transcriptomics: [number, number], proteomics: [number, number], metabolomics: [number, number]},
   fcScales: {transcriptomics: d3.ScaleSequential<string, never>, proteomics: d3.ScaleSequential<string, never>, metabolomics: d3.ScaleSequential<string, never>}
   interactionGraphData: unknown,
-  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]} },
+  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]} },
   pathwayDropdown: string,
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
@@ -77,7 +77,8 @@ export default new Vuex.Store({
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty' }],
       pathwayNodeDictionary: { },
-      nodePathwayDictionary: { }
+      nodePathwayDictionary: { },
+      pathwayNodeDictionaryClean: { }
     },
     pathwayDropdown: '',
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
@@ -338,20 +339,28 @@ export default new Vuex.Store({
     },
     setPathwayLayouting ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
       const nodePathwayDict: {[key: string]: string[]} = {}
+      const pathwayNodeDictClean: {[key: string]: string[]} = {}
       Object.keys(val.pathwayNodeDictionary).forEach(pathwayID => {
         val.pathwayNodeDictionary[pathwayID].forEach(nodeIDstr => {
           const nodeIDs = nodeIDstr.split(';')
           nodeIDs.forEach(nodeID => {
             const nodeIDreplace = nodeID.replace('cpd:', '').replace('gl:', '')
+            // for nodePathwayDict
             if (Object.keys(nodePathwayDict).includes(nodeIDreplace)) {
               nodePathwayDict[nodeIDreplace].push(pathwayID)
             } else {
               nodePathwayDict[nodeIDreplace] = [pathwayID]
             }
+            // for pathwayNodeDictClean
+            if (Object.keys(pathwayNodeDictClean).includes(pathwayID)) {
+              pathwayNodeDictClean[pathwayID].push(nodeIDreplace)
+            } else {
+              pathwayNodeDictClean[pathwayID] = [nodeIDreplace]
+            }
           })
         })
       })
-      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict })
+      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict, pathwayNodeDictionaryClean: pathwayNodeDictClean })
     },
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')
