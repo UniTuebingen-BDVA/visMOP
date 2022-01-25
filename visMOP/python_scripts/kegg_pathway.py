@@ -7,7 +7,7 @@ class KeggPathway:
     def __init__(self, pathway_ID):
         self.keggID = pathway_ID
         self.title = ""
-        self.entries = []
+        self.entries = {}
         self.relations = []
         self.reactions = []
         self.orig_x_extent = [0, 0]
@@ -147,7 +147,7 @@ class KeggPathway:
         x_divisor = self.orig_x_extent[1] - self.orig_x_extent[0]
         y_divisor = self.orig_y_extent[1] - self.orig_y_extent[0]
 
-        for entry in self.entries:
+        for entry in self.entries.values():
             if not self.keggID in entry.extent_applied:
                 current_pos = entry.origPos[self.keggID]
                 new_pos = [current_pos[0]/x_divisor, current_pos[1]/y_divisor]
@@ -155,12 +155,15 @@ class KeggPathway:
                 entry.extent_applied[self.keggID] = True
 
     def return_pathway_node_list(self):
-        current_entries = [
-            entry.keggID for entry in self.entries if not entry.is_empty]
-        return self.keggID, current_entries
+        # current_entries = [
+        #     entry.keggID for entry in self.entries if not entry.is_empty]
+        current_entries = list(self.entries.keys())
+        return self.keggID, current_entries 
 
     def return_pathway_kegg_String_info_dict(self):
         return self.keggID, {'numEntries': len(self.entries), 'StringIds': self.prot_in_pathway_StringIds, 'brite_hier_superheadings': self.brite_hier_superheadings,'brite_hier_subcategories': self.brite_hier_subcategories ,'brite_hier_proteinIDs': self.brite_hier_proteinIDs}
+        #current_entries = [entry.keggID for entry in self.entries if not entry.is_empty]
+        
 
     def return_amounts(self):
         amounts = {"genes": self.amount_genes,
@@ -168,13 +171,12 @@ class KeggPathway:
         return self.keggID, amounts
 
     def return_formated_title(self):
-        return {"text": self.keggID + " - " + self.title, "value": self.keggID}
+        return {"text": self.keggID +" - "+ self.title, "value" : self.keggID, "title": self.title}
 
     def asdict(self):
         """ return the KeggPathway  as dictionary 
         """
-        return {'keggID': self.keggID, 'entries': self.entries, 'relations': self.relations, 'reactions': self.reactions, "orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent, "maplinks": self.maplinks, "amount_genes": self.amount_genes, "amount_maplinks": self.amount_maplinks, "amount_compounds": self.amount_compounds}
-
+        return {'keggID': self.keggID, 'entries': self.entries.values(), 'relations': self.relations, 'reactions': self.reactions,"orig_x_extent": self.orig_x_extent, "orig_y_extent": self.orig_y_extent, "maplinks": self.maplinks, "amount_genes": self.amount_genes, "amount_maplinks": self.amount_maplinks, "amount_compounds": self.amount_compounds}        
 
 class KeggPathwayEntry:
     """ Class for a single entry of the KEGG Pathway KGML

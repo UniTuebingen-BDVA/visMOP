@@ -14,6 +14,10 @@
 
           <v-spacer></v-spacer>
 
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal"></v-text-field>
+
+          <v-spacer></v-spacer>
+
           <v-select
             :items="transcriptomicsTableHeaders"
             v-model="transcriptomicsSymbolCol"
@@ -44,6 +48,10 @@
 
           <v-spacer></v-spacer>
 
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" :v-model="proteomicsSheetVal"></v-text-field>
+
+          <v-spacer></v-spacer>
+
           <v-select
             :items="proteomicsTableHeaders"
             v-model="proteomicsSymbolCol"
@@ -71,6 +79,10 @@
             chips
             label=".xlsx File Input"
           ></v-file-input>
+
+          <v-spacer></v-spacer>
+
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -108,15 +120,24 @@ export default Vue.extend({
 
   data: () => ({
     overlay: false,
+    transcriptomicsSheetVal: '0',
     transcriptomicsSymbolCol: '',
     transcriptomicsValueCol: '',
     recievedTranscriptomicsData: false,
+    proteomicsSheetVal: '0',
     proteomicsSymbolCol: '',
     proteomicsValueCol: '',
     recievedProteomicsData: false,
+    metabolomicsSheetVal: '0',
     metabolomicsSymbolCol: '',
     metabolomicsValueCol: '',
-    recievedMetabolomicsData: false
+    recievedMetabolomicsData: false,
+    sheetRules: [
+      (value: string) => {
+        const pattern = /^([0-9]*)$/
+        return pattern.test(value) || 'Enter a number'
+      }
+    ]
   }),
   computed: {
     ...mapState({
@@ -139,6 +160,7 @@ export default Vue.extend({
         this.overlay = true
         const formData = new FormData()
         formData.append('dataTable', fileInput)
+        formData.append('sheetNumber', this.transcriptomicsSheetVal)
         fetch('/transcriptomics_table', {
           method: 'POST',
           headers: {},
@@ -169,13 +191,14 @@ export default Vue.extend({
     fetchProteomicsTable (fileInput: File) {
       if (typeof fileInput !== 'undefined') {
         this.overlay = true
-        const formDat = new FormData()
-        formDat.append('dataTable', fileInput)
+        const formData = new FormData()
+        formData.append('dataTable', fileInput)
+        formData.append('sheetNumber', this.proteomicsSheetVal)
 
         fetch('/proteomics_table', {
           method: 'POST',
           headers: {},
-          body: formDat
+          body: formData
 
         })
           .then((response) => response.json())
@@ -203,13 +226,14 @@ export default Vue.extend({
     fetchMetabolomicsTable (fileInput: File) {
       if (typeof fileInput !== 'undefined') {
         this.overlay = true
-        const formDat = new FormData()
-        formDat.append('dataTable', fileInput)
+        const formData = new FormData()
+        formData.append('dataTable', fileInput)
+        formData.append('sheetNumber', this.metabolomicsSheetVal)
 
         fetch('/metabolomics_table', {
           method: 'POST',
           headers: {},
-          body: formDat
+          body: formData
         })
           .then((response) => response.json())
 

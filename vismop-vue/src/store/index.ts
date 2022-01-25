@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import _ from 'lodash'
-import { scaleSequential, interpolateInferno } from 'd3'
+import * as d3 from 'd3'
 
 Vue.use(Vuex)
 interface State {
@@ -10,29 +10,44 @@ interface State {
   transcriptomicsTableHeaders: unknown,
   transcriptomicsTableData: unknown,
   transcriptomicsData: unknown,
+  /**
+   * KEY: Symbol -> VAL: KEGGID
+   */
   transcriptomicsSymbolDict: { [key: string]: string },
+  /**
+   * KEY: KEGGID -> VAL: SYMBOL
+   */
   transcriptomicsKeggIDDict: { [key: string]: string },
   proteomicsTableHeaders: unknown,
   proteomicsTableData: unknown,
   clickedNodes: { id: string, name: string, fcTranscript: number, fcProt: number, delete: unknown }[],
   proteomicsData: unknown,
+  /**
+   * KEY: Symbol -> VAL: KEGGID
+   */
   proteomicsSymbolDict: { [key: string]: string },
-  proteomicsKeggDict: { [key: string]: string },
+  /**
+   * KEY: KEGGID -> VAL: SYMBOL
+   */
+  proteomicsKeggIDDict: { [key: string]: string },
   metabolomicsData: unknown,
   metabolomicsTableHeaders: unknown,
   metabolomicsTableData: unknown,
-  usedSymbolCols: unknown,
+  usedSymbolCols: {transcriptomics: string, proteomics: string, metabolomics: string},
   overlay: unknown,
   graphData: unknown,
   fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number)} },
-  fcQuantiles: [number, number],
-  fcScale: unknown,
+  fcQuantiles: {transcriptomics: [number, number], proteomics: [number, number], metabolomics: [number, number]},
+  fcScales: {transcriptomics: d3.ScaleSequential<string, never>, proteomics: d3.ScaleSequential<string, never>, metabolomics: d3.ScaleSequential<string, never>}
   interactionGraphData: unknown,
-  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] } },
+  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]} },
   pathwayDropdown: string,
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
-  keggIDGenesymbolDict: {[key: string]: string}
+  keggIDGenesymbolDict: {[key: string]: string},
+  pathwayCompare: string[],
+  glyphData: unknown,
+  glyphs: { url: { [key: string]: string }, svg: { [key: string]: SVGElement }}
 }
 export default new Vuex.Store({
   state: {
@@ -48,26 +63,30 @@ export default new Vuex.Store({
     clickedNodes: [],
     proteomicsData: null,
     proteomicsSymbolDict: {},
-    proteomicsKeggDict: {},
+    proteomicsKeggIDDict: {},
     metabolomicsTableHeaders: [],
     metabolomicsTableData: [],
     metabolomicsData: null,
-    usedSymbolCols: { transcriptomics: null, proteomics: null, metabolomics: null },
+    usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
     overlay: false,
     graphData: null,
     fcs: {},
-    fcQuantiles: [0, 0],
-    fcScale: null,
+    fcQuantiles: { transcriptomics: [0, 0], proteomics: [0, 0], metabolomics: [0, 0] },
+    fcScales: { transcriptomics: d3.scaleSequential(), proteomics: d3.scaleSequential(), metabolomics: d3.scaleSequential() },
     interactionGraphData: null,
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty' }],
-      pathwayNodeDictionary: { a: [] }
+      pathwayNodeDictionary: { },
+      nodePathwayDictionary: { },
+      pathwayNodeDictionaryClean: { }
     },
     pathwayDropdown: '',
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
     pathayAmountDict: {},
-    keggIDGenesymbolDict: {}
-
+    keggIDGenesymbolDict: {},
+    pathwayCompare: [],
+    glyphData: {},
+    glyphs: { url: {}, svg: {} }
   } as State,
   mutations: {
     APPEND_CLICKEDNODE (state, val) {
@@ -109,8 +128,8 @@ export default new Vuex.Store({
     SET_PROTEOMICSSYMBOLDICT (state, val) {
       state.proteomicsSymbolDict = val
     },
-    SET_PROTEOMICSKEGGDICT (state, val) {
-      state.proteomicsKeggDict = val
+    SET_PROTEOMICSKEGGIDDICT (state, val) {
+      state.proteomicsKeggIDDict = val
     },
     SET_METABOLOMICSTABLEHEADER (state, val) {
       state.metabolomicsTableHeaders = val
@@ -136,8 +155,8 @@ export default new Vuex.Store({
     SET_FCQUANTILES (state, val) {
       state.fcQuantiles = val
     },
-    SET_FCSCALE (state, val) {
-      state.fcScale = val
+    SET_FCSCALES (state, val) {
+      state.fcScales = val
     },
     SET_PATHWAYLAYOUTING (state, val) {
       state.pathwayLayouting = val
@@ -156,20 +175,54 @@ export default new Vuex.Store({
     },
     SET_KEGGIDGENESYMBOLDICT (state, val) {
       state.keggIDGenesymbolDict = val
+    },
+    APPEND_PATHWAYCOMPARE (state, val) {
+      state.pathwayCompare.push(val)
+    },
+    REMOVE_PATHWAYCOMPARE (state, val) {
+      state.pathwayCompare.splice(val, 1)
+    },
+    SET_GLYPHDATA (state, val) {
+      state.glyphData = val
+    },
+    SET_GLYPHS (state, val) {
+      state.glyphs = val
     }
   },
   actions: {
-    addClickedNode ({ commit, state }, val) {
+    addClickedNode ({ dispatch, state }, val: string) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
+      // TODO multiIDs will not work at the moment
+      const keggIDs = val.split(';')
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
-      if (!enteredKeys.includes(val)) {
-        const sybmolName = state.keggIDGenesymbolDict[val]
-        const tableEntry = { id: val, name: sybmolName, fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
-        commit('APPEND_CLICKEDNODE', tableEntry)
+      keggIDs.forEach(element => {
+        try {
+          if (!enteredKeys.includes(element)) {
+            dispatch('appendClickedNode', element)
+          }
+        } catch (error) {
+        }
+      })
+    },
+    addClickedNodeFromTable ({ dispatch, state }, val: {[key: string]: string}) {
+      const symbolProt = val[state.usedSymbolCols.proteomics]
+      const keggID = state.proteomicsSymbolDict[symbolProt]
+      const enteredKeys = state.clickedNodes.map(row => { return row.id })
+      try {
+        if (!enteredKeys.includes(keggID)) {
+          dispatch('appendClickedNode', keggID)
+        }
+      } catch (error) {
       }
     },
+    appendClickedNode ({ commit, state }, val) {
+      const symbolProt = state.proteomicsKeggIDDict[val]
+      const symbolTrans = state.transcriptomicsKeggIDDict[val]
+      const tableEntry = { id: val, name: `${symbolTrans}/${symbolProt}`, fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
+      commit('APPEND_CLICKEDNODE', tableEntry)
+    },
     queryEgoGraps ({ commit, state }, val) {
-      const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggDict[elem.id] })
+      const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggIDDict[elem.id] })
       fetch('/interaction_graph', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +272,7 @@ export default new Vuex.Store({
     },
     setProteomicsSymbolDict ({ commit }, val) {
       commit('SET_PROTEOMICSSYMBOLDICT', val)
-      commit('SET_PROTEOMICSKEGGDICT', _.invert(val))
+      commit('SET_PROTEOMICSKEGGIDDICT', _.invert(val))
     },
     setMetabolomicsTableHeaders ({ commit }, val) {
       commit('SET_METABOLOMICSTABLEHEADER', val)
@@ -242,17 +295,25 @@ export default new Vuex.Store({
     setFCS ({ commit }, val) {
       commit('SET_FCS', val)
       console.log('fcs', val)
-      const fcsNum: number[] = []
+      const fcsTranscriptomics: number[] = []
+      const fcsProteomics: number[] = []
+      const fcsMetabolomics: number[] = []
+
       for (const key in val) {
-        const entry: { transcriptomics: (string | number), proteomics: (string | number) } = val[key]
+        const entry: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number) } = val[key]
         if (!(typeof entry.transcriptomics === 'string')) {
-          fcsNum.push(entry.transcriptomics)
+          fcsTranscriptomics.push(entry.transcriptomics)
         }
         if (!(typeof entry.proteomics === 'string')) {
-          fcsNum.push(entry.proteomics)
+          fcsProteomics.push(entry.proteomics)
+        }
+        if (!(typeof entry.metabolomics === 'string')) {
+          fcsMetabolomics.push(entry.metabolomics)
         }
       }
-      const fcsAsc = fcsNum.sort((a, b) => a - b)
+      const fcsTranscriptomicsAsc = fcsTranscriptomics.sort((a, b) => a - b)
+      const fcsProteomicsAsc = fcsProteomics.sort((a, b) => a - b)
+      const fcsMetabolomicsAsc = fcsMetabolomics.sort((a, b) => a - b)
 
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
@@ -265,25 +326,68 @@ export default new Vuex.Store({
           return arr[base]
         }
       }
-      const minVal5 = quantile(fcsAsc, 0.05)
-      const maxVal95 = quantile(fcsAsc, 0.95)
-      commit('SET_FCQUANTILES', [minVal5, maxVal95])
-      const scale = scaleSequential().domain([minVal5, maxVal95]).interpolator(interpolateInferno)
+      const quantTranscriptomics = [quantile(fcsTranscriptomicsAsc, 0.05), quantile(fcsTranscriptomicsAsc, 0.95)]
+      const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
+      const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
-      commit('SET_FCSCALE', scale)
+      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain(quantTranscriptomics)
+      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain(quantProteomics)
+      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+
+      commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
+      commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
     },
-    setPathwayLayouting ({ commit }, val) {
-      commit('SET_PATHWAYLAYOUTING', val)
+    setPathwayLayouting ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
+      const nodePathwayDict: {[key: string]: string[]} = {}
+      const pathwayNodeDictClean: {[key: string]: string[]} = {}
+      Object.keys(val.pathwayNodeDictionary).forEach(pathwayID => {
+        val.pathwayNodeDictionary[pathwayID].forEach(nodeIDstr => {
+          const nodeIDs = nodeIDstr.split(';')
+          nodeIDs.forEach(nodeID => {
+            const nodeIDreplace = nodeID.replace('cpd:', '').replace('gl:', '')
+            // for nodePathwayDict
+            if (Object.keys(nodePathwayDict).includes(nodeIDreplace)) {
+              nodePathwayDict[nodeIDreplace].push(pathwayID)
+            } else {
+              nodePathwayDict[nodeIDreplace] = [pathwayID]
+            }
+            // for pathwayNodeDictClean
+            if (Object.keys(pathwayNodeDictClean).includes(pathwayID)) {
+              pathwayNodeDictClean[pathwayID].push(nodeIDreplace)
+            } else {
+              pathwayNodeDictClean[pathwayID] = [nodeIDreplace]
+            }
+          })
+        })
+      })
+      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict, pathwayNodeDictionaryClean: pathwayNodeDictClean })
     },
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')
       commit('SET_PATHWAYDROPDOWN', valClean)
+    },
+    focusPathwayViaDropdown ({ commit }, val) {
+      commit('SET_PATHWAYDROPDOWN', val)
+    },
+    selectPathwayCompare ({ commit, state }, val) {
+      const valClean = val.replace('path:', '')
+      if (!state.pathwayCompare.includes(valClean)) commit('APPEND_PATHWAYCOMPARE', valClean)
+    },
+    removePathwayCompare ({ commit, state }, val) {
+      const idx = state.pathwayCompare.indexOf(val)
+      commit('REMOVE_PATHWAYCOMPARE', idx)
     },
     setOmicsRecieved ({ commit }, val) {
       commit('SET_OMICSRECIEVED', val)
     },
     setPathayAmountDict ({ commit }, val) {
       commit('SET_PATHWAYAMOUNTDICT', val)
+    },
+    setGlyphData ({ commit }, val) {
+      commit('SET_GLYPHDATA', val)
+    },
+    setGlyphs ({ commit }, val) {
+      commit('SET_GLYPHS', val)
     }
 
   },

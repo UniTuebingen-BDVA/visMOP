@@ -133,7 +133,6 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
                 y = (coords[2]+coords[3]) / 2
                 current_entry.origPos[pathway_ID] = [x, y]    
             pathway.update_orig_extents(*current_entry.origPos[pathway_ID])
-
             pathway.add_entry(current_entry)
             pathway.add_stringIds(string_id_prot)
             pathway.add_kegg_info(entry_kegg_gets)
@@ -142,7 +141,7 @@ def parse_KGML(pathway_ID, kgml, global_entry, global_relation, global_reaction,
             entry_keggID_map[entry_ID] = current_entry.keggID
 
     pathway.apply_extents()
-    for entry in pathway.entries:
+    for entry in pathway.entries.values():
         global_entry[entry.keggID] = entry
 
     for relation in root.findall('relation'):

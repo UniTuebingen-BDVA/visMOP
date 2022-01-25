@@ -76,7 +76,7 @@ class StringGraph:
         composed_graph.graph["egoID_identity"] = egoID_identity
         composed_graph.graph["identity_egoID"] = identity_egoID
         composed_graph.graph["identities"] = list(range(len(list(self.ego_graphs.values()))))
-        #print(composed_graph.graph)
+        print("completeGraph", nx.info(composed_graph))
         intersections_node = self.calculate_intersections_nodes(composed_graph)
         intersections_edge = self.calculate_intersections_edges(composed_graph)
         shared_ego_edges = self.calculate_ego_ego_edges(composed_graph)
@@ -124,7 +124,7 @@ class StringGraph:
         egoIDs = graph.graph["egoID_identity"].keys()
         for edge in graph.edges:
             if((edge[0] in egoIDs) and (edge[1] in egoIDs)):
-                print("egoegoedge", edge)
+                #print("egoegoedge", edge)
                 ego_edges_color[edge]= [graph.graph["egoID_identity"][edge[0]],graph.graph["egoID_identity"][edge[1]] ]
         #print("egoegoedgecolors", ego_edges_color)
         return ego_edges_color

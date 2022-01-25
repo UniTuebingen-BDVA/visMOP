@@ -34,9 +34,9 @@ export interface edge {
  * Defines a set of node attributes
  */
 export interface detailNodeAttr extends baseNodeAttr {
-  
+
   origPos: { [key: string]: number[] };
-  
+
   secondaryColor: string;
   outlineColor: string;
   nonFadeColor: string;

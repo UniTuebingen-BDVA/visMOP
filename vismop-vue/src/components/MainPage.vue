@@ -1,82 +1,152 @@
 <template>
   <v-container fluid>
     <v-row>
-      <!-- Data Table-->
-      <v-col cols="3" class="mb-2" id="inputTable">
-        <div>
-          <v-card class="mb-5">
-            <v-card-title>
-              Data
-              <v-spacer></v-spacer>
-              <v-text-field
-                v-model="tableSearch"
-                append-icon="mdi-magnify"
-                label="Search"
-                single-line
-                hide-details
-              ></v-text-field>
-            </v-card-title>
+      <!-- Misc. Tabs -->
+      <v-col cols="5" class="d-flex flex-column mb-2">
+        <v-card>
+          <v-tabs
+            v-model="selectedTabMisc"
+            background-color="blue lighten-2"
+            dark
+            center-active
+            next-icon="mdi-arrow-right-bold-box-outline"
+            prev-icon="mdi-arrow-left-bold-box-outline"
+            show-arrows
+          >
+            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
+            <v-tab href="#dataTable">Data Table</v-tab>
+            <v-tab href="#selectedNodes">Selected Entities</v-tab>
+            <v-tab href="#ppiGraph"> Protein-Protein Interaction </v-tab>
+            <v-tab href="#pathwayCompare"> Pathway Compare </v-tab>
+            <v-tabs-items :value="selectedTabMisc">
+              <v-tab-item value="dataTable">
+                <v-row>
+                  <v-col cols="12" class="inputTable">
+                    <keep-alive>
+                      <div>
+                        <v-card class="mb-5">
+                          <v-card-title>
+                            Data
+                            <v-spacer></v-spacer>
+                            <v-text-field
+                              class="pt-0"
+                              v-model="tableSearch"
+                              append-icon="mdi-magnify"
+                              label="Search"
+                              single-line
+                              hide-details
+                            ></v-text-field>
+                          </v-card-title>
 
-            <v-tabs
-              v-model="selectedTabTable"
-              background-color="blue lighten-2"
-              dark
-              center-active
-              next-icon="mdi-arrow-right-bold-box-outline"
-              prev-icon="mdi-arrow-left-bold-box-outline"
-              show-arrows
-            >
-              <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
-              <v-tab href="#transcriptomics">Transcriptomics</v-tab>
-              <v-tab href="#proteome">Proteomics</v-tab>
-              <v-tab href="#metabol">Metabolomics</v-tab>
-            </v-tabs>
+                          <v-tabs
+                            v-model="selectedTabTable"
+                            background-color="blue lighten-2"
+                            dark
+                            center-active
+                            next-icon="mdi-arrow-right-bold-box-outline"
+                            prev-icon="mdi-arrow-left-bold-box-outline"
+                            show-arrows
+                          >
+                            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
+                            <v-tab href="#transcriptomics">Transcriptomics</v-tab>
+                            <v-tab href="#proteome">Proteomics</v-tab>
+                            <v-tab href="#metabol">Metabolomics</v-tab>
+                          </v-tabs>
 
-            <v-tabs-items :value="selectedTabTable">
-              <v-tab-item value="transcriptomics">
-                <v-data-table
-                  dense
-                  :headers="transcriptomicsTableHeaders"
-                  :items="transcriptomicsTableData"
-                  :items-per-page="5"
-                  :search="tableSearch"
-                  class="elevation-1"
-                  id="transcriptomics"
-                  @click:row="transcriptomicsSelection"
-                ></v-data-table>
+                          <v-tabs-items :value="selectedTabTable">
+                            <v-tab-item value="transcriptomics">
+                              <v-data-table
+                                dense
+                                v-model="selectedTranscriptomics"
+                                show-select
+                                fixed-header
+                                hide-default-footer
+                                :headers="transcriptomicsTableHeaders"
+                                :item-class="itemRowColor"
+                                :items="transcriptomicsTableData"
+                                :items-per-page="-1"
+                                :search="tableSearch"
+                                class="elevation-1 scrollableTable"
+                                id="transcriptomics"
+                                @click:row="transcriptomicsSelection"
+                              ></v-data-table>
+                            </v-tab-item>
+
+                            <v-tab-item value="proteome">
+                              <v-data-table
+                                dense
+                                v-model="selectedProteomics"
+                                show-select
+                                fixed-header
+                                hide-default-footer
+                                :headers="proteomicsTableHeaders"
+                                :item-class="itemRowColor"
+                                :items="proteomicsTableData"
+                                :items-per-page="-1"
+                                :search="tableSearch"
+                                class="elevation-1 scrollableTable"
+                                id="proteomicsTable"
+                                @click:row="proteomicsSelection"
+                              ></v-data-table>
+                            </v-tab-item>
+
+                            <v-tab-item value="metabol" >
+                              <v-data-table
+                                dense
+                                v-model="selectedMetabolomics"
+                                show-select
+                                fixed-header
+                                hide-default-footer
+                                :headers="metabolomicsTableHeaders"
+                                :item-class="itemRowColor"
+                                :items="metabolomicsTableData"
+                                :items-per-page="-1"
+                                :search="tableSearch"
+                                class="elevation-1 scrollableTable"
+                                id="metabolomicsTable"
+                                @click:row="metabolomicsSelection"
+                              ></v-data-table>
+                            </v-tab-item>
+                          </v-tabs-items>
+                        </v-card>
+                      </div>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
               </v-tab-item>
-
-              <v-tab-item value="proteome">
-                <v-data-table
-                  dense
-                  :headers="proteomicsTableHeaders"
-                  :items="proteomicsTableData"
-                  :items-per-page="5"
-                  :search="tableSearch"
-                  class="elevation-1"
-                  id="proteomicsTable"
-                  @click:row="proteomicsSelection"
-                ></v-data-table>
+              <v-tab-item value="selectedNodes">
+                <v-row>
+                  <v-col cols="12">
+                    <keep-alive>
+                       <interaction-graph-table> </interaction-graph-table>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
               </v-tab-item>
-
-              <v-tab-item value="metabol">
-                <v-data-table
-                  dense
-                  :headers="metabolomicsTableHeaders"
-                  :items="metabolomicsTableData"
-                  :items-per-page="5"
-                  :search="tableSearch"
-                  class="elevation-1"
-                  id="metabolomicsTable"
-                  @click:row="metabolomicsSelection"
-                ></v-data-table>
+              <v-tab-item value="ppiGraph">
+                <v-row>
+                  <v-col cols="12">
+                    <keep-alive>
+                       <interaction-graph
+                        contextID="interactionGraph"
+                        > </interaction-graph>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
+              </v-tab-item>
+               <v-tab-item value="pathwayCompare">
+                <v-row>
+                  <v-col cols="12">
+                    <keep-alive>
+                      <pathway-compare>
+                      </pathway-compare>
+                    </keep-alive>
+                  </v-col>
+                </v-row>
               </v-tab-item>
             </v-tabs-items>
-          </v-card>
-        </div>
-        <interaction-graph
-        contextID="interactionGraph"
-        > </interaction-graph>
+          </v-tabs>
+        </v-card>
       </v-col>
       <!-- Network -->
       <v-col cols="7" class="d-flex flex-column mb-2">
@@ -129,10 +199,6 @@
           </v-tabs-items>
         </v-card>
       </v-col>
-      <!-- Data Table-->
-      <v-col cols="2" class="mb-2" id="selectedTable">
-        <interaction-graph-table> </interaction-graph-table>
-      </v-col>
     </v-row>
     <div class="text-center">
       <v-overlay :value="overlay">
@@ -148,21 +214,40 @@ import OverviewComponent from './OverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
+import PathwayCompare from './PathwayCompare.vue'
+
+interface Data{
+  tableSearch: string
+  selectedTabTable: string
+  selectedTabNetwork: string
+  selectedTabMisc: string
+  transcriptomicsSelectionData: { [key: string]: string }[],
+  proteomicsSelectionData: { [key: string]: string }[],
+  metabolomicsSelectionData: { [key: string]: string }[],
+  pathwaySelection: string,
+  selectedTranscriptomics: { [key: string]: string }[],
+  selectedProteomics: { [key: string]: string }[],
+  selectedMetabolomics: { [key: string]: string }[]
+}
 
 export default Vue.extend({
-  components: { OverviewComponent, InteractionGraph, InteractionGraphTable }, // removed NetworkGraphComponent,
+  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare },
   // name of the component
   name: 'MainPage',
 
   // data section of the Vue component. Access via this.<varName> .
-  data: () => ({
+  data: (): Data => ({
     tableSearch: '',
     selectedTabTable: 'transcriptomics',
     selectedTabNetwork: 'overviewNetwork',
-    transcriptomicsSelectionData: {},
-    proteomicsSelectionData: {},
-    metabolomicsSelectionData: {},
-    pathwaySelection: ''
+    selectedTabMisc: 'dataTable',
+    transcriptomicsSelectionData: [{}],
+    proteomicsSelectionData: [{}],
+    metabolomicsSelectionData: [{}],
+    pathwaySelection: '',
+    selectedTranscriptomics: [],
+    selectedProteomics: [],
+    selectedMetabolomics: []
   }),
 
   computed: {
@@ -192,19 +277,62 @@ export default Vue.extend({
       }
     }
   },
-  // watch: {},
+  watch: {
+    pathwayLayouting: function () {
+      this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
+        const symbol = row[this.usedSymbolCols.transcriptomics]
+        const keggID = this.transcriptomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+      })
+      this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
+
+      this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
+        const symbol = row[this.usedSymbolCols.proteomics]
+        const keggID = this.proteomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+      })
+      this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
+
+      this.metabolomicsTableData.forEach((row: {[key: string]: string | number }) => {
+        const symbol = row[this.usedSymbolCols.metabolomics]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+      })
+      this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
+    },
+    selectedTranscriptomics: function () {
+      this.transcriptomicsSelectionData = (this.selectedTranscriptomics)
+    },
+    selectedProteomics: function () {
+      this.proteomicsSelectionData = (this.selectedProteomics)
+    },
+    selectedMetabolomics: function () {
+      this.metabolomicsSelectionData = (this.selectedMetabolomics)
+    }
+  },
 
   // mounted () {},
 
   methods: {
-    transcriptomicsSelection (val: string) {
-      this.transcriptomicsSelectionData = val
+    transcriptomicsSelection (val: { [key: string]: string }) {
+      // this.transcriptomicsSelectionData = val
     },
-    proteomicsSelection (val: string) {
-      this.proteomicsSelectionData = val
+    proteomicsSelection (val: { [key: string]: string }) {
+      this.$store.dispatch('addClickedNodeFromTable', val)
     },
-    metabolomicsSelection (val: string) {
-      this.metabolomicsSelectionData = val
+    metabolomicsSelection (val: { [key: string]: string }) {
+      // this.metabolomicsSelectionData = val
+    },
+    itemRowColor (item: {[key:string]: string}) {
+      let keggID = this.transcriptomicsSymbolDict[item[this.usedSymbolCols.transcriptomics]]
+      if (!keggID) { keggID = this.proteomicsSymbolDict[item[this.usedSymbolCols.proteomics]] }
+      if (!keggID) { keggID = item[this.usedSymbolCols.metabolomics] }
+
+      const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(keggID) : false
+
+      return (item.available !== 'No') ? (includedInSelectedPathway ? 'rowstyle-inPathway' : 'rowstyle-available') : 'rowstyle-notAvailable'
     }
   }
 })

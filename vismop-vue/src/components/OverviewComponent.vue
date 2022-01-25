@@ -18,7 +18,7 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import { mainGraph } from '../core/overviewNetwork'
+import OverviewGraph from '../core/overviewNetwork'
 import { generateGraphData } from '../core/overviewGraphPreparation'
 import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
 import Vue from 'vue'
@@ -28,7 +28,13 @@ interface Data{
   tableSearch: string
   selectedTab: string
   outstandingDraw: boolean
-  networkGraph: (Sigma | undefined)
+  networkGraph: (OverviewGraph | undefined)
+  transcriptomicsIntersection: string[]
+  transcriptomicsUnion: string[]
+  proteomicsIntersection: string[]
+  proteomicsUnion: string[]
+  metabolomicsIntersection: string[]
+  metabolomicsUnion: string[]
 }
 
 export default Vue.extend({
@@ -40,8 +46,13 @@ export default Vue.extend({
     tableSearch: '',
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
-    networkGraph: undefined
-
+    networkGraph: undefined,
+    transcriptomicsIntersection: [],
+    transcriptomicsUnion: [],
+    proteomicsIntersection: [],
+    proteomicsUnion: [],
+    metabolomicsIntersection: [],
+    metabolomicsUnion: []
   }),
 
   computed: {
@@ -49,11 +60,84 @@ export default Vue.extend({
       overviewData: (state:any) => state.overviewData,
       fcs: (state:any) => state.fcs,
       overlay: (state:any) => state.overlay,
-      fcQuantiles: (state:any) => state.fcQuantiles
+      fcQuantiles: (state:any) => state.fcQuantiles,
+      pathwayDropdown: (state:any) => state.pathwayDropdown,
+      pathwayLayouting: (state: any) => state.pathwayLayouting,
+      usedSymbolCols: (state: any) => state.usedSymbolCols,
+      transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
+      proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict
+    }),
+    combinedIntersection: {
+      get: function (): string[] {
+        const combinedElements = []
+        if (this.transcriptomicsIntersection.length > 0) combinedElements.push(this.transcriptomicsIntersection)
+        if (this.proteomicsIntersection.length > 0) combinedElements.push(this.proteomicsIntersection)
+        if (this.metabolomicsIntersection.length > 0) combinedElements.push(this.metabolomicsIntersection)
+        let intersection = combinedElements.length > 0 ? combinedElements.reduce((a, b) => a.filter((c) => b.includes(c))) : []
 
-    })
+        intersection = [...new Set([...intersection])]
+        return intersection
+      }
+    },
+    combinedUnion: {
+      get: function (): string[] {
+        return [...new Set([...this.transcriptomicsUnion, ...this.proteomicsUnion, ...this.metabolomicsUnion])]
+      }
+    }
   },
   watch: {
+    combinedIntersection: function () {
+      this.networkGraph?.setPathwaysContainingIntersecion(this.combinedIntersection)
+    },
+    combinedUnion: function () {
+      this.networkGraph?.setPathwaysContainingUnion(this.combinedUnion)
+    },
+    transcriptomicsSelection: function () {
+      const foundPathways: string[][] = []
+      this.transcriptomicsSelection.forEach((element: { [key: string]: string}) => {
+        const symbol = element[this.usedSymbolCols.transcriptomics]
+        const keggID = this.transcriptomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        if (pathwaysContaining) foundPathways.push(pathwaysContaining)
+      })
+      console.log('foundPathways', foundPathways)
+      const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
+      this.transcriptomicsIntersection = intersection
+      this.transcriptomicsUnion = union
+      // this.networkGraph?.setPathwaysContainingSelection(intersection)
+    },
+    proteomicsSelection: function () {
+      const foundPathways: string[][] = []
+      this.proteomicsSelection.forEach((element: { [key: string]: string}) => {
+        const symbol = element[this.usedSymbolCols.proteomics]
+        const keggID = this.proteomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        if (pathwaysContaining) foundPathways.push(pathwaysContaining)
+      })
+      console.log('foundPathways', foundPathways)
+      const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
+      this.proteomicsIntersection = intersection
+      this.proteomicsUnion = union
+      // this.networkGraph?.setPathwaysContainingSelection(intersection)
+    },
+    metabolomicsSelection: function () {
+      const foundPathways: string[][] = []
+      this.metabolomicsSelection.forEach((element: { [key: string]: string}) => {
+        const symbol = element[this.usedSymbolCols.metabolomics]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        if (pathwaysContaining) foundPathways.push(pathwaysContaining)
+      })
+      const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+      const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
+      this.metabolomicsIntersection = intersection
+      this.metabolomicsUnion = union
+      // this.networkGraph?.setPathwaysContainingSelection(intersection)
+    },
+    pathwayDropdown: function () {
+      this.networkGraph?.refreshCurrentPathway()
+    },
     overviewData: function () {
       if (this.isActive) {
         console.log(this.contextID)
@@ -85,17 +169,27 @@ export default Vue.extend({
       this.drawNetwork()
     }
   },
-  props: ['contextID', 'isActive'],
+  props: {
+    contextID: String,
+    transcriptomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    proteomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    metabolomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    isActive: Boolean
+  },
   methods: {
     drawNetwork () {
+      if (this.networkGraph) { this.networkGraph.killGraph() }
       const fcExtents = this.fcQuantiles
       const glyphData = generateGlyphData(fcExtents)
+      this.$store.dispatch('setGlyphData', glyphData)
       console.log('GLYPH DATA', glyphData)
-      const glyphs = generateGlyphs(glyphData)
-      console.log('GLYPHs', glyphData)
-      const networkData = generateGraphData(this.overviewData, fcExtents, glyphs)
+      const generatedGlyphs = generateGlyphs(glyphData)
+      this.$store.dispatch('setGlyphs', generatedGlyphs)
+      const glyphsURL = generatedGlyphs.url
+      console.log('GLYPHs', this.$store.state.glyphs)
+      const networkData = generateGraphData(this.overviewData, fcExtents, glyphsURL)
       console.log('base dat', networkData)
-      this.networkGraph = mainGraph(this.contextID, networkData)
+      this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }
   }
 })

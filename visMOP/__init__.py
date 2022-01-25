@@ -60,9 +60,10 @@ def transcriptomics_table_recieve():
     
     # recieve data-blob
     transfer_dat = request.files['dataTable']
+    sheet_no = int(request.form['sheetNumber'])
     
     #create and parse data table and prepare json
-    data_table = create_df(transfer_dat)
+    data_table = create_df(transfer_dat, sheet_no)
     transcriptomics_df_global = data_table.copy(deep=True)
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
@@ -87,9 +88,11 @@ def prot_table_recieve():
 
     # aquire table data-blob
     transfer_dat = request.files['dataTable']
+    sheet_no = int(request.form['sheetNumber'])
+
     
     # parse data table and prepare json
-    prot_data = create_df(transfer_dat)
+    prot_data = create_df(transfer_dat, sheet_no)
     prot_table_global = prot_data.copy(deep=True)
     prot_table_json = prot_data.to_json(orient="columns")
     entry_IDs = list(prot_data.iloc[:, 0])
@@ -115,9 +118,10 @@ def metabolomics_table_recieve():
 
     # recieve table data-blob
     transfer_dat = request.files['dataTable']
+    sheet_no = int(request.form['sheetNumber'])
     
     # parse and create dataframe and prepare json
-    data_table = create_df(transfer_dat)
+    data_table = create_df(transfer_dat, sheet_no)
     metabolomics_df_global = data_table.copy(deep=True)
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
@@ -160,8 +164,8 @@ def interaction_graph():
 
 def uniprot_access(colname):
     # create dict from protein dataframe
+    global prot_table_global
     protein_dict = make_protein_dict(prot_table_global,colname)
-    # print(protein_dict)
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
     add_uniprot_info(protein_dict)
@@ -241,7 +245,7 @@ def kegg_parsing():
     # Handle Metabolomics if available
     if metabolomics["recieved"]:
         metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
-        metabolomics_keggIDs = metabolomics_dict.keys()
+        metabolomics_keggIDs =  list(metabolomics_dict.keys())
         for elem in metabolomics_keggIDs:
             if elem in fold_changes:
                 fold_changes[elem]["metabolomics"] = metabolomics_dict[elem][metabolomics["value"]]
@@ -280,7 +284,7 @@ def kegg_parsing():
 
     # combineKeggIDS from all sources
     print(metabolomics_keggIDs)
-    combined_keggIDs = list(set(transcriptomics_keggIDs+proteomics_keggIDs+list(metabolomics_keggIDs)))
+    combined_keggIDs = list(set(transcriptomics_keggIDs+proteomics_keggIDs+metabolomics_keggIDs))
     print("len keggIDs: {}".format(len(combined_keggIDs)))
 
     # query kegg gets by keggID (using cache)

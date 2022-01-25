@@ -2,14 +2,28 @@
 <template>
   <div>
     <v-card>
-      <v-row justify="space-between">
-        <v-card-title>
-          InteractionGraph
-        </v-card-title>
+      <v-row justify="space-between" align="center">
+        <v-col cols="4">
+          <v-card-title>
+            InteractionGraph
+          </v-card-title>
+        </v-col>
+        <v-col cols="3">
+          <v-btn v-on:click="queryEgoGraphs">Plot</v-btn>
+        </v-col>
+        <v-col cols="5">
+          <v-slider
+            thumb-label
+            v-model="stringSlider"
+            min=400
+            max=1000
+            hide-details=""
+          > </v-slider>
+        </v-col>
       </v-row>
       <v-row>
         <v-col cols="12" class="mb-2">
-          <div :id="contextID" class="webglContainerSmall"></div>
+          <div :id="contextID" class="webglContainer"></div>
         </v-col>
       </v-row>
     </v-card>
@@ -23,7 +37,7 @@ import Vue from 'vue'
 import Sigma from 'sigma'
 
 interface Data {
-  placeHolder: string;
+  stringSlider: number;
   interactionGraph: Sigma | undefined;
 }
 
@@ -33,7 +47,7 @@ export default Vue.extend({
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
-    placeHolder: '',
+    stringSlider: 900,
     interactionGraph: undefined
   }),
 
@@ -55,8 +69,8 @@ export default Vue.extend({
   // mounted () {},
   props: ['contextID'],
   methods: {
-    drawInteractionGraph () {
-      console.log('Placeholder')
+    queryEgoGraphs () {
+      this.$store.dispatch('queryEgoGraps', this.stringSlider)
     }
   }
 })

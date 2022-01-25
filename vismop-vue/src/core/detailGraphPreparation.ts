@@ -1,5 +1,5 @@
 import * as _ from 'lodash'
-import { generateColorScale } from '@/core/utils'
+import * as d3 from 'd3'
 import {
   node,
   edge,
@@ -18,7 +18,7 @@ import store from '@/store'
  */
 export function generateGraphData (
   nodeList: { [key: string]: entry },
-  fcsExtent: number[]
+  fcsExtent: {transcriptomics: number[], proteomics: number[], metabolomics: number[]}
 ): graphData {
   const keggIDGenesymbolDict : { [key: string]: string } = {}
   const fadeGray = 'rgba(30,30,30,0.2)'
@@ -30,7 +30,10 @@ export function generateGraphData (
   } as graphData
   const addedEdges: string[] = []
   console.log('fcsExtent', fcsExtent)
-  const colorScale = generateColorScale(fcsExtent[0], fcsExtent[1])
+  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
+  const colorScaleProteomics = store.state.fcScales.proteomics
+  const colorScaleMetabolomics = store.state.fcScales.metabolomics
+
   // console.log("NodeList", nodeList)
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey]
@@ -51,15 +54,15 @@ export function generateGraphData (
           entry.entryType === 'gene'
             ? typeof entry.trascriptomicsValue === 'string'
               ? '#808080'
-              : colorScale(entry.trascriptomicsValue)
+              : colorScaleTranscriptomics(entry.trascriptomicsValue)
             : typeof entry.metabolomicsValue === 'string'
               ? '#808080'
-              : colorScale(entry.metabolomicsValue)
+              : colorScaleMetabolomics(entry.metabolomicsValue)
         const secondaryColor =
           entry.entryType === 'gene'
             ? typeof entry.proteomicsValue === 'string'
               ? '#808080'
-              : colorScale(entry.proteomicsValue)
+              : colorScaleProteomics(entry.proteomicsValue)
             : '#808080'
         const currentNode = {
           key: keggID,

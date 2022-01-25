@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card v-bind:class="[expandButton ? 'detailComponentLarger' : '','detailComponent']">
+    <v-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
       <v-col>
       <v-overflow-btn
                     :items="pathwayLayouting.pathwayList"
@@ -12,16 +12,23 @@
                     dense
                     v-model="pathwaySelection"
       ></v-overflow-btn>
-      <div :id="contextID" v-bind:class="[expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
-       <v-btn
-        class="mx-2 expandButton"
-        fab
-        dark
-        small
-        bottom
-        left
-        @click="expandComponent"
-      ><v-icon>mdi-arrow-expand</v-icon></v-btn>
+      <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
+      <v-card-actions>
+        <v-btn
+          class="mx-2 expandButton"
+          fab
+          dark
+          small
+          @click="expandComponent"
+        ><v-icon>mdi-arrow-expand</v-icon></v-btn>
+          <v-btn
+          class="mx-2 minimizeButton"
+          fab
+          dark
+          small
+          @click="minimizeComponent"
+        ><v-icon>mdi-window-minimize</v-icon></v-btn>
+      </v-card-actions>
       </v-col>
     </v-card>
   </div>
@@ -35,12 +42,14 @@ import Vue from 'vue'
 import Sigma from 'sigma'
 
 interface Data{
+  mutationObserver: (MutationObserver | undefined)
   tableSearch: string
   selectedTab: string
   outstandingDraw: boolean
   networkGraph: (DetailNetwork | undefined)
   pathwaySelection: string
   expandButton: boolean
+  minimizeButton: boolean
 }
 
 export default Vue.extend({
@@ -49,12 +58,14 @@ export default Vue.extend({
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
+    mutationObserver: undefined,
     tableSearch: '',
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
     networkGraph: undefined,
     pathwaySelection: '',
-    expandButton: false
+    expandButton: false,
+    minimizeButton: false
 
   }),
 
@@ -99,15 +110,16 @@ export default Vue.extend({
     },
     pathwaySelection: function () {
       this.selectPathway(this.pathwaySelection)
+      this.$store.dispatch('focusPathwayViaDropdown', this.pathwaySelection)
     },
     transcriptomicsSelection: function () {
-      this.focusNodeTranscriptomics(this.transcriptomicsSelection)
+      // this.focusNodeTranscriptomics(this.transcriptomicsSelection)
     },
     proteomicsSelection: function () {
-      this.focusNodeProteomics(this.proteomicsSelection)
+      // this.focusNodeProteomics(this.proteomicsSelection)
     },
     metabolomicsSelection: function () {
-      this.focusNodeMetabolomics(this.metabolomicsSelection)
+      // this.focusNodeMetabolomics(this.metabolomicsSelection)
     },
     pathwayDropdown: function () {
       this.pathwaySelection = this.pathwayDropdown
@@ -115,32 +127,37 @@ export default Vue.extend({
   },
 
   mounted () {
+    this.mutationObserver = new MutationObserver(this.refreshGraph)
+    const config = { attributes: true }
+    const tar = document.getElementById(this.contextID)
+    if (tar) this.mutationObserver.observe(tar, config)
     if (this.graphData) {
       this.drawNetwork()
     }
   },
   props: {
     contextID: String,
-    transcriptomicsSelection: { type: Object },
-    proteomicsSelection: { type: Object },
-    metabolomicsSelection: { type: Object },
+    transcriptomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    proteomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    metabolomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
     isActive: Boolean
   },
   methods: {
     drawNetwork () {
+      if (this.networkGraph) { this.networkGraph.killGraph() }
       const fcExtents = this.fcQuantiles
       const networkData = generateGraphData(this.graphData, fcExtents)
       console.log('base dat', networkData)
-      const key = Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
+      const key = this.pathwayDropdown ? this.pathwayDropdown : Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
       const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
       this.networkGraph = new DetailNetwork(networkData, this.contextID, key, nodeList)
     },
     focusNodeTranscriptomics (row: {[key: string]: string}) {
       const symbol = row[this.usedSymbolCols.transcriptomics]
-      console.log('Symbol', symbol)
-      console.log('dict', this.transcriptomicsSymbolDict)
-      const keggID = this.transcriptomicsSymbolDict[symbol]
-      console.log('ID', keggID)
+      // console.log('Symbol', symbol)
+      // console.log('dict', this.transcriptomicsSymbolDict)
+      // const keggID = this.transcriptomicsSymbolDict[symbol]
+      // console.log('ID', keggID)
       // panToNode(this.networkGraph as Sigma, keggID)
     },
     focusNodeProteomics (row: {[key: string]: string}) {
@@ -172,7 +189,16 @@ export default Vue.extend({
     },
     expandComponent () {
       this.expandButton = !this.expandButton
+      this.networkGraph?.refresh()
+    },
+    minimizeComponent () {
+      this.minimizeButton = !this.minimizeButton
+      this.networkGraph?.refresh()
+    },
+    refreshGraph () {
+      this.networkGraph?.refresh()
     }
+
   }
 })
 </script>
