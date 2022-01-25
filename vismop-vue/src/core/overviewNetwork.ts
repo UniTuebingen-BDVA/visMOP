@@ -166,4 +166,8 @@ export default class overviewGraph {
     this.pathwaysContainingUnion = val
     this.renderer.refresh()
   }
+
+  public killGraph () {
+    this.renderer.kill()
+  }
 }

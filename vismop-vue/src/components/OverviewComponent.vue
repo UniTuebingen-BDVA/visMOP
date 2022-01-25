@@ -178,6 +178,7 @@ export default Vue.extend({
   },
   methods: {
     drawNetwork () {
+      if (this.networkGraph) { this.networkGraph.killGraph() }
       const fcExtents = this.fcQuantiles
       const glyphData = generateGlyphData(fcExtents)
       this.$store.dispatch('setGlyphData', glyphData)

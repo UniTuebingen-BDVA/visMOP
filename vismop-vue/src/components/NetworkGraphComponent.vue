@@ -144,10 +144,11 @@ export default Vue.extend({
   },
   methods: {
     drawNetwork () {
+      if (this.networkGraph) { this.networkGraph.killGraph() }
       const fcExtents = this.fcQuantiles
       const networkData = generateGraphData(this.graphData, fcExtents)
       console.log('base dat', networkData)
-      const key = Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
+      const key = this.pathwayDropdown ? this.pathwayDropdown : Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
       const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
       this.networkGraph = new DetailNetwork(networkData, this.contextID, key, nodeList)
     },

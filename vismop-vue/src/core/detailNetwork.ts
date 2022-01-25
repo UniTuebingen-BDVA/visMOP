@@ -158,4 +158,8 @@ export default class pathwayGraph {
     this.currentSigma.refresh()
     this.currentSigma.resize()
   }
+
+  public killGraph () {
+    this.currentSigma.kill()
+  }
 }
