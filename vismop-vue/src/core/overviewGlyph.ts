@@ -42,7 +42,7 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
               transcriptomicsData.nodeState.regulated += 1
             }
             if (typeof fcsCurrent.proteomics === 'number') {
-              proteomicsData.foldChanges.push({ symbol: store.state.proteomicsKeggDict[currentEntry], value: fcsCurrent.proteomics })
+              proteomicsData.foldChanges.push({ symbol: store.state.proteomicsKeggIDDict[currentEntry], value: fcsCurrent.proteomics })
               proteomicsData.nodeState.regulated += 1
             }
             if (typeof fcsCurrent.metabolomics === 'number') {

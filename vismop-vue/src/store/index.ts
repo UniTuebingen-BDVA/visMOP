@@ -29,11 +29,11 @@ interface State {
   /**
    * KEY: KEGGID -> VAL: SYMBOL
    */
-  proteomicsKeggDict: { [key: string]: string },
+  proteomicsKeggIDDict: { [key: string]: string },
   metabolomicsData: unknown,
   metabolomicsTableHeaders: unknown,
   metabolomicsTableData: unknown,
-  usedSymbolCols: unknown,
+  usedSymbolCols: {transcriptomics: string, proteomics: string, metabolomics: string},
   overlay: unknown,
   graphData: unknown,
   fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number)} },
@@ -63,11 +63,11 @@ export default new Vuex.Store({
     clickedNodes: [],
     proteomicsData: null,
     proteomicsSymbolDict: {},
-    proteomicsKeggDict: {},
+    proteomicsKeggIDDict: {},
     metabolomicsTableHeaders: [],
     metabolomicsTableData: [],
     metabolomicsData: null,
-    usedSymbolCols: { transcriptomics: null, proteomics: null, metabolomics: null },
+    usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
     overlay: false,
     graphData: null,
     fcs: {},
@@ -127,8 +127,8 @@ export default new Vuex.Store({
     SET_PROTEOMICSSYMBOLDICT (state, val) {
       state.proteomicsSymbolDict = val
     },
-    SET_PROTEOMICSKEGGDICT (state, val) {
-      state.proteomicsKeggDict = val
+    SET_PROTEOMICSKEGGIDDICT (state, val) {
+      state.proteomicsKeggIDDict = val
     },
     SET_METABOLOMICSTABLEHEADER (state, val) {
       state.metabolomicsTableHeaders = val
@@ -189,7 +189,7 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    addClickedNode ({ commit, state }, val: string) {
+    addClickedNode ({ dispatch, state }, val: string) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       // TODO multiIDs will not work at the moment
       const keggIDs = val.split(';')
@@ -197,16 +197,31 @@ export default new Vuex.Store({
       keggIDs.forEach(element => {
         try {
           if (!enteredKeys.includes(element)) {
-            const sybmolName = state.keggIDGenesymbolDict[element]
-            const tableEntry = { id: element, name: sybmolName, fcTranscript: state.fcs[element].transcriptomics, fcProt: state.fcs[element].proteomics, delete: val }
-            commit('APPEND_CLICKEDNODE', tableEntry)
+            dispatch('appendClickedNode', element)
           }
         } catch (error) {
         }
       })
     },
+    addClickedNodeFromTable ({ dispatch, state }, val: {[key: string]: string}) {
+      const symbolProt = val[state.usedSymbolCols.proteomics]
+      const keggID = state.proteomicsSymbolDict[symbolProt]
+      const enteredKeys = state.clickedNodes.map(row => { return row.id })
+      try {
+        if (!enteredKeys.includes(keggID)) {
+          dispatch('appendClickedNode', keggID)
+        }
+      } catch (error) {
+      }
+    },
+    appendClickedNode ({ commit, state }, val) {
+      const symbolProt = state.proteomicsKeggIDDict[val]
+      const symbolTrans = state.transcriptomicsKeggIDDict[val]
+      const tableEntry = { id: val, name: `${symbolTrans}/${symbolProt}`, fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
+      commit('APPEND_CLICKEDNODE', tableEntry)
+    },
     queryEgoGraps ({ commit, state }, val) {
-      const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggDict[elem.id] })
+      const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggIDDict[elem.id] })
       fetch('/interaction_graph', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -256,7 +271,7 @@ export default new Vuex.Store({
     },
     setProteomicsSymbolDict ({ commit }, val) {
       commit('SET_PROTEOMICSSYMBOLDICT', val)
-      commit('SET_PROTEOMICSKEGGDICT', _.invert(val))
+      commit('SET_PROTEOMICSKEGGIDDICT', _.invert(val))
     },
     setMetabolomicsTableHeaders ({ commit }, val) {
       commit('SET_METABOLOMICSTABLEHEADER', val)

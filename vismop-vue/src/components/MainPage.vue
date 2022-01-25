@@ -320,7 +320,7 @@ export default Vue.extend({
       // this.transcriptomicsSelectionData = val
     },
     proteomicsSelection (val: { [key: string]: string }) {
-      // this.proteomicsSelectionData = val
+      this.$store.dispatch('addClickedNodeFromTable', val)
     },
     metabolomicsSelection (val: { [key: string]: string }) {
       // this.metabolomicsSelectionData = val
