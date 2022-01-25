@@ -23,10 +23,9 @@ class StringGraph:
             self.complete_graph = nx.parse_edgelist(lines, create_using=nx.Graph,comments="protein1", data=(("weight", int),))
         self.current_confidence = 900
         self.filter_by_confidence(900)
-        print("completeGraph",nx.info(self.complete_graph))
-        print("completeGraph",nx.info(self.complete_graph))
-        print(self.complete_graph.edges('10090.ENSMUSP00000137402', data=True))
-        print({edgeProts[1]:edgeProts[2]['weight'] for edgeProts in self.complete_graph.edges('10090.ENSMUSP00000137402', data=True)})
+        # print("completeGraph",nx.info(self.complete_graph))
+        # print("completeGraph",nx.info(self.complete_graph))
+        
 
     def set_string_name_dict(self, val):
         self.name_dict = val

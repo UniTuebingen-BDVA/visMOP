@@ -339,12 +339,12 @@ def kegg_parsing():
     data_driven_layout_data = pd.DataFrame.from_dict({'path:'+pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
     pd.set_option("display.max_rows", None, "display.max_columns", None)
 
-    print('4 * no outlier + all outlier')
+    # print('4 * no outlier + all outlier')
     # outlier_data = data_driven_layout_data.loc[['path:mmu05135','path:mmu04910','path:mmu04723', 'path:mmu05418', 'path:mmu05215','path:mmu01200','path:mmu00061','path:mmu04060', 'path:mmu05200','path:mmu00190']]
-    outlier_data = data_driven_layout_data.loc[['path:mmu05135','path:mmu04910','path:mmu04723', 'path:mmu05418', 'path:mmu00190','path:mmu05150','path:mmu00280']]
+    # outlier_data = data_driven_layout_data.loc[['path:mmu05135','path:mmu04910','path:mmu04723', 'path:mmu05418', 'path:mmu00190','path:mmu05150','path:mmu00280']]
     
-    print(outlier_data)  
-    print(outlier_data.to_latex(index=True))  
+    # print(outlier_data)  
+    # print(outlier_data.to_latex(index=True))  
 
     # add incoming edges to nodes 
     add_incoming_edges(overall_entries)

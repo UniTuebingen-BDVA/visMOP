@@ -46,7 +46,7 @@ class KeggPathway:
         for omic, val in zip(['transcriptomics', 'proteomics', 'metabolomics'], [entry.trascriptomicsValue, entry.proteomicsValue, entry.metabolomicsValue]):
             if not isinstance(val, str):
                 self.all_values[omic].append(val)
-        self.entries.append(entry)
+        self.entries[entry.keggID] = entry
 
     def add_kegg_info(self, kegg_gets):
         # print(kegg_gets,self.kos)
@@ -63,13 +63,13 @@ class KeggPathway:
     def add_stringIds(self, stringIDs):
         self.prot_in_pathway_StringIds += stringIDs
 
-    def redo_all_values_dic(self):
-        self.all_values = {'transcriptomics': [],
-                           'proteomics': [], 'metabolomics': []}
-        for entry in self.entries:
-            for omic, val in zip(['transcriptomics', 'proteomics', 'metabolomics'], [entry.trascriptomicsValue, entry.proteomicsValue, entry.metabolomicsValue]):
-                if not isinstance(val, str):
-                    self.all_values[omic].append(val)
+    # def redo_all_values_dic(self):
+    #     self.all_values = {'transcriptomics': [],
+    #                        'proteomics': [], 'metabolomics': []}
+    #     for entry in self.entries:
+    #         for omic, val in zip(['transcriptomics', 'proteomics', 'metabolomics'], [entry.trascriptomicsValue, entry.proteomicsValue, entry.metabolomicsValue]):
+    #             if not isinstance(val, str):
+    #                 self.all_values[omic].append(val)
 
     def get_PathwaySummaryData(self, recieved_omics, omic_limits):
         dummy_val = float('nan')

@@ -33,7 +33,7 @@ export default class overviewGraph {
     const graph = MultiGraph.from(graphData)
     // console.log('NODES', graph.nodes())
 
-    const inferredSettings = forceAtlas2.inferSettings(graph)
+    // const inferredSettings = forceAtlas2.inferSettings(graph)
 
     // from events SIGMA2 example, initialze sets for highlight on hover:
     let highlighedNodes = new Set()
@@ -83,10 +83,10 @@ export default class overviewGraph {
     console.log(renderer.getSetting('nodeProgramClasses'))
 
     // To directly assign the positions to the nodes:
-    const start = Date.now()
-    forceAtlas2.assign(graph, { iterations: 500, settings: inferredSettings })
-    const duration = (Date.now() - start) / 1000
-    console.log(`layoutDuration: ${duration} S`)
+    // const start = Date.now()
+    // forceAtlas2.assign(graph, { iterations: 500, settings: inferredSettings })
+    // const duration = (Date.now() - start) / 1000
+    // console.log(`layoutDuration: ${duration} S`)
     // const layout = new FA2Layout(graph, {settings: sensibleSettings });
     // layout.start();
 

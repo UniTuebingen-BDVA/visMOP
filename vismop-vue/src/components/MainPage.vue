@@ -182,14 +182,14 @@
                 </v-col>
                 </v-row>
                   <keep-alive>
-                    <!-- <network-graph-component
+                    <network-graph-component
                       contextID="detailContext"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
                       :isActive="activeOverview"
                     >
-                    </network-graph-component> -->
+                    </network-graph-component>
                   </keep-alive>
             </v-tab-item>
 
@@ -209,7 +209,7 @@
 </template>
 <script lang="ts">
 import { mapState } from 'vuex'
-// import NetworkGraphComponent from './NetworkGraphComponent.vue'
+import NetworkGraphComponent from './NetworkGraphComponent.vue'
 import OverviewComponent from './OverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'

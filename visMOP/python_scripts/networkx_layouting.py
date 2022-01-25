@@ -52,7 +52,6 @@ def get_networkx_with_edge_weights(node_dict, pathway_info_dict, stringGraph):
         interaction_scores.append(interaction_score)
     min_val_brite, min_val_interaction = min(brite_scores), min(interaction_scores)
     max_val_brite, max_val_interaction= max(brite_scores), max(interaction_scores)
-    print(len(brite_scores), len(interaction_scores))
     # norm_brite_score = [normalize_in_range(interaction_score,min_val_interaction, max_val_interaction,[0,10]) for brite_score in brite_scores]
     total_scores = [normalize_in_range(brite_score, min_val_brite, max_val_brite,[0,1]) + normalize_in_range(interaction_score,min_val_interaction, max_val_interaction,[0,1]) for brite_score, interaction_score in zip(brite_scores, interaction_scores)]
     min_val_total = min(total_scores)
