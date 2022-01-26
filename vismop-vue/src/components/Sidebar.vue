@@ -1,5 +1,15 @@
 <template>
   <v-list nav dense>
+      Selected Omics:
+      {{ chosenOmics.length }}
+    <v-chip-group active-class="primary--text" column>
+      <v-chip
+        v-for="variable in chosenOmics"
+        :key="variable"
+      >
+        {{ variable }}
+      </v-chip>
+    </v-chip-group>
     <v-expansion-panels>
       <v-expansion-panel>
         <v-expansion-panel-header>
@@ -144,7 +154,16 @@ export default Vue.extend({
       transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
       proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
       metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders
-    })
+    }),
+    chosenOmics: {
+      get: function () {
+        const chosen = []
+        if (this.recievedTranscriptomicsData) chosen.push('Transcriptomics')
+        if (this.recievedProteomicsData) chosen.push('Proteomics')
+        if (this.recievedMetabolomicsData) chosen.push('Metabolomics')
+        return chosen
+      }
+    }
   },
 
   watch: {},
