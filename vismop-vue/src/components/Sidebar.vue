@@ -45,6 +45,20 @@
             @click="lockHover"
             @input="unlockHover"
           ></v-select>
+          <v-spacer></v-spacer>
+          Input Filter:
+          <v-range-slider
+            v-for="variable in sliderTranscriptomics"
+            v-model="sliderVals.transcriptomics[variable.text]"
+            :key="variable.text"
+            :max="variable.max"
+            :min="variable.min"
+            :step="variable.step"
+            :hint="variable.text"
+            thumb-label
+            persistent-hint
+          >
+          </v-range-slider>
         </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
@@ -79,6 +93,20 @@
             @click="lockHover"
             @input="unlockHover"
           ></v-select>
+          <v-spacer></v-spacer>
+          Input Filter:
+          <v-range-slider
+            v-for="variable in sliderProteomics"
+            v-model="sliderVals.proteomics[variable.text]"
+            :key="variable.text"
+            :max="variable.max"
+            :min="variable.min"
+            :step="variable.step"
+            :hint="variable.text"
+            thumb-label
+            persistent-hint
+          >
+          </v-range-slider>
         </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
@@ -113,6 +141,20 @@
             @click="lockHover"
             @input="unlockHover"
           ></v-select>
+          <v-spacer></v-spacer>
+          Input Filter:
+          <v-range-slider
+            v-for="variable in sliderMetabolomics"
+            v-model="sliderVals.metabolomics[variable.text]"
+            :key="variable.text"
+            :max="variable.max"
+            :min="variable.min"
+            :step="variable.step"
+            :hint="variable.text"
+            thumb-label
+            persistent-hint
+          >
+          </v-range-slider>
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
@@ -142,6 +184,7 @@ export default Vue.extend({
     metabolomicsSymbolCol: '',
     metabolomicsValueCol: '',
     recievedMetabolomicsData: false,
+    sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: number[]}, proteomics: {[key: string]: number[]}, metabolomics: {[key: string]: number[]} },
     sheetRules: [
       (value: string) => {
         const pattern = /^([0-9]*)$/
@@ -153,7 +196,10 @@ export default Vue.extend({
     ...mapState({
       transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
       proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
-      metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders
+      metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders,
+      transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
+      proteomicsTableData: (state: any) => state.proteomicsTableData,
+      metabolomicsTableData: (state: any) => state.metabolomicsTableData
     }),
     chosenOmics: {
       get: function () {
@@ -162,6 +208,72 @@ export default Vue.extend({
         if (this.recievedProteomicsData) chosen.push('Proteomics')
         if (this.recievedMetabolomicsData) chosen.push('Metabolomics')
         return chosen
+      }
+    },
+    sliderTranscriptomics: {
+      get: function () {
+        const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+        const typedArrayData = this.transcriptomicsTableData as [{[key: string]: number}]
+        const typedArrayHeader = this.transcriptomicsTableHeaders as [{[key: string]: string}]
+
+        typedArrayHeader.forEach(element => {
+          const valArr = typedArrayData.map(elem => elem[element.value])
+          if (valArr.every((val) => typeof val === 'number')) {
+            console.log(element.value, valArr)
+            const min = Math.floor(Math.min(...valArr))
+            const max = Math.ceil(Math.max(...valArr))
+            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+            if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
+              this.sliderVals.transcriptomics[element.value] = [min, max]
+            }
+            console.log(element.value, this.sliderVals)
+          }
+        })
+        return outObj
+      }
+    },
+    sliderProteomics: {
+      get: function () {
+        const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+        const typedArrayData = this.proteomicsTableData as [{[key: string]: number}]
+        const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
+
+        typedArrayHeader.forEach(element => {
+          const valArr = typedArrayData.map(elem => elem[element.value])
+          if (valArr.every((val) => typeof val === 'number')) {
+            console.log(element.value, valArr)
+            const min = Math.floor(Math.min(...valArr))
+            const max = Math.ceil(Math.max(...valArr))
+            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+            if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
+              this.sliderVals.proteomics[element.value] = [min, max]
+            }
+            console.log(element.value, this.sliderVals)
+          }
+        })
+        return outObj
+      }
+    },
+    sliderMetabolomics: {
+      get: function () {
+        const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+        const typedArrayData = this.metabolomicsTableData as [{[key: string]: number}]
+        const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
+
+        typedArrayHeader.forEach(element => {
+          const valArr = typedArrayData.map(elem => elem[element.value])
+          if (valArr.every((val) => typeof val === 'number')) {
+            console.log(element.value, valArr)
+            const min = Math.floor(Math.min(...valArr))
+            const max = Math.ceil(Math.max(...valArr))
+            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+            if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
+              this.sliderVals.metabolomics[element.value] = [min, max]
+            }
+            console.log(element.value, this.sliderVals)
+          }
+        })
+        return outObj
       }
     }
   },
@@ -277,6 +389,7 @@ export default Vue.extend({
       }
     },
     generateKGMLs () {
+      console.log('sliderTest', this.sliderVals)
       this.$store.dispatch('setOverlay', true)
       const payload = {
         transcriptomics: {
