@@ -17,6 +17,7 @@ def create_df(file_type, sheet_no):
     read_table = read_table.fillna(value = "None")
     read_table['id'] = read_table.index
     read_table['available'] = 'No'
+    read_table['inSelected'] = 'No'
     print(read_table)
     return read_table
 
@@ -35,6 +36,7 @@ def generate_vue_table_header(df):
             vue_header = {}
             vue_header['text'] = entry
             vue_header['value'] = entry
+            vue_header['align'] = 'd-none' if (entry == 'inSelected') else 'start'
             vue_headers.append(vue_header)
     return vue_headers
 
