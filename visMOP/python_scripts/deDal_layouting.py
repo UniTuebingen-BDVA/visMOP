@@ -1,6 +1,4 @@
 from networkx.algorithms.assortativity import neighbor_degree
-from networkx.algorithms.isolate import number_of_isolates
-from networkx.readwrite.json_graph.adjacency import adjacency_data
 from numpy.core.fromnumeric import mean
 import networkx as nx
 import numpy as np
@@ -24,8 +22,6 @@ def double_centring(data_table):
 
     return data_table
 
-
-# nicht ganz sicher ob das so richtig ist
 def NetworkSmoothing(graph, data_tabel, eigenvec_matrix):
     num_of_connected_components = nx.number_connected_components(graph)
     node_names = list(data_tabel.index)
@@ -52,7 +48,6 @@ def NetworkSmoothing(graph, data_tabel, eigenvec_matrix):
     # falls ein Wert für einen Pathway nicht da ist den mean von den Nachbarn nehmen? --> project vector on Graph
     for col_num in range(len(data_tabel.columns)):
         vec = data_tabel.iloc[:, col_num]
-        #vec = fill_missing_vec_values(graph, node_names, data_tabel.iloc[:, col_num])
         data_tabel.iloc[:, col_num] = project_vector_on_first_components_of_a_basis(
             vec, eigenvec_matrix, num_vars, 0)
     return data_tabel
@@ -69,7 +64,7 @@ def project_vector_on_first_components_of_a_basis(vec, basis, num_of_first_vecto
     return res
 
 
-def fill_missing_values_with_neighbor_mean(graph_dict, data_table, recieved_omics, defaul_means, numValsPerOmic):  # geht noch nicht richtig # defold values per omic and pos
+def fill_missing_values_with_neighbor_mean(graph_dict, data_table, recieved_omics, defaul_means, numValsPerOmic): # defold values per omic and pos
     defaul_means_rec_omic = [default_mean for (default_mean, recieved) in zip(defaul_means, recieved_omics) if recieved]
     node_names = list(data_table.index)
     new_data = {}
@@ -105,11 +100,6 @@ def get_pca_layout_pos(data_table):
     explained_variation = pca.explained_variance_ratio_
     print("Variance explained by PC1 = " + str(explained_variation[0]))
     print("Variance explained by PC2 = " + str(explained_variation[1]))
-    # pos_xy= new_pos.transpose()
-    # plt.scatter(
-    #     pos_xy[0], pos_xy[1])
-    # plt.gca().set_aspect('equal', 'datalim')
-    # plt.savefig('plt_layout_pca.png')
     # pca.calcDispersionsRelative?
     pos_dic_pca = {node_name: row for row, node_name in zip(
         new_pos, list(data_table.index))}
@@ -124,49 +114,27 @@ def convert_each_feature_into_z_scores(data_table):
 
 
 def get_umap_layout_pos(data_table):
-    # reducer = umap.UMAP(random_state=42,transform_seed=42)
-    # np.random.seed(42)
-    new_pos = umap.UMAP(random_state=2).fit_transform(data_table)
+    new_pos = umap.UMAP().fit_transform(data_table)
     pos_dic = {node_name: row for row, node_name in zip(
         new_pos, list(data_table.index))}
     norm_vals_dict = normalize_all_x_y_to_ndc(pos_dic, [-1,1])
-    # plt.scatter(
-    #     new_pos[:, 0],
-    #     new_pos[:, 1])
-    # plt.gca().set_aspect('equal', 'datalim')
-    # plt.savefig('plt_layout_umap.png')
     return new_pos, norm_vals_dict
-
-# def perform_all_dim_reductions(data_table):
-#     z_scores = convert_each_feature_into_z_scores(data_table)
-#     # pos_umap = get_umap_layout_pos(z_scores)
-#     pos_umap = []
-#     # print(pos_umap)
-#     pos_pca = get_pca_layout_pos(z_scores)
-#     pos_dic_pca = {node_name: row for row, node_name in zip(
-#         pos_pca, list(data_table.index))}
-#     return pos_umap, pos_dic_pca
 
 def normalize_all_x_y_to_ndc(pos_per_node, val_space):
     x_vals = [val[0] for key, val in pos_per_node.items()]
     y_vals = [val[1] for key, val in pos_per_node.items()]
-    min_x = min(x_vals)
-    max_x = max(x_vals)
-    min_y = min(y_vals)
-    max_y = max(y_vals)
+    min_x, max_x, min_y, max_y = min(x_vals), max(x_vals), min(y_vals), max(y_vals)
 
-    norm_vals = {node: [normalize_to_ndc(xy[0], min_x, max_x, val_space), normalize_to_ndc(
+    norm_vals = {node: [normalize_in_range(xy[0], min_x, max_x, val_space), normalize_in_range(
         xy[1], min_y, max_y, val_space)] for node, xy in pos_per_node.items()}
     return norm_vals
 
-
-def normalize_to_ndc(val, min_val, max_val, val_space):
+def normalize_in_range(val, min_val, max_val, val_space):
     numerator = (val_space[1]-val_space[0]) * (val-min_val)
     devisor = max_val - min_val 
     if devisor == 0:
         return val_space[0] 
     return numerator/devisor + val_space[0]
-
 
 def morph_layouts(xy_1, xy_2, percentage):
     new_xy = {node: coordinate_in_morphed_graph(
@@ -180,28 +148,6 @@ def coordinate_in_morphed_graph(xy_1, xy_2, percentage):
     y_morphed = percentage * y2 + (1-percentage)*y1
 
     return [x_morphed, y_morphed]
-
-# def coordinate_in_morphed_graph(xy_1, xy_2, percentage):
-#     x1, y1, x2, y2 = xy_1[0], xy_1[1], xy_2[0], xy_2[1]
-#     e_dist_sq = math.pow(edist(x1, y1, x2, y2), 2)
-
-#     z = math.pow(percentage, 2) * e_dist_sq
-#     z1 = math.pow(1-percentage, 2) * e_dist_sq
-
-#     f = -(2*x1 - 2*x2)
-#     h = -(math.pow(x2, 2)) - math.pow(x1, 2) + math.pow(y2, 2) - math.pow(y1, 2) - z + z1
-#     e = 2*y1 - 2*y2
-
-#     a = math.pow(e, 2) + math.pow(f, 2)
-#     b = -2*math.pow(e, 2)*x2-2*e*f*y2+2*f*h
-#     # c = math.pow(e,2) * math.pow(x2,2) + math.pow(h,2) -2*e*h*y2+ math.pow(e,2) * math.pow(y2,2) -math.pow(e,2)*z
-
-#     # delta = math.pow(b) -4*a*c
-#     x_morphed = -b/(2*a)
-#     y_morphed = f*(x_morphed + h) / e
-
-#     return [x_morphed, y_morphed]
-
 
 def rotate_to_ref(pos_to_rot, ref_pos):
     node_list = pos_to_rot.keys()
@@ -258,5 +204,24 @@ def edist(x1, y1, x2, y2):
     return np.linalg.norm(np.array([x1, y1])-np.array([x2, y2]))
 
 
-# post prosessing methods!!!!!
+# def coordinate_in_morphed_graph(xy_1, xy_2, percentage):
+#     x1, y1, x2, y2 = xy_1[0], xy_1[1], xy_2[0], xy_2[1]
+#     e_dist_sq = math.pow(edist(x1, y1, x2, y2), 2)
+
+#     z = math.pow(percentage, 2) * e_dist_sq
+#     z1 = math.pow(1-percentage, 2) * e_dist_sq
+
+#     f = -(2*x1 - 2*x2)
+#     h = -(math.pow(x2, 2)) - math.pow(x1, 2) + math.pow(y2, 2) - math.pow(y1, 2) - z + z1
+#     e = 2*y1 - 2*y2
+
+#     a = math.pow(e, 2) + math.pow(f, 2)
+#     b = -2*math.pow(e, 2)*x2-2*e*f*y2+2*f*h
+#     # c = math.pow(e,2) * math.pow(x2,2) + math.pow(h,2) -2*e*h*y2+ math.pow(e,2) * math.pow(y2,2) -math.pow(e,2)*z
+
+#     # delta = math.pow(b) -4*a*c
+#     x_morphed = -b/(2*a)
+#     y_morphed = f*(x_morphed + h) / e
+
+#     return [x_morphed, y_morphed]
 

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, send_from_directory,request, Response
-from visMOP.python_scripts.networkx_layouting import force_dir_layout, get_spring_layout_pos, add_initial_positions, relayout, get_networkx_with_edge_weights, get_networkx_with_edge_weights_all_nodes_connected
-from visMOP.python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty,add_incoming_edges
+from visMOP.python_scripts.networkx_layouting import  get_spring_layout_pos, add_initial_positions, relayout 
+from visMOP.python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty, add_incoming_edges
 from visMOP.python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls,associacte_value_keggID
 from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
 from visMOP.python_scripts.create_overview import get_overview
@@ -12,12 +12,12 @@ import os
 import json
 import sys
 import random
-from visMOP.python_scripts.deDal_layouting import fill_missing_values_with_neighbor_mean, convert_each_feature_into_z_scores, double_centring, normalize_all_x_y_to_ndc, NetworkSmoothing, rotate_to_ref, get_pca_layout_pos, morph_layouts, get_umap_layout_pos
+from visMOP.python_scripts.deDal_layouting import fill_missing_values_with_neighbor_mean, convert_each_feature_into_z_scores, double_centring, NetworkSmoothing, rotate_to_ref, get_pca_layout_pos, morph_layouts, get_umap_layout_pos
+from visMOP.python_scripts.forceDir_layouting import get_pos_in_force_dir_layout, get_networkx_with_edge_weights_all_nodes_connected
 import networkx as nx
 import copy
 from numpy.core.fromnumeric import mean
 import time
-import pickle
 
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
 
@@ -268,7 +268,6 @@ def kegg_parsing():
         # query uniprot for the IDs in the table and add their info to the dictionary
         # get_uniprot_entry(symbol_kegg_dict_,data_path)
         # add_uniprot_info(symbol_kegg_dict_)
-        # print(symbol_kegg_dict_)
         for symbol in gene_symbols_transcriptomics:
             try:
                 keggID = symbol_kegg_dict_transcriptomics[symbol]
@@ -283,7 +282,6 @@ def kegg_parsing():
         #print("keggIDs: {}".format(keggIDs))
 
     # combineKeggIDS from all sources
-    print(metabolomics_keggIDs)
     combined_keggIDs = list(set(transcriptomics_keggIDs+proteomics_keggIDs+metabolomics_keggIDs))
     print("len keggIDs: {}".format(len(combined_keggIDs)))
 
@@ -293,7 +291,6 @@ def kegg_parsing():
     
     # parse gets into a usable format
     parsed_gets = {k:parse_get(v,k) for k,v in kegg_gets.items()}
-    
     print("parsed_gets: {}".format(len(parsed_gets)))
     
     #pathways_per_gene = {elem.geneName : (elem.keggID,elem.pathways) for elem in parsed_gets}
@@ -310,7 +307,7 @@ def kegg_parsing():
     parsed_pathways = []
     print("Len unique Pathways: ", len(unique_pathways))
 
-    outlier_list = [ 'mmu00450','mmu03030','mmu03008','mmu03010', 'mmu01250','mmu01230', 'mmu01200', 'mmu01240', 'mmu00592', 'mmu02010', 'mmu00983']
+    
     # list accessor is used for test purposes only --> less data = faster
     for pathwayID in parsed_IDs:
         # TODO blacklist system?!
@@ -322,29 +319,28 @@ def kegg_parsing():
             
     # generate dict with k: pathway v: nodes
     pathway_node_dict = {k:v for k,v in (pathway.return_pathway_node_list() for pathway in parsed_pathways)}
-     # generate dict with id: pathway_id info_dict: ontology_string
-    pathway_info_dict = {'path:'+id:ontology_string for id,ontology_string in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
+    # generate dict with id: pathway_id info_dict: ontology_string
+    pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     
     # generate dict with k: pathwy v: {amountGenes, amountCompounds}
     pathway_amount_dict = {k:v for k,v in (pathway.return_amounts() for pathway in parsed_pathways)}
 
     # generate list of pathways for pathway selection
-    dropdown_pathways = [pathway.return_formated_title() for pathway in parsed_pathways]        
+    dropdown_pathways = [pathway.return_formated_title() for pathway in parsed_pathways]
     
-    # generate dataframe of summary Data for all pathways
-    # up_down_reg_limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
-    numValsPerOmic = 8
+    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
     up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
     omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
-    data_driven_layout_data = pd.DataFrame.from_dict({'path:'+pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
+    # user choice 
+    use_pathway_size = False
+    omic_stats_used = [True, True, True, True, True, True, True, False]
+    num_vals_per_omic = sum(omics_recieved)
+    data_col_used = omic_stats_used * num_vals_per_omic + [use_pathway_size]
+    # generate dataframe of summary Data for all pathways
+    data_driven_layout_data_complete = pd.DataFrame.from_dict({'path:'+pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
+    data_driven_layout_data_user = data_driven_layout_data_complete.iloc[:, data_col_used]
+    print(data_driven_layout_data_complete.shape,data_driven_layout_data_user.shape)
     pd.set_option("display.max_rows", None, "display.max_columns", None)
-
-    # print('4 * no outlier + all outlier')
-    # outlier_data = data_driven_layout_data.loc[['path:mmu05135','path:mmu04910','path:mmu04723', 'path:mmu05418', 'path:mmu05215','path:mmu01200','path:mmu00061','path:mmu04060', 'path:mmu05200','path:mmu00190']]
-    # outlier_data = data_driven_layout_data.loc[['path:mmu05135','path:mmu04910','path:mmu04723', 'path:mmu05418', 'path:mmu00190','path:mmu05150','path:mmu00280']]
-    
-    # print(outlier_data)  
-    # print(outlier_data.to_latex(index=True))  
 
     # add incoming edges to nodes 
     add_incoming_edges(overall_entries)
@@ -370,15 +366,6 @@ def kegg_parsing():
     # pos = get_spring_layout_pos(networkx_parsed)
     # with_init_pos = add_initial_positions(pos,without_empty)
 
-    # print('without_empty, pos')
-    # for i in random.sample(range(0, len(without_empty.keys())-1),1):
-    #     key = list(without_empty.keys())[i]
-    #     print(i, key, without_empty[key])
-    #     print('pos', pos[key])
-    #     print('added pos', with_init_pos[key])
-
-    
-
     ###########################################################################
     # creates a dict with all pathway names for create_overview function
     import numpy as np
@@ -387,7 +374,6 @@ def kegg_parsing():
         pathway_titles["path:" + i.keggID] = [i.title]
 
     
-    
     pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles, parsed_pathways)
     network_overview = generate_networkx_dict(pathway_connection_dict)
     # pos_dict = get_spring_layout_pos(network_overview)
@@ -395,10 +381,10 @@ def kegg_parsing():
     print('-------------------------------------------------------------------------------------------')
     up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
     # pd.set_option("display.max_rows", None, "display.max_columns", None)
-    with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data, omics_recieved, up_down_reg_means, numValsPerOmic)
+    with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data_user, omics_recieved, up_down_reg_means, num_vals_per_omic)
     
     # pre_pos_options
-    z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data.index))
+    z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data_user.index))
     double_centring_df = double_centring(copy.deepcopy(z_score_df))
     # network_smooting_df = NetworkSmoothing(nx.Graph(network_overview), copy.deepcopy(with_miss_val_df), None)
     
@@ -436,24 +422,16 @@ def kegg_parsing():
     # a_file = open("zs_umap.pkl", "wb")
     # pickle.dump(pos_dict, a_file)
     # a_file.close()
-    # a_file = open("no_umap.pkl", "wb")
-    # pickle.dump(pos_dict1, a_file)
-    # a_file.close()
-    # a_file = open("ds_umap.pkl", "wb")
-    # pickle.dump(pos_dict3, a_file)
-    # a_file.close()
-    # a_file = open("ns_umap.pkl", "wb")
-    # pickle.dump(pos_dict4, a_file)
-    # a_file.close()
+
     
     
     
-        # force directed Layout with additional edge weight
+    # force directed Layout with additional edge weight
     # print('now my force dir layout')
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
     # network_with_edge_weight = get_networkx_with_edge_weights_all_nodes_connected(pathway_info_dict, stringGraph)
 
-    # pos_dict_forc_dir = force_dir_layout(network_with_edge_weight)
+    # pos_dict_forc_dir = get_pos_in_force_dir_layout(network_with_edge_weight)
     # a_file = open("force_dir.pkl", "wb")
     # pickle.dump(pos_dict_forc_dir, a_file)
     # a_file.close()
@@ -467,49 +445,7 @@ def kegg_parsing():
     
     pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
     # pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
-    
-    # for i in random.sample(range(0, len(pathway_connection_dict_new.keys())-1),3):
-    #     key = list(pathway_connection_dict_new.keys())[i]
-    #     print(key)
-    #     print([pathway_connection_dict_new[key]['initialPosX'],pathway_connection_dict_new[key]['initialPosY']])
-    #     print(pos_dict[key])
-    #     print('--------------------------------------------------------------------------------------------------')
 
-
-    #get force directed layout
-    #
-
-    
-    # init_pos_overview = add_initial_positions(pos_overview, pathway_connection_dict)
-    # _, pca_pos = perform_all_dim_reductions(data_driven_layout_data)
-    # print(pathway_connection_dict_copy['path:mmu03015+path:mmu03013'])
-    # print(pathway_connection_dict_copy)
-    
-    # rot_to_ref = rotate_to_ref(pathway_connection_dict,pathway_connection_dict_pca,list(data_driven_layout_data.index))
-    
-    # perform_all_dim_reductions(data_driven_layout_data)
-    # print('######################################################')
-    # print('######################################################')
-    # print(morph_layouts(pca_pos,rot_to_ref, 0.6))
-    # print(nx.Graph(network_overview))
-    # print(NetworkSmoothing(nx.Graph(network_overview), data_driven_layout_data, None))
-    # print(get_pca_layout_pos(data_driven_layout_data))
-    # get_pca_layout_pos(data_driven_layout_data)
-    # print('pathway_connection_dict')
-    # for i in random.sample(range(0, len(pathway_connection_dict.keys())-1),3):
-    #     key = list(pathway_connection_dict.keys())[i]
-    #     print(i, key, pathway_connection_dict[key])
-    #     print('######################################################')
-
-    # print('with_init_pos')
-    # for i in random.sample(range(0, len(with_init_pos.keys())-1),1):
-    #     key = list(with_init_pos.keys())[i]
-    #     print(i, key, with_init_pos[key].keys())
-
-    
-    #print(init_pos_overview)
-
-    # add genes with available fc values to overview_dict
     """
     for i in with_init_pos.keys():
         if not with_init_pos[i]["value"] == "NoVal":
@@ -540,8 +476,6 @@ def kegg_parsing():
         "pathways_amount_dict": pathway_amount_dict
     }
     return json.dumps(out_dat)#json.dumps(pathway_dicts)
-
-
 
 
 if __name__ == "__main__":
