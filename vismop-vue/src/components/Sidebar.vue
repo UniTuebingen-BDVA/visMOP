@@ -218,10 +218,19 @@ export default Vue.extend({
 
         typedArrayHeader.forEach(element => {
           const valArr = typedArrayData.map(elem => elem[element.value])
-          if (valArr.every((val) => typeof val === 'number')) {
-            console.log(element.value, valArr)
-            const min = Math.floor(Math.min(...valArr))
-            const max = Math.ceil(Math.max(...valArr))
+          const numArr: number[] = []
+          let amtNum = 0
+          let amtNonNum = 0
+          valArr.forEach((val) => {
+            if (typeof val === 'number') {
+              amtNum += 1
+              numArr.push(val)
+            } else amtNonNum += 1
+          })
+          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+            console.log(element.value, numArr)
+            const min = Math.floor(Math.min(...numArr))
+            const max = Math.ceil(Math.max(...numArr))
             outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
             if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
               this.sliderVals.transcriptomics[element.value] = [min, max]
@@ -240,10 +249,19 @@ export default Vue.extend({
 
         typedArrayHeader.forEach(element => {
           const valArr = typedArrayData.map(elem => elem[element.value])
-          if (valArr.every((val) => typeof val === 'number')) {
-            console.log(element.value, valArr)
-            const min = Math.floor(Math.min(...valArr))
-            const max = Math.ceil(Math.max(...valArr))
+          const numArr: number[] = []
+          let amtNum = 0
+          let amtNonNum = 0
+          valArr.forEach((val) => {
+            if (typeof val === 'number') {
+              amtNum += 1
+              numArr.push(val)
+            } else amtNonNum += 1
+          })
+          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+            console.log(element.value, numArr)
+            const min = Math.floor(Math.min(...numArr))
+            const max = Math.ceil(Math.max(...numArr))
             outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
             if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
               this.sliderVals.proteomics[element.value] = [min, max]
@@ -262,10 +280,19 @@ export default Vue.extend({
 
         typedArrayHeader.forEach(element => {
           const valArr = typedArrayData.map(elem => elem[element.value])
-          if (valArr.every((val) => typeof val === 'number')) {
-            console.log(element.value, valArr)
-            const min = Math.floor(Math.min(...valArr))
-            const max = Math.ceil(Math.max(...valArr))
+          const numArr: number[] = []
+          let amtNum = 0
+          let amtNonNum = 0
+          valArr.forEach((val) => {
+            if (typeof val === 'number') {
+              amtNum += 1
+              numArr.push(val)
+            } else amtNonNum += 1
+          })
+          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+            console.log(element.value, numArr)
+            const min = Math.floor(Math.min(...numArr))
+            const max = Math.ceil(Math.max(...numArr))
             outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
             if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
               this.sliderVals.metabolomics[element.value] = [min, max]
@@ -418,6 +445,7 @@ export default Vue.extend({
       })
         .then((response) => response.json())
         .then((dataContent) => {
+          if (dataContent === 1) return 1
           this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
           this.$store.dispatch('setPathayAmountDict', dataContent.pathways_amount_dict)
           this.$store.dispatch('setOverviewData', dataContent.overview_data)
@@ -437,8 +465,10 @@ export default Vue.extend({
             dataContent.pathwayLayouting
           )
         })
-
-        .then(() => this.$store.dispatch('setOverlay', false))
+        .then((val) => {
+          if (val) alert('Empty Data Selection! Adjust data source and/or filter settings')
+          this.$store.dispatch('setOverlay', false)
+        })
     },
     lockHover () {
       this.$store.dispatch('setSideBarExpand', false)

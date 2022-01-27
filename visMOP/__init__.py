@@ -11,6 +11,7 @@ import pathlib
 import os
 import json
 import sys
+import numbers
 
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
 
@@ -159,6 +160,7 @@ def uniprot_access(colname, filter_obj):
     global prot_table_global
     prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
     for k,v in filter_obj.items():
+        prot_table_global.loc[pd.to_numeric(prot_table_global[k],errors='coerce').notnull()]
         prot_table_global = prot_table_global.loc[(prot_table_global[k] >= v[0]) & (prot_table_global[k] <= v[1])]
     protein_dict = make_protein_dict(prot_table_global,colname)
     # query uniprot for the IDs in the table and add their info to the dictionary
@@ -230,6 +232,7 @@ def kegg_parsing():
     if metabolomics["recieved"]:
         metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
         for k,v in slider_vals["metabolomics"].items():
+            metabolomics_df = metabolomics_df.loc[pd.to_numeric(metabolomics_df[k],errors='coerce').notnull()]
             metabolomics_df = metabolomics_df.loc[(metabolomics_df[k] >= v[0]) & (metabolomics_df[k] <= v[1])]
         metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_keggIDs =  list(metabolomics_dict.keys())
@@ -246,7 +249,7 @@ def kegg_parsing():
         #TODO Duplicates are dropped how to handle these duplicates?!
         transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
         for k,v in slider_vals["transcriptomics"].items():
-            print("KEY", k)
+            transcriptomics_df = transcriptomics_df.loc[pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull()]
             transcriptomics_df = transcriptomics_df.loc[(transcriptomics_df[k] >= v[0]) & (transcriptomics_df[k] <= v[1])]
         transcriptomics_dict = transcriptomics_df.to_dict("index")
         
@@ -294,7 +297,8 @@ def kegg_parsing():
     parsed_IDs = list(kegg_kgml.keys())
     parsed_pathways = []
     print("Len unique Pathways: ", len(unique_pathways))
-
+    if len(unique_pathways) == 0 :
+        return json.dumps(1)
     # list accessor is used for test purposes only --> less data = faster
     for pathwayID in parsed_IDs[0:]:
         # TODO blacklist system?!
