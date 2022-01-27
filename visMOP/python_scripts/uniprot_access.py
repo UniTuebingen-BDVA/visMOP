@@ -10,8 +10,7 @@ import json
 def make_protein_dict(df, colname):
     column_names = df.columns
 
-    df = df.set_index(colname)
-
+    
     # stores data for each uniprot ID
 
     prot_dict = df.to_dict('index')

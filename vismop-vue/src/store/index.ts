@@ -330,8 +330,8 @@ export default new Vuex.Store({
       const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
       const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
-      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain(quantTranscriptomics)
-      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain(quantProteomics)
+      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
+      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
       const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
 
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })

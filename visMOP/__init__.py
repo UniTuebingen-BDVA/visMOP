@@ -162,9 +162,18 @@ def interaction_graph():
     # generate json data of merged ego graphs
     return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph()})
 
-def uniprot_access(colname):
+def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
     global prot_table_global
+    prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
+    for k,v in filter_obj.items():
+        is_empty = (v['empties'] & (prot_table_global[k] == 'None'))
+        is_numeric = (pd.to_numeric(prot_table_global[k],errors='coerce').notnull())
+        df_numeric = prot_table_global.loc[is_numeric]
+        df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+        df_is_empty = prot_table_global.loc[is_empty]
+    
+        prot_table_global = prot_table_global.loc[prot_table_global.index.isin(df_is_in_range.index) | prot_table_global.index.isin(df_is_empty.index) ]
     protein_dict = make_protein_dict(prot_table_global,colname)
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
@@ -203,7 +212,7 @@ def kegg_parsing():
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
-    
+    slider_vals = request.json['sliderVals']
 
     #gene_symbols_col = request.json['geneSymbolsCol']
     #value_col = request.json['valueCol']
@@ -221,7 +230,7 @@ def kegg_parsing():
             script_dir = data_path
             dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.5.txt.gz'# '10090.protein.links.v11.0.txt'
             stringGraph = StringGraph(dest_dir)
-            keggID_to_stringID = uniprot_access(proteomics["symbol"])
+            uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
             # ID being a Uniprot ID
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
@@ -244,7 +253,16 @@ def kegg_parsing():
 
     # Handle Metabolomics if available
     if metabolomics["recieved"]:
-        metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
+        metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
+        for k,v in slider_vals["metabolomics"].items():
+            is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(metabolomics_df[k],errors='coerce').notnull())
+            df_numeric = metabolomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = metabolomics_df.loc[is_empty]
+        
+            metabolomics_df = metabolomics_df.loc[metabolomics_df.index.isin(df_is_in_range.index) | metabolomics_df.index.isin(df_is_empty.index) ]
+        metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_keggIDs =  list(metabolomics_dict.keys())
         for elem in metabolomics_keggIDs:
             if elem in fold_changes:
@@ -257,7 +275,18 @@ def kegg_parsing():
     #Handle Transcriptomics
     if transcriptomics["recieved"]:
         #TODO Duplicates are dropped how to handle these duplicates?!
-        transcriptomics_dict = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"]).to_dict("index")
+        transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
+        for k,v in slider_vals["transcriptomics"].items():
+            is_empty = (v['empties'] & (transcriptomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull())
+            df_numeric = transcriptomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = transcriptomics_df.loc[is_empty]
+        
+            transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]
+
+        print("DF", transcriptomics_df)
+        transcriptomics_dict = transcriptomics_df.to_dict("index")
         
         gene_symbols_transcriptomics=transcriptomics_dict.keys()
         #TODO blacklist system to handle unanswered queries
@@ -306,8 +335,8 @@ def kegg_parsing():
     parsed_IDs = list(kegg_kgml.keys())
     parsed_pathways = []
     print("Len unique Pathways: ", len(unique_pathways))
-
-    
+    if len(unique_pathways) == 0 :
+        return json.dumps(1)
     # list accessor is used for test purposes only --> less data = faster
     for pathwayID in parsed_IDs:
         # TODO blacklist system?!
