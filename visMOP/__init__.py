@@ -160,8 +160,13 @@ def uniprot_access(colname, filter_obj):
     global prot_table_global
     prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
     for k,v in filter_obj.items():
-        prot_table_global.loc[pd.to_numeric(prot_table_global[k],errors='coerce').notnull()]
-        prot_table_global = prot_table_global.loc[(prot_table_global[k] >= v[0]) & (prot_table_global[k] <= v[1])]
+        is_empty = (v['empties'] & (prot_table_global[k] == 'None'))
+        is_numeric = (pd.to_numeric(prot_table_global[k],errors='coerce').notnull())
+        df_numeric = prot_table_global.loc[is_numeric]
+        df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+        df_is_empty = prot_table_global.loc[is_empty]
+    
+        prot_table_global = prot_table_global.loc[prot_table_global.index.isin(df_is_in_range.index) | prot_table_global.index.isin(df_is_empty.index) ]
     protein_dict = make_protein_dict(prot_table_global,colname)
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
@@ -232,8 +237,13 @@ def kegg_parsing():
     if metabolomics["recieved"]:
         metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
         for k,v in slider_vals["metabolomics"].items():
-            metabolomics_df = metabolomics_df.loc[pd.to_numeric(metabolomics_df[k],errors='coerce').notnull()]
-            metabolomics_df = metabolomics_df.loc[(metabolomics_df[k] >= v[0]) & (metabolomics_df[k] <= v[1])]
+            is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(metabolomics_df[k],errors='coerce').notnull())
+            df_numeric = metabolomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = metabolomics_df.loc[is_empty]
+        
+            metabolomics_df = metabolomics_df.loc[metabolomics_df.index.isin(df_is_in_range.index) | metabolomics_df.index.isin(df_is_empty.index) ]
         metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_keggIDs =  list(metabolomics_dict.keys())
         for elem in metabolomics_keggIDs:
@@ -249,8 +259,15 @@ def kegg_parsing():
         #TODO Duplicates are dropped how to handle these duplicates?!
         transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
         for k,v in slider_vals["transcriptomics"].items():
-            transcriptomics_df = transcriptomics_df.loc[pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull()]
-            transcriptomics_df = transcriptomics_df.loc[(transcriptomics_df[k] >= v[0]) & (transcriptomics_df[k] <= v[1])]
+            is_empty = (v['empties'] & (transcriptomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull())
+            df_numeric = transcriptomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = transcriptomics_df.loc[is_empty]
+        
+            transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]
+
+        print("DF", transcriptomics_df)
         transcriptomics_dict = transcriptomics_df.to_dict("index")
         
         gene_symbols_transcriptomics=transcriptomics_dict.keys()

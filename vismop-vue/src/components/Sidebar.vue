@@ -47,18 +47,25 @@
           ></v-select>
           <v-spacer></v-spacer>
           Input Filter:
-          <v-range-slider
+          <v-row
             v-for="variable in sliderTranscriptomics"
-            v-model="sliderVals.transcriptomics[variable.text]"
             :key="variable.text"
-            :max="variable.max"
-            :min="variable.min"
-            :step="variable.step"
-            :hint="variable.text"
-            thumb-label
-            persistent-hint
           >
-          </v-range-slider>
+            <v-checkbox
+              v-model="sliderVals.transcriptomics[variable.text].empties"
+              :label="'Empties'"
+            ></v-checkbox>
+            <v-range-slider
+              v-model="sliderVals.transcriptomics[variable.text].vals"
+              :max="variable.max"
+              :min="variable.min"
+              :step="variable.step"
+              :hint="variable.text"
+              thumb-label
+              persistent-hint
+            >
+            </v-range-slider>
+          </v-row>
         </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
@@ -95,18 +102,25 @@
           ></v-select>
           <v-spacer></v-spacer>
           Input Filter:
-          <v-range-slider
+           <v-row
             v-for="variable in sliderProteomics"
-            v-model="sliderVals.proteomics[variable.text]"
             :key="variable.text"
-            :max="variable.max"
-            :min="variable.min"
-            :step="variable.step"
-            :hint="variable.text"
-            thumb-label
-            persistent-hint
           >
-          </v-range-slider>
+            <v-checkbox
+              v-model="sliderVals.proteomics[variable.text].empties"
+              :label="'Empties'"
+            ></v-checkbox>
+            <v-range-slider
+              v-model="sliderVals.proteomics[variable.text].vals"
+              :max="variable.max"
+              :min="variable.min"
+              :step="variable.step"
+              :hint="variable.text"
+              thumb-label
+              persistent-hint
+            >
+            </v-range-slider>
+          </v-row>
         </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
@@ -143,18 +157,25 @@
           ></v-select>
           <v-spacer></v-spacer>
           Input Filter:
-          <v-range-slider
+          <v-row
             v-for="variable in sliderMetabolomics"
-            v-model="sliderVals.metabolomics[variable.text]"
             :key="variable.text"
-            :max="variable.max"
-            :min="variable.min"
-            :step="variable.step"
-            :hint="variable.text"
-            thumb-label
-            persistent-hint
           >
-          </v-range-slider>
+            <v-checkbox
+              v-model="sliderVals.metabolomics[variable.text].empties"
+              :label="'Empties'"
+            ></v-checkbox>
+            <v-range-slider
+              v-model="sliderVals.metabolomics[variable.text].vals"
+              :max="variable.max"
+              :min="variable.min"
+              :step="variable.step"
+              :hint="variable.text"
+              thumb-label
+              persistent-hint
+            >
+            </v-range-slider>
+          </v-row>
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
@@ -184,7 +205,7 @@ export default Vue.extend({
     metabolomicsSymbolCol: '',
     metabolomicsValueCol: '',
     recievedMetabolomicsData: false,
-    sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: number[]}, proteomics: {[key: string]: number[]}, metabolomics: {[key: string]: number[]} },
+    sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
     sheetRules: [
       (value: string) => {
         const pattern = /^([0-9]*)$/
@@ -221,10 +242,13 @@ export default Vue.extend({
           const numArr: number[] = []
           let amtNum = 0
           let amtNonNum = 0
+          let empties = 0
           valArr.forEach((val) => {
             if (typeof val === 'number') {
               amtNum += 1
               numArr.push(val)
+            } else if (val === 'None') {
+              empties += 1
             } else amtNonNum += 1
           })
           if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
@@ -233,7 +257,7 @@ export default Vue.extend({
             const max = Math.ceil(Math.max(...numArr))
             outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
             if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
-              this.sliderVals.transcriptomics[element.value] = [min, max]
+              this.sliderVals.transcriptomics[element.value] = { vals: [min, max], empties: true }
             }
             console.log(element.value, this.sliderVals)
           }
@@ -252,10 +276,13 @@ export default Vue.extend({
           const numArr: number[] = []
           let amtNum = 0
           let amtNonNum = 0
+          let empties = 0
           valArr.forEach((val) => {
             if (typeof val === 'number') {
               amtNum += 1
               numArr.push(val)
+            } else if (val === 'None') {
+              empties += 1
             } else amtNonNum += 1
           })
           if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
@@ -264,7 +291,7 @@ export default Vue.extend({
             const max = Math.ceil(Math.max(...numArr))
             outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
             if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
-              this.sliderVals.proteomics[element.value] = [min, max]
+              this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
             }
             console.log(element.value, this.sliderVals)
           }
@@ -283,10 +310,13 @@ export default Vue.extend({
           const numArr: number[] = []
           let amtNum = 0
           let amtNonNum = 0
+          let empties = 0
           valArr.forEach((val) => {
             if (typeof val === 'number') {
               amtNum += 1
               numArr.push(val)
+            } else if (val === 'None') {
+              empties += 1
             } else amtNonNum += 1
           })
           if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
@@ -295,7 +325,7 @@ export default Vue.extend({
             const max = Math.ceil(Math.max(...numArr))
             outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
             if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
-              this.sliderVals.metabolomics[element.value] = [min, max]
+              this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
             }
             console.log(element.value, this.sliderVals)
           }
