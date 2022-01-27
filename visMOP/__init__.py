@@ -154,9 +154,12 @@ def interaction_graph():
     # generate json data of merged ego graphs
     return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph()})
 
-def uniprot_access(colname):
+def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
     global prot_table_global
+    prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
+    for k,v in filter_obj.items():
+        prot_table_global = prot_table_global.loc[(prot_table_global[k] >= v[0]) & (prot_table_global[k] <= v[1])]
     protein_dict = make_protein_dict(prot_table_global,colname)
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
@@ -191,7 +194,7 @@ def kegg_parsing():
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
-
+    slider_vals = request.json['sliderVals']
 
     #gene_symbols_col = request.json['geneSymbolsCol']
     #value_col = request.json['valueCol']
@@ -209,7 +212,7 @@ def kegg_parsing():
             script_dir = data_path
             dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
             stringGraph = StringGraph(dest_dir)
-            uniprot_access(proteomics["symbol"])
+            uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
             # ID being a Uniprot ID
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
@@ -225,7 +228,10 @@ def kegg_parsing():
 
     # Handle Metabolomics if available
     if metabolomics["recieved"]:
-        metabolomics_dict = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"]).to_dict("index")
+        metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
+        for k,v in slider_vals["metabolomics"].items():
+            metabolomics_df = metabolomics_df.loc[(metabolomics_df[k] >= v[0]) & (metabolomics_df[k] <= v[1])]
+        metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_keggIDs =  list(metabolomics_dict.keys())
         for elem in metabolomics_keggIDs:
             if elem in fold_changes:
@@ -238,7 +244,11 @@ def kegg_parsing():
     #Handle Transcriptomics
     if transcriptomics["recieved"]:
         #TODO Duplicates are dropped how to handle these duplicates?!
-        transcriptomics_dict = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"]).to_dict("index")
+        transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
+        for k,v in slider_vals["transcriptomics"].items():
+            print("KEY", k)
+            transcriptomics_df = transcriptomics_df.loc[(transcriptomics_df[k] >= v[0]) & (transcriptomics_df[k] <= v[1])]
+        transcriptomics_dict = transcriptomics_df.to_dict("index")
         
         gene_symbols_transcriptomics=transcriptomics_dict.keys()
         #TODO blacklist system to handle unanswered queries

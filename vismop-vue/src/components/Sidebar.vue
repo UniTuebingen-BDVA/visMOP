@@ -406,7 +406,8 @@ export default Vue.extend({
           recieved: this.recievedMetabolomicsData,
           symbol: this.metabolomicsSymbolCol,
           value: this.metabolomicsValueCol
-        }
+        },
+        sliderVals: this.sliderVals
       }
       fetch('/kegg_parsing', {
         method: 'POST',
