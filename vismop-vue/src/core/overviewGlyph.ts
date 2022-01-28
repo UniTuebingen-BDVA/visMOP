@@ -199,9 +199,9 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   const firstLayer = outermostRadius - layerWidth
   const secondLayer = firstLayer - layerWidth
   const innermostRadius = secondLayer - layerWidth
-  const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain(store.state.fcQuantiles.transcriptomics)
-  const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain(store.state.fcQuantiles.proteomics)
-  const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(store.state.fcQuantiles.metabolomics)
+  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
+  const colorScaleProteomics = store.state.fcScales.proteomics
+  const colorScaleMetabolomics = store.state.fcScales.metabolomics
   let highlightSection = 0
 
   const outerArcDat: {
