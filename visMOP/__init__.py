@@ -28,19 +28,19 @@ app.config.from_mapping(
     CACHE_DEFAULT_TIMEOUT= 300
 )
 cache = Cache(app)
-# global data
-#transcriptomics_df_global = None
-
-#prot_table_global = None
-#prot_dict_global = None
-
-metabolomics_df_global = None
-
-stringGraph = None
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()
 #data_path = pathlib.Path("/var/www/vismop")
+
+# build stringraph, once
+stringGraph = None
+try:
+    script_dir = data_path
+    dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
+    stringGraph = StringGraph(dest_dir)
+except:
+    print("Stringraph Error")
 
 """
 Default app routes for index and favicon
@@ -58,9 +58,6 @@ transcriptomics table recieve
 """
 @app.route('/transcriptomics_table', methods=['POST'])
 def transcriptomics_table_recieve():
-    
-    # make variable available globally TODO evaluate if there is a better alternative (maybe a class?)
-    #global transcriptomics_df_global
     print("table recieve triggered")
     
     # recieve data-blob
@@ -88,13 +85,10 @@ protein recieve
 """
 @app.route('/proteomics_table', methods=['POST'])
 def prot_table_recieve():
-    # make table available globally
-    # global prot_table_global
-
+  
     # aquire table data-blob
     transfer_dat = request.files['dataTable']
     sheet_no = int(request.form['sheetNumber'])
-
     
     # parse data table and prepare json
     prot_data = create_df(transfer_dat, sheet_no)
@@ -106,8 +100,6 @@ def prot_table_recieve():
     out_data["header"] = generate_vue_table_header(prot_data)
     out_data["entries"] = generate_vue_table_entries(prot_data)
     out_data["data"] = prot_table_json
-   
-    
 
     return json.dumps(out_data)
 
@@ -143,27 +135,20 @@ def interaction_graph():
     # make variables available globally
     global stringGraph
     #global prot_dict_global # keggID --> Uniprot data
-    prot_dict_global = json.loads(scache.get('prot_dict_global'))
-
-    # clear existing graphs, if function is called again!!
-    stringGraph.clear_ego_graphs()
+    prot_dict_global = json.loads(cache.get('prot_dict_global'))
 
     # get node IDs and confidence threshold from request
     node_IDs = request.json['nodes']
     confidence_threshold = request.json['threshold']
 
-    # check if graph confidence needs updating
-    if confidence_threshold != stringGraph.current_confidence:
-        stringGraph.filter_by_confidence(confidence_threshold)
+    # get name Mapping
+    stringID_to_name = {v["string_id"]:v["Gene Symbol"][0] for k,v in prot_dict_global.items()}
 
     # get string IDs from the transferred keggIDs of selected proteins/nodes
-    string_ID = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
+    string_IDs = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
     
-    # generate a ego graph for each node
-    for idx, node in enumerate(string_ID):
-        stringGraph.query_ego_graph(node, idx, 1)
     # generate json data of merged ego graphs
-    return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph()})
+    return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph(string_IDs,1,stringID_to_name,confidence_threshold)})
 
 def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
@@ -184,14 +169,11 @@ def uniprot_access(colname, filter_obj):
     # add location to table
     prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
     
-    # make dict availbe globally and update it
-    #global prot_dict_global
+    # set cache for structures
     cache.set('prot_dict_global', json.dumps(protein_dict))
     cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
-    # make string graph available globally and set a translation dict: k: stringID, v: GeneSymbol
-    global stringGraph
-    stringID_to_name = {v["string_id"]:v["Gene Symbol"][0] for k,v in protein_dict.items()}
-    stringGraph.set_string_name_dict(stringID_to_name)
+  
+    
 
 
 """
@@ -199,8 +181,7 @@ App route for querying and parsing kegg files
 """
 @app.route('/kegg_parsing', methods=['POST'])
 def kegg_parsing():
-    
-    global stringGraph
+
     print(cache)
     overall_entries = {}
     overall_relations = {}
@@ -226,9 +207,6 @@ def kegg_parsing():
     #Handle Proteomics if available
     if proteomics["recieved"]:
         try:
-            script_dir = data_path
-            dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
-            stringGraph = StringGraph(dest_dir)
             uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
             prot_dict_global = json.loads(cache.get('prot_dict_global'))
 
