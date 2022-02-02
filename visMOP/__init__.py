@@ -12,15 +12,27 @@ import os
 import json
 import sys
 import numbers
-
+import secrets
+from flask_caching import Cache
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
+app.config.from_mapping(
+    # this causes random key on each start, so a server restart will invaldiate sessions
+    #SECRET_KEY=secrets.token_hex(),
 
+    # ONLY FOR DEV CHANGE TO NEW KEY WHEN DEPLOYING
+    SECRET_KEY = 'a3759c42d7a3317735ac032895d8abda630d2017f798a052c7e86f1c6eea3cc9',
+    # !!!!!!
 
+    CACHE_TYPE='FileSystemCache',
+    CACHE_DIR='./session_cache',
+    CACHE_DEFAULT_TIMEOUT= 300
+)
+cache = Cache(app)
 # global data
-transcriptomics_df_global = None
+#transcriptomics_df_global = None
 
-prot_table_global = None
-prot_dict_global = None
+#prot_table_global = None
+#prot_dict_global = None
 
 metabolomics_df_global = None
 
@@ -48,7 +60,7 @@ transcriptomics table recieve
 def transcriptomics_table_recieve():
     
     # make variable available globally TODO evaluate if there is a better alternative (maybe a class?)
-    global transcriptomics_df_global
+    #global transcriptomics_df_global
     print("table recieve triggered")
     
     # recieve data-blob
@@ -57,7 +69,7 @@ def transcriptomics_table_recieve():
     
     #create and parse data table and prepare json
     data_table = create_df(transfer_dat, sheet_no)
-    transcriptomics_df_global = data_table.copy(deep=True)
+    cache.set('transcriptomics_df_global', data_table.copy(deep=True).to_json(orient="columns"))
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
     out_data =  {}
@@ -77,7 +89,7 @@ protein recieve
 @app.route('/proteomics_table', methods=['POST'])
 def prot_table_recieve():
     # make table available globally
-    global prot_table_global
+    # global prot_table_global
 
     # aquire table data-blob
     transfer_dat = request.files['dataTable']
@@ -86,7 +98,7 @@ def prot_table_recieve():
     
     # parse data table and prepare json
     prot_data = create_df(transfer_dat, sheet_no)
-    prot_table_global = prot_data.copy(deep=True)
+    cache.set('prot_table_global', prot_data.copy(deep=True).to_json(orient="columns"))
     prot_table_json = prot_data.to_json(orient="columns")
     entry_IDs = list(prot_data.iloc[:, 0])
     out_data = {}
@@ -106,16 +118,13 @@ metabolomics table recieve
 def metabolomics_table_recieve():
     print("table recieve triggered")
 
-    # make dataframe available globally
-    global metabolomics_df_global
-
     # recieve table data-blob
     transfer_dat = request.files['dataTable']
     sheet_no = int(request.form['sheetNumber'])
     
     # parse and create dataframe and prepare json
     data_table = create_df(transfer_dat, sheet_no)
-    metabolomics_df_global = data_table.copy(deep=True)
+    cache.set('metabolomics_df_global', data_table.copy(deep=True).to_json(orient="columns"))
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
     out_data =  {}
@@ -133,7 +142,8 @@ def metabolomics_table_recieve():
 def interaction_graph():
     # make variables available globally
     global stringGraph
-    global prot_dict_global # keggID --> Uniprot data
+    #global prot_dict_global # keggID --> Uniprot data
+    prot_dict_global = json.loads(scache.get('prot_dict_global'))
 
     # clear existing graphs, if function is called again!!
     stringGraph.clear_ego_graphs()
@@ -157,7 +167,7 @@ def interaction_graph():
 
 def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
-    global prot_table_global
+    prot_table_global = pd.read_json(cache.get('prot_table_global'), orient="columns")
     prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
     for k,v in filter_obj.items():
         is_empty = (v['empties'] & (prot_table_global[k] == 'None'))
@@ -175,12 +185,12 @@ def uniprot_access(colname, filter_obj):
     prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
     
     # make dict availbe globally and update it
-    global prot_dict_global
-    prot_dict_global= protein_dict
-
+    #global prot_dict_global
+    cache.set('prot_dict_global', json.dumps(protein_dict))
+    cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
     # make string graph available globally and set a translation dict: k: stringID, v: GeneSymbol
     global stringGraph
-    stringID_to_name = {v["string_id"]:v["Gene Symbol"][0] for k,v in prot_dict_global.items()}
+    stringID_to_name = {v["string_id"]:v["Gene Symbol"][0] for k,v in protein_dict.items()}
     stringGraph.set_string_name_dict(stringID_to_name)
 
 
@@ -189,9 +199,9 @@ App route for querying and parsing kegg files
 """
 @app.route('/kegg_parsing', methods=['POST'])
 def kegg_parsing():
-    global metabolomics_df_global
+    
     global stringGraph
-
+    print(cache)
     overall_entries = {}
     overall_relations = {}
     overall_reactions = {}
@@ -220,6 +230,8 @@ def kegg_parsing():
             dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
             stringGraph = StringGraph(dest_dir)
             uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
+            prot_dict_global = json.loads(cache.get('prot_dict_global'))
+
             # ID being a Uniprot ID
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
@@ -235,6 +247,7 @@ def kegg_parsing():
 
     # Handle Metabolomics if available
     if metabolomics["recieved"]:
+        metabolomics_df_global = pd.read_json(cache.get('metabolomics_df_global'),orient='columns')
         metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
         for k,v in slider_vals["metabolomics"].items():
             is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
@@ -256,6 +269,7 @@ def kegg_parsing():
 
     #Handle Transcriptomics
     if transcriptomics["recieved"]:
+        transcriptomics_df_global = pd.read_json(cache.get('transcriptomics_df_global'),orient='columns')
         #TODO Duplicates are dropped how to handle these duplicates?!
         transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
         for k,v in slider_vals["transcriptomics"].items():

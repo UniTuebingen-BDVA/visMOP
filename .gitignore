@@ -5,7 +5,7 @@ node_modules
 kegg_cache/*.json
 package-lock.json
 __pycache__
-
+/session_cache/*
 # local env files
 .env.local
 .env.*.local

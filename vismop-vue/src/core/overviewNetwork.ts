@@ -113,7 +113,7 @@ export default class overviewGraph {
     renderer.on('clickNode', ({ node, event }) => {
       console.log('clicking Node: ', node)
       console.log('clicking event', event)
-      if (event.ctrlKey) store.dispatch('selectPathwayCompare', node)
+      if (event.original.ctrlKey) store.dispatch('selectPathwayCompare', node)
       else store.dispatch('focusPathwayViaOverview', node)
     })
 
