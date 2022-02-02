@@ -344,7 +344,20 @@ export default Vue.extend({
 
   methods: {
     fetchTranscriptomicsTable (fileInput: File) {
-      if (typeof fileInput !== 'undefined') {
+      this.$store.dispatch(
+        'setTranscriptomicsTableHeaders',
+        []
+      )
+      this.$store.dispatch(
+        'setTranscriptomicsTableData',
+        []
+      )
+      this.$store.dispatch(
+        'setTranscriptomicsData',
+        []
+      )
+      Vue.set(this.sliderVals, 'transcriptomics', {})
+      if (fileInput !== null) {
         this.overlay = true
         const formData = new FormData()
         formData.append('dataTable', fileInput)
@@ -372,12 +385,29 @@ export default Vue.extend({
           })
           .then(() => (this.overlay = false))
       } else {
-        alert('Malformed File!!!')
+        // more errorhandling?
+        this.recievedTranscriptomicsData = false
+        console.log('Transcriptomics file Cleared')
       }
     },
 
     fetchProteomicsTable (fileInput: File) {
-      if (typeof fileInput !== 'undefined') {
+      this.$store.dispatch(
+        'setProteomicsTableHeaders',
+        []
+      )
+      this.$store.dispatch(
+        'setProteomicsTableData',
+        []
+      )
+      this.$store.dispatch(
+        'setProteomicsData',
+        []
+      )
+      Vue.set(this.sliderVals, 'proteomics', {})
+      console.log('slider val clear', this.sliderVals)
+      console.log('prot header', this.proteomicsTableHeaders)
+      if (fileInput !== null) {
         this.overlay = true
         const formData = new FormData()
         formData.append('dataTable', fileInput)
@@ -408,11 +438,26 @@ export default Vue.extend({
           })
           .then(() => (this.overlay = false))
       } else {
-        alert('Malformed File!!!')
+        // more errorhandling?
+        this.recievedProteomicsData = false
+        console.log('Protfile Cleared')
       }
     },
     fetchMetabolomicsTable (fileInput: File) {
-      if (typeof fileInput !== 'undefined') {
+      this.$store.dispatch(
+        'setMetabolomicsTableHeaders',
+        []
+      )
+      this.$store.dispatch(
+        'setMetabolomicsTableData',
+        []
+      )
+      this.$store.dispatch(
+        'setMetabolomicsData',
+        []
+      )
+      Vue.set(this.sliderVals, 'metabolomics', {})
+      if (fileInput !== null) {
         this.overlay = true
         const formData = new FormData()
         formData.append('dataTable', fileInput)
@@ -442,7 +487,9 @@ export default Vue.extend({
           })
           .then(() => (this.overlay = false))
       } else {
-        alert('Malformed File!!!')
+        // more errorhandling?
+        this.recievedMetabolomicsData = false
+        console.log('Metabol. file Cleared')
       }
     },
     generateKGMLs () {

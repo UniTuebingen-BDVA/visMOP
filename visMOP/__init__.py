@@ -182,7 +182,6 @@ App route for querying and parsing kegg files
 @app.route('/kegg_parsing', methods=['POST'])
 def kegg_parsing():
 
-    print(cache)
     overall_entries = {}
     overall_relations = {}
     overall_reactions = {}
@@ -259,7 +258,7 @@ def kegg_parsing():
         
             transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]
 
-        print("DF", transcriptomics_df)
+        #print("DF", transcriptomics_df)
         transcriptomics_dict = transcriptomics_df.to_dict("index")
         
         gene_symbols_transcriptomics=transcriptomics_dict.keys()

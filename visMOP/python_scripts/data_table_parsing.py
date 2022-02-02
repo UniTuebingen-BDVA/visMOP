@@ -9,16 +9,12 @@ def create_df(file_type, sheet_no):
     """
     read_table = pd.read_excel(file_type, sheet_name=sheet_no,header = None, engine='openpyxl')
     read_table = read_table.dropna(how='all')
-    print(read_table)
     read_table = read_table.rename(columns=read_table.iloc[0])
-    print(read_table)
     read_table = read_table.drop(read_table.index[0])
-    print(read_table)
     read_table = read_table.fillna(value = "None")
     read_table['id'] = read_table.index
     read_table['available'] = 'No'
     read_table['inSelected'] = 'No'
-    print(read_table)
     return read_table
 
 def generate_vue_table_header(df):
