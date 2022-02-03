@@ -89,6 +89,7 @@
           </v-card-title>
 
           <v-card-text>
+            DISCLAIMER: Your data gets cached on this server! DO NOT USE for unanonymized data!!!
             For research use only. See <a href="https://www.kegg.jp/kegg/legal.html" target="_blank">KEGG</a> for more info.<br>
             Using Data from<br>
             KEGG: <a href="https://www.kegg.jp/" target="_blank">KEGG</a> <br>
