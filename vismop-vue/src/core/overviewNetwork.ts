@@ -35,32 +35,41 @@ export default class overviewGraph {
 
     const inferredSettings = forceAtlas2.inferSettings(graph)
 
+    let highlighedEdgesClick = new Set()
+    let highlighedNodesClick = new Set()
     // from events SIGMA2 example, initialze sets for highlight on hover:
-    let highlighedNodes = new Set()
-    let highlighedEdges = new Set()
+    let highlighedNodesHover = new Set()
+    let highlighedEdgesHover = new Set()
+    let highlightedCenterHover = ''
+
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: string, data: Attributes) => {
-      if (this.currentPathway === node.replace('path:', '')) {
-        return { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1 }
+      const nodeSize = (highlighedNodesHover.has(node) || (this.currentPathway === node.replace('path:', ''))) ? 15 : 10
+      if ((this.currentPathway === node.replace('path:', '')) || (highlightedCenterHover === node)) {
+        return { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1, size: nodeSize }
       }
       if (this.pathwaysContainingIntersection.includes(node.replace('path:', ''))) {
-        return { ...data, color: 'rgba(0,255,0,1.0)', zIndex: 1 }
+        return { ...data, color: 'rgba(0,255,0,1.0)', zIndex: 1, size: nodeSize }
       }
       if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
-        return { ...data, color: 'rgba(0,0,255,1.0)', zIndex: 1 }
+        return { ...data, color: 'rgba(0,0,255,1.0)', zIndex: 1, size: nodeSize }
+      }
+      if (highlighedNodesHover.has(node)) {
+        return { ...data, color: 'rgba(255,200,200,1.0)', zIndex: 1, size: nodeSize }
+      }
+      if (highlighedNodesClick.has(node)) {
+        return { ...data, color: 'rgba(255,200,200,1.0)', zIndex: 1, size: nodeSize }
       }
       return data
     }
 
     // same for edges
     const edgeReducer = (edge: unknown, data: Attributes) => {
-      if (highlighedEdges.has(edge)) {
-        return {
-          ...data,
-          sourceColor: 'rgba(255,0,0,1.0)',
-          targetColor: 'rgba(255,0,0,1.0)',
-          zIndex: 1
-        }
+      if (highlighedEdgesHover.has(edge)) {
+        return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 }
+      }
+      if (highlighedEdgesClick.has(edge)) {
+        return { ...data, color: 'rgba(255,0,0,1.0)', size: 1, zIndex: 1 }
       }
 
       return data
@@ -93,10 +102,11 @@ export default class overviewGraph {
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       console.log('Entering: ', node)
-      highlighedNodes = new Set(graph.neighbors(node))
-      highlighedNodes.add(node)
+      highlighedNodesHover = new Set(graph.neighbors(node))
+      highlighedNodesHover.add(node)
+      highlightedCenterHover = node
 
-      highlighedEdges = new Set(graph.edges(node))
+      highlighedEdgesHover = new Set(graph.edges(node))
 
       renderer.refresh()
     })
@@ -104,8 +114,9 @@ export default class overviewGraph {
     renderer.on('leaveNode', ({ node }) => {
       console.log('Leaving:', node)
 
-      highlighedNodes.clear()
-      highlighedEdges.clear()
+      highlighedNodesHover.clear()
+      highlighedEdgesHover.clear()
+      highlightedCenterHover = ''
 
       renderer.refresh()
     })
@@ -113,8 +124,15 @@ export default class overviewGraph {
     renderer.on('clickNode', ({ node, event }) => {
       console.log('clicking Node: ', node)
       console.log('clicking event', event)
-      if (event.original.ctrlKey) store.dispatch('selectPathwayCompare', node)
-      else store.dispatch('focusPathwayViaOverview', node)
+      if (event.original.ctrlKey) {
+        store.dispatch('selectPathwayCompare', node)
+      } else {
+        highlighedEdgesClick.clear()
+        highlighedNodesClick.clear()
+        highlighedNodesClick = new Set(graph.neighbors(node))
+        highlighedEdgesClick = new Set(graph.edges(node))
+        store.dispatch('focusPathwayViaOverview', node)
+      }
     })
 
     return renderer
