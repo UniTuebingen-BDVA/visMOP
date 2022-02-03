@@ -216,7 +216,7 @@ export default Vue.extend({
       { text: 'Mouse', value: 'mmu' },
       { text: 'Human', value: 'hsa' }
     ],
-    targetOrganism: { text: 'Mouse', value: 'mmu' },
+    targetOrganism: 'mmu',
     sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
     sheetRules: [
       (value: string) => {

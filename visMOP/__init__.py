@@ -15,23 +15,24 @@ import numbers
 import secrets
 from flask_caching import Cache
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
-app.config.from_mapping(
-    # this causes random key on each start, so a server restart will invaldiate sessions
-    #SECRET_KEY=secrets.token_hex(),
-
-    # ONLY FOR DEV CHANGE TO NEW KEY WHEN DEPLOYING
-    SECRET_KEY = 'a3759c42d7a3317735ac032895d8abda630d2017f798a052c7e86f1c6eea3cc9',
-    # !!!!!!
-
-    CACHE_TYPE='FileSystemCache',
-    CACHE_DIR='./session_cache',
-    CACHE_DEFAULT_TIMEOUT= 300
-)
-cache = Cache(app)
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()
 #data_path = pathlib.Path("/var/www/vismop")
+
+app.config.from_mapping(
+    # this causes random key on each start, so a server restart will invaldiate sessions
+    SECRET_KEY=secrets.token_hex(),
+
+    # ONLY FOR DEV CHANGE TO NEW KEY WHEN DEPLOYING
+    #SECRET_KEY = 'a3759c42d7a3317735ac032895d8abda630d2017f798a052c7e86f1c6eea3cc9',
+    # !!!!!!
+
+    CACHE_TYPE='FileSystemCache',
+    CACHE_DIR=data_path/'session_cache',
+    CACHE_DEFAULT_TIMEOUT= 300
+)
+cache = Cache(app)
 
 # build stringraph, once
 stringGraph = None

@@ -69,7 +69,6 @@ import * as d3 from 'd3'
 interface Data {
   tableSearch: string;
   model: null;
-  test: string[]
 }
 
 export default Vue.extend({
@@ -79,8 +78,7 @@ export default Vue.extend({
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
     tableSearch: '',
-    model: null,
-    test: ['a', 'b', 'c']
+    model: null
   }),
 
   computed: {
@@ -101,7 +99,7 @@ export default Vue.extend({
     },
     appendGlyph (pathway: string) {
       this.$nextTick(() => {
-        const test = d3.select(`#glyph${pathway}`).append(() => this.glyphs.svg[pathway])
+        d3.select(`#glyph${pathway}`).append(() => this.glyphs.svg[pathway])
       })
     }
   }
