@@ -1,5 +1,12 @@
 <template>
   <v-list nav dense>
+    <v-select
+      :items="targetOrganisms"
+      label="Target Organism"
+      v-model="targetOrganism"
+      @click="lockHover"
+      @input="unlockHover"
+    ></v-select>
       Selected Omics:
       {{ chosenOmics.length }}
     <v-chip-group active-class="primary--text" column>
@@ -205,6 +212,11 @@ export default Vue.extend({
     metabolomicsSymbolCol: '',
     metabolomicsValueCol: '',
     recievedMetabolomicsData: false,
+    targetOrganisms: [
+      { text: 'Mouse', value: 'mmu' },
+      { text: 'Human', value: 'hsa' }
+    ],
+    targetOrganism: { text: 'Mouse', value: 'mmu' },
     sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
     sheetRules: [
       (value: string) => {
@@ -496,6 +508,7 @@ export default Vue.extend({
       console.log('sliderTest', this.sliderVals)
       this.$store.dispatch('setOverlay', true)
       const payload = {
+        targetOrganism: this.targetOrganism,
         transcriptomics: {
           recieved: this.recievedTranscriptomicsData,
           symbol: this.transcriptomicsSymbolCol,

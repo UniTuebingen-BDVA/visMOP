@@ -187,7 +187,7 @@ def kegg_parsing():
     overall_reactions = {}
     proteomics_symbol_dict = {}
     symbol_kegg_dict_transcriptomics = {}
-    mouse_db = "mmu"
+    target_db = request.json['targetOrganism']
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
@@ -265,7 +265,7 @@ def kegg_parsing():
         #TODO blacklist system to handle unanswered queries
         unwanted_temporary = {"Gm10972","Gm2399","Gm5819","Gm7969","LOC636187","AC004946.2","AP005901.1","AC079779.1","FP325318.1","LINC00540","THCAT155","AC132825.3","AL138889.3","AL023807.1","AC092957.1","LINC02842","AC024337.2","LINC01331","GAGE12B","NBPF5P","LINC00536","AC019270.1","AC092640.1","LINC02470","OR4K13","AL512605.1","AC113418.1","AL359851.1","RPL22P12","OR10G4","AC124804.1","AP005901.5","LINC02717","LINC00906","LINC01727","C10orf105","AC024270.4","AC008083.3","AC104118.1","RPL37P2","ACTG1P15","SEPHS1P1","AL512328.1","RRAS2P1","ARMS2","NPHP3-AS1","AC011595.2","AC022211.1","RPL26P6","SPRR2G","GGTLC4P","AL844908.1","AC025040.2","AC093458.2","AC104024.4","LINC02016","AC090772.3","AC107081.3","AC013724.1","RPS19P3","RPS7P3","AP001432.1","AC069213.3","AP001024.1"}
         gene_symbols_transcriptomics = [symb for symb in gene_symbols_transcriptomics if symb not in unwanted_temporary]
-        transcriptomics_keggIDs, symbol_kegg_dict_transcriptomics = gene_symbols_to_keggID(gene_symbols_transcriptomics, mouse_db, data_path / 'kegg_cache/gene_symbol_cache.json')
+        transcriptomics_keggIDs, symbol_kegg_dict_transcriptomics = gene_symbols_to_keggID(gene_symbols_transcriptomics, target_db, data_path / 'kegg_cache/gene_symbol_cache.json')
         for symbol in gene_symbols_transcriptomics:
             try:
                 keggID = symbol_kegg_dict_transcriptomics[symbol]
