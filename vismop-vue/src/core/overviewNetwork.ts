@@ -1,4 +1,4 @@
-import { MultiGraph } from 'graphology'
+import { UndirectedGraph } from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
@@ -7,6 +7,7 @@ import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import store from '@/store'
 import { DEFAULT_SETTINGS } from 'sigma/settings'
+import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path'
 
 export default class overviewGraph {
   private currentPathway = '';
@@ -30,10 +31,14 @@ export default class overviewGraph {
 
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement
-    const graph = MultiGraph.from(graphData)
+    const graph = UndirectedGraph.from(graphData)
     // console.log('NODES', graph.nodes())
 
     const inferredSettings = forceAtlas2.inferSettings(graph)
+
+    let shortestPathClick: string[] = []
+    let shortestPathNodes: string[] = []
+    let shortestPathEdges: string[] = []
 
     let highlighedEdgesClick = new Set()
     let highlighedNodesClick = new Set()
@@ -45,6 +50,19 @@ export default class overviewGraph {
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: string, data: Attributes) => {
       const nodeSize = (highlighedNodesHover.has(node) || (this.currentPathway === node.replace('path:', ''))) ? 15 : 10
+      if (shortestPathNodes?.length > 0) {
+        if (shortestPathClick.includes(node)) {
+          return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 }
+        }
+        if (shortestPathNodes.includes(node)) {
+          return { ...data, color: 'rgba(255,180,255,1.0)', zIndex: 1, size: 10 }
+        } else {
+          return { ...data, color: 'rgba(255,255,255,1.0)', size: 5 }
+        }
+      }
+      if (shortestPathClick.includes(node)) {
+        return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 }
+      }
       if ((this.currentPathway === node.replace('path:', '')) || (highlightedCenterHover === node)) {
         return { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1, size: nodeSize }
       }
@@ -64,7 +82,14 @@ export default class overviewGraph {
     }
 
     // same for edges
-    const edgeReducer = (edge: unknown, data: Attributes) => {
+    const edgeReducer = (edge: string, data: Attributes) => {
+      if (shortestPathNodes?.length > 0) {
+        if (shortestPathEdges?.includes(edge)) {
+          return { ...data, color: 'rgba(255,180,255,1.0)', zIndex: 1, size: 4 }
+        } else {
+          return { ...data, size: 1 }
+        }
+      }
       if (highlighedEdgesHover.has(edge)) {
         return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 }
       }
@@ -126,7 +151,22 @@ export default class overviewGraph {
       console.log('clicking event', event)
       if (event.original.ctrlKey) {
         store.dispatch('selectPathwayCompare', node)
+      } else if (event.original.altKey) {
+        if (shortestPathClick.length === 2) shortestPathClick.pop()
+        shortestPathClick.push(node)
+        if (shortestPathClick.length === 2) {
+          shortestPathNodes = bidirectional(graph, shortestPathClick[0], shortestPathClick[1]) as string[]
+          if (shortestPathNodes?.length > 0) {
+            shortestPathEdges = edgePathFromNodePath(graph, shortestPathNodes as string[])
+            console.log('shortest Path edges', shortestPathEdges)
+          } else {
+            shortestPathClick = []
+          }
+        }
       } else {
+        shortestPathClick = []
+        shortestPathNodes = []
+        shortestPathEdges = []
         highlighedEdgesClick.clear()
         highlighedNodesClick.clear()
         highlighedNodesClick = new Set(graph.neighbors(node))

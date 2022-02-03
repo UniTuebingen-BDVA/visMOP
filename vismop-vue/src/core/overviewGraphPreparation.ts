@@ -58,17 +58,15 @@ export function generateGraphData (
         } as node
         graph.nodes.push(currentNode)
         for (const relation of entry.outgoingEdges) {
-          let currentEdge = {} as edge
-          currentEdge = generateForceGraphEdge(relation)
-          if (!addedEdges.includes(currentEdge.key)) {
+          const currentEdge = generateForceGraphEdge(relation)
+          if ((!addedEdges.includes(currentEdge.key)) && (!addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`))) {
             graph.edges.push(currentEdge)
             addedEdges.push(currentEdge.key)
           }
         }
         for (const relation of entry.outgoingOnceRemoved) {
-          let currentEdge = {} as edge
-          currentEdge = generateForceGraphEdge(relation)
-          if (!addedEdges.includes(currentEdge.key)) {
+          const currentEdge = generateForceGraphEdge(relation)
+          if ((!addedEdges.includes(currentEdge.key)) && (!addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`))) {
             graph.edges.push(currentEdge)
             addedEdges.push(currentEdge.key)
           }
@@ -102,6 +100,7 @@ function generateForceGraphEdge (relation: relation): edge {
       key: relation.relationID,
       source: entry1,
       target: entry2,
+      undirected: true,
       attributes: {
         zIndex: 0,
         color: edgeColors[relationType]
@@ -116,6 +115,7 @@ function generateForceGraphEdge (relation: relation): edge {
       key: relation.relationID,
       source: entry1,
       target: entry2,
+      undirected: true,
       attributes: {
         zIndex: 0,
         color: edgeColors[relationType]

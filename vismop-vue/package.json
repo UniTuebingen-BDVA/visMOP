@@ -13,10 +13,11 @@
   "dependencies": {
     "core-js": "^3.6.5",
     "d3": "^7.1.1",
-    "graphology": "^0.21.1",
+    "graphology": "^0.23.2",
     "graphology-layout": "^0.4.1",
     "graphology-layout-forceatlas2": "^0.6.1",
     "graphology-operators": "^1.5.0",
+    "graphology-shortest-path": "^2.0.0",
     "lodash": "^4.17.20",
     "sigma": "^2.2.0",
     "vue": "^2.6.11",
@@ -68,7 +69,8 @@
     },
     "rules": {
       "no-unused-expressions": "off",
-      "@typescript-eslint/no-unused-expressions": 2}
+      "@typescript-eslint/no-unused-expressions": 2
+    }
   },
   "browserslist": [
     "> 1%",
