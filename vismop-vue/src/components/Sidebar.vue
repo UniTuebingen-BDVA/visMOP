@@ -25,6 +25,7 @@
         <v-expansion-panel-content>
           <v-file-input
             v-on:change="fetchTranscriptomicsTable"
+            v-model="transcriptomicsFile"
             chips
             label=".xlsx File Input"
           ></v-file-input>
@@ -80,13 +81,14 @@
         <v-expansion-panel-content>
           <v-file-input
             v-on:change="fetchProteomicsTable"
+            v-model="proteomicsFile"
             chips
             label=".xlsx File Input"
           ></v-file-input>
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" :v-model="proteomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -135,6 +137,7 @@
         <v-expansion-panel-content>
           <v-file-input
             v-on:change="fetchMetabolomicsTable"
+            v-model="metabolomicsFile"
             chips
             label=".xlsx File Input"
           ></v-file-input>
@@ -193,6 +196,30 @@
 <script lang="ts">
 import { mapState } from 'vuex'
 import Vue from 'vue'
+import { Function } from 'lodash'
+
+interface Data{
+   overlay: boolean,
+  transcriptomicsFile: File | null,
+  transcriptomicsSheetVal: string,
+  transcriptomicsSymbolCol: string,
+  transcriptomicsValueCol: string,
+  recievedTranscriptomicsData: boolean,
+  proteomicsFile: File | null,
+  proteomicsSheetVal: string,
+  proteomicsSymbolCol: string,
+  proteomicsValueCol: string,
+  recievedProteomicsData: boolean,
+  metabolomicsFile: File | null,
+  metabolomicsSheetVal: string,
+  metabolomicsSymbolCol: string,
+  metabolomicsValueCol: string,
+  recievedMetabolomicsData: boolean,
+  targetOrganisms: { text: string, value: string}[],
+  targetOrganism: string,
+  sliderVals: { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
+  sheetRules(value: string): boolean | string
+}
 
 export default Vue.extend({
   name: 'SideBar',
@@ -200,14 +227,17 @@ export default Vue.extend({
 
   data: () => ({
     overlay: false,
+    transcriptomicsFile: null,
     transcriptomicsSheetVal: '0',
     transcriptomicsSymbolCol: '',
     transcriptomicsValueCol: '',
     recievedTranscriptomicsData: false,
+    proteomicsFile: null,
     proteomicsSheetVal: '0',
     proteomicsSymbolCol: '',
     proteomicsValueCol: '',
     recievedProteomicsData: false,
+    metabolomicsFile: null,
     metabolomicsSheetVal: '0',
     metabolomicsSymbolCol: '',
     metabolomicsValueCol: '',
@@ -347,7 +377,11 @@ export default Vue.extend({
     }
   },
 
-  watch: {},
+  watch: {
+    transcriptomicsSheetVal: function () { this.fetchTranscriptomicsTable(this.transcriptomicsFile) },
+    proteomicsSheetVal: function () { this.fetchProteomicsTable(this.transcriptomicsFile) },
+    metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.transcriptomicsFile) }
+  },
 
   // functions to call on mount (after DOM etc. is built)
   mounted () {
@@ -355,7 +389,7 @@ export default Vue.extend({
   },
 
   methods: {
-    fetchTranscriptomicsTable (fileInput: File) {
+    fetchTranscriptomicsTable (fileInput: File | null) {
       this.$store.dispatch(
         'setTranscriptomicsTableHeaders',
         []
@@ -403,7 +437,7 @@ export default Vue.extend({
       }
     },
 
-    fetchProteomicsTable (fileInput: File) {
+    fetchProteomicsTable (fileInput: File | null) {
       this.$store.dispatch(
         'setProteomicsTableHeaders',
         []
@@ -417,8 +451,6 @@ export default Vue.extend({
         []
       )
       Vue.set(this.sliderVals, 'proteomics', {})
-      console.log('slider val clear', this.sliderVals)
-      console.log('prot header', this.proteomicsTableHeaders)
       if (fileInput !== null) {
         this.overlay = true
         const formData = new FormData()
@@ -455,7 +487,7 @@ export default Vue.extend({
         console.log('Protfile Cleared')
       }
     },
-    fetchMetabolomicsTable (fileInput: File) {
+    fetchMetabolomicsTable (fileInput: File | null) {
       this.$store.dispatch(
         'setMetabolomicsTableHeaders',
         []
