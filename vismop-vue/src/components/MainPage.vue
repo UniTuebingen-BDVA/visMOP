@@ -282,27 +282,61 @@ export default Vue.extend({
   },
   watch: {
     pathwayLayouting: function () {
+      let transcriptomicsAvailable = 0
+      let transcriptomicsTotal = 0
+
       this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
+        transcriptomicsTotal += 1
         const symbol = row[this.usedSymbolCols.transcriptomics]
         const keggID = this.transcriptomicsSymbolDict[symbol]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+        if (pathwaysContaining) transcriptomicsAvailable += 1
       })
+      console.log('table headers', this.transcriptomicsTableHeaders)
+      this.transcriptomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
+        if (entry.value === 'available') {
+          entry.text = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`
+        }
+      })
+      this.$store.dispatch('setTranscriptomicsTableHeaders', this.transcriptomicsTableHeaders)
       this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
 
+      let proteomiocsAvailable = 0
+      let proteomicsTotal = 0
+
       this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
+        proteomicsTotal += 1
         const symbol = row[this.usedSymbolCols.proteomics]
         const keggID = this.proteomicsSymbolDict[symbol]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+        if (pathwaysContaining) proteomiocsAvailable += 1
       })
+      this.proteomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
+        if (entry.value === 'available') {
+          entry.text = `available (${proteomiocsAvailable} of ${proteomicsTotal})`
+        }
+      })
+      this.$store.dispatch('setProteomicsTableHeaders', this.proteomicsTableHeaders)
       this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
 
+      let metabolomicsAvailable = 0
+      let metabolomicsTotal = 0
+
       this.metabolomicsTableData.forEach((row: {[key: string]: string | number }) => {
+        metabolomicsTotal += 1
         const symbol = row[this.usedSymbolCols.metabolomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+        if (pathwaysContaining) metabolomicsAvailable += 1
       })
+      this.metabolomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
+        if (entry.value === 'available') {
+          entry.text = `available (${metabolomicsAvailable} of ${metabolomicsTotal})`
+        }
+      })
+      this.$store.dispatch('setMetabolomicsTableHeaders', this.metabolomicsTableHeaders)
       this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
     },
     selectedTranscriptomics: function () {
