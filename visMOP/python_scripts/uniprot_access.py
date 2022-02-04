@@ -93,9 +93,11 @@ def add_uniprot_info(dict):
                 if line.startswith('DR') and 'KEGG' in line:
                     keggID = line.strip().split(';')[1].strip()
                     line = file.readline()
-
-        dict[id]['string_id'] = string_id
-        dict[id]['keggID'] = keggID
+        try:
+            dict[id]['string_id'] = string_id
+            dict[id]['keggID'] = keggID
+        except:
+            print('ID has no String and/or no KEGG ID: ', id)
         # from textfile split lines to get location name
         try:
 

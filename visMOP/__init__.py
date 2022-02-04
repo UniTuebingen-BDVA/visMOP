@@ -64,7 +64,6 @@ def transcriptomics_table_recieve():
     # recieve data-blob
     transfer_dat = request.files['dataTable']
     sheet_no = int(request.form['sheetNumber'])
-    
     #create and parse data table and prepare json
     data_table = create_df(transfer_dat, sheet_no)
     cache.set('transcriptomics_df_global', data_table.copy(deep=True).to_json(orient="columns"))
@@ -90,7 +89,8 @@ def prot_table_recieve():
     # aquire table data-blob
     transfer_dat = request.files['dataTable']
     sheet_no = int(request.form['sheetNumber'])
-    
+    print("sheet no", sheet_no)
+
     # parse data table and prepare json
     prot_data = create_df(transfer_dat, sheet_no)
     cache.set('prot_table_global', prot_data.copy(deep=True).to_json(orient="columns"))
@@ -213,9 +213,12 @@ def kegg_parsing():
             # ID being a Uniprot ID
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
-                proteomics_symbol_dict[ID] = entry["keggID"]
-                proteomics_keggIDs.append(entry["keggID"])
-                fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
+                try:
+                    proteomics_symbol_dict[ID] = entry["keggID"]
+                    proteomics_keggIDs.append(entry["keggID"])
+                    fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
+                except:
+                    print('ID not added to fold chances or keggIDs: ', ID)
 
         except FileNotFoundError:
             print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")

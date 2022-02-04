@@ -369,9 +369,11 @@ export default new Vuex.Store({
     focusPathwayViaDropdown ({ commit }, val) {
       commit('SET_PATHWAYDROPDOWN', val)
     },
-    selectPathwayCompare ({ commit, state }, val) {
-      const valClean = val.replace('path:', '')
-      if (!state.pathwayCompare.includes(valClean)) commit('APPEND_PATHWAYCOMPARE', valClean)
+    selectPathwayCompare ({ commit, state }, val: string[]) {
+      val.forEach(element => {
+        const valClean = element.replace('path:', '')
+        if (!state.pathwayCompare.includes(valClean)) commit('APPEND_PATHWAYCOMPARE', valClean)
+      })
     },
     removePathwayCompare ({ commit, state }, val) {
       const idx = state.pathwayCompare.indexOf(val)

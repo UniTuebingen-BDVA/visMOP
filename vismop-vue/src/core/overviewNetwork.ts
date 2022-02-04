@@ -150,7 +150,7 @@ export default class overviewGraph {
       console.log('clicking Node: ', node)
       console.log('clicking event', event)
       if (event.original.ctrlKey) {
-        store.dispatch('selectPathwayCompare', node)
+        store.dispatch('selectPathwayCompare', [node])
       } else if (event.original.altKey) {
         if (shortestPathClick.length === 2) shortestPathClick.pop()
         shortestPathClick.push(node)
@@ -159,6 +159,7 @@ export default class overviewGraph {
           if (shortestPathNodes?.length > 0) {
             shortestPathEdges = edgePathFromNodePath(graph, shortestPathNodes as string[])
             console.log('shortest Path edges', shortestPathEdges)
+            store.dispatch('selectPathwayCompare', shortestPathNodes)
           } else {
             shortestPathClick = []
           }
