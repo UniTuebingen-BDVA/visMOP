@@ -66,11 +66,13 @@ def calculate_edge_weight(pathway1, pathway2, stringGraph, use_brite, use_intera
 
     return brite_score, interaction_score
 
-def get_pos_in_force_dir_layout(graph, ewi):
+def get_pos_in_force_dir_layout(graph, ewi=1):
     forceatlas2 = ForceAtlas2(edgeWeightInfluence= ewi)
     pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=None, iterations=250)
     pos_out = {k:[v[0], v[1]] for k, v in pos.items()}
     return pos_out
+
+
 
 
 """ OLD """
