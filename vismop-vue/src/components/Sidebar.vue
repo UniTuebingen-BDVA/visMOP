@@ -1,6 +1,13 @@
 <template>
   <v-list nav dense>
     <v-select
+      :items="targetDatabases"
+      label="Target Database"
+      v-model="targetDatabase"
+      @click="lockHover"
+      @input="unlockHover"
+    ></v-select>
+    <v-select
       :items="targetOrganisms"
       label="Target Organism"
       v-model="targetOrganism"
@@ -189,7 +196,7 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
-    <v-btn v-on:click="generateKGMLs">Plot</v-btn>
+    <v-btn v-on:click="dataQuery">Plot</v-btn>
   </v-list>
 </template>
 
@@ -217,6 +224,8 @@ interface Data{
   recievedMetabolomicsData: boolean,
   targetOrganisms: { text: string, value: string}[],
   targetOrganism: string,
+  targetDatabases: { text: string, value: string}[],
+  targetDatabase: string,
   sliderVals: { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
   sheetRules(value: string): boolean | string
 }
@@ -247,6 +256,11 @@ export default Vue.extend({
       { text: 'Human', value: 'hsa' }
     ],
     targetOrganism: 'mmu',
+    targetDatabases: [
+      { text: 'Reactome', value: 'reactome' },
+      { text: 'KEGG', value: 'kegg' }
+    ],
+    targetDatabase: 'reactome',
     sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
     sheetRules: [
       (value: string) => {
@@ -536,6 +550,45 @@ export default Vue.extend({
         console.log('Metabol. file Cleared')
       }
     },
+
+    dataQuery () {
+      if (this.targetDatabase === 'kegg') {
+        this.generateKGMLs()
+      } else if (this.targetDatabase === 'reactome') {
+        this.queryReactome()
+      }
+    },
+
+    queryReactome () {
+      this.$store.dispatch('setOverlay', true)
+      const payload = {
+        targetOrganism: this.targetOrganism,
+        transcriptomics: {
+          recieved: this.recievedTranscriptomicsData,
+          symbol: this.transcriptomicsSymbolCol,
+          value: this.transcriptomicsValueCol
+        },
+        proteomics: {
+          recieved: this.recievedProteomicsData,
+          symbol: this.proteomicsSymbolCol,
+          value: this.proteomicsValueCol
+        },
+        metabolomics: {
+          recieved: this.recievedMetabolomicsData,
+          symbol: this.metabolomicsSymbolCol,
+          value: this.metabolomicsValueCol
+        },
+        sliderVals: this.sliderVals
+      }
+      fetch('/reactome_parsing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+    },
+
     generateKGMLs () {
       console.log('sliderTest', this.sliderVals)
       this.$store.dispatch('setOverlay', true)

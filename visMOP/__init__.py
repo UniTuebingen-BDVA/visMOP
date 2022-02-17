@@ -6,6 +6,10 @@ from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries,
 from visMOP.python_scripts.create_overview import get_overview
 from visMOP.python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info
 from visMOP.python_scripts.interaction_graph import StringGraph
+from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
+from visMOP.python_scripts.reactome_query import ReactomeQuery
+
+
 import pandas as pd
 import pathlib
 import os
@@ -398,7 +402,94 @@ def kegg_parsing():
     return json.dumps(out_dat)#json.dumps(pathway_dicts)
 
 
+"""
+App route for querying and parsing on reactome data
+"""
+@app.route('/reactome_hierarchy', methods=['POST'])
+def reactome_parsing():
+    overall_entries = {}
+    overall_relations = {}
+    overall_reactions = {}
+    proteomics_symbol_dict = {}
+    symbol_kegg_dict_transcriptomics = {}
+    target_db = request.json['targetOrganism']
+    transcriptomics = request.json['transcriptomics']
+    proteomics = request.json['proteomics']
+    metabolomics = request.json['metabolomics']
+    slider_vals = request.json['sliderVals']
 
+    proteomics_keggIDs = []
+    metabolomics_keggIDs = []
+    transcriptomics_keggIDs = []
+
+    fold_changes = {}
+
+    reactome_hierarchy = PathwayHierarchy()
+    reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
+    reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
+
+    print(reactome_hierarchy.levels[1])
+    #Handle Proteomics if available
+    if proteomics["recieved"]:
+        proteomics_query_data_tuples = []
+        try:
+            uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
+            prot_dict_global = json.loads(cache.get('prot_dict_global'))
+            
+            for ID in prot_dict_global:
+                entry = prot_dict_global[ID]
+                proteomics_query_data_tuples.append( (ID, entry[proteomics["value"]]) ) 
+
+        except FileNotFoundError:
+            print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
+          
+        # target organism is a little bit annoying at the moment
+        tar_organism = 'Mus_musculus'
+        protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'uniprot', data_path / "reactome_data/pickles/")
+        # add entries to hierarchy
+        for query_key, query_result in protein_query.query_results.items():
+            for entity_id, entity_data in query_result.items():
+                reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
+        
+
+    if metabolomics["recieved"]:
+        metabolomics_query_data_tuples = []
+
+        metabolomics_df_global = pd.read_json(cache.get('metabolomics_df_global'),orient='columns')
+        metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
+        for k,v in slider_vals["metabolomics"].items():
+            is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(metabolomics_df[k],errors='coerce').notnull())
+            df_numeric = metabolomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = metabolomics_df.loc[is_empty]
+        
+            metabolomics_df = metabolomics_df.loc[metabolomics_df.index.isin(df_is_in_range.index) | metabolomics_df.index.isin(df_is_empty.index) ]
+        metabolomics_dict = metabolomics_df.to_dict("index")
+        metabolomics_IDs =  list(metabolomics_dict.keys())
+        for elem in metabolomics_IDs:
+            metabolomics_query_data_tuples.append( (ID, metabolomics_dict[elem][metabolomics["value"]]) ) 
+
+          
+        # target organism is a little bit annoying at the moment
+        tar_organism = 'Mus_musculus'
+        protein_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'uniprot', data_path / "reactome_data/pickles/")
+        # add entries to hierarchy
+        for query_key, query_result in protein_query.query_results.items():
+            for entity_id, entity_data in query_result.items():
+                reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
+        reactome_hierarchy.aggregate_pathways()
+
+    reactome_hierarchy.aggregate_pathways()
+    cache.set('reactome_hierarchy', reactome_hierarchy)
+    return
+
+
+@app.route('/reactome_overview', methods=['POST'])
+def reactome_overview():
+    request.json['targetLevel']
+    
+    return
 
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)

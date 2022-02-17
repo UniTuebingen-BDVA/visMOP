@@ -6,6 +6,9 @@ kegg_cache/*.json
 package-lock.json
 __pycache__
 /session_cache/*
+*.pickle
+**/diagram/
+
 # local env files
 .env.local
 .env.*.local
