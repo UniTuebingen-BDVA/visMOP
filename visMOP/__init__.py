@@ -14,6 +14,7 @@ import sys
 import random
 from visMOP.python_scripts.deDal_layouting import fill_missing_values_with_neighbor_mean, convert_each_feature_into_z_scores, double_centring, NetworkSmoothing, rotate_to_ref, get_pca_layout_pos, morph_layouts, get_umap_layout_pos
 from visMOP.python_scripts.forceDir_layouting import get_pos_in_force_dir_layout, get_networkx_with_edge_weights_all_nodes_connected
+from visMOP.python_scripts.module_layouting import Module_layout
 import networkx as nx
 import copy
 from numpy.core.fromnumeric import mean
@@ -402,6 +403,8 @@ def kegg_parsing():
     for i in parsed_pathways:
         pathway_titles["path:" + i.keggID] = [i.title]
 
+    module_layout = Module_layout(data_driven_layout_data_user, pathway_connection_dict)
+    module_node_pos = module_layout.get_final_node_positions()
     
     pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles, parsed_pathways)
     network_overview = generate_networkx_dict(pathway_connection_dict)
