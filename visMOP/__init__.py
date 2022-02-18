@@ -405,7 +405,7 @@ def kegg_parsing():
 """
 App route for querying and parsing on reactome data
 """
-@app.route('/reactome_hierarchy', methods=['POST'])
+@app.route('/reactome_parsing', methods=['POST'])
 def reactome_parsing():
     overall_entries = {}
     overall_relations = {}
@@ -428,7 +428,6 @@ def reactome_parsing():
     reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
 
-    print(reactome_hierarchy.levels[1])
     #Handle Proteomics if available
     if proteomics["recieved"]:
         proteomics_query_data_tuples = []
@@ -451,7 +450,7 @@ def reactome_parsing():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
         
-
+    
     if metabolomics["recieved"]:
         metabolomics_query_data_tuples = []
 
@@ -478,17 +477,19 @@ def reactome_parsing():
         for query_key, query_result in protein_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
-        reactome_hierarchy.aggregate_pathways()
-
+    
     reactome_hierarchy.aggregate_pathways()
     cache.set('reactome_hierarchy', reactome_hierarchy)
-    return
+    return 0
 
 
 @app.route('/reactome_overview', methods=['POST'])
 def reactome_overview():
-    request.json['targetLevel']
-    
+    # TODO sent to frontend
+
+    target_level = request.json['targetLevel']
+    print(reactome_hierarchy.generate_overview_data(target_level))
+
     return
 
 if __name__ == "__main__":

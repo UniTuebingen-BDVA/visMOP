@@ -1,6 +1,8 @@
 import json
 import pathlib
 
+import pickle
+
 class ReactomePathway:
     """ Pathway Class for ractome pathway entries
 
@@ -17,9 +19,11 @@ class ReactomePathway:
         self.graph_json_file = None
         self.reactome_sID= reactome_sID
         self.children= []
-        self.proteins = {}
-        self.genes = {}
-        self.metabolites = {}
+        self.measured_proteins = {}
+        self.measured_genes = {}
+        self.measured_metabolites = {}
+        self.total_proteins = []
+        self.total_metabolites = []
         self.parents= []
         self.level = -1
         self.root_id = ''
@@ -98,8 +102,13 @@ class PathwayHierarchy(dict):
             try:
                 with open(json_path / (key+'.graph.json')) as fh:
                     json_file = json.load(fh)
+                    json_file['nodes'] = format_content_graph_json(json_file)
                     entry.graph_json_file = json_file
-            except:
+                    prot, molec = get_contained_entities_graph_json(entry.graph_json_file)
+                    entry.total_proteins = prot
+                    entry.total_metabolites = molec
+            except Exception as e:
+                #print('Exception', e)
                 pass
     
     def aggregate_pathways(self):
@@ -113,15 +122,21 @@ class PathwayHierarchy(dict):
                 proteins = {}
                 genes = {}
                 metabolites = {}
+                total_proteins = []
+                total_metabolites = []
                 for leaf in leaves:
-                    proteins = {**proteins, **self[leaf].proteins}
-                    genes = {**genes, **self[leaf].genes}
-                    metabolite = {**metabolites, **self[leaf].metabolites}
-                v.proteins = proteins
-                v.genes = genes
-                v.metabolites = metabolites
-                if ((len(v.proteins) > 0) and (len(v.genes) > 0) and (len(v.metabolites) > 0)):
-                    v.has_data = True
+                    proteins = {**proteins, **self[leaf].measured_proteins}
+                    genes = {**genes, **self[leaf].measured_genes}
+                    metabolite = {**metabolites, **self[leaf].measured_metabolites}
+                    total_proteins.extend(self[leaf].total_proteins)
+                    total_metabolites.extend(self[leaf].total_metabolites)
+                v.measured_proteins = proteins
+                v.measured_genes = genes
+                v.measured_metabolites = metabolites
+                v.total_proteins = list(set(total_proteins))
+                v.total_metabolites = list(set(total_metabolites))
+            if ((len(v.measured_proteins) > 0) or (len(v.measured_genes) > 0) or (len(v.measured_metabolites) > 0)):
+                v.has_data = True
 
     def get_leaves_target(self, tar_id):
         """ Gets all leaves found for target entry
@@ -147,25 +162,24 @@ class PathwayHierarchy(dict):
         """
         current_reactome_id = entity_data['reactome_id']
         for pathway in entity_data["pathways"]:
-            self[pathway[0]].has_data = True
             if self[pathway[0]].name == '': self[pathway[0]].name = pathway[1]
             if query_type == 'protein':
-                if query_key in self[pathway[0]].proteins:
-                    self[pathway[0]].proteins[query_key]['forms'][current_reactome_id] =  entity_data['name']
+                if query_key in self[pathway[0]].measured_proteins:
+                    self[pathway[0]].measured_proteins[query_key]['forms'][current_reactome_id] =  entity_data['name']
                 else:
-                    self[pathway[0]].proteins[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: entity_data['name']}}
+                    self[pathway[0]].measured_proteins[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: entity_data['name']}}
 
             elif query_type == 'gene':
-                if query_key in self[pathway[0]].genes:
-                    self[pathway[0]].genes[query_key]['forms'][current_reactome_id] = entity_data['name']
+                if query_key in self[pathway[0]].measured_genes:
+                    self[pathway[0]].measured_genes[query_key]['forms'][current_reactome_id] = entity_data['name']
                 else:
-                    self[pathway[0]].genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: entity_data['name']}}
+                    self[pathway[0]].measured_genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: entity_data['name']}}
             
             elif query_type == 'metabolite':
-                if query_key in self[pathway[0]].metabolites:
-                    self[pathway[0]].metabolites[query_key]['forms'][current_reactome_id] =  entity_data['name']
+                if query_key in self[pathway[0]].measured_metabolites:
+                    self[pathway[0]].measured_metabolites[query_key]['forms'][current_reactome_id] =  entity_data['name']
                 else:
-                    self[pathway[0]].metabolites[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: entity_data['name']}}
+                    self[pathway[0]].measured_metabolites[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: entity_data['name']}}
     def load_data(self, path, organism):
         """ Load hierarchy data into datastructure
 
@@ -196,7 +210,77 @@ class PathwayHierarchy(dict):
         self.add_hierarchy_levels()
     
     def generate_overview_data(self, level):
-        out_data = []
+        out_data = {}
         pathway_ids = self.levels[level]
         for pathway in pathway_ids:
-            pathway_dict = {'pathway_name': '', 'pathway_id': '', 'entries': {'proteomics': {}, 'metabolomics': {}, 'transctiptomics': {}}}
+            entry = self[pathway]
+            if entry.has_data:
+                pathway_dict = {'pathway_name': '',
+                'pathway_id': '',
+                'entries': {
+                    'proteomics': {'measured':{}, 'total':0},
+                    'transcriptomics': {'measured':{}, 'total':0},
+                    'metabolomics': {'measured':{}, 'total':0}
+                    }
+                }
+                
+                pathway_dict['pathway_name'] = entry.name
+                pathway_dict['pathway_id'] = entry.reactome_sID
+
+                pathway_dict['entries']['proteomics']['total'] = entry.total_proteins
+                pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins
+                pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites
+
+                for k, v in entry.measured_proteins.items():
+                    name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]
+                    pathway_dict['entries']['proteomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name}
+                for k, v in entry.measured_genes.items():
+                    name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]
+                    pathway_dict['entries']['transcriptomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name}
+                for k, v in entry.measured_metabolites.items():
+                    name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]
+                    pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name}
+                out_data[pathway] = pathway_dict
+        return out_data
+
+def format_content_graph_json(json_file):
+    intermediate_node_dict = {}
+
+    for v in json_file['nodes']:
+        intermediate_node_dict[v['dbId']] = v
+    return intermediate_node_dict
+def get_contained_entities_graph_json(formatted_json):
+    contained_proteins = []
+    contained_molecules = []
+
+    leaves_total = []
+    for k in formatted_json['nodes'].keys():
+        leaves = get_leaves_graph_json(formatted_json['nodes'], k)
+        leaves_total.extend(leaves)
+    leaves_set = list(set(leaves_total))
+
+    for leaf in leaves_total:
+        entry = formatted_json['nodes'][leaf]
+        if entry['schemaClass'] == 'EntityWithAccessionedSequence':
+            contained_proteins.append(leaf)
+        elif entry['schemaClass'] == 'Pathway':
+            pass # TODO
+        else:
+            contained_molecules.append(leaf)
+    return contained_proteins, contained_molecules
+
+def get_leaves_graph_json(intermediate_node_dict, entry_id):
+        leaves = []
+        leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves)
+        return leaves
+
+def leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves):
+    if entry_id is not None:
+        #print(intermediate_node_dict[entry_id]['children'])
+        if 'children' not in intermediate_node_dict[entry_id]:
+            leaves.append(entry_id)
+        if 'children' in intermediate_node_dict[entry_id]:
+            for elem in intermediate_node_dict[entry_id]['children']:
+                leaf_recursive_graph_json(intermediate_node_dict, elem, leaves)
+    else:
+        print('end recursion')
