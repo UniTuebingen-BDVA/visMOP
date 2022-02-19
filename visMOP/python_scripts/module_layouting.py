@@ -17,28 +17,38 @@ import scipy.stats as stats
 
 class Module_layout:
 
-    def __init__(self, data_table, graph_dict, drm='umap'):
-        self.data_table = StandardScaler().fit_transform(
-            self.fill_missing_values_with_neighbor_mean(graph_dict, data_table))
-        self.fullGraph = nx.Graph(graph_dict)
-        self.relative_distances = self.getRealtiveDistancesBetweenModules(self.modules_center)
+    def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, drm='umap'):
+        print("Calculating module layout...")
+        self.data_table = data_table
+        self.data_table_scaled_filled = StandardScaler().fit_transform(
+            self.fill_missing_values_with_neighbor_mean(graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic))
+        print("Scaled input data")
+        self.full_graph = nx.Graph(graph_dict)
         self.initial_node_pos = self.get_initial_node_pos(drm)
-        self.modules = self.get_cluster(self.data_table)
+        print("initial node positions calculated")
+        self.modules = self.get_cluster()
+        print("Clusters identified")
         self.modules_center = self.get_module_centers()
-        self.weights = self.getModulesWeights(self.modules, self.fullGraph)
+        print("Cluster centers identified")
+        self.relative_distances = self.getRealtiveDistancesBetweenModules(self.modules_center)
+        self.weights = self.getModulesWeights()
+        print("Relative distances between modules and module weights calculated")
         self.getModulePos()
+        print("Module Positions identified")
         self.modules_area = self.getSizeOfModulesRegion()
-        self.final_node_pos = getNodePositions()
+        print("Module sizes identified")
+        self.final_node_pos = self.getNodePositions()
+        print("final node positions identified")
         
     # defold values per omic and pos
-    def fill_missing_values_with_neighbor_mean(graph_dict, data_table, recieved_omics, defaul_means, numValsPerOmic):
+    def fill_missing_values_with_neighbor_mean(self, graph_dict, recieved_omics, defaul_means, numValsPerOmic):
         defaul_means_rec_omic = [default_mean for (default_mean, recieved) in zip(
             defaul_means, recieved_omics) if recieved]
-        node_names = list(data_table.index)
+        node_names = list(self.data_table.index)
         new_data = {}
         for node_name in node_names:
             new_node_vec = []
-            for pos, val in enumerate(data_table.loc[node_name]):
+            for pos, val in enumerate(self.data_table.loc[node_name]):
                 default_val = 0 if pos % 1 != 0 or pos % 2 != 0 or pos//numValsPerOmic > len(
                     defaul_means_rec_omic)-1 else defaul_means_rec_omic[pos//numValsPerOmic]
                 new_val = val
@@ -49,7 +59,7 @@ class Module_layout:
                     calc_node_val = 0
                     for node_info in neighbor_nodes:
                         neighbor_name = node_info['target']
-                        neighbor_val = data_table.loc[neighbor_name][pos]
+                        neighbor_val = self.data_table.loc[neighbor_name][pos]
                         if not math.isnan(neighbor_val):
                             calc_node_val += neighbor_val
                             node_vals_not_none += 1
@@ -63,7 +73,7 @@ class Module_layout:
 
     def get_pca_layout_pos(self):
         pca = PCA(n_components=2)
-        new_pos = pca.fit_transform(self.data_table)
+        new_pos = pca.fit_transform(self.data_table_scaled_filled)
 
         explained_variation = pca.explained_variance_ratio_
         print("Variance explained by PC1 = " + str(explained_variation[0]))
@@ -76,7 +86,7 @@ class Module_layout:
         return norm_vals_dict
 
     def get_umap_layout_pos(self):
-        new_pos = UMAP().fit_transform(self.data_table)
+        new_pos = UMAP().fit_transform(self.data_table_scaled_filled)
         pos_dic = {node_name: row for row, node_name in zip(
             new_pos, list(self.data_table.index))}
         norm_vals_dict = self.normalizeNodePositionInRange(
@@ -84,12 +94,11 @@ class Module_layout:
         return norm_vals_dict
 
     def get_cluster(self):
-
         kmeans = KMeans(n_clusters=5, random_state=0).fit_predict(
-            self.data_table)
+            self.data_table_scaled_filled)
         ordered_nodes = [x for _, x in sorted(
             zip(kmeans, self.data_table.index))]
-        nums_in_cl = list(dict(sorted(Counter(Y).items())).values())
+        nums_in_cl = list(dict(sorted(Counter(ordered_nodes).items())).values())
         split_array = [sum(nums_in_cl[:i+1]) for i, _ in enumerate(nums_in_cl)]
         cl_list = np.split(ordered_nodes, split_array)
         return cl_list[:-1]
@@ -105,7 +114,7 @@ class Module_layout:
         num_modules = len(self.modules)
         weights = np.zeros((num_modules, num_modules))
         for module_pair in combinations(range(len(self.modules)), 2):
-            self.module_pair_order.append(module_pair)
+            #self.module_pair_order.append(module_pair)
             num_edges = sum([self.full_graph.has_edge(
                 n_1, n_2) for n_1 in self.modules[module_pair[0]] for n_2 in self.modules[module_pair[1]]])
             weights[module_pair[0], module_pair[1]] = num_edges
@@ -157,18 +166,18 @@ class Module_layout:
         distance_similarities = [1]*len(self.relative_distances)
         for maxiteration in range(100):
             noPossibleLayout = True
-            while(noPossibleLayout and maxiteration > 0):
-                cur_module_centers = [self.getNewModuleCenter(
+            while noPossibleLayout:
+                new_module_centers = [self.getNewModuleCenter(
                     module_center, module_number, distance_similarities) for module_number, module_center in enumerate(self.modules_center)]
                 new_rel_distances = self.getRealtiveDistancesBetweenModules(
-                    cur_module_centers)
+                    new_module_centers)
                 distance_similarities = self.evaluateRelativDistanceSimilarity(
                     self.relative_distances, new_rel_distances)
                 noPossibleLayout = sum(
                     distance_similarities) == len(new_rel_distances)
-            new_C = self.evaluteCostFunction(cur_module_centers)
+            new_C = self.evaluteCostFunction(new_module_centers)
             if new_C < best_C:
-                self.modules_center = cur_module_centers
+                self.modules_center = new_module_centers
                 best_C = new_C
 
     def getNewModuleCenter(self, module_center, module_number, distance_similarities):
@@ -207,7 +216,7 @@ class Module_layout:
                        l_max for mod_center in self.modules_center]
         # get max distance between two modules, x or y
         # module_x_y_distances = {max(abs(new_centers[m_p[0]][0]-new_centers[m_p[1]][0]),abs(new_centers[m_p[0]][1]-new_centers[m_p[1]][1])): m_p for m_p in combinations(range(len(new_centers)), 2)}
-        module_regions = self.divideSpaceForTwoModules(new_centers, module_node_nums, module_x_y_distances, [
+        module_regions = self.divideSpaceForTwoModules(new_centers, module_node_nums, self.module_x_y_distances, [
                                                        0, l_max, 0, l_max], range(len(new_centers)), sum(module_node_nums))
         area_list = [[]] * len(new_centers)
         for (area, mod_num) in module_regions:
@@ -243,7 +252,7 @@ class Module_layout:
 
         for abst in np.arange(0.01, max_dist - 0.01, 0.01):
             area_1[mod_1_area_pos_to_ad], area_1[mod_1_area_pos_to_ad]  = [min_border_pos + abst]*2
-            mods_in_area_1 = [pos for pos in modules_in_area if pos in mod_center_in_area(module_centers[pos], area_1)]
+            mods_in_area_1 = [pos for pos in modules_in_area if pos in self.mod_center_in_area(module_centers[pos], area_1)]
             num_nodes_area_1 = sum([module_node_number[pos] for pos in mods_in_area_1])
             num_nodes_area_2 = total_sum_nodes_in_area - num_nodes_area_1
             score = abs(self.get_area_size(area_1)*num_nodes_area_1/total_sum_nodes_in_area- self.get_area_size(area_2)*num_nodes_area_2/total_sum_nodes_in_area)
@@ -256,7 +265,7 @@ class Module_layout:
                num_nodes_area_1_best = num_nodes_area_1
                num_nodes_area_2_best = num_nodes_area_2
 
-        return divideSpaceForTwoModules(module_centers, module_node_number, module_ia_x_y_distances, area_1, mods_in_area_1_best, num_nodes_area_1), divideSpaceForTwoModules(module_centers, module_node_number, module_ia_x_y_distances, area_2, mods_in_area_2_best, num_nodes_area_2)
+        return self.divideSpaceForTwoModules(module_centers, module_node_number, module_ia_x_y_distances, area_1_best, mods_in_area_1_best, num_nodes_area_1_best), self.divideSpaceForTwoModules(module_centers, module_node_number, module_ia_x_y_distances, area_2_best, mods_in_area_2_best, num_nodes_area_2_best)
 
     def get_area_size(area):
         area_size = (area[1]-area[0]) * (area[3]-area[2])
@@ -299,7 +308,7 @@ class Module_layout:
         '''
         node_positions = {}
         for module, module_area in zip(self.modules, self.modules_area):
-            sub_graph = self.fullGraph.subgraph(module, 0)
+            sub_graph = self.full_graph.subgraph(module, 0)
             module_node_positions = get_pos_in_force_dir_layout(sub_graph)
             adjusted_node_positions = self.normalizeNodePositionInRange(
                 module_node_positions, module_area)

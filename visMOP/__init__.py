@@ -403,15 +403,18 @@ def kegg_parsing():
     for i in parsed_pathways:
         pathway_titles["path:" + i.keggID] = [i.title]
 
-    module_layout = Module_layout(data_driven_layout_data_user, pathway_connection_dict)
-    module_node_pos = module_layout.get_final_node_positions()
+    
+    
+    up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
     
     pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles, parsed_pathways)
     network_overview = generate_networkx_dict(pathway_connection_dict)
+
+    module_layout = Module_layout(data_driven_layout_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic)
+    module_node_pos = module_layout.get_final_node_positions()
     # pos_dict = get_spring_layout_pos(network_overview)
     # pos_dict = normalize_all_x_y_to_ndc(pos_dict, [-1,1])
     print('-------------------------------------------------------------------------------------------')
-    up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
     # pd.set_option("display.max_rows", None, "display.max_columns", None)
     with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data_user, omics_recieved, up_down_reg_means, num_vals_per_omic)
     
