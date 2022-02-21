@@ -13,18 +13,21 @@ from itertools import combinations
 from scipy.spatial import distance
 from visMOP.python_scripts.forceDir_layouting import get_pos_in_force_dir_layout
 import scipy.stats as stats
+from visMOP.python_scripts.kegg_parsing import generate_networkx_dict
 from random import randint
+from copy import deepcopy
 
 
 class Module_layout:
 
     def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, drm='umap'):
         print("Calculating module layout...")
+        networkx_dict = generate_networkx_dict(graph_dict)
+        self.full_graph = nx.Graph(networkx_dict)
         self.data_table = data_table
         self.data_table_scaled_filled = StandardScaler().fit_transform(
             self.fill_missing_values_with_neighbor_mean(graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic))
         print("Scaled input data")
-        self.full_graph = nx.Graph(graph_dict)
         self.initial_node_pos = self.get_initial_node_pos(drm)
         print("initial node positions calculated")
         self.modules = self.get_cluster()
@@ -117,12 +120,9 @@ class Module_layout:
         num_modules = len(self.modules)
         weights = np.zeros((num_modules, num_modules))
         for module_pair in combinations(range(len(self.modules)), 2):
-            # self.module_pair_order.append(module_pair)
             num_edges = sum([self.full_graph.has_edge(
                 n_1, n_2) for n_1 in self.modules[module_pair[0]] for n_2 in self.modules[module_pair[1]]])
             weights[module_pair[0], module_pair[1]] = num_edges
-            weights[module_pair[1], module_pair[0]
-                    ] = weights[module_pair[0], module_pair[1]]
         return weights
 
     def get_module_centers(self):
@@ -150,10 +150,13 @@ class Module_layout:
         Parameter: Weight of module h and k w(h,k), Manhattan distance between module h and k d(h,k)
         C = sum over (w(h,k) * d(h,k)) 
         '''
-        distances = [distance.cityblock(cur_module_centers[module_pair[0]], cur_module_centers[module_pair[1]])
-                     for module_pair in combinations(range(len(self.modules)), 2)]
-        C = sum([w*d for w, d in zip(self.weights, distances)])
-        print(C)
+        num_modules = len(self.modules)
+        distances = np.zeros((num_modules, num_modules))
+        for module_pair in combinations(range(len(self.modules)), 2):
+            distances[module_pair[0], module_pair[1]] = distance.cityblock(cur_module_centers[module_pair[0]], cur_module_centers[module_pair[1]])
+
+        C = sum(sum([np.array(w)*np.array(d) for w, d in zip(self.weights, distances)]))
+
         return C
 
     def getModulePos(self):
@@ -187,6 +190,7 @@ class Module_layout:
             if new_C < best_C:
                 self.modules_center = new_module_centers
                 best_C = new_C
+        print('best Costfunction value: ', best_C)
 
     def getNewModuleCenter(self, module_center, module_number, distance_similarities):
         total_dist_sim = sum(
@@ -199,17 +203,18 @@ class Module_layout:
             # max movement in neg/ pos x direction: m_c[0] - 0.1 / 1-m_c[0] -0.1
             for coord in [0, 1]:
                 move_in_neg_dir = np.random.binomial(1, 0.5) == 1
-                curve_half_width = module_center[coord] - \
-                    0.1 if move_in_neg_dir else 0.9-module_center[coord]
+                curve_half_width_neg = module_center[coord] - 0.02
+                curve_half_width_pos = 0.98 - module_center[coord]
+                curve_half_width = curve_half_width_neg if (move_in_neg_dir and curve_half_width_neg > 0) or curve_half_width_pos <= 0 else curve_half_width_pos
                 normal_dist_vals = np.random.normal(
                     0, curve_half_width/3, 1001)
-                draw_num = True
-                while draw_num:
+                shift_num_valid = False
+                while not shift_num_valid:
                     shift_num = abs(normal_dist_vals[randint(0, 1000)])
-                    draw_num = shift_num != 0 and -curve_half_width <= shift_num <= curve_half_width
+                    shift_num_valid = shift_num != 0 and -curve_half_width <= shift_num <= curve_half_width
                 new_center[coord] = new_center[coord] - \
                     shift_num if move_in_neg_dir else new_center[coord] + shift_num
-        # norm_dist # von x: - module_center[0] + 0,1, 1,1 - module_center[0] same for y
+
         return new_center
 
     def evaluateRelativDistanceSimilarity(self, original_dist, new_dist):
@@ -228,12 +233,16 @@ class Module_layout:
         # paper method
         set_areas = [[[mod_center[0]*l_max - math.sqrt(mod_l),mod_center[0]*l_max + math.sqrt(mod_l)], [mod_center[1]*l_max - math.sqrt(mod_l),mod_center[1]*l_max + math.sqrt(mod_l)]] for mod_center, mod_l in zip(self.modules_center,module_sizes)]
         """
-        new_centers = [mod_center[0] *
-                       l_max for mod_center in self.modules_center]
+        new_centers = [[mod_center[0] * l_max, mod_center[1] * l_max] for mod_center in self.modules_center]
+
         # get max distance between two modules, x or y
-        # module_x_y_distances = {max(abs(new_centers[m_p[0]][0]-new_centers[m_p[1]][0]),abs(new_centers[m_p[0]][1]-new_centers[m_p[1]][1])): m_p for m_p in combinations(range(len(new_centers)), 2)}
-        module_regions = self.divideSpaceForTwoModules(new_centers, module_node_nums, self.module_x_y_distances, [
-                                                       0, l_max, 0, l_max], range(len(new_centers)), sum(module_node_nums))
+        # for m_p in combinations(range(len(new_centers)), 2):
+        #     print(m_p)
+        #     print(new_centers[m_p[0]])
+            # print(max(abs(new_centers[m_p[0]][0]-new_centers[m_p[1]][0]),abs(new_centers[m_p[0]][1]-new_centers[m_p[1]][1])))
+        module_x_y_distances = {max(abs(new_centers[m_p[0]][0]-new_centers[m_p[1]][0]),abs(new_centers[m_p[0]][1]-new_centers[m_p[1]][1])): m_p for m_p in combinations(range(len(new_centers)), 2)}
+        module_regions = self.divideSpaceForTwoModules(new_centers, module_node_nums, module_x_y_distances, [
+                                                       0, l_max, 0, l_max], list(range(len(new_centers))), sum(module_node_nums))
         area_list = [[]] * len(new_centers)
         for (area, mod_num) in module_regions:
             area_list[mod_num] = area
@@ -244,45 +253,60 @@ class Module_layout:
         if len(modules_in_area) == 1:
             return area_to_divide, modules_in_area[0]
         # get the two modules furthest away from each other
+        # print('modules_in_area: ', modules_in_area)
+        # print('module_ia_x_y_distances: ', module_ia_x_y_distances)
         found_mod_pair = False
-        while(not found_mod_pair):
+        while not found_mod_pair:
             max_dist = max(module_ia_x_y_distances.keys())
             mod_pair = module_ia_x_y_distances[max_dist]
-            found_mod_pair = mod_pair.issubset(modules_in_area)
+            #print(mod_pair,module_ia_x_y_distances)
+            found_mod_pair = set(mod_pair).issubset(modules_in_area)
             del module_ia_x_y_distances[max_dist]
 
         mod_1 = mod_pair[0]
         mod_2 = mod_pair[1]
-
         # max dist is on x axis
         x_dist = module_centers[mod_1][0] - module_centers[mod_2][0]
-        area_1 = area_to_divide
-        area_2 = area_to_divide
+        area_1 = deepcopy(area_to_divide)
+        area_2 = deepcopy(area_to_divide)
+        # change x coord
         if max_dist == abs(x_dist):
-            mod_1_area_pos_to_ad, mod_2_area_pos_to_ad, min_border_pos = [1, 0, module_centers[mod_1][0]] if x_dist < 0 else [
-                0, 1, module_centers[mod_2][0]]  # mod 2 x_min anpassen, mod 1 x_max anpassen
+            mod_1_area_pos_to_ad, mod_2_area_pos_to_ad, min_border_pos = [0, 1, module_centers[mod_2][1]] if x_dist < 0 else [
+                1, 0, module_centers[mod_1][1]]  # mod 2 x_min anpassen, mod 1 x_max anpassen
+        # change y coord
         else:
             y_dist = module_centers[mod_1][1] - module_centers[mod_2][1]
-            mod_1_area_pos_to_ad, mod_2_area_pos_to_ad = [
-                3, 2] if y_dist < 0 else [2, 3]
+            mod_1_area_pos_to_ad, mod_2_area_pos_to_ad, min_border_pos = [
+                2, 3, module_centers[mod_2][1]] if y_dist < 0 else [3, 2, module_centers[mod_1][1]]
 
         area_1_best, area_2_best, mods_in_area_1_best, num_nodes_area_2, num_nodes_area_1_best, num_nodes_area_2_best, score_min = [
             [], [], [], [], 0, 0, inf]
-
+        area_1_before = deepcopy(area_to_divide)
         for abst in np.arange(0.01, max_dist - 0.01, 0.01):
-            area_1[mod_1_area_pos_to_ad], area_1[mod_1_area_pos_to_ad] = [
-                min_border_pos + abst]*2
-            mods_in_area_1 = [pos for pos in modules_in_area if pos in self.mod_center_in_area(
-                module_centers[pos], area_1)]
-            num_nodes_area_1 = sum([module_node_number[pos]
-                                    for pos in mods_in_area_1])
+            area_1[mod_1_area_pos_to_ad] = min_border_pos + abst
+            area_2[mod_2_area_pos_to_ad] = min_border_pos + abst
+            mods_in_area_1 = [mod for mod in modules_in_area if self.mod_center_in_area(module_centers[mod], area_1)]
+            if len(mods_in_area_1)==0 or len(mods_in_area_1)==len(modules_in_area):
+                print('area_1 before', area_1_before)
+                print('area1', area_1)
+                print(module_centers[mod_1], module_centers[mod_2])
+                print(mod_pair)
+                print(modules_in_area)
+                print(min_border_pos + abst)
+                print(mod_1_area_pos_to_ad, mod_2_area_pos_to_ad, min_border_pos)
+                for mod in modules_in_area:
+                    print(module_centers[mod])
+                    print(self.mod_center_in_area(module_centers[mod], area_1))
+            num_nodes_area_1 = sum([module_node_number[mod] for mod in mods_in_area_1])
             num_nodes_area_2 = total_sum_nodes_in_area - num_nodes_area_1
             score = abs(self.get_area_size(area_1)*num_nodes_area_1/total_sum_nodes_in_area -
                         self.get_area_size(area_2)*num_nodes_area_2/total_sum_nodes_in_area)
             if score < score_min:
                 score_min = score
                 mods_in_area_1_best = mods_in_area_1
-                mods_in_area_2_best = modules_in_area - mods_in_area_1
+                #print('mods_in_area_1_best', mods_in_area_1_best)
+                mods_in_area_2_best = [mod for mod in modules_in_area if mod not in mods_in_area_1]
+                #print('mods_in_area_2_best', mods_in_area_2_best)
                 area_1_best = area_1
                 area_2_best = area_2
                 num_nodes_area_1_best = num_nodes_area_1
@@ -290,18 +314,18 @@ class Module_layout:
 
         return self.divideSpaceForTwoModules(module_centers, module_node_number, module_ia_x_y_distances, area_1_best, mods_in_area_1_best, num_nodes_area_1_best), self.divideSpaceForTwoModules(module_centers, module_node_number, module_ia_x_y_distances, area_2_best, mods_in_area_2_best, num_nodes_area_2_best)
 
-    def get_area_size(area):
+    def get_area_size(self,area):
         area_size = (area[1]-area[0]) * (area[3]-area[2])
         return area_size
 
-    def get_sorted_list(list_to_sort, sorting_order):
+    def get_sorted_list(self, list_to_sort, sorting_order):
         sorted_list = [element for _, element in sorted(
             zip(sorting_order, list_to_sort))]
         return sorted_list
 
-    def mod_center_in_area(mod_center, area):
+    def mod_center_in_area(self, mod_center, area):
         # area: [x_min, x_max,  y_min, y_max]
-        in_area = True if area[0] <= mod_center[0] <= area[1] and area[2] <= mod_center[1] <= area[3] else False
+        in_area = area[0] <= mod_center[0] <= area[1] and area[2] <= mod_center[1] <= area[3]
         return in_area
 
     def normalize_in_range(self, val, min_val, max_val, val_space):

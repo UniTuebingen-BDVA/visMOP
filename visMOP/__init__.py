@@ -1,7 +1,7 @@
 from flask import Flask, render_template, send_from_directory,request, Response
 from visMOP.python_scripts.networkx_layouting import  get_spring_layout_pos, add_initial_positions, relayout 
 from visMOP.python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty, add_incoming_edges
-from visMOP.python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls,associacte_value_keggID
+from visMOP.python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls, associacte_value_keggID
 from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
 from visMOP.python_scripts.create_overview import get_overview
 from visMOP.python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info
@@ -408,8 +408,9 @@ def kegg_parsing():
     up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
     
     pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles, parsed_pathways)
-    network_overview = generate_networkx_dict(pathway_connection_dict)
-
+    # network_overview = generate_networkx_dict(pathway_connection_dict)
+    # print(pathway_connection_dict)
+    print('-------------------------------------------------------------------------------------------')
     module_layout = Module_layout(data_driven_layout_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic)
     module_node_pos = module_layout.get_final_node_positions()
     # pos_dict = get_spring_layout_pos(network_overview)
