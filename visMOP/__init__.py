@@ -417,11 +417,11 @@ def kegg_parsing():
     # pos_dict = normalize_all_x_y_to_ndc(pos_dict, [-1,1])
     print('-------------------------------------------------------------------------------------------')
     # pd.set_option("display.max_rows", None, "display.max_columns", None)
-    with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data_user, omics_recieved, up_down_reg_means, num_vals_per_omic)
+    #with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data_user, omics_recieved, up_down_reg_means, num_vals_per_omic)
     
     # pre_pos_options
-    z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data_user.index))
-    double_centring_df = double_centring(copy.deepcopy(z_score_df))
+    #z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data_user.index))
+    #double_centring_df = double_centring(copy.deepcopy(z_score_df))
     # network_smooting_df = NetworkSmoothing(nx.Graph(network_overview), copy.deepcopy(with_miss_val_df), None)
     
     # PCA --> without normalization
@@ -431,7 +431,7 @@ def kegg_parsing():
     # _, pos_dict = get_pca_layout_pos(z_score_df)
     
     # PCA --> double centering normalization
-    _, pos_dict = get_pca_layout_pos(double_centring_df)
+    #_, pos_dict = get_pca_layout_pos(double_centring_df)
 
     # PCA --> network smooting
     # _, pos_dict = get_pca_layout_pos(network_smooting_df)
@@ -479,7 +479,7 @@ def kegg_parsing():
     # rot_to_ref = rotate_to_ref(pos_dict_forc_dir, pos_dict)
     # morph_pos = morph_layouts(pos_dict, rot_to_ref, 0.5)
     
-    pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
+    pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
     # pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
 
     """
