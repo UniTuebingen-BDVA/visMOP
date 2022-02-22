@@ -16,11 +16,13 @@ import scipy.stats as stats
 from visMOP.python_scripts.kegg_parsing import generate_networkx_dict
 from random import randint
 from copy import deepcopy
+import time
 
 
 class Module_layout:
 
     def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, drm='umap'):
+        startTime = time.time()
         self.module_nodes_num = []
         print("Calculating module layout...")
         networkx_dict = generate_networkx_dict(graph_dict)
@@ -33,8 +35,9 @@ class Module_layout:
         print("initial node positions calculated")
         self.modules = self.get_cluster()
         print("Clusters identified")
-        self.modules_center = self.get_module_centers()
+        self.modules_center = self.get_module_centers(self.initial_node_pos)
         print("Cluster centers identified")
+        self.module_pair_min_dist = None
         self.relative_distances = self.getRealtiveDistancesBetweenModules(
             self.modules_center)
         self.weights = self.getModulesWeights()
@@ -45,9 +48,32 @@ class Module_layout:
         print("Module sizes identified")
         self.final_node_pos = self.getNodePositions()
         print("final node positions identified")
-        print(self.module_nodes_num)
-        print(self.modules_area)
-        print([self.get_area_size(area) for area in self.modules_area])
+        endTime = time.time()
+        self.get_stats()
+        print("Time for Module Layout calculation {:.3f} s".format((endTime-startTime)))
+
+        
+    
+    def get_stats(self):
+        new_module_center = self.get_module_centers(self.final_node_pos)
+        new_realtiv_dist = self.getRealtiveDistancesBetweenModules(new_module_center)
+        _, distance_similarities = self.evaluateRelativDistanceSimilarity(
+                    self.relative_distances, new_realtiv_dist)
+        final_area_size = [self.get_area_size(area) for area in self.modules_area]
+        total_area = sum(final_area_size)
+        area_nodes_ratio = [area/node_num for area, node_num in zip(final_area_size, self.module_nodes_num)]
+        node_num_ratio = [node_num/len(self.final_node_pos ) for node_num in self.module_nodes_num]
+        area_ratio = [area/total_area for area in final_area_size]
+        ordered_org_rel_dist = [self.relative_distances[k] for k in new_realtiv_dist.keys()]
+        print('old rel dist centers: ', ordered_org_rel_dist)
+        print('new rel dist centers: ', list(new_realtiv_dist.values()))
+        print('rel dis comparison: ', list(distance_similarities.values()))
+        print('num nodes in Module: ', self.module_nodes_num)
+        print('Node Num Ratio: ', node_num_ratio)
+        print('Area Size Ratio: ', area_ratio)
+        print('Area Num Nodes Ratio: ', area_nodes_ratio)
+        print('Areas: ', self.modules_area)
+
 
     # defold values per omic and pos
     def fill_missing_values_with_neighbor_mean(self, graph_dict, recieved_omics, defaul_means, numValsPerOmic):
@@ -129,8 +155,8 @@ class Module_layout:
             weights[module_pair[0], module_pair[1]] = num_edges
         return weights
 
-    def get_module_centers(self):
-        module_centers = [[self.initial_node_pos[pathway]
+    def get_module_centers(self, node_pos):
+        module_centers = [[node_pos[pathway]
                                      for pathway in module] for module in self.modules]
         module_centers = [list(map(list, zip(*module_coords))) for module_coords in module_centers]
         module_centers = [[np.median(module_coords[0]),np.median(module_coords[1])] for module_coords in module_centers]
@@ -144,9 +170,14 @@ class Module_layout:
         '''
         all_distances = {module_pair: distance.cityblock(cur_module_centers[module_pair[0]], cur_module_centers[module_pair[1]])
                          for module_pair in combinations(range(len(self.modules)), 2)}
-        min_distance = min(list(all_distances.values()))
+        if self.module_pair_min_dist is None:
+            self.module_pair_min_dist = max(all_distances, key=all_distances.get)
+
+        min_distance = all_distances[self.module_pair_min_dist]
         relative_distances = {
             m_p: dist/min_distance for m_p, dist in all_distances.items()}
+
+        relative_distances = dict(sorted(relative_distances.items(), key=lambda item: item[1]))
         return relative_distances
 
     def evaluteCostFunction(self, cur_module_centers):
@@ -180,17 +211,17 @@ class Module_layout:
         distance_similarities = {
             m_p: 1 for m_p in combinations(range(len(self.modules)), 2)}
         for maxiteration in range(100):
-            noPossibleLayout = True
-            while noPossibleLayout:
+            print(maxiteration)
+            possibleLayout = False
+            while not possibleLayout:
                 new_module_centers = [self.getNewModuleCenter(
                     module_center, module_number, distance_similarities) for module_number, module_center in enumerate(self.modules_center)]
                 new_rel_distances = self.getRealtiveDistancesBetweenModules(
                     new_module_centers)
-                distance_similarities = self.evaluateRelativDistanceSimilarity(
+                possibleLayout, distance_similarities = self.evaluateRelativDistanceSimilarity(
                     self.relative_distances, new_rel_distances)
-                noPossibleLayout = sum(
-                    list(distance_similarities.values())) == len(new_rel_distances)
             new_C = self.evaluteCostFunction(new_module_centers)
+            new_C *= 0.95
             if new_C < best_C:
                 self.modules_center = new_module_centers
                 best_C = new_C
@@ -207,8 +238,8 @@ class Module_layout:
             # max movement in neg/ pos x direction: m_c[0] - 0.1 / 1-m_c[0] -0.1
             for coord in [0, 1]:
                 move_in_neg_dir = np.random.binomial(1, 0.5) == 1
-                curve_half_width_neg = module_center[coord] - 0.02
-                curve_half_width_pos = 0.98 - module_center[coord]
+                curve_half_width_neg = module_center[coord] 
+                curve_half_width_pos = 1 - module_center[coord]
                 curve_half_width = curve_half_width_neg if (move_in_neg_dir and curve_half_width_neg > 0) or curve_half_width_pos <= 0 else curve_half_width_pos
                 normal_dist_vals = np.random.normal(
                     0, curve_half_width/3, 1001)
@@ -222,9 +253,18 @@ class Module_layout:
         return new_center
 
     def evaluateRelativDistanceSimilarity(self, original_dist, new_dist):
-        distance_similarities = {m_p: (o_d-0.1*o_d) <= n_d <= (o_d+0.1*o_d)
-                                 for (m_p, o_d), n_d in zip(original_dist.items(), new_dist.values())}
-        return distance_similarities
+        #distance_similarities = {m_p: (o_d-0.1) <= n_d <= (o_d+0.1)
+        #                         for (m_p, o_d), n_d in zip(original_dist.items(), new_dist.values())}
+        #distance_similarities = np.array(list(original_dist.keys())) == np.array(list(new_dist.keys()))
+        #distance_similarities = [truth_array[0] and truth_array[1] for truth_array in distance_similarities]
+        org_key_list = list(original_dist.keys())
+        distance_similarities = {mod_pair: new_pos-1 <= org_key_list.index(mod_pair) <= new_pos+1 for new_pos, mod_pair in enumerate(new_dist.keys())}
+        
+        dist_sim_sum = sum(distance_similarities.values())
+        possibleLayout = dist_sim_sum >= len(distance_similarities)*0.8
+        #distance_similarities_dict = {m_p: distance_similarities[pos] for pos, m_p in enumerate(new_dist.keys())}
+
+        return possibleLayout, distance_similarities
 
     def getSizeOfModulesRegion(self):
         '''
