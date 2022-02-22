@@ -66,7 +66,7 @@ class PathwayHierarchy(dict):
                     level += 1
                     next_elem = self[next_elem].parents[0] # [0] is temp fix disregards more than one parent
             v.level = level
-            v.root_name = next_elem
+            v.root_id= next_elem
             if level in self.levels:
                 self.levels[level].append(v.reactome_sID)
             else:
@@ -119,11 +119,11 @@ class PathwayHierarchy(dict):
         for k, v in self.items():
             if not v.is_leaf:
                 leaves = self.get_leaves_target(v.reactome_sID)
-                proteins = {}
-                genes = {}
-                metabolites = {}
-                total_proteins = []
-                total_metabolites = []
+                proteins = v.measured_proteins
+                genes = v.measured_genes
+                metabolites = v.measured_metabolites
+                total_proteins = v.total_proteins
+                total_metabolites = v.total_metabolites
                 for leaf in leaves:
                     proteins = {**proteins, **self[leaf].measured_proteins}
                     genes = {**genes, **self[leaf].measured_genes}
@@ -209,14 +209,16 @@ class PathwayHierarchy(dict):
             v.assert_leaf_root_state()
         self.add_hierarchy_levels()
     
-    def generate_overview_data(self, level):
+    def generate_overview_data(self, level, verbose):
         out_data = {}
         pathway_ids = self.levels[level]
+        pathway_ids.extend(self.levels[0])
         for pathway in pathway_ids:
             entry = self[pathway]
             if entry.has_data:
                 pathway_dict = {'pathway_name': '',
                 'pathway_id': '',
+                'root_id': '',
                 'entries': {
                     'proteomics': {'measured':{}, 'total':0},
                     'transcriptomics': {'measured':{}, 'total':0},
@@ -226,10 +228,11 @@ class PathwayHierarchy(dict):
                 
                 pathway_dict['pathway_name'] = entry.name
                 pathway_dict['pathway_id'] = entry.reactome_sID
+                pathway_dict['root_id'] = entry.root_id
 
-                pathway_dict['entries']['proteomics']['total'] = entry.total_proteins
-                pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins
-                pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites
+                pathway_dict['entries']['proteomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
+                pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
+                pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites if verbose else len(entry.total_metabolites)
 
                 for k, v in entry.measured_proteins.items():
                     name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]

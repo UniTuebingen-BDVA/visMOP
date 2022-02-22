@@ -480,17 +480,17 @@ def reactome_parsing():
     
     reactome_hierarchy.aggregate_pathways()
     cache.set('reactome_hierarchy', reactome_hierarchy)
-    return 0
+    return 'success'
 
 
-@app.route('/reactome_overview', methods=['POST'])
-def reactome_overview():
+@app.route('/reactome_overview/<targetLevel>', methods=['GET'])
+def reactome_overview(targetLevel):
     # TODO sent to frontend
-
-    target_level = request.json['targetLevel']
-    print(reactome_hierarchy.generate_overview_data(target_level))
-
-    return
+    target_level = int(targetLevel)
+    reactome_hierarchy = cache.get('reactome_hierarchy')
+    out_data = reactome_hierarchy.generate_overview_data(target_level, False)
+    print(out_data)
+    return json.dumps(out_data)
 
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)

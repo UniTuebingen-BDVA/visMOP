@@ -7,6 +7,9 @@
       @click="lockHover"
       @input="unlockHover"
     ></v-select>
+    <div v-if="targetDatabase === 'reactome'">
+      <v-text-field :rules="sheetRules" label="Reactome Target Tier" :value="reactomeLevelSelection" v-model="reactomeLevelSelection"></v-text-field>
+    </div>
     <v-select
       :items="targetOrganisms"
       label="Target Organism"
@@ -226,6 +229,7 @@ interface Data{
   targetOrganism: string,
   targetDatabases: { text: string, value: string}[],
   targetDatabase: string,
+  reactomeLevelSelection: number,
   sliderVals: { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
   sheetRules(value: string): boolean | string
 }
@@ -261,6 +265,7 @@ export default Vue.extend({
       { text: 'KEGG', value: 'kegg' }
     ],
     targetDatabase: 'reactome',
+    reactomeLevelSelection: 1,
     sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
     sheetRules: [
       (value: string) => {
@@ -586,9 +591,17 @@ export default Vue.extend({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
-      })
+      }).then(() => this.getReactomeData())
     },
 
+    getReactomeData () {
+      fetch(`/reactome_overview/${this.reactomeLevelSelection}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then((response) => console.log(response.json())).then(() => this.$store.dispatch('setOverlay', false))
+    },
     generateKGMLs () {
       console.log('sliderTest', this.sliderVals)
       this.$store.dispatch('setOverlay', true)
