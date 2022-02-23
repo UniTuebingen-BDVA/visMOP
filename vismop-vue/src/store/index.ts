@@ -7,6 +7,7 @@ Vue.use(Vuex)
 interface State {
   sideBarExpand: boolean
   overviewData: unknown,
+  targetDatabase: string,
   transcriptomicsTableHeaders: unknown,
   transcriptomicsTableData: unknown,
   transcriptomicsData: unknown,
@@ -53,6 +54,7 @@ export default new Vuex.Store({
   state: {
     sideBarExpand: true,
     overviewData: null,
+    targetDatabase: 'reactome',
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
     transcriptomicsData: null,
@@ -94,6 +96,9 @@ export default new Vuex.Store({
     },
     REMOVE_CLICKEDNODE (state, val) {
       state.clickedNodes.splice(val, 1)
+    },
+    SET_TARTGETDATABASE (state, val) {
+      state.targetDatabase = val
     },
     SET_SIDEBAREXPAND (state, val) {
       state.sideBarExpand = val
@@ -239,6 +244,9 @@ export default new Vuex.Store({
         commit('REMOVE_CLICKEDNODE', indexNode)
       }
     },
+    setTargetDatabase ({ commit }, val) {
+      commit('SET_TARTGETDATABASE', val)
+    },
     setKeggIDGeneSymbolDict ({ commit }, val) {
       commit('SET_KEGGIDGENESYMBOLDICT', val)
     },
@@ -337,7 +345,7 @@ export default new Vuex.Store({
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
       commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
     },
-    setPathwayLayouting ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
+    setPathwayLayoutingKegg ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
       const nodePathwayDict: {[key: string]: string[]} = {}
       const pathwayNodeDictClean: {[key: string]: string[]} = {}
       Object.keys(val.pathwayNodeDictionary).forEach(pathwayID => {
@@ -361,6 +369,9 @@ export default new Vuex.Store({
         })
       })
       commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict, pathwayNodeDictionaryClean: pathwayNodeDictClean })
+    },
+    setPathwayLayoutingReactome ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
+      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: val.pathwayNodeDictionary, pathwayNodeDictionaryClean: {} })
     },
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')

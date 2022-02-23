@@ -56,6 +56,18 @@ class ReactomeQuery:
                 pathways.extend(physical_entity['pathways'])
         self.all_contained_pathways = list(set(pathways))
 
+    def get_query_pathway_dict(self):
+        """ generates a dict with k: entryID  v: pathways tuples
+        """
+        query_pathway_dict = {}
+        for k,v in self.query_results.items():
+            pathways = []
+            for entity_k, entity in v.items():
+                pathways.extend(entity['pathways'])
+            query_pathway_dict[k] = list(set(pathways))
+        return query_pathway_dict
+        
+
     def get_levels_of_query(self, hierarchy, level):
         """ gets level of all queried pathway
             probably deprecate

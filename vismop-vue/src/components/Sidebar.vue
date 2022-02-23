@@ -4,6 +4,7 @@
       :items="targetDatabases"
       label="Target Database"
       v-model="targetDatabase"
+      v-on:change="setTargetDatabase"
       @click="lockHover"
       @input="unlockHover"
     ></v-select>
@@ -591,7 +592,14 @@ export default Vue.extend({
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
-      }).then(() => this.getReactomeData())
+      }).then((response) => response.json())
+        .then((dataContent) => {
+          if (dataContent === 1) return 1
+          this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
+          this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
+          this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
+        })
+        .then(() => this.getReactomeData())
     },
 
     getReactomeData () {
@@ -600,7 +608,7 @@ export default Vue.extend({
         headers: {
           'Content-Type': 'application/json'
         }
-      }).then((response) => console.log(response.json())).then(() => this.$store.dispatch('setOverlay', false))
+      }).then((response) => response.json()).then((dataContent) => this.$store.dispatch('setOverviewData', dataContent)).then(() => this.$store.dispatch('setOverlay', false))
     },
     generateKGMLs () {
       console.log('sliderTest', this.sliderVals)
@@ -649,7 +657,7 @@ export default Vue.extend({
           )
           this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
           this.$store.dispatch(
-            'setPathwayLayouting',
+            'setPathwayLayoutingKegg',
             dataContent.pathwayLayouting
           )
         })
@@ -663,6 +671,10 @@ export default Vue.extend({
     },
     unlockHover () {
       this.$store.dispatch('setSideBarExpand', true)
+    },
+    setTargetDatabase () {
+      console.log('TESTESTEST')
+      this.$store.dispatch('setTargetDatabase', this.targetDatabase)
     }
   }
 })

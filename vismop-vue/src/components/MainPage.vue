@@ -172,16 +172,31 @@
             <v-tab-item value="overviewNetwork">
               <v-row>
                 <v-col cols="12">
-                  <keep-alive>
-                    <overview-component
-                      contextID="overviewContext"
-                      :transcriptomicsSelection="transcriptomicsSelectionData"
-                      :proteomicsSelection="proteomicsSelectionData"
-                      :metabolomicsSelection="metabolomicsSelectionData"
-                      :isActive="activeOverview"
-                    >
-                    </overview-component>
-                  </keep-alive>
+                    <div v-if="targetDatabase === 'kegg'">
+                      <keep-alive>
+                          <overview-component
+                          contextID="overviewContext"
+                          :transcriptomicsSelection="transcriptomicsSelectionData"
+                          :proteomicsSelection="proteomicsSelectionData"
+                          :metabolomicsSelection="metabolomicsSelectionData"
+                          :isActive="activeOverview"
+                        >
+                        </overview-component>
+                      </keep-alive>
+                    </div>
+                    <div v-if="targetDatabase === 'reactome'">
+                      <keep-alive>
+                        <overview-component-reactome
+                          contextID="overviewContext"
+                          :transcriptomicsSelection="transcriptomicsSelectionData"
+                          :proteomicsSelection="proteomicsSelectionData"
+                          :metabolomicsSelection="metabolomicsSelectionData"
+                          :isActive="activeOverview"
+                        >
+                        </overview-component-reactome>
+                      </keep-alive>
+                    </div>
+
                 </v-col>
                 </v-row>
                   <keep-alive>
@@ -218,6 +233,7 @@ import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
 import PathwayCompare from './PathwayCompare.vue'
+import OverviewComponentReactome from './OverviewComponentReactome.vue'
 
 interface Data{
   tableSearch: string
@@ -234,7 +250,7 @@ interface Data{
 }
 
 export default Vue.extend({
-  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare },
+  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, OverviewComponentReactome },
   // name of the component
   name: 'MainPage',
 
@@ -255,6 +271,7 @@ export default Vue.extend({
 
   computed: {
     ...mapState({
+      targetDatabase: (state: any) => state.targetDatabase,
       transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
       transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
       proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
@@ -281,6 +298,9 @@ export default Vue.extend({
     }
   },
   watch: {
+    targetDatabase: function () {
+      console.log('TESTEST', this.targetDatabase)
+    },
     pathwayLayouting: function () {
       let transcriptomicsAvailable = 0
       let transcriptomicsTotal = 0
