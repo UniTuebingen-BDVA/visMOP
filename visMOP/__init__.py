@@ -361,6 +361,24 @@ def kegg_parsing():
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
     up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
     omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
+    omics_names = ['transcript', 'proteom', 'metabolom']
+    stat_value_names = ['num values', 'mean exp (high ', '% vals (higher ',
+                                        'mean exp(lower ', '% vals (lower ', '% Reg (', '% Unreg (', "% p with val"]
+    complete_stat_names = []
+    for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
+        if omic_r:
+            for pos, stat in enumerate(stat_value_names):
+                next_col_name = omic + '_' + stat
+                if pos in [1,2]:#
+                    next_col_name += str(limits[1]) + ')'
+                elif pos in [3,4]:#
+                    next_col_name += str(limits[0]) + ')'
+                elif pos in [5,6]:#
+                    next_col_name += str(limits) + ')'
+                complete_stat_names.append(next_col_name)
+    complete_stat_names += ['pathway size']
+    #print(complete_stat_names)
+    
     # user choice 
     use_pathway_size = False
     omic_stats_used = [True, True, True, True, True, True, True, False]
@@ -368,8 +386,9 @@ def kegg_parsing():
     data_col_used = omic_stats_used * num_vals_per_omic + [use_pathway_size]
     # generate dataframe of summary Data for all pathways
     data_driven_layout_data_complete = pd.DataFrame.from_dict({'path:'+pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
+    data_driven_layout_data_complete.columns = complete_stat_names
     data_driven_layout_data_user = data_driven_layout_data_complete.iloc[:, data_col_used]
-    print(data_driven_layout_data_complete.shape,data_driven_layout_data_user.shape)
+    #print(data_driven_layout_data_user.columns)
     pd.set_option("display.max_rows", None, "display.max_columns", None)
 
     # add incoming edges to nodes 

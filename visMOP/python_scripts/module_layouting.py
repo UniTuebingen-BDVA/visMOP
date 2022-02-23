@@ -2,6 +2,7 @@ from cmath import inf
 from pickle import TRUE
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from tables import Col
 from umap import UMAP
 from sklearn.cluster import KMeans
 import pandas as pd
@@ -17,12 +18,14 @@ from visMOP.python_scripts.kegg_parsing import generate_networkx_dict
 from random import randint
 from copy import deepcopy
 import time
+import matplotlib.pyplot as plt
 
 
 class Module_layout:
 
     def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, drm='umap'):
         startTime = time.time()
+        self.kmeans = KMeans(n_clusters=5, random_state=0)
         self.module_nodes_num = []
         print("Calculating module layout...")
         networkx_dict = generate_networkx_dict(graph_dict)
@@ -49,9 +52,9 @@ class Module_layout:
         self.final_node_pos = self.getNodePositions()
         print("final node positions identified")
         endTime = time.time()
-        self.get_stats()
+        #self.get_stats()
+        self.get_stat_plots()
         print("Time for Module Layout calculation {:.3f} s".format((endTime-startTime)))
-
         
     
     def get_stats(self):
@@ -74,6 +77,20 @@ class Module_layout:
         print('Area Num Nodes Ratio: ', area_nodes_ratio)
         print('Areas: ', self.modules_area)
 
+    def get_stat_plots(self):
+        df_imputed = pd.DataFrame(self.data_table_scaled_filled, columns=self.data_table.columns, index=self.data_table.index)
+        num_fig_cols = math.ceil(len(self.modules)/2)
+        print(num_fig_cols)
+        for col in df_imputed.columns:
+            new_file_name = str(col) + '_stats.png'
+            fig, ax  = plt.subplots(nrows=2, ncols= num_fig_cols)
+            fig.suptitle(col)
+            for i, cluster_nodes in enumerate(self.modules):
+                ax[i%2,i//2].hist(df_imputed.loc[cluster_nodes, col].values)
+                ax[i%2,i//2].set_title('Cluster ' + str(i))
+                ax[i%2,i//2].set_ylabel('frequency')
+            plt.savefig(new_file_name)
+            plt.clf()
 
     # defold values per omic and pos
     def fill_missing_values_with_neighbor_mean(self, graph_dict, recieved_omics, defaul_means, numValsPerOmic):
@@ -129,12 +146,12 @@ class Module_layout:
         return norm_vals_dict
 
     def get_cluster(self):
-        kmeans = KMeans(n_clusters=5, random_state=0).fit_predict(
+        kmeans_fit = self.kmeans.fit_predict(
             self.data_table_scaled_filled)
         ordered_nodes = [x for _, x in sorted(
-            zip(kmeans, self.data_table.index))]
+            zip(kmeans_fit, self.data_table.index))]
         nums_in_cl = list(
-            dict(sorted(Counter(kmeans).items())).values())
+            dict(sorted(Counter(kmeans_fit).items())).values())
         split_array = [sum(nums_in_cl[:i+1]) for i, _ in enumerate(nums_in_cl)]
         cl_list = np.split(ordered_nodes, split_array)
         return cl_list[:-1]
