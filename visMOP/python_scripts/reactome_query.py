@@ -37,7 +37,7 @@ class ReactomeQuery:
             pickle_path: path to picle files
 
         """
-        with open(pickle_path / ('{}_{}2reactome.pickle'.format(target_organism, id_database)), 'rb') as handle:
+        with open(pickle_path / ('{}_{}2Reactome.pickle'.format(target_organism, id_database)), 'rb') as handle:
             reactome_data = pickle.load(handle)
             for elem in self.query_data:
                 try:
@@ -66,8 +66,17 @@ class ReactomeQuery:
                 pathways.extend(entity['pathways'])
             query_pathway_dict[k] = list(set(pathways))
         return query_pathway_dict
-        
-
+    
+    def get_measurement_levels(self):
+        """ gets measurement levels of query
+        """
+        fold_changes = []
+        for k,v in self.query_results.items():
+            k2, entry = list(v.items())[0]
+            measurement_val = entry['measurement']
+            fold_changes.append(measurement_val)
+        return fold_changes
+       
     def get_levels_of_query(self, hierarchy, level):
         """ gets level of all queried pathway
             probably deprecate

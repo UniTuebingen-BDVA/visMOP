@@ -20,7 +20,7 @@
 import { mapState } from 'vuex'
 import OverviewGraph from '../core/overviewNetwork'
 import { generateGraphData } from '../core/overviewGraphPreparationReactome'
-import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
+import { generateGlyphData, generateGlyphDataReactome, generateGlyphs } from '../core/overviewGlyph'
 import Vue from 'vue'
 import Sigma from 'sigma'
 
@@ -178,14 +178,14 @@ export default Vue.extend({
     drawNetwork () {
       if (this.networkGraph) { this.networkGraph.killGraph() }
       // const fcExtents = this.fcQuantiles
-      // const glyphData = generateGlyphData(fcExtents)
-      // this.$store.dispatch('setGlyphData', glyphData)
+      const glyphData = generateGlyphDataReactome()
+      this.$store.dispatch('setGlyphData', glyphData)
       // console.log('GLYPH DATA', glyphData)
-      // const generatedGlyphs = generateGlyphs(glyphData)
-      // this.$store.dispatch('setGlyphs', generatedGlyphs)
-      // const glyphsURL = generatedGlyphs.url
-      // console.log('GLYPHs', this.$store.state.glyphs)
-      const networkData = generateGraphData(this.overviewData)
+      const generatedGlyphs = generateGlyphs(glyphData)
+      this.$store.dispatch('setGlyphs', generatedGlyphs)
+      const glyphsURL = generatedGlyphs.url
+      console.log('GLYPHs', this.$store.state.glyphs)
+      const networkData = generateGraphData(this.overviewData, glyphsURL)
       console.log('base dat', networkData)
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }

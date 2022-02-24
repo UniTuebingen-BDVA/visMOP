@@ -345,6 +345,35 @@ export default new Vuex.Store({
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
       commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
     },
+    setFCSReactome ({ commit }, val: {transcriptomics: number[], proteomics: number[], metabolomics: number[]}) {
+      commit('SET_FCS', val)
+      console.log('fcs', val)
+      const fcsTranscriptomicsAsc = val.transcriptomics.sort((a, b) => a - b)
+      const fcsProteomicsAsc = val.proteomics.sort((a, b) => a - b)
+      const fcsMetabolomicsAsc = val.metabolomics.sort((a, b) => a - b)
+
+      // https://stackoverflow.com/a/55297611
+      const quantile = (arr: number[], q: number) => {
+        const pos = (arr.length - 1) * q
+        const base = Math.floor(pos)
+        const rest = pos - base
+        if (arr[base + 1] !== undefined) {
+          return arr[base] + rest * (arr[base + 1] - arr[base])
+        } else {
+          return arr[base]
+        }
+      }
+      const quantTranscriptomics = [quantile(fcsTranscriptomicsAsc, 0.05), quantile(fcsTranscriptomicsAsc, 0.95)]
+      const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
+      const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
+
+      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
+      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0]])
+      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+
+      commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
+      commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
+    },
     setPathwayLayoutingKegg ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
       const nodePathwayDict: {[key: string]: string[]} = {}
       const pathwayNodeDictClean: {[key: string]: string[]} = {}

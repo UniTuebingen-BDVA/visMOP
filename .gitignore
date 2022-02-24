@@ -8,7 +8,8 @@ __pycache__
 /session_cache/*
 *.pickle
 **/diagram/
-
+**.ipynb
+/reactome_testing_files
 # local env files
 .env.local
 .env.*.local

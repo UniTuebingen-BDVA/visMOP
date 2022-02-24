@@ -407,27 +407,18 @@ App route for querying and parsing on reactome data
 """
 @app.route('/reactome_parsing', methods=['POST'])
 def reactome_parsing():
-    overall_entries = {}
-    overall_relations = {}
-    overall_reactions = {}
-    proteomics_symbol_dict = {}
-    symbol_kegg_dict_transcriptomics = {}
     target_db = request.json['targetOrganism']
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
     slider_vals = request.json['sliderVals']
 
-    proteomics_keggIDs = []
-    metabolomics_keggIDs = []
-    transcriptomics_keggIDs = []
-
-    fold_changes = {}
-
     reactome_hierarchy = PathwayHierarchy()
     reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
 
+    node_pathway_dict = {}
+    fold_changes = {'transcriptomics': [], 'proteomics': [], 'metabolomics': []}
     #Handle Proteomics if available
     if proteomics["recieved"]:
         proteomics_query_data_tuples = []
@@ -444,8 +435,10 @@ def reactome_parsing():
           
         # target organism is a little bit annoying at the moment
         tar_organism = 'Mus_musculus'
-        protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'uniprot', data_path / "reactome_data/pickles/")
+        protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'UniProt', data_path / "reactome_data/pickles/")
+        fold_changes['proteomics'] = protein_query.get_measurement_levels()
         # add entries to hierarchy
+        node_pathway_dict = {**node_pathway_dict, **protein_query.get_query_pathway_dict()}
         for query_key, query_result in protein_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
@@ -466,21 +459,61 @@ def reactome_parsing():
             metabolomics_df = metabolomics_df.loc[metabolomics_df.index.isin(df_is_in_range.index) | metabolomics_df.index.isin(df_is_empty.index) ]
         metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_IDs =  list(metabolomics_dict.keys())
-        for elem in metabolomics_IDs:
-            metabolomics_query_data_tuples.append( (ID, metabolomics_dict[elem][metabolomics["value"]]) ) 
+        for ID in metabolomics_IDs:
+            metabolomics_query_data_tuples.append( (ID, metabolomics_dict[ID][metabolomics["value"]]) ) 
 
           
         # target organism is a little bit annoying at the moment
         tar_organism = 'Mus_musculus'
-        protein_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'uniprot', data_path / "reactome_data/pickles/")
+        metabolite_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'ChEBI', data_path / "reactome_data/pickles/")
+        fold_changes['metabolites'] = metabolite_query.get_measurement_levels()
         # add entries to hierarchy
-        for query_key, query_result in protein_query.query_results.items():
+        node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
+
+        for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
-                reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
+                reactome_hierarchy.add_query_data(entity_data, 'metbolite', query_key)
     
+    if transcriptomics["recieved"]:
+        transcriptomics_query_data_tuples = []
+        transcriptomics_df_global = pd.read_json(cache.get('transcriptomics_df_global'),orient='columns')
+        #TODO Duplicates are dropped how to handle these duplicates?!
+        transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
+        for k,v in slider_vals["transcriptomics"].items():
+            is_empty = (v['empties'] & (transcriptomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull())
+            df_numeric = transcriptomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = transcriptomics_df.loc[is_empty]
+        
+            transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]
+
+        #print("DF", transcriptomics_df)
+        transcriptomics_dict = transcriptomics_df.to_dict("index")
+        transcriptomics_IDs =  list(transcriptomics_dict.keys())
+        for ID in transcriptomics_IDs:
+            transcriptomics_query_data_tuples.append( (ID, transcriptomics_dict[ID][transcriptomics["value"]]) ) 
+
+        # target organism is a little bit annoying at the moment
+        tar_organism = 'Mus_musculus'
+        transcriptomics_query = ReactomeQuery(transcriptomics_query_data_tuples, tar_organism, 'Ensembl', data_path / "reactome_data/pickles/")
+        fold_changes['transcriptomics'] = transcriptomics_query.get_measurement_levels()
+        # add entries to hierarchy
+        node_pathway_dict = {**node_pathway_dict, **transcriptomics_query.get_query_pathway_dict()}
+        for query_key, query_result in transcriptomics_query.query_results.items():
+            for entity_id, entity_data in query_result.items():
+                reactome_hierarchy.add_query_data(entity_data, 'gene', query_key)
+
     reactome_hierarchy.aggregate_pathways()
     cache.set('reactome_hierarchy', reactome_hierarchy)
-    return 'success'
+    dropdown_pathways = [] # TODO 
+    out_dat = {
+        "omicsRecieved": {"transcriptomics": transcriptomics["recieved"], "proteomics": proteomics["recieved"], "metabolomics": metabolomics["recieved"]},
+        "pathwayLayouting": {"pathwayList": dropdown_pathways, "pathwayNodeDictionary": node_pathway_dict},
+        "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"], "metabolomics": metabolomics["symbol"]},
+        "fcs": fold_changes
+    }
+    return json.dumps(out_dat)
 
 
 @app.route('/reactome_overview/<targetLevel>', methods=['GET'])
@@ -489,7 +522,7 @@ def reactome_overview(targetLevel):
     target_level = int(targetLevel)
     reactome_hierarchy = cache.get('reactome_hierarchy')
     out_data = reactome_hierarchy.generate_overview_data(target_level, False)
-    print(out_data)
+    
     return json.dumps(out_data)
 
 if __name__ == "__main__":

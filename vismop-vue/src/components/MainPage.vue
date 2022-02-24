@@ -60,12 +60,11 @@
                                 v-model="selectedTranscriptomics"
                                 show-select
                                 fixed-header
-                                hide-default-footer
                                 multi-sort
                                 :headers="transcriptomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="transcriptomicsTableData"
-                                :items-per-page="-1"
+                                :items-per-page="10"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="transcriptomics"
@@ -79,12 +78,11 @@
                                 v-model="selectedProteomics"
                                 show-select
                                 fixed-header
-                                hide-default-footer
                                 multi-sort
                                 :headers="proteomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="proteomicsTableData"
-                                :items-per-page="-1"
+                                :items-per-page="10"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="proteomicsTable"
@@ -98,12 +96,11 @@
                                 v-model="selectedMetabolomics"
                                 show-select
                                 fixed-header
-                                hide-default-footer
                                 multi-sort
                                 :headers="metabolomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="metabolomicsTableData"
-                                :items-per-page="-1"
+                                :items-per-page="10"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="metabolomicsTable"

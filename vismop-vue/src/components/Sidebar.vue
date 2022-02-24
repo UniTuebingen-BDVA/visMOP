@@ -598,6 +598,7 @@ export default Vue.extend({
           this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
           this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
           this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
+          this.$store.dispatch('setFCSReactome', dataContent.fcs)
         })
         .then(() => this.getReactomeData())
     },

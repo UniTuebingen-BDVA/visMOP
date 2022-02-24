@@ -16,7 +16,8 @@ import store from '@/store'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string} }
+  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string} },
+  glyphs: {[key: string]: string}
 ): graphData {
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
@@ -34,14 +35,14 @@ export function generateGraphData (
     const id = entry.pathwayId
     const initPosX = Math.random() * 100
     const initPosY = Math.random() * 100
-    const color = '#FF0000'
+    const color = '#FFFFFF'
     const currentNode = {
       key: id,
       // label: "",
       attributes: {
         entryType: 'temp',
-        type: 'circle',
-        // image: glyphs[entryKey.replace('path:', '')],
+        type: 'image',
+        image: glyphs[id],
         name: _.escape(name),
         color: color,
         label: `Name: ${_.escape(name)}`,

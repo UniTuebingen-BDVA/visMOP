@@ -36,4 +36,5 @@ def generate_pickles(file_path, mapping_file):
             pickle.dump(databse_2_reactome[key], handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
+    # run with path_to_files, filename as args
     generate_pickles(sys.argv[1], sys.argv[2])
