@@ -597,7 +597,6 @@ export default Vue.extend({
           if (dataContent === 1) return 1
           this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
           this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
-          this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
           this.$store.dispatch('setFCSReactome', dataContent.fcs)
         })
         .then(() => this.getReactomeData())
@@ -609,7 +608,11 @@ export default Vue.extend({
         headers: {
           'Content-Type': 'application/json'
         }
-      }).then((response) => response.json()).then((dataContent) => this.$store.dispatch('setOverviewData', dataContent)).then(() => this.$store.dispatch('setOverlay', false))
+      }).then((response) => response.json())
+        .then((dataContent) => {
+          this.$store.dispatch('setOverviewData', dataContent.overviewData)
+          this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
+        }).then(() => this.$store.dispatch('setOverlay', false))
     },
     generateKGMLs () {
       console.log('sliderTest', this.sliderVals)
@@ -674,7 +677,6 @@ export default Vue.extend({
       this.$store.dispatch('setSideBarExpand', true)
     },
     setTargetDatabase () {
-      console.log('TESTESTEST')
       this.$store.dispatch('setTargetDatabase', this.targetDatabase)
     }
   }

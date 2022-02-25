@@ -96,7 +96,7 @@ export default Vue.extend({
       const foundPathways: string[][] = []
       this.transcriptomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.transcriptomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       console.log('foundPathways', foundPathways)
@@ -111,7 +111,7 @@ export default Vue.extend({
       this.proteomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.proteomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
-        if (pathwaysContaining) foundPathways.push(pathwaysContaining)
+        if (pathwaysContaining) foundPathways.push(pathwaysContaining); console.log('foundPathways', pathwaysContaining)
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
@@ -124,7 +124,7 @@ export default Vue.extend({
       const foundPathways: string[][] = []
       this.metabolomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.metabolomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []

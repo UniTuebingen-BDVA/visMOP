@@ -304,9 +304,11 @@ export default Vue.extend({
 
       this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
         transcriptomicsTotal += 1
-        const symbol = row[this.usedSymbolCols.transcriptomics]
-        const keggID = this.transcriptomicsSymbolDict[symbol]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        let symbol = row[this.usedSymbolCols.transcriptomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.transcriptomicsSymbolDict[symbol]
+        }
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
         if (pathwaysContaining) transcriptomicsAvailable += 1
       })
@@ -324,9 +326,11 @@ export default Vue.extend({
 
       this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
         proteomicsTotal += 1
-        const symbol = row[this.usedSymbolCols.proteomics]
-        const keggID = this.proteomicsSymbolDict[symbol]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        let symbol = row[this.usedSymbolCols.proteomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.proteomicsSymbolDict[symbol]
+        }
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
         if (pathwaysContaining) proteomiocsAvailable += 1
       })
@@ -367,17 +371,22 @@ export default Vue.extend({
     },
     pathwayDropdown: function () {
       this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        const symbol = row[this.usedSymbolCols.transcriptomics]
-        const keggID = this.transcriptomicsSymbolDict[symbol]
-        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(keggID) : false
+        let symbol = row[this.usedSymbolCols.transcriptomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.transcriptomicsSymbolDict[symbol]
+        }
+        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(symbol) : false
         row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
       })
       this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
 
       this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        const symbol = row[this.usedSymbolCols.proteomics]
-        const keggID = this.proteomicsSymbolDict[symbol]
-        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(keggID) : false
+
+        let symbol = row[this.usedSymbolCols.proteomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.proteomicsSymbolDict[symbol]
+        }
+        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(symbol) : false
         row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
       })
       this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)

@@ -438,7 +438,7 @@ def reactome_parsing():
         protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'UniProt', data_path / "reactome_data/pickles/")
         fold_changes['proteomics'] = protein_query.get_measurement_levels()
         # add entries to hierarchy
-        node_pathway_dict = {**node_pathway_dict, **protein_query.get_query_pathway_dict()}
+        # node_pathway_dict = {**node_pathway_dict, **protein_query.get_query_pathway_dict()}
         for query_key, query_result in protein_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
@@ -468,7 +468,7 @@ def reactome_parsing():
         metabolite_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'ChEBI', data_path / "reactome_data/pickles/")
         fold_changes['metabolites'] = metabolite_query.get_measurement_levels()
         # add entries to hierarchy
-        node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
+        # node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
 
         for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
@@ -499,7 +499,7 @@ def reactome_parsing():
         transcriptomics_query = ReactomeQuery(transcriptomics_query_data_tuples, tar_organism, 'Ensembl', data_path / "reactome_data/pickles/")
         fold_changes['transcriptomics'] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy
-        node_pathway_dict = {**node_pathway_dict, **transcriptomics_query.get_query_pathway_dict()}
+        # node_pathway_dict = {**node_pathway_dict, **transcriptomics_query.get_query_pathway_dict()}
         for query_key, query_result in transcriptomics_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'gene', query_key)
@@ -509,7 +509,6 @@ def reactome_parsing():
     dropdown_pathways = [] # TODO 
     out_dat = {
         "omicsRecieved": {"transcriptomics": transcriptomics["recieved"], "proteomics": proteomics["recieved"], "metabolomics": metabolomics["recieved"]},
-        "pathwayLayouting": {"pathwayList": dropdown_pathways, "pathwayNodeDictionary": node_pathway_dict},
         "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"], "metabolomics": metabolomics["symbol"]},
         "fcs": fold_changes
     }
@@ -521,9 +520,9 @@ def reactome_overview(targetLevel):
     # TODO sent to frontend
     target_level = int(targetLevel)
     reactome_hierarchy = cache.get('reactome_hierarchy')
-    out_data = reactome_hierarchy.generate_overview_data(target_level, False)
+    out_data, pathway_dict, dropdown_data = reactome_hierarchy.generate_overview_data(target_level, False)
     
-    return json.dumps(out_data)
+    return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict}})
 
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)

@@ -213,6 +213,8 @@ class PathwayHierarchy(dict):
         out_data = []
         pathway_ids = self.levels[level]
         pathway_ids.extend(self.levels[0])
+        query_pathway_dict = {}
+        pathway_dropdown = []
         for pathway in pathway_ids:
             entry = self[pathway]
             if entry.has_data:
@@ -230,6 +232,8 @@ class PathwayHierarchy(dict):
                 pathway_dict['pathwayId'] = entry.reactome_sID
                 pathway_dict['rootId'] = entry.root_id
 
+                pathway_dropdown.append({"text": entry.reactome_sID +" - "+ entry.name, "value" : entry.reactome_sID, "title": entry.name})
+
                 pathway_dict['entries']['proteomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
                 pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
                 pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites if verbose else len(entry.total_metabolites)
@@ -237,14 +241,26 @@ class PathwayHierarchy(dict):
                 for k, v in entry.measured_proteins.items():
                     name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]
                     pathway_dict['entries']['proteomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name}
+                    if k in query_pathway_dict.keys():
+                        query_pathway_dict[k].append(pathway)
+                    else:
+                        query_pathway_dict[k] = [pathway]
                 for k, v in entry.measured_genes.items():
                     name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]
                     pathway_dict['entries']['transcriptomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name}
+                    if k in query_pathway_dict.keys():
+                        query_pathway_dict[k].append(pathway)
+                    else:
+                        query_pathway_dict[k] = [pathway]
                 for k, v in entry.measured_metabolites.items():
                     name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]
                     pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name}
+                    if k in query_pathway_dict.keys():
+                        query_pathway_dict[k].append(pathway)
+                    else:
+                        query_pathway_dict[k] = [pathway]
                 out_data.append( pathway_dict )
-        return out_data
+        return out_data, query_pathway_dict, pathway_dropdown
 
 def format_content_graph_json(json_file):
     intermediate_node_dict = {}

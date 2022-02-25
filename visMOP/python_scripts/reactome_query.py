@@ -57,13 +57,14 @@ class ReactomeQuery:
         self.all_contained_pathways = list(set(pathways))
 
     def get_query_pathway_dict(self):
-        """ generates a dict with k: entryID  v: pathways tuples
+        """ generates a dict with k: entryID  v: pathways tuples (for lowlevel pathways, maybe deprecate)
         """
         query_pathway_dict = {}
         for k,v in self.query_results.items():
             pathways = []
             for entity_k, entity in v.items():
-                pathways.extend(entity['pathways'])
+                pathway_ids = [elem[0] for elem in entity['pathways']]
+                pathways.extend(pathway_ids)
             query_pathway_dict[k] = list(set(pathways))
         return query_pathway_dict
     
