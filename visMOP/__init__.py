@@ -361,7 +361,7 @@ def kegg_parsing():
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
     up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
     omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
-    omics_names = ['transcript', 'proteom', 'metabolom']
+    omics_names = ['t', 'p', 'm']
     stat_value_names = ['num values', 'mean exp (high ', '% vals (higher ',
                                         'mean exp(lower ', '% vals (lower ', '% Reg (', '% Unreg (', "% p with val"]
     complete_stat_names = []
@@ -377,8 +377,8 @@ def kegg_parsing():
                     next_col_name += str(limits) + ')'
                 complete_stat_names.append(next_col_name)
     complete_stat_names += ['pathway size']
-    #print(complete_stat_names)
     
+
     # user choice 
     use_pathway_size = False
     omic_stats_used = [True, True, True, True, True, True, True, False]

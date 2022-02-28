@@ -52,8 +52,8 @@ class Module_layout:
         self.final_node_pos = self.getNodePositions()
         print("final node positions identified")
         endTime = time.time()
-        #self.get_stats()
-        self.get_stat_plots()
+        self.get_stats()
+        #self.get_stat_plots()
         print("Time for Module Layout calculation {:.3f} s".format((endTime-startTime)))
         
     
@@ -377,7 +377,6 @@ class Module_layout:
         return in_area
 
     def normalize_in_range(self, val, min_val, max_val, val_space):
-        print()
         numerator = (val_space[1]-val_space[0]) * (val-min_val)
         devisor = max_val - min_val
         if devisor == 0:
@@ -420,7 +419,6 @@ class Module_layout:
 
 
 ''' OLD '''
-
 
 def getSizeOfModulesRegion_old(self):
     '''
