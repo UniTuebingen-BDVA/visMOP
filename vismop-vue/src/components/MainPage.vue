@@ -381,7 +381,6 @@ export default Vue.extend({
       this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
 
       this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
-
         let symbol = row[this.usedSymbolCols.proteomics]
         if (this.targetDatabase === 'kegg') {
           symbol = this.proteomicsSymbolDict[symbol]

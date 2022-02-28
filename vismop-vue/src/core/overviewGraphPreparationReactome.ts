@@ -16,8 +16,9 @@ import store from '@/store'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string} },
-  glyphs: {[key: string]: string}
+  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string, maplinks: string[], subtreeIds: string[]} },
+  glyphs: {[key: string]: string},
+  rootIds: string[]
 ): graphData {
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
@@ -54,10 +55,27 @@ export function generateGraphData (
       } as baseNodeAttr
     } as node
     graph.nodes.push(currentNode)
-    const currentEdge = generateForceGraphEdge(entry.rootId, entry.pathwayId)
+    const currentEdge = generateForceGraphEdge(entry.rootId, entry.pathwayId, 'hierarchical')
     if ((!addedEdges.includes(currentEdge.key)) && (!addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`))) {
       graph.edges.push(currentEdge)
       addedEdges.push(currentEdge.key)
+    }
+    console.log(rootIds)
+    for (const maplink of entry.maplinks) {
+      if (!rootIds.includes(entry.pathwayId)) {
+        for (const entryKey in nodeList) {
+          const loopEntry = nodeList[entryKey]
+          if (!rootIds.includes(loopEntry.pathwayId)) {
+            if (loopEntry.subtreeIds.includes(maplink)) {
+              const currentEdge = generateForceGraphEdge(entry.pathwayId, loopEntry.pathwayId, 'maplink')
+              if ((!addedEdges.includes(currentEdge.key)) && (!addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`))) {
+                graph.edges.push(currentEdge)
+                addedEdges.push(currentEdge.key)
+              }
+            }
+          }
+        }
+      }
     }
   }
   return graph
@@ -68,24 +86,24 @@ export function generateGraphData (
  * @param {relation} relation object
  * @returns {edge}, edge object
  */
-function generateForceGraphEdge (sourceID: string, targetID: string): edge {
+function generateForceGraphEdge (sourceID: string, targetID: string, type: string): edge {
   const fadeGray = 'rgba(30,30,30,0.2)'
 
   const edgeColors: { [key: string]: string } = {
-    maplink: '#999999',
-    maplinkOnceRemoved: '#FF0000'
+    hierarchy: '#999999',
+    maplink: '#FF0000'
   }
 
   const entry1 = sourceID
   const entry2 = targetID
   const edge = {
-    key: `${sourceID}_to_${targetID}`,
+    key: `${sourceID}+${targetID}`,
     source: entry1,
     target: entry2,
     undirected: true,
     attributes: {
       zIndex: 0,
-      color: edgeColors.maplink
+      color: type === 'maplink' ? edgeColors.maplink : edgeColors.hierarchy
     } as baseEdgeAttr
   } as edge
   return edge

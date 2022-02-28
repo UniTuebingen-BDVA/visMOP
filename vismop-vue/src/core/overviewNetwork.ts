@@ -1,5 +1,6 @@
 import { UndirectedGraph } from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
+import noverlap from 'graphology-layout-noverlap'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
@@ -119,6 +120,7 @@ export default class overviewGraph {
     // To directly assign the positions to the nodes:
     const start = Date.now()
     forceAtlas2.assign(graph, { iterations: 500, settings: inferredSettings })
+    noverlap.assign(graph)
     const duration = (Date.now() - start) / 1000
     console.log(`layoutDuration: ${duration} S`)
     // const layout = new FA2Layout(graph, {settings: sensibleSettings });

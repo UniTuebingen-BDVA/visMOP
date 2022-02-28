@@ -520,9 +520,9 @@ def reactome_overview(targetLevel):
     # TODO sent to frontend
     target_level = int(targetLevel)
     reactome_hierarchy = cache.get('reactome_hierarchy')
-    out_data, pathway_dict, dropdown_data = reactome_hierarchy.generate_overview_data(target_level, False)
+    out_data, pathway_dict, dropdown_data, root_ids = reactome_hierarchy.generate_overview_data(target_level, False)
     
-    return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict}})
+    return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)

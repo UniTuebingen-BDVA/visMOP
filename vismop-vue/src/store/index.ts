@@ -41,7 +41,7 @@ interface State {
   fcQuantiles: {transcriptomics: [number, number], proteomics: [number, number], metabolomics: [number, number]},
   fcScales: {transcriptomics: d3.ScaleSequential<string, never>, proteomics: d3.ScaleSequential<string, never>, metabolomics: d3.ScaleSequential<string, never>}
   interactionGraphData: unknown,
-  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]} },
+  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]}, rootIds: string[] },
   pathwayDropdown: string,
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
@@ -80,7 +80,8 @@ export default new Vuex.Store({
       pathwayList: [{ text: 'empty', value: 'empty' }],
       pathwayNodeDictionary: { },
       nodePathwayDictionary: { },
-      pathwayNodeDictionaryClean: { }
+      pathwayNodeDictionaryClean: { },
+      rootIds: []
     },
     pathwayDropdown: '',
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },

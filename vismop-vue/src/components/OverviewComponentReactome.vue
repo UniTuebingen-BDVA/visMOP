@@ -185,7 +185,7 @@ export default Vue.extend({
       this.$store.dispatch('setGlyphs', generatedGlyphs)
       const glyphsURL = generatedGlyphs.url
       console.log('GLYPHs', this.$store.state.glyphs)
-      const networkData = generateGraphData(this.overviewData, glyphsURL)
+      const networkData = generateGraphData(this.overviewData, glyphsURL, this.pathwayLayouting.rootIds)
       console.log('base dat', networkData)
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }

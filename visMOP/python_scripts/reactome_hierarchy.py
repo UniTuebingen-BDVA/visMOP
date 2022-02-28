@@ -18,12 +18,14 @@ class ReactomePathway:
         self.json_file = None
         self.graph_json_file = None
         self.reactome_sID= reactome_sID
-        self.children= []
+        self.children = []
+        self.subtree_ids = []
         self.measured_proteins = {}
         self.measured_genes = {}
         self.measured_metabolites = {}
         self.total_proteins = []
         self.total_metabolites = []
+        self.maplinks = []
         self.parents= []
         self.level = -1
         self.root_id = ''
@@ -104,9 +106,10 @@ class PathwayHierarchy(dict):
                     json_file = json.load(fh)
                     json_file['nodes'] = format_content_graph_json(json_file)
                     entry.graph_json_file = json_file
-                    prot, molec = get_contained_entities_graph_json(entry.graph_json_file)
+                    prot, molec, contained_maplinks = get_contained_entities_graph_json(entry.graph_json_file)
                     entry.total_proteins = prot
                     entry.total_metabolites = molec
+                    entry.maplinks = contained_maplinks
             except Exception as e:
                 #print('Exception', e)
                 pass
@@ -118,44 +121,51 @@ class PathwayHierarchy(dict):
         """
         for k, v in self.items():
             if not v.is_leaf:
-                leaves = self.get_leaves_target(v.reactome_sID)
+                subtree = self.get_subtree_target(v.reactome_sID)
                 proteins = v.measured_proteins
                 genes = v.measured_genes
                 metabolites = v.measured_metabolites
                 total_proteins = v.total_proteins
                 total_metabolites = v.total_metabolites
-                for leaf in leaves:
-                    proteins = {**proteins, **self[leaf].measured_proteins}
-                    genes = {**genes, **self[leaf].measured_genes}
-                    metabolite = {**metabolites, **self[leaf].measured_metabolites}
-                    total_proteins.extend(self[leaf].total_proteins)
-                    total_metabolites.extend(self[leaf].total_metabolites)
+                maplinks = v.maplinks
+                subtree_ids = subtree
+                subtree_ids.append(v.reactome_sID)
+                for node in subtree:
+                    proteins = {**proteins, **self[node].measured_proteins}
+                    genes = {**genes, **self[node].measured_genes}
+                    metabolite = {**metabolites, **self[node].measured_metabolites}
+                    total_proteins.extend(self[node].total_proteins)
+                    total_metabolites.extend(self[node].total_metabolites)
+                    maplinks.extend(self[node].maplinks)
                 v.measured_proteins = proteins
                 v.measured_genes = genes
                 v.measured_metabolites = metabolites
                 v.total_proteins = list(set(total_proteins))
                 v.total_metabolites = list(set(total_metabolites))
+                v.maplinks = list(set(maplinks))
+                v.subtree_ids = subtree_ids
             if ((len(v.measured_proteins) > 0) or (len(v.measured_genes) > 0) or (len(v.measured_metabolites) > 0)):
                 v.has_data = True
 
-    def get_leaves_target(self, tar_id):
+    def get_subtree_target(self, tar_id):
         """ Gets all leaves found for target entry
 
         Args:
             tar_id: String: entry id for which to retrieve leafes
         """
-        leaves = []
-        self._leaf_recursive(tar_id,leaves)
-        return leaves
+        subtree = []
+        self._subtree_recursive(tar_id,subtree)
+        return subtree
 
-    def _leaf_recursive(self, entry_id, leaves):
+    def _subtree_recursive(self, entry_id, subtree):
         """ Recursive function for leaf retrieval
         """
         if entry_id is not None:
             if len(self[entry_id].children) == 0:
-                leaves.append(entry_id)
+                pass#leaves.append(entry_id)
             for elem in self[entry_id].children:
-                self._leaf_recursive(elem, leaves)
+                self._subtree_recursive(elem, subtree)
+            subtree.append(entry_id)
 
     def add_query_data(self, entity_data, query_type, query_key):
         """ Adds query data (i.e. experimental omics data, to hierarchy structure) 
@@ -215,12 +225,15 @@ class PathwayHierarchy(dict):
         pathway_ids.extend(self.levels[0])
         query_pathway_dict = {}
         pathway_dropdown = []
+        root_ids = []
         for pathway in pathway_ids:
             entry = self[pathway]
             if entry.has_data:
                 pathway_dict = {'pathwayName': '',
                 'pathwayId': '',
                 'rootId': '',
+                'maplinks': [],
+                'subtreeIds': [],
                 'entries': {
                     'proteomics': {'measured':{}, 'total':0},
                     'transcriptomics': {'measured':{}, 'total':0},
@@ -231,7 +244,9 @@ class PathwayHierarchy(dict):
                 pathway_dict['pathwayName'] = entry.name
                 pathway_dict['pathwayId'] = entry.reactome_sID
                 pathway_dict['rootId'] = entry.root_id
-
+                root_ids.append(entry.root_id)
+                pathway_dict['maplinks'] = entry.maplinks
+                pathway_dict['subtreeIds'] = entry.subtree_ids
                 pathway_dropdown.append({"text": entry.reactome_sID +" - "+ entry.name, "value" : entry.reactome_sID, "title": entry.name})
 
                 pathway_dict['entries']['proteomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
@@ -260,7 +275,7 @@ class PathwayHierarchy(dict):
                     else:
                         query_pathway_dict[k] = [pathway]
                 out_data.append( pathway_dict )
-        return out_data, query_pathway_dict, pathway_dropdown
+        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids))
 
 def format_content_graph_json(json_file):
     intermediate_node_dict = {}
@@ -271,6 +286,7 @@ def format_content_graph_json(json_file):
 def get_contained_entities_graph_json(formatted_json):
     contained_proteins = []
     contained_molecules = []
+    contained_maplinks = []
 
     leaves_total = []
     for k in formatted_json['nodes'].keys():
@@ -283,10 +299,10 @@ def get_contained_entities_graph_json(formatted_json):
         if entry['schemaClass'] == 'EntityWithAccessionedSequence':
             contained_proteins.append(leaf)
         elif entry['schemaClass'] == 'Pathway':
-            pass # TODO
+            contained_maplinks.append(entry['stId'])
         else:
             contained_molecules.append(leaf)
-    return contained_proteins, contained_molecules
+    return contained_proteins, contained_molecules, contained_maplinks
 
 def get_leaves_graph_json(intermediate_node_dict, entry_id):
         leaves = []
