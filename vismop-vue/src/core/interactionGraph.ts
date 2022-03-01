@@ -88,11 +88,12 @@ export function generateInteractionGraph (elemID: string, nodeLink: networkxNode
   const graphData = generateInteractionGraphData(nodeLink)
   const elem = document.getElementById(elemID) as HTMLElement
   const graph = MultiGraph.from(graphData)
-  random.assign(graph)
+  // random.assign(graph)
   console.log('NODES', graph.nodes())
-  const inferredSettings = forceAtlas2.inferSettings(graph)
+  // const positions = noverlap(graph, {maxIterations: 50})
+  // const inferredSettings = forceAtlas2.inferSettings(graph)
   const start = Date.now()
-  forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings })
+  // forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings })
   const duration = (Date.now() - start) / 1000
   const renderer = new Sigma(graph, elem, {
     zIndex: true,

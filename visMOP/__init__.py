@@ -19,6 +19,7 @@ import networkx as nx
 import copy
 from numpy.core.fromnumeric import mean
 import time
+import pickle
 
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
 
@@ -432,6 +433,12 @@ def kegg_parsing():
     print('-------------------------------------------------------------------------------------------')
     module_layout = Module_layout(data_driven_layout_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic)
     module_node_pos = module_layout.get_final_node_positions()
+    
+    #with open('modul_layout.pkl', "rb") as f:
+    #    module_node_pos = pickle.load(f)
+    #a_file = open("modul_layout.pkl", "wb")
+    #pickle.dump(module_node_pos, a_file)
+    #a_file.close()
     # pos_dict = get_spring_layout_pos(network_overview)
     # pos_dict = normalize_all_x_y_to_ndc(pos_dict, [-1,1])
     print('-------------------------------------------------------------------------------------------')
@@ -474,9 +481,7 @@ def kegg_parsing():
     # with open('force_dir.pkl', "rb") as f:
     #     pos_dict_forc_dir = pickle.load(f)
 
-    # a_file = open("zs_umap.pkl", "wb")
-    # pickle.dump(pos_dict, a_file)
-    # a_file.close()
+    
 
     
     

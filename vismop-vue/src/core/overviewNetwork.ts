@@ -7,6 +7,7 @@ import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import store from '@/store'
 import { DEFAULT_SETTINGS } from 'sigma/settings'
+import noverlap from 'graphology-layout-noverlap'
 
 export default class overviewGraph {
   private currentPathway = '';
@@ -32,6 +33,7 @@ export default class overviewGraph {
     const elem = document.getElementById(elemID) as HTMLElement
     const graph = MultiGraph.from(graphData)
     // console.log('NODES', graph.nodes())
+    // noverlap.assign(graph)
 
     // const inferredSettings = forceAtlas2.inferSettings(graph)
 
@@ -113,7 +115,7 @@ export default class overviewGraph {
     renderer.on('clickNode', ({ node, event }) => {
       console.log('clicking Node: ', node)
       console.log('clicking event', event)
-      if (event.ctrlKey) store.dispatch('selectPathwayCompare', node)
+      if (event.original.ctrlKey) store.dispatch('selectPathwayCompare', node)
       else store.dispatch('focusPathwayViaOverview', node)
     })
 
