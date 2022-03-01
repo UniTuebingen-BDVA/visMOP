@@ -7,6 +7,7 @@ Vue.use(Vuex)
 interface State {
   sideBarExpand: boolean
   overviewData: unknown,
+  targetDatabase: string,
   transcriptomicsTableHeaders: unknown,
   transcriptomicsTableData: unknown,
   transcriptomicsData: unknown,
@@ -40,7 +41,7 @@ interface State {
   fcQuantiles: {transcriptomics: [number, number], proteomics: [number, number], metabolomics: [number, number]},
   fcScales: {transcriptomics: d3.ScaleSequential<string, never>, proteomics: d3.ScaleSequential<string, never>, metabolomics: d3.ScaleSequential<string, never>}
   interactionGraphData: unknown,
-  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]} },
+  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]}, rootIds: string[] },
   pathwayDropdown: string,
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
@@ -53,6 +54,7 @@ export default new Vuex.Store({
   state: {
     sideBarExpand: true,
     overviewData: null,
+    targetDatabase: 'reactome',
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
     transcriptomicsData: null,
@@ -78,7 +80,8 @@ export default new Vuex.Store({
       pathwayList: [{ text: 'empty', value: 'empty' }],
       pathwayNodeDictionary: { },
       nodePathwayDictionary: { },
-      pathwayNodeDictionaryClean: { }
+      pathwayNodeDictionaryClean: { },
+      rootIds: []
     },
     pathwayDropdown: '',
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
@@ -94,6 +97,9 @@ export default new Vuex.Store({
     },
     REMOVE_CLICKEDNODE (state, val) {
       state.clickedNodes.splice(val, 1)
+    },
+    SET_TARTGETDATABASE (state, val) {
+      state.targetDatabase = val
     },
     SET_SIDEBAREXPAND (state, val) {
       state.sideBarExpand = val
@@ -239,6 +245,9 @@ export default new Vuex.Store({
         commit('REMOVE_CLICKEDNODE', indexNode)
       }
     },
+    setTargetDatabase ({ commit }, val) {
+      commit('SET_TARTGETDATABASE', val)
+    },
     setKeggIDGeneSymbolDict ({ commit }, val) {
       commit('SET_KEGGIDGENESYMBOLDICT', val)
     },
@@ -337,7 +346,36 @@ export default new Vuex.Store({
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
       commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
     },
-    setPathwayLayouting ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
+    setFCSReactome ({ commit }, val: {transcriptomics: number[], proteomics: number[], metabolomics: number[]}) {
+      commit('SET_FCS', val)
+      console.log('fcs', val)
+      const fcsTranscriptomicsAsc = val.transcriptomics.sort((a, b) => a - b)
+      const fcsProteomicsAsc = val.proteomics.sort((a, b) => a - b)
+      const fcsMetabolomicsAsc = val.metabolomics.sort((a, b) => a - b)
+
+      // https://stackoverflow.com/a/55297611
+      const quantile = (arr: number[], q: number) => {
+        const pos = (arr.length - 1) * q
+        const base = Math.floor(pos)
+        const rest = pos - base
+        if (arr[base + 1] !== undefined) {
+          return arr[base] + rest * (arr[base + 1] - arr[base])
+        } else {
+          return arr[base]
+        }
+      }
+      const quantTranscriptomics = [quantile(fcsTranscriptomicsAsc, 0.05), quantile(fcsTranscriptomicsAsc, 0.95)]
+      const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
+      const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
+
+      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
+      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0]])
+      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+
+      commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
+      commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
+    },
+    setPathwayLayoutingKegg ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
       const nodePathwayDict: {[key: string]: string[]} = {}
       const pathwayNodeDictClean: {[key: string]: string[]} = {}
       Object.keys(val.pathwayNodeDictionary).forEach(pathwayID => {
@@ -362,6 +400,9 @@ export default new Vuex.Store({
       })
       commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict, pathwayNodeDictionaryClean: pathwayNodeDictClean })
     },
+    setPathwayLayoutingReactome ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
+      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: val.pathwayNodeDictionary, pathwayNodeDictionaryClean: {} })
+    },
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')
       commit('SET_PATHWAYDROPDOWN', valClean)
@@ -369,9 +410,11 @@ export default new Vuex.Store({
     focusPathwayViaDropdown ({ commit }, val) {
       commit('SET_PATHWAYDROPDOWN', val)
     },
-    selectPathwayCompare ({ commit, state }, val) {
-      const valClean = val.replace('path:', '')
-      if (!state.pathwayCompare.includes(valClean)) commit('APPEND_PATHWAYCOMPARE', valClean)
+    selectPathwayCompare ({ commit, state }, val: string[]) {
+      val.forEach(element => {
+        const valClean = element.replace('path:', '')
+        if (!state.pathwayCompare.includes(valClean)) commit('APPEND_PATHWAYCOMPARE', valClean)
+      })
     },
     removePathwayCompare ({ commit, state }, val) {
       const idx = state.pathwayCompare.indexOf(val)

@@ -20,7 +20,6 @@ export default class pathwayGraph {
   constructor (graphData: graphData, containerID: string, initialPathway: string, initialNodeIds: string[]) {
     this.canvasContainer = document.getElementById(containerID) as HTMLElement
     this.completeGraphModel = MultiGraph.from(graphData)
-    console.log('detail data', graphData)
     this.currentGraphModel = this.layoutToPathway(initialPathway, initialNodeIds)
     this.currentSigma = this.drawCurrentGraph()
   }

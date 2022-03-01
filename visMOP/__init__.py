@@ -6,6 +6,10 @@ from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries,
 from visMOP.python_scripts.create_overview import get_overview
 from visMOP.python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info
 from visMOP.python_scripts.interaction_graph import StringGraph
+from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
+from visMOP.python_scripts.reactome_query import ReactomeQuery
+
+
 import pandas as pd
 import pathlib
 import os
@@ -21,23 +25,37 @@ from numpy.core.fromnumeric import mean
 import time
 import pickle
 
+import numbers
+import secrets
+from flask_caching import Cache
 app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
-
-
-# global data
-transcriptomics_df_global = None
-
-prot_table_global = None
-prot_dict_global = None
-
-metabolomics_df_global = None
-
-stringGraph = None
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()
-
 #data_path = pathlib.Path("/var/www/vismop")
+
+app.config.from_mapping(
+    # this causes random key on each start, so a server restart will invaldiate sessions
+    SECRET_KEY=secrets.token_hex(),
+
+    # ONLY FOR DEV CHANGE TO NEW KEY WHEN DEPLOYING
+    #SECRET_KEY = 'a3759c42d7a3317735ac032895d8abda630d2017f798a052c7e86f1c6eea3cc9',
+    # !!!!!!
+
+    CACHE_TYPE='FileSystemCache',
+    CACHE_DIR=data_path/'session_cache',
+    CACHE_DEFAULT_TIMEOUT= 300
+)
+cache = Cache(app)
+
+# build stringraph, once
+stringGraph = None
+try:
+    script_dir = data_path
+    dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
+    stringGraph = StringGraph(dest_dir)
+except:
+    print("Stringraph Error")
 
 """
 Default app routes for index and favicon
@@ -55,18 +73,14 @@ transcriptomics table recieve
 """
 @app.route('/transcriptomics_table', methods=['POST'])
 def transcriptomics_table_recieve():
-    
-    # make variable available globally TODO evaluate if there is a better alternative (maybe a class?)
-    global transcriptomics_df_global
     print("table recieve triggered")
     
     # recieve data-blob
     transfer_dat = request.files['dataTable']
     sheet_no = int(request.form['sheetNumber'])
-    
     #create and parse data table and prepare json
     data_table = create_df(transfer_dat, sheet_no)
-    transcriptomics_df_global = data_table.copy(deep=True)
+    cache.set('transcriptomics_df_global', data_table.copy(deep=True).to_json(orient="columns"))
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
     out_data =  {}
@@ -85,17 +99,15 @@ protein recieve
 """
 @app.route('/proteomics_table', methods=['POST'])
 def prot_table_recieve():
-    # make table available globally
-    global prot_table_global
-
+  
     # aquire table data-blob
     transfer_dat = request.files['dataTable']
     sheet_no = int(request.form['sheetNumber'])
+    print("sheet no", sheet_no)
 
-    
     # parse data table and prepare json
     prot_data = create_df(transfer_dat, sheet_no)
-    prot_table_global = prot_data.copy(deep=True)
+    cache.set('prot_table_global', prot_data.copy(deep=True).to_json(orient="columns"))
     prot_table_json = prot_data.to_json(orient="columns")
     entry_IDs = list(prot_data.iloc[:, 0])
     out_data = {}
@@ -103,8 +115,6 @@ def prot_table_recieve():
     out_data["header"] = generate_vue_table_header(prot_data)
     out_data["entries"] = generate_vue_table_entries(prot_data)
     out_data["data"] = prot_table_json
-   
-    
 
     return json.dumps(out_data)
 
@@ -115,16 +125,13 @@ metabolomics table recieve
 def metabolomics_table_recieve():
     print("table recieve triggered")
 
-    # make dataframe available globally
-    global metabolomics_df_global
-
     # recieve table data-blob
     transfer_dat = request.files['dataTable']
     sheet_no = int(request.form['sheetNumber'])
     
     # parse and create dataframe and prepare json
     data_table = create_df(transfer_dat, sheet_no)
-    metabolomics_df_global = data_table.copy(deep=True)
+    cache.set('metabolomics_df_global', data_table.copy(deep=True).to_json(orient="columns"))
     table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
     out_data =  {}
@@ -142,31 +149,25 @@ def metabolomics_table_recieve():
 def interaction_graph():
     # make variables available globally
     global stringGraph
-    global prot_dict_global # keggID --> Uniprot data
-
-    # clear existing graphs, if function is called again!!
-    stringGraph.clear_ego_graphs()
+    #global prot_dict_global # keggID --> Uniprot data
+    prot_dict_global = json.loads(cache.get('prot_dict_global'))
 
     # get node IDs and confidence threshold from request
     node_IDs = request.json['nodes']
     confidence_threshold = request.json['threshold']
 
-    # check if graph confidence needs updating
-    if confidence_threshold != stringGraph.current_confidence:
-        stringGraph.filter_by_confidence(confidence_threshold)
+    # get name Mapping
+    stringID_to_name = {v["string_id"]:v["Gene Symbol"][0] for k,v in prot_dict_global.items()}
 
     # get string IDs from the transferred keggIDs of selected proteins/nodes
-    string_ID = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
+    string_IDs = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
     
-    # generate a ego graph for each node
-    for idx, node in enumerate(string_ID):
-        stringGraph.query_ego_graph(node, idx, 1)
     # generate json data of merged ego graphs
-    return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph()})
+    return json.dumps({"interaction_graph": stringGraph.get_merged_egoGraph(string_IDs,1,stringID_to_name,confidence_threshold)})
 
 def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
-    global prot_table_global
+    prot_table_global = pd.read_json(cache.get('prot_table_global'), orient="columns")
     prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
     for k,v in filter_obj.items():
         is_empty = (v['empties'] & (prot_table_global[k] == 'None'))
@@ -183,16 +184,10 @@ def uniprot_access(colname, filter_obj):
     # add location to table
     prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
     
-    # make dict availbe globally and update it
-    global prot_dict_global
-    prot_dict_global= protein_dict
-
-    # make string graph available globally and set a translation dict: k: stringID, v: GeneSymbol
-    global stringGraph
-    stringID_to_name = {v["string_id"]:v["Gene Symbol"][0] for k,v in prot_dict_global.items()}
-    stringID_to_keggID = {v["keggID"]:v["string_id"] for k,v in prot_dict_global.items()}
-    # stringGraph.set_string_name_dict(stringID_to_name)
-    return stringID_to_keggID
+    # set cache for structures
+    cache.set('prot_dict_global', json.dumps(protein_dict))
+    cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
+  
     
 
 
@@ -201,16 +196,13 @@ App route for querying and parsing kegg files
 """
 @app.route('/kegg_parsing', methods=['POST'])
 def kegg_parsing():
-    globalStartTime = time.time()
-    global metabolomics_df_global
-    global stringGraph
 
     overall_entries = {}
     overall_relations = {}
     overall_reactions = {}
     proteomics_symbol_dict = {}
     symbol_kegg_dict_transcriptomics = {}
-    mouse_db = "mmu"
+    target_db = request.json['targetOrganism']
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
@@ -229,16 +221,18 @@ def kegg_parsing():
     #Handle Proteomics if available
     if proteomics["recieved"]:
         try:
-            script_dir = data_path
-            dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.5.txt.gz'# '10090.protein.links.v11.0.txt'
-            stringGraph = StringGraph(dest_dir)
             uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
+            prot_dict_global = json.loads(cache.get('prot_dict_global'))
+
             # ID being a Uniprot ID
             for ID in prot_dict_global:
                 entry = prot_dict_global[ID]
-                proteomics_symbol_dict[ID] = entry["keggID"]
-                proteomics_keggIDs.append(entry["keggID"])
-                fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
+                try:
+                    proteomics_symbol_dict[ID] = entry["keggID"]
+                    proteomics_keggIDs.append(entry["keggID"])
+                    fold_changes[entry["keggID"]] = {"transcriptomics": "NA", "proteomics": entry[proteomics["value"]], "metabolomics": "NA",}
+                except:
+                    print('ID not added to fold chances or keggIDs: ', ID)
 
         except FileNotFoundError:
             print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
@@ -252,9 +246,11 @@ def kegg_parsing():
           
             # build protein interaction graph from string file
     
+    globalStartTime = time.time()
 
     # Handle Metabolomics if available
     if metabolomics["recieved"]:
+        metabolomics_df_global = pd.read_json(cache.get('metabolomics_df_global'),orient='columns')
         metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
         for k,v in slider_vals["metabolomics"].items():
             is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
@@ -276,6 +272,7 @@ def kegg_parsing():
 
     #Handle Transcriptomics
     if transcriptomics["recieved"]:
+        transcriptomics_df_global = pd.read_json(cache.get('transcriptomics_df_global'),orient='columns')
         #TODO Duplicates are dropped how to handle these duplicates?!
         transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
         for k,v in slider_vals["transcriptomics"].items():
@@ -287,18 +284,14 @@ def kegg_parsing():
         
             transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]
 
-        print("DF", transcriptomics_df)
+        #print("DF", transcriptomics_df)
         transcriptomics_dict = transcriptomics_df.to_dict("index")
         
         gene_symbols_transcriptomics=transcriptomics_dict.keys()
         #TODO blacklist system to handle unanswered queries
         unwanted_temporary = {"Gm10972","Gm2399","Gm5819","Gm7969","LOC636187","AC004946.2","AP005901.1","AC079779.1","FP325318.1","LINC00540","THCAT155","AC132825.3","AL138889.3","AL023807.1","AC092957.1","LINC02842","AC024337.2","LINC01331","GAGE12B","NBPF5P","LINC00536","AC019270.1","AC092640.1","LINC02470","OR4K13","AL512605.1","AC113418.1","AL359851.1","RPL22P12","OR10G4","AC124804.1","AP005901.5","LINC02717","LINC00906","LINC01727","C10orf105","AC024270.4","AC008083.3","AC104118.1","RPL37P2","ACTG1P15","SEPHS1P1","AL512328.1","RRAS2P1","ARMS2","NPHP3-AS1","AC011595.2","AC022211.1","RPL26P6","SPRR2G","GGTLC4P","AL844908.1","AC025040.2","AC093458.2","AC104024.4","LINC02016","AC090772.3","AC107081.3","AC013724.1","RPS19P3","RPS7P3","AP001432.1","AC069213.3","AP001024.1"}
         gene_symbols_transcriptomics = [symb for symb in gene_symbols_transcriptomics if symb not in unwanted_temporary]
-        transcriptomics_keggIDs, symbol_kegg_dict_transcriptomics = gene_symbols_to_keggID(gene_symbols_transcriptomics, mouse_db, data_path / 'kegg_cache/gene_symbol_cache.json')
-        symbol_kegg_dict_ = copy.deepcopy(symbol_kegg_dict_transcriptomics)
-        # query uniprot for the IDs in the table and add their info to the dictionary
-        # get_uniprot_entry(symbol_kegg_dict_,data_path)
-        # add_uniprot_info(symbol_kegg_dict_)
+        transcriptomics_keggIDs, symbol_kegg_dict_transcriptomics = gene_symbols_to_keggID(gene_symbols_transcriptomics, target_db, data_path / 'kegg_cache/gene_symbol_cache.json')
         for symbol in gene_symbols_transcriptomics:
             try:
                 keggID = symbol_kegg_dict_transcriptomics[symbol]
@@ -537,6 +530,128 @@ def kegg_parsing():
     }
     return json.dumps(out_dat)#json.dumps(pathway_dicts)
 
+
+"""
+App route for querying and parsing on reactome data
+"""
+@app.route('/reactome_parsing', methods=['POST'])
+def reactome_parsing():
+    target_db = request.json['targetOrganism']
+    transcriptomics = request.json['transcriptomics']
+    proteomics = request.json['proteomics']
+    metabolomics = request.json['metabolomics']
+    slider_vals = request.json['sliderVals']
+
+    reactome_hierarchy = PathwayHierarchy()
+    reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
+    reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
+
+    node_pathway_dict = {}
+    fold_changes = {'transcriptomics': [], 'proteomics': [], 'metabolomics': []}
+    #Handle Proteomics if available
+    if proteomics["recieved"]:
+        proteomics_query_data_tuples = []
+        try:
+            uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
+            prot_dict_global = json.loads(cache.get('prot_dict_global'))
+            
+            for ID in prot_dict_global:
+                entry = prot_dict_global[ID]
+                proteomics_query_data_tuples.append( (ID, entry[proteomics["value"]]) ) 
+
+        except FileNotFoundError:
+            print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
+          
+        # target organism is a little bit annoying at the moment
+        tar_organism = 'Mus_musculus'
+        protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'UniProt', data_path / "reactome_data/pickles/")
+        fold_changes['proteomics'] = protein_query.get_measurement_levels()
+        # add entries to hierarchy
+        # node_pathway_dict = {**node_pathway_dict, **protein_query.get_query_pathway_dict()}
+        for query_key, query_result in protein_query.query_results.items():
+            for entity_id, entity_data in query_result.items():
+                reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
+        
+    
+    if metabolomics["recieved"]:
+        metabolomics_query_data_tuples = []
+
+        metabolomics_df_global = pd.read_json(cache.get('metabolomics_df_global'),orient='columns')
+        metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
+        for k,v in slider_vals["metabolomics"].items():
+            is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(metabolomics_df[k],errors='coerce').notnull())
+            df_numeric = metabolomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = metabolomics_df.loc[is_empty]
+        
+            metabolomics_df = metabolomics_df.loc[metabolomics_df.index.isin(df_is_in_range.index) | metabolomics_df.index.isin(df_is_empty.index) ]
+        metabolomics_dict = metabolomics_df.to_dict("index")
+        metabolomics_IDs =  list(metabolomics_dict.keys())
+        for ID in metabolomics_IDs:
+            metabolomics_query_data_tuples.append( (ID, metabolomics_dict[ID][metabolomics["value"]]) ) 
+
+          
+        # target organism is a little bit annoying at the moment
+        tar_organism = 'Mus_musculus'
+        metabolite_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'ChEBI', data_path / "reactome_data/pickles/")
+        fold_changes['metabolites'] = metabolite_query.get_measurement_levels()
+        # add entries to hierarchy
+        # node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
+
+        for query_key, query_result in metabolite_query.query_results.items():
+            for entity_id, entity_data in query_result.items():
+                reactome_hierarchy.add_query_data(entity_data, 'metbolite', query_key)
+    
+    if transcriptomics["recieved"]:
+        transcriptomics_query_data_tuples = []
+        transcriptomics_df_global = pd.read_json(cache.get('transcriptomics_df_global'),orient='columns')
+        #TODO Duplicates are dropped how to handle these duplicates?!
+        transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
+        for k,v in slider_vals["transcriptomics"].items():
+            is_empty = (v['empties'] & (transcriptomics_df[k] == 'None'))
+            is_numeric = (pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull())
+            df_numeric = transcriptomics_df.loc[is_numeric]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_empty = transcriptomics_df.loc[is_empty]
+        
+            transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]
+
+        #print("DF", transcriptomics_df)
+        transcriptomics_dict = transcriptomics_df.to_dict("index")
+        transcriptomics_IDs =  list(transcriptomics_dict.keys())
+        for ID in transcriptomics_IDs:
+            transcriptomics_query_data_tuples.append( (ID, transcriptomics_dict[ID][transcriptomics["value"]]) ) 
+
+        # target organism is a little bit annoying at the moment
+        tar_organism = 'Mus_musculus'
+        transcriptomics_query = ReactomeQuery(transcriptomics_query_data_tuples, tar_organism, 'Ensembl', data_path / "reactome_data/pickles/")
+        fold_changes['transcriptomics'] = transcriptomics_query.get_measurement_levels()
+        # add entries to hierarchy
+        # node_pathway_dict = {**node_pathway_dict, **transcriptomics_query.get_query_pathway_dict()}
+        for query_key, query_result in transcriptomics_query.query_results.items():
+            for entity_id, entity_data in query_result.items():
+                reactome_hierarchy.add_query_data(entity_data, 'gene', query_key)
+
+    reactome_hierarchy.aggregate_pathways()
+    cache.set('reactome_hierarchy', reactome_hierarchy)
+    dropdown_pathways = [] # TODO 
+    out_dat = {
+        "omicsRecieved": {"transcriptomics": transcriptomics["recieved"], "proteomics": proteomics["recieved"], "metabolomics": metabolomics["recieved"]},
+        "used_symbol_cols" : {"transcriptomics": transcriptomics["symbol"],"proteomics": proteomics["symbol"], "metabolomics": metabolomics["symbol"]},
+        "fcs": fold_changes
+    }
+    return json.dumps(out_dat)
+
+
+@app.route('/reactome_overview/<targetLevel>', methods=['GET'])
+def reactome_overview(targetLevel):
+    # TODO sent to frontend
+    target_level = int(targetLevel)
+    reactome_hierarchy = cache.get('reactome_hierarchy')
+    out_data, pathway_dict, dropdown_data, root_ids = reactome_hierarchy.generate_overview_data(target_level, False)
+    
+    return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)

@@ -1,5 +1,6 @@
 import store from '@/store'
 import * as d3 from 'd3'
+import { stratify } from 'd3'
 import { PieArcDatum } from 'd3-shape'
 import * as _ from 'lodash'
 
@@ -69,6 +70,57 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
   return outGlyphData
 }
 
+export function generateGlyphDataReactome (): { [key: string]: glyphData } {
+  const outGlyphData: { [key: string]: glyphData } = {}
+  // contains pathway lists
+  const pathwayLayouting = store.state.pathwayLayouting
+  const fcs = store.state.fcs
+  const omicsRecieved = store.state.omicsRecieved
+  const overviewData = store.state.overviewData as {pathwayName: string, pathwayId: string, entries: {
+    transcriptomics: {measured: {[key: string]: {id: string, value: number, name: string}}, total: number},
+    proteomics: {measured: {[key: string]: {id: string, value: number, name: string}}, total: number},
+    metabolomics: {measured: {[key: string]: {id: string, value: number, name: string}}, total: number}
+    }
+  }[]
+
+  for (const pathway of overviewData) {
+    const transcriptomicsData = { available: omicsRecieved.transcriptomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
+    const proteomicsData = { available: omicsRecieved.proteomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
+    const metabolomicsData = { available: omicsRecieved.metabolomics, meanFoldchange: 0, foldChanges: [], nodeState: { total: 0, regulated: 0 } } as omicsData
+
+    transcriptomicsData.nodeState.total = pathway.entries.transcriptomics.total
+    for (const measureKey in pathway.entries.transcriptomics.measured) {
+      const entry = pathway.entries.transcriptomics.measured[measureKey]
+      transcriptomicsData.foldChanges.push({ symbol: entry.name, value: entry.value })
+      transcriptomicsData.nodeState.regulated += 1
+    }
+
+    proteomicsData.nodeState.total = pathway.entries.proteomics.total
+    for (const measureKey in pathway.entries.proteomics.measured) {
+      const entry = pathway.entries.proteomics.measured[measureKey]
+      proteomicsData.foldChanges.push({ symbol: entry.name, value: entry.value })
+      proteomicsData.nodeState.regulated += 1
+    }
+
+    metabolomicsData.nodeState.total = pathway.entries.metabolomics.total
+    for (const measureKey in pathway.entries.metabolomics.measured) {
+      const entry = pathway.entries.metabolomics.measured[measureKey]
+      metabolomicsData.foldChanges.push({ symbol: entry.name, value: entry.value })
+      metabolomicsData.nodeState.regulated += 1
+    }
+
+    transcriptomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    proteomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    metabolomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    transcriptomicsData.meanFoldchange = transcriptomicsData.foldChanges.reduce((a, b) => a + b.value, 0) / transcriptomicsData.foldChanges.length
+    proteomicsData.meanFoldchange = proteomicsData.foldChanges.reduce((a, b) => a + b.value, 0) / proteomicsData.foldChanges.length
+    metabolomicsData.meanFoldchange = metabolomicsData.foldChanges.reduce((a, b) => a + b.value, 0) / metabolomicsData.foldChanges.length
+
+    outGlyphData[pathway.pathwayId] = { pathwayID: pathway.pathwayId, transcriptomics: transcriptomicsData, proteomics: proteomicsData, metabolomics: metabolomicsData }
+  }
+  return outGlyphData
+}
+
 export function generateGlyphs (inputData: { [key: string]: glyphData }): { url: { [key: string]: string }, svg: { [key: string]: unknown }} {
   const outObjURL: { [key: string]: string } = {}
   const outObjSVG: { [key: string]: unknown } = {}
@@ -91,95 +143,6 @@ export function generateGlyphs (inputData: { [key: string]: glyphData }): { url:
   }
 
   return { url: outObjURL, svg: outObjSVG }
-}
-
-function generateGlyph (glyphDat: glyphData): SVGElement {
-  const diameter = 56
-  const layerWidth = diameter / 7
-  const width = diameter
-  const height = diameter
-  const outermostRadius = diameter / 2
-  const firstLayer = outermostRadius - layerWidth
-  const secondLayer = firstLayer - layerWidth
-  const innermostRadius = secondLayer - layerWidth
-  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
-  const colorScaleProteomics = store.state.fcScales.proteomics
-  const colorScaleMetabolomics = store.state.fcScales.metabolomics
-
-  // prepare transcriptomics
-  let colorsTranscriptomics: string[] = []
-  const transcriptomicsArcDat = []
-  if (glyphDat.transcriptomics.available) {
-    colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleTranscriptomics(elem.value))
-    const angleRangeTranscriptomicsFCs = _.range(1.5 * Math.PI, 2.5 * Math.PI + (Math.PI / colorsTranscriptomics.length), Math.PI / colorsTranscriptomics.length)
-    colorsTranscriptomics.forEach((element, idx) => {
-      transcriptomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0 })
-    })
-    const transcriptomicsRegulatedQuotient = glyphDat.transcriptomics.nodeState.regulated / glyphDat.transcriptomics.nodeState.total
-    transcriptomicsArcDat.push({ data: 1, value: 1, index: 0, startAngle: 0.5 * Math.PI, endAngle: 0.5 * Math.PI + Math.PI * transcriptomicsRegulatedQuotient, padAngle: 0 })
-    transcriptomicsArcDat.push({ data: 2, value: 2, index: 1, startAngle: 0.5 * Math.PI + Math.PI * transcriptomicsRegulatedQuotient, endAngle: 1.5 * Math.PI, padAngle: 0 })
-    colorsTranscriptomics.push('black', 'gray')
-  }
-
-  // prepare proteomics
-  let colorsProteomics: string[] = []
-  const proteomicsArcDat = []
-  if (glyphDat.proteomics.available) {
-    colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleProteomics(elem.value))
-    const angleRangeProteomicsFCs = _.range(0.5 * Math.PI, 1.5 * Math.PI + (Math.PI / colorsProteomics.length), Math.PI / colorsProteomics.length)
-    colorsProteomics.forEach((element, idx) => {
-      proteomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0 })
-    })
-    const proteomicsRegulatedQuotient = glyphDat.proteomics.nodeState.regulated / glyphDat.proteomics.nodeState.total
-    proteomicsArcDat.push({ data: 1, value: 1, index: 0, startAngle: 1.5 * Math.PI, endAngle: 1.5 * Math.PI + Math.PI * proteomicsRegulatedQuotient, padAngle: 0 })
-    proteomicsArcDat.push({ data: 2, value: 2, index: 1, startAngle: 1.5 * Math.PI + Math.PI * proteomicsRegulatedQuotient, endAngle: 2.5 * Math.PI, padAngle: 0 })
-    colorsProteomics.push('black', 'gray')
-  }
-  // prepare metabolomics
-  let colorsMetabolomics: string[] = []
-  const metabolomicsArcDat = []
-  if (glyphDat.metabolomics.available) {
-    colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScaleMetabolomics(elem.value))
-    const angleRangeMetabolomicsFCs = _.range(1.5 * Math.PI, 2.5 * Math.PI + (Math.PI / colorsMetabolomics.length), Math.PI / colorsMetabolomics.length)
-    colorsMetabolomics.forEach((element, idx) => {
-      metabolomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0 })
-    })
-    const metabolomicsRegulatedQuotient = glyphDat.metabolomics.nodeState.regulated / glyphDat.metabolomics.nodeState.total
-    metabolomicsArcDat.push({ data: 1, value: 1, index: 0, startAngle: 0.5 * Math.PI, endAngle: 0.5 * Math.PI + Math.PI * metabolomicsRegulatedQuotient, padAngle: 0 })
-    metabolomicsArcDat.push({ data: 2, value: 2, index: 1, startAngle: 0.5 * Math.PI + Math.PI * metabolomicsRegulatedQuotient, endAngle: 1.5 * Math.PI, padAngle: 0 })
-    colorsMetabolomics.push('black', 'gray')
-  }
-
-  const svg = d3.create('svg')
-    .attr('width', width)
-    .attr('height', height)
-  const g = svg.append('g')
-    .attr('transform', `translate(${width / 2},${height / 2})`)
-
-  const arcOuter = d3.arc<PieArcDatum<number>>().innerRadius(firstLayer).outerRadius(outermostRadius)
-  const arcMiddle = d3.arc<PieArcDatum<number>>().innerRadius(secondLayer).outerRadius(firstLayer)
-  const arcInner = d3.arc<PieArcDatum<number>>().innerRadius(innermostRadius).outerRadius(secondLayer)
-
-  // segment order: transcriptomics = outer, proteomics = middle, metabolomics = inner
-  g.selectAll('g')
-    .data(transcriptomicsArcDat)
-    .enter()
-    .append('path')
-    .attr('d', arcOuter)
-    .attr('fill', (d, i) => colorsTranscriptomics[i])
-  g.selectAll('g')
-    .data(proteomicsArcDat)
-    .enter()
-    .append('path')
-    .attr('d', arcMiddle)
-    .attr('fill', (d, i) => colorsProteomics[i])
-  g.selectAll('g')
-    .data(metabolomicsArcDat)
-    .enter()
-    .append('path')
-    .attr('d', arcInner)
-    .attr('fill', (d, i) => colorsMetabolomics[i])
-  return svg.node() as SVGElement
 }
 
 function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyphIdx: number): SVGElement {
@@ -465,3 +428,94 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   }
   return svg.node() as SVGElement
 }
+
+/* old
+function generateGlyph (glyphDat: glyphData): SVGElement {
+  const diameter = 56
+  const layerWidth = diameter / 7
+  const width = diameter
+  const height = diameter
+  const outermostRadius = diameter / 2
+  const firstLayer = outermostRadius - layerWidth
+  const secondLayer = firstLayer - layerWidth
+  const innermostRadius = secondLayer - layerWidth
+  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
+  const colorScaleProteomics = store.state.fcScales.proteomics
+  const colorScaleMetabolomics = store.state.fcScales.metabolomics
+
+  // prepare transcriptomics
+  let colorsTranscriptomics: string[] = []
+  const transcriptomicsArcDat = []
+  if (glyphDat.transcriptomics.available) {
+    colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleTranscriptomics(elem.value))
+    const angleRangeTranscriptomicsFCs = _.range(1.5 * Math.PI, 2.5 * Math.PI + (Math.PI / colorsTranscriptomics.length), Math.PI / colorsTranscriptomics.length)
+    colorsTranscriptomics.forEach((element, idx) => {
+      transcriptomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0 })
+    })
+    const transcriptomicsRegulatedQuotient = glyphDat.transcriptomics.nodeState.regulated / glyphDat.transcriptomics.nodeState.total
+    transcriptomicsArcDat.push({ data: 1, value: 1, index: 0, startAngle: 0.5 * Math.PI, endAngle: 0.5 * Math.PI + Math.PI * transcriptomicsRegulatedQuotient, padAngle: 0 })
+    transcriptomicsArcDat.push({ data: 2, value: 2, index: 1, startAngle: 0.5 * Math.PI + Math.PI * transcriptomicsRegulatedQuotient, endAngle: 1.5 * Math.PI, padAngle: 0 })
+    colorsTranscriptomics.push('black', 'gray')
+  }
+
+  // prepare proteomics
+  let colorsProteomics: string[] = []
+  const proteomicsArcDat = []
+  if (glyphDat.proteomics.available) {
+    colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleProteomics(elem.value))
+    const angleRangeProteomicsFCs = _.range(0.5 * Math.PI, 1.5 * Math.PI + (Math.PI / colorsProteomics.length), Math.PI / colorsProteomics.length)
+    colorsProteomics.forEach((element, idx) => {
+      proteomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0 })
+    })
+    const proteomicsRegulatedQuotient = glyphDat.proteomics.nodeState.regulated / glyphDat.proteomics.nodeState.total
+    proteomicsArcDat.push({ data: 1, value: 1, index: 0, startAngle: 1.5 * Math.PI, endAngle: 1.5 * Math.PI + Math.PI * proteomicsRegulatedQuotient, padAngle: 0 })
+    proteomicsArcDat.push({ data: 2, value: 2, index: 1, startAngle: 1.5 * Math.PI + Math.PI * proteomicsRegulatedQuotient, endAngle: 2.5 * Math.PI, padAngle: 0 })
+    colorsProteomics.push('black', 'gray')
+  }
+  // prepare metabolomics
+  let colorsMetabolomics: string[] = []
+  const metabolomicsArcDat = []
+  if (glyphDat.metabolomics.available) {
+    colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScaleMetabolomics(elem.value))
+    const angleRangeMetabolomicsFCs = _.range(1.5 * Math.PI, 2.5 * Math.PI + (Math.PI / colorsMetabolomics.length), Math.PI / colorsMetabolomics.length)
+    colorsMetabolomics.forEach((element, idx) => {
+      metabolomicsArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0 })
+    })
+    const metabolomicsRegulatedQuotient = glyphDat.metabolomics.nodeState.regulated / glyphDat.metabolomics.nodeState.total
+    metabolomicsArcDat.push({ data: 1, value: 1, index: 0, startAngle: 0.5 * Math.PI, endAngle: 0.5 * Math.PI + Math.PI * metabolomicsRegulatedQuotient, padAngle: 0 })
+    metabolomicsArcDat.push({ data: 2, value: 2, index: 1, startAngle: 0.5 * Math.PI + Math.PI * metabolomicsRegulatedQuotient, endAngle: 1.5 * Math.PI, padAngle: 0 })
+    colorsMetabolomics.push('black', 'gray')
+  }
+
+  const svg = d3.create('svg')
+    .attr('width', width)
+    .attr('height', height)
+  const g = svg.append('g')
+    .attr('transform', `translate(${width / 2},${height / 2})`)
+
+  const arcOuter = d3.arc<PieArcDatum<number>>().innerRadius(firstLayer).outerRadius(outermostRadius)
+  const arcMiddle = d3.arc<PieArcDatum<number>>().innerRadius(secondLayer).outerRadius(firstLayer)
+  const arcInner = d3.arc<PieArcDatum<number>>().innerRadius(innermostRadius).outerRadius(secondLayer)
+
+  // segment order: transcriptomics = outer, proteomics = middle, metabolomics = inner
+  g.selectAll('g')
+    .data(transcriptomicsArcDat)
+    .enter()
+    .append('path')
+    .attr('d', arcOuter)
+    .attr('fill', (d, i) => colorsTranscriptomics[i])
+  g.selectAll('g')
+    .data(proteomicsArcDat)
+    .enter()
+    .append('path')
+    .attr('d', arcMiddle)
+    .attr('fill', (d, i) => colorsProteomics[i])
+  g.selectAll('g')
+    .data(metabolomicsArcDat)
+    .enter()
+    .append('path')
+    .attr('d', arcInner)
+    .attr('fill', (d, i) => colorsMetabolomics[i])
+  return svg.node() as SVGElement
+}
+*/

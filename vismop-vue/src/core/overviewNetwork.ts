@@ -1,5 +1,6 @@
-import { MultiGraph } from 'graphology'
+import { UndirectedGraph } from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
+import noverlap from 'graphology-layout-noverlap'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
@@ -7,7 +8,7 @@ import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import store from '@/store'
 import { DEFAULT_SETTINGS } from 'sigma/settings'
-import noverlap from 'graphology-layout-noverlap'
+import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path'
 
 export default class overviewGraph {
   private currentPathway = '';
@@ -31,38 +32,71 @@ export default class overviewGraph {
 
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement
-    const graph = MultiGraph.from(graphData)
+    const graph = UndirectedGraph.from(graphData)
     // console.log('NODES', graph.nodes())
     // noverlap.assign(graph)
 
     // const inferredSettings = forceAtlas2.inferSettings(graph)
 
+    let shortestPathClick: string[] = []
+    let shortestPathNodes: string[] = []
+    let shortestPathEdges: string[] = []
+
+    let highlighedEdgesClick = new Set()
+    let highlighedNodesClick = new Set()
     // from events SIGMA2 example, initialze sets for highlight on hover:
-    let highlighedNodes = new Set()
-    let highlighedEdges = new Set()
+    let highlighedNodesHover = new Set()
+    let highlighedEdgesHover = new Set()
+    let highlightedCenterHover = ''
+
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: string, data: Attributes) => {
-      if (this.currentPathway === node.replace('path:', '')) {
-        return { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1 }
+      const nodeSize = (highlighedNodesHover.has(node) || (this.currentPathway === node.replace('path:', ''))) ? 15 : 10
+      if (shortestPathNodes?.length > 0) {
+        if (shortestPathClick.includes(node)) {
+          return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 }
+        }
+        if (shortestPathNodes.includes(node)) {
+          return { ...data, color: 'rgba(255,180,255,1.0)', zIndex: 1, size: 10 }
+        } else {
+          return { ...data, color: 'rgba(255,255,255,1.0)', size: 5 }
+        }
+      }
+      if (shortestPathClick.includes(node)) {
+        return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 }
+      }
+      if ((this.currentPathway === node.replace('path:', '')) || (highlightedCenterHover === node)) {
+        return { ...data, color: 'rgba(255,0,0,1.0)', zIndex: 1, size: nodeSize }
       }
       if (this.pathwaysContainingIntersection.includes(node.replace('path:', ''))) {
-        return { ...data, color: 'rgba(0,255,0,1.0)', zIndex: 1 }
+        return { ...data, color: 'rgba(0,255,0,1.0)', zIndex: 1, size: nodeSize }
       }
       if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
-        return { ...data, color: 'rgba(0,0,255,1.0)', zIndex: 1 }
+        return { ...data, color: 'rgba(0,0,255,1.0)', zIndex: 1, size: nodeSize }
+      }
+      if (highlighedNodesHover.has(node)) {
+        return { ...data, color: 'rgba(255,200,200,1.0)', zIndex: 1, size: nodeSize }
+      }
+      if (highlighedNodesClick.has(node)) {
+        return { ...data, color: 'rgba(255,200,200,1.0)', zIndex: 1, size: nodeSize }
       }
       return data
     }
 
     // same for edges
-    const edgeReducer = (edge: unknown, data: Attributes) => {
-      if (highlighedEdges.has(edge)) {
-        return {
-          ...data,
-          sourceColor: 'rgba(255,0,0,1.0)',
-          targetColor: 'rgba(255,0,0,1.0)',
-          zIndex: 1
+    const edgeReducer = (edge: string, data: Attributes) => {
+      if (shortestPathNodes?.length > 0) {
+        if (shortestPathEdges?.includes(edge)) {
+          return { ...data, color: 'rgba(255,180,255,1.0)', zIndex: 1, size: 4 }
+        } else {
+          return { ...data, size: 1 }
         }
+      }
+      if (highlighedEdgesHover.has(edge)) {
+        return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 }
+      }
+      if (highlighedEdgesClick.has(edge)) {
+        return { ...data, color: 'rgba(255,0,0,1.0)', size: 1, zIndex: 1 }
       }
 
       return data
@@ -95,10 +129,11 @@ export default class overviewGraph {
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       console.log('Entering: ', node)
-      highlighedNodes = new Set(graph.neighbors(node))
-      highlighedNodes.add(node)
+      highlighedNodesHover = new Set(graph.neighbors(node))
+      highlighedNodesHover.add(node)
+      highlightedCenterHover = node
 
-      highlighedEdges = new Set(graph.edges(node))
+      highlighedEdgesHover = new Set(graph.edges(node))
 
       renderer.refresh()
     })
@@ -106,8 +141,9 @@ export default class overviewGraph {
     renderer.on('leaveNode', ({ node }) => {
       console.log('Leaving:', node)
 
-      highlighedNodes.clear()
-      highlighedEdges.clear()
+      highlighedNodesHover.clear()
+      highlighedEdgesHover.clear()
+      highlightedCenterHover = ''
 
       renderer.refresh()
     })
@@ -115,8 +151,31 @@ export default class overviewGraph {
     renderer.on('clickNode', ({ node, event }) => {
       console.log('clicking Node: ', node)
       console.log('clicking event', event)
-      if (event.original.ctrlKey) store.dispatch('selectPathwayCompare', node)
-      else store.dispatch('focusPathwayViaOverview', node)
+      if (event.original.ctrlKey) {
+        store.dispatch('selectPathwayCompare', [node])
+      } else if (event.original.altKey) {
+        if (shortestPathClick.length === 2) shortestPathClick.pop()
+        shortestPathClick.push(node)
+        if (shortestPathClick.length === 2) {
+          shortestPathNodes = bidirectional(graph, shortestPathClick[0], shortestPathClick[1]) as string[]
+          if (shortestPathNodes?.length > 0) {
+            shortestPathEdges = edgePathFromNodePath(graph, shortestPathNodes as string[])
+            console.log('shortest Path edges', shortestPathEdges)
+            store.dispatch('selectPathwayCompare', shortestPathNodes)
+          } else {
+            shortestPathClick = []
+          }
+        }
+      } else {
+        shortestPathClick = []
+        shortestPathNodes = []
+        shortestPathEdges = []
+        highlighedEdgesClick.clear()
+        highlighedNodesClick.clear()
+        highlighedNodesClick = new Set(graph.neighbors(node))
+        highlighedEdgesClick = new Set(graph.edges(node))
+        store.dispatch('focusPathwayViaOverview', node)
+      }
     })
 
     return renderer

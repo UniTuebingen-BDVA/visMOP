@@ -60,12 +60,11 @@
                                 v-model="selectedTranscriptomics"
                                 show-select
                                 fixed-header
-                                hide-default-footer
                                 multi-sort
                                 :headers="transcriptomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="transcriptomicsTableData"
-                                :items-per-page="-1"
+                                :items-per-page="10"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="transcriptomics"
@@ -79,12 +78,11 @@
                                 v-model="selectedProteomics"
                                 show-select
                                 fixed-header
-                                hide-default-footer
                                 multi-sort
                                 :headers="proteomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="proteomicsTableData"
-                                :items-per-page="-1"
+                                :items-per-page="10"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="proteomicsTable"
@@ -98,12 +96,11 @@
                                 v-model="selectedMetabolomics"
                                 show-select
                                 fixed-header
-                                hide-default-footer
                                 multi-sort
                                 :headers="metabolomicsTableHeaders"
                                 :item-class="itemRowColor"
                                 :items="metabolomicsTableData"
-                                :items-per-page="-1"
+                                :items-per-page="10"
                                 :search="tableSearch"
                                 class="elevation-1 scrollableTable"
                                 id="metabolomicsTable"
@@ -172,16 +169,31 @@
             <v-tab-item value="overviewNetwork">
               <v-row>
                 <v-col cols="12">
-                  <keep-alive>
-                    <overview-component
-                      contextID="overviewContext"
-                      :transcriptomicsSelection="transcriptomicsSelectionData"
-                      :proteomicsSelection="proteomicsSelectionData"
-                      :metabolomicsSelection="metabolomicsSelectionData"
-                      :isActive="activeOverview"
-                    >
-                    </overview-component>
-                  </keep-alive>
+                    <div v-if="targetDatabase === 'kegg'">
+                      <keep-alive>
+                          <overview-component
+                          contextID="overviewContext"
+                          :transcriptomicsSelection="transcriptomicsSelectionData"
+                          :proteomicsSelection="proteomicsSelectionData"
+                          :metabolomicsSelection="metabolomicsSelectionData"
+                          :isActive="activeOverview"
+                        >
+                        </overview-component>
+                      </keep-alive>
+                    </div>
+                    <div v-if="targetDatabase === 'reactome'">
+                      <keep-alive>
+                        <overview-component-reactome
+                          contextID="overviewContext"
+                          :transcriptomicsSelection="transcriptomicsSelectionData"
+                          :proteomicsSelection="proteomicsSelectionData"
+                          :metabolomicsSelection="metabolomicsSelectionData"
+                          :isActive="activeOverview"
+                        >
+                        </overview-component-reactome>
+                      </keep-alive>
+                    </div>
+
                 </v-col>
                 </v-row>
                   <keep-alive>
@@ -218,6 +230,7 @@ import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
 import PathwayCompare from './PathwayCompare.vue'
+import OverviewComponentReactome from './OverviewComponentReactome.vue'
 
 interface Data{
   tableSearch: string
@@ -234,7 +247,7 @@ interface Data{
 }
 
 export default Vue.extend({
-  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare },
+  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, OverviewComponentReactome },
   // name of the component
   name: 'MainPage',
 
@@ -255,6 +268,7 @@ export default Vue.extend({
 
   computed: {
     ...mapState({
+      targetDatabase: (state: any) => state.targetDatabase,
       transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
       transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
       proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
@@ -281,28 +295,69 @@ export default Vue.extend({
     }
   },
   watch: {
+    targetDatabase: function () {
+      console.log('TESTEST', this.targetDatabase)
+    },
     pathwayLayouting: function () {
+      let transcriptomicsAvailable = 0
+      let transcriptomicsTotal = 0
+
       this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        const symbol = row[this.usedSymbolCols.transcriptomics]
-        const keggID = this.transcriptomicsSymbolDict[symbol]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        transcriptomicsTotal += 1
+        let symbol = row[this.usedSymbolCols.transcriptomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.transcriptomicsSymbolDict[symbol]
+        }
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+        if (pathwaysContaining) transcriptomicsAvailable += 1
       })
+      console.log('table headers', this.transcriptomicsTableHeaders)
+      this.transcriptomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
+        if (entry.value === 'available') {
+          entry.text = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`
+        }
+      })
+      this.$store.dispatch('setTranscriptomicsTableHeaders', this.transcriptomicsTableHeaders)
       this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
 
+      let proteomiocsAvailable = 0
+      let proteomicsTotal = 0
+
       this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        const symbol = row[this.usedSymbolCols.proteomics]
-        const keggID = this.proteomicsSymbolDict[symbol]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        proteomicsTotal += 1
+        let symbol = row[this.usedSymbolCols.proteomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.proteomicsSymbolDict[symbol]
+        }
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+        if (pathwaysContaining) proteomiocsAvailable += 1
       })
+      this.proteomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
+        if (entry.value === 'available') {
+          entry.text = `available (${proteomiocsAvailable} of ${proteomicsTotal})`
+        }
+      })
+      this.$store.dispatch('setProteomicsTableHeaders', this.proteomicsTableHeaders)
       this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
 
+      let metabolomicsAvailable = 0
+      let metabolomicsTotal = 0
+
       this.metabolomicsTableData.forEach((row: {[key: string]: string | number }) => {
+        metabolomicsTotal += 1
         const symbol = row[this.usedSymbolCols.metabolomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
+        if (pathwaysContaining) metabolomicsAvailable += 1
       })
+      this.metabolomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
+        if (entry.value === 'available') {
+          entry.text = `available (${metabolomicsAvailable} of ${metabolomicsTotal})`
+        }
+      })
+      this.$store.dispatch('setMetabolomicsTableHeaders', this.metabolomicsTableHeaders)
       this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
     },
     selectedTranscriptomics: function () {
@@ -316,17 +371,21 @@ export default Vue.extend({
     },
     pathwayDropdown: function () {
       this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        const symbol = row[this.usedSymbolCols.transcriptomics]
-        const keggID = this.transcriptomicsSymbolDict[symbol]
-        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(keggID) : false
+        let symbol = row[this.usedSymbolCols.transcriptomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.transcriptomicsSymbolDict[symbol]
+        }
+        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(symbol) : false
         row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
       })
       this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
 
       this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        const symbol = row[this.usedSymbolCols.proteomics]
-        const keggID = this.proteomicsSymbolDict[symbol]
-        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(keggID) : false
+        let symbol = row[this.usedSymbolCols.proteomics]
+        if (this.targetDatabase === 'kegg') {
+          symbol = this.proteomicsSymbolDict[symbol]
+        }
+        const includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(symbol) : false
         row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
       })
       this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)

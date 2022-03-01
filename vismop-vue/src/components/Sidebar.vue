@@ -1,5 +1,23 @@
 <template>
   <v-list nav dense>
+    <v-select
+      :items="targetDatabases"
+      label="Target Database"
+      v-model="targetDatabase"
+      v-on:change="setTargetDatabase"
+      @click="lockHover"
+      @input="unlockHover"
+    ></v-select>
+    <div v-if="targetDatabase === 'reactome'">
+      <v-text-field :rules="sheetRules" label="Reactome Target Tier" :value="reactomeLevelSelection" v-model="reactomeLevelSelection"></v-text-field>
+    </div>
+    <v-select
+      :items="targetOrganisms"
+      label="Target Organism"
+      v-model="targetOrganism"
+      @click="lockHover"
+      @input="unlockHover"
+    ></v-select>
       Selected Omics:
       {{ chosenOmics.length }}
     <v-chip-group active-class="primary--text" column>
@@ -18,6 +36,7 @@
         <v-expansion-panel-content>
           <v-file-input
             v-on:change="fetchTranscriptomicsTable"
+            v-model="transcriptomicsFile"
             chips
             label=".xlsx File Input"
           ></v-file-input>
@@ -73,13 +92,14 @@
         <v-expansion-panel-content>
           <v-file-input
             v-on:change="fetchProteomicsTable"
+            v-model="proteomicsFile"
             chips
             label=".xlsx File Input"
           ></v-file-input>
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" :v-model="proteomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -128,6 +148,7 @@
         <v-expansion-panel-content>
           <v-file-input
             v-on:change="fetchMetabolomicsTable"
+            v-model="metabolomicsFile"
             chips
             label=".xlsx File Input"
           ></v-file-input>
@@ -179,13 +200,40 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
-    <v-btn v-on:click="generateKGMLs">Plot</v-btn>
+    <v-btn v-on:click="dataQuery">Plot</v-btn>
   </v-list>
 </template>
 
 <script lang="ts">
 import { mapState } from 'vuex'
 import Vue from 'vue'
+import { Function } from 'lodash'
+
+interface Data{
+   overlay: boolean,
+  transcriptomicsFile: File | null,
+  transcriptomicsSheetVal: string,
+  transcriptomicsSymbolCol: string,
+  transcriptomicsValueCol: string,
+  recievedTranscriptomicsData: boolean,
+  proteomicsFile: File | null,
+  proteomicsSheetVal: string,
+  proteomicsSymbolCol: string,
+  proteomicsValueCol: string,
+  recievedProteomicsData: boolean,
+  metabolomicsFile: File | null,
+  metabolomicsSheetVal: string,
+  metabolomicsSymbolCol: string,
+  metabolomicsValueCol: string,
+  recievedMetabolomicsData: boolean,
+  targetOrganisms: { text: string, value: string}[],
+  targetOrganism: string,
+  targetDatabases: { text: string, value: string}[],
+  targetDatabase: string,
+  reactomeLevelSelection: number,
+  sliderVals: { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
+  sheetRules(value: string): boolean | string
+}
 
 export default Vue.extend({
   name: 'SideBar',
@@ -193,18 +241,32 @@ export default Vue.extend({
 
   data: () => ({
     overlay: false,
+    transcriptomicsFile: null,
     transcriptomicsSheetVal: '0',
     transcriptomicsSymbolCol: '',
     transcriptomicsValueCol: '',
     recievedTranscriptomicsData: false,
+    proteomicsFile: null,
     proteomicsSheetVal: '0',
     proteomicsSymbolCol: '',
     proteomicsValueCol: '',
     recievedProteomicsData: false,
+    metabolomicsFile: null,
     metabolomicsSheetVal: '0',
     metabolomicsSymbolCol: '',
     metabolomicsValueCol: '',
     recievedMetabolomicsData: false,
+    targetOrganisms: [
+      { text: 'Mouse', value: 'mmu' },
+      { text: 'Human', value: 'hsa' }
+    ],
+    targetOrganism: 'mmu',
+    targetDatabases: [
+      { text: 'Reactome', value: 'reactome' },
+      { text: 'KEGG', value: 'kegg' }
+    ],
+    targetDatabase: 'reactome',
+    reactomeLevelSelection: 1,
     sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
     sheetRules: [
       (value: string) => {
@@ -335,7 +397,11 @@ export default Vue.extend({
     }
   },
 
-  watch: {},
+  watch: {
+    transcriptomicsSheetVal: function () { this.fetchTranscriptomicsTable(this.transcriptomicsFile) },
+    proteomicsSheetVal: function () { this.fetchProteomicsTable(this.transcriptomicsFile) },
+    metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.transcriptomicsFile) }
+  },
 
   // functions to call on mount (after DOM etc. is built)
   mounted () {
@@ -343,8 +409,21 @@ export default Vue.extend({
   },
 
   methods: {
-    fetchTranscriptomicsTable (fileInput: File) {
-      if (typeof fileInput !== 'undefined') {
+    fetchTranscriptomicsTable (fileInput: File | null) {
+      this.$store.dispatch(
+        'setTranscriptomicsTableHeaders',
+        []
+      )
+      this.$store.dispatch(
+        'setTranscriptomicsTableData',
+        []
+      )
+      this.$store.dispatch(
+        'setTranscriptomicsData',
+        []
+      )
+      Vue.set(this.sliderVals, 'transcriptomics', {})
+      if (fileInput !== null) {
         this.overlay = true
         const formData = new FormData()
         formData.append('dataTable', fileInput)
@@ -372,12 +451,27 @@ export default Vue.extend({
           })
           .then(() => (this.overlay = false))
       } else {
-        alert('Malformed File!!!')
+        // more errorhandling?
+        this.recievedTranscriptomicsData = false
+        console.log('Transcriptomics file Cleared')
       }
     },
 
-    fetchProteomicsTable (fileInput: File) {
-      if (typeof fileInput !== 'undefined') {
+    fetchProteomicsTable (fileInput: File | null) {
+      this.$store.dispatch(
+        'setProteomicsTableHeaders',
+        []
+      )
+      this.$store.dispatch(
+        'setProteomicsTableData',
+        []
+      )
+      this.$store.dispatch(
+        'setProteomicsData',
+        []
+      )
+      Vue.set(this.sliderVals, 'proteomics', {})
+      if (fileInput !== null) {
         this.overlay = true
         const formData = new FormData()
         formData.append('dataTable', fileInput)
@@ -408,11 +502,26 @@ export default Vue.extend({
           })
           .then(() => (this.overlay = false))
       } else {
-        alert('Malformed File!!!')
+        // more errorhandling?
+        this.recievedProteomicsData = false
+        console.log('Protfile Cleared')
       }
     },
-    fetchMetabolomicsTable (fileInput: File) {
-      if (typeof fileInput !== 'undefined') {
+    fetchMetabolomicsTable (fileInput: File | null) {
+      this.$store.dispatch(
+        'setMetabolomicsTableHeaders',
+        []
+      )
+      this.$store.dispatch(
+        'setMetabolomicsTableData',
+        []
+      )
+      this.$store.dispatch(
+        'setMetabolomicsData',
+        []
+      )
+      Vue.set(this.sliderVals, 'metabolomics', {})
+      if (fileInput !== null) {
         this.overlay = true
         const formData = new FormData()
         formData.append('dataTable', fileInput)
@@ -442,13 +551,74 @@ export default Vue.extend({
           })
           .then(() => (this.overlay = false))
       } else {
-        alert('Malformed File!!!')
+        // more errorhandling?
+        this.recievedMetabolomicsData = false
+        console.log('Metabol. file Cleared')
       }
+    },
+
+    dataQuery () {
+      if (this.targetDatabase === 'kegg') {
+        this.generateKGMLs()
+      } else if (this.targetDatabase === 'reactome') {
+        this.queryReactome()
+      }
+    },
+
+    queryReactome () {
+      this.$store.dispatch('setOverlay', true)
+      const payload = {
+        targetOrganism: this.targetOrganism,
+        transcriptomics: {
+          recieved: this.recievedTranscriptomicsData,
+          symbol: this.transcriptomicsSymbolCol,
+          value: this.transcriptomicsValueCol
+        },
+        proteomics: {
+          recieved: this.recievedProteomicsData,
+          symbol: this.proteomicsSymbolCol,
+          value: this.proteomicsValueCol
+        },
+        metabolomics: {
+          recieved: this.recievedMetabolomicsData,
+          symbol: this.metabolomicsSymbolCol,
+          value: this.metabolomicsValueCol
+        },
+        sliderVals: this.sliderVals
+      }
+      fetch('/reactome_parsing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }).then((response) => response.json())
+        .then((dataContent) => {
+          if (dataContent === 1) return 1
+          this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
+          this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
+          this.$store.dispatch('setFCSReactome', dataContent.fcs)
+        })
+        .then(() => this.getReactomeData())
+    },
+
+    getReactomeData () {
+      fetch(`/reactome_overview/${this.reactomeLevelSelection}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then((response) => response.json())
+        .then((dataContent) => {
+          this.$store.dispatch('setOverviewData', dataContent.overviewData)
+          this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
+        }).then(() => this.$store.dispatch('setOverlay', false))
     },
     generateKGMLs () {
       console.log('sliderTest', this.sliderVals)
       this.$store.dispatch('setOverlay', true)
       const payload = {
+        targetOrganism: this.targetOrganism,
         transcriptomics: {
           recieved: this.recievedTranscriptomicsData,
           symbol: this.transcriptomicsSymbolCol,
@@ -491,7 +661,7 @@ export default Vue.extend({
           )
           this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
           this.$store.dispatch(
-            'setPathwayLayouting',
+            'setPathwayLayoutingKegg',
             dataContent.pathwayLayouting
           )
         })
@@ -505,6 +675,9 @@ export default Vue.extend({
     },
     unlockHover () {
       this.$store.dispatch('setSideBarExpand', true)
+    },
+    setTargetDatabase () {
+      this.$store.dispatch('setTargetDatabase', this.targetDatabase)
     }
   }
 })
