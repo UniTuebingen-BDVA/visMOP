@@ -46,6 +46,9 @@ export default class EdgeProgram extends AbstractEdgeProgram {
   matrixLocation: WebGLUniformLocation;
   sqrtZoomRatioLocation: WebGLUniformLocation;
   correctionRatioLocation: WebGLUniformLocation;
+  dashLengthLocation: WebGLUniformLocation;
+  gapLengthLocation: WebGLUniformLocation;
+  viewportResolutionLocation: WebGLUniformLocation;
 
   constructor (gl: WebGLRenderingContext) {
     super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES)
@@ -71,6 +74,18 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     const sqrtZoomRatioLocation = gl.getUniformLocation(this.program, 'u_sqrtZoomRatio')
     if (sqrtZoomRatioLocation === null) throw new Error('EdgeProgram: error while getting sqrtZoomRatioLocation')
     this.sqrtZoomRatioLocation = sqrtZoomRatioLocation
+
+    const dashLengthLocation = gl.getUniformLocation(this.program, 'u_dashLength')
+    if (dashLengthLocation === null) throw new Error('EdgeProgram: error while getting dashLengthLocation')
+    this.dashLengthLocation = dashLengthLocation
+
+    const gapLengthLocation = gl.getUniformLocation(this.program, 'u_gapLength')
+    if (gapLengthLocation === null) throw new Error('EdgeProgram: error while getting gapLengthLocation')
+    this.gapLengthLocation = gapLengthLocation
+
+    const viewportResolutionLocation = gl.getUniformLocation(this.program, 'u_viewportResolution')
+    if (viewportResolutionLocation === null) { throw new Error('EdgeProgram: error while getting viewportResolutionLocation') }
+    this.viewportResolutionLocation = viewportResolutionLocation
 
     // Enabling the OES_element_index_uint extension
     // NOTE: on older GPUs, this means that really large graphs won't
@@ -211,7 +226,9 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix)
     gl.uniform1f(this.sqrtZoomRatioLocation, Math.sqrt(params.ratio))
     gl.uniform1f(this.correctionRatioLocation, params.correctionRatio)
-
+    gl.uniform1f(this.dashLengthLocation, 5 * (1 / params.ratio))
+    gl.uniform1f(this.gapLengthLocation, 5 * (1 / params.ratio))
+    gl.uniform2f(this.viewportResolutionLocation, params.width, params.height)
     // Drawing:
     gl.drawElements(gl.TRIANGLES, this.indicesArray.length, this.indicesType, 0)
   }

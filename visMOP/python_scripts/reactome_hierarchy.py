@@ -120,30 +120,30 @@ class PathwayHierarchy(dict):
         as the supplied omics data is only mapped to leaf nodes, data has to be aggregated to the higher level nodes
         """
         for k, v in self.items():
-            if not v.is_leaf:
-                subtree = self.get_subtree_target(v.reactome_sID)
-                proteins = v.measured_proteins
-                genes = v.measured_genes
-                metabolites = v.measured_metabolites
-                total_proteins = v.total_proteins
-                total_metabolites = v.total_metabolites
-                maplinks = v.maplinks
-                subtree_ids = subtree
-                subtree_ids.append(v.reactome_sID)
-                for node in subtree:
-                    proteins = {**proteins, **self[node].measured_proteins}
-                    genes = {**genes, **self[node].measured_genes}
-                    metabolite = {**metabolites, **self[node].measured_metabolites}
-                    total_proteins.extend(self[node].total_proteins)
-                    total_metabolites.extend(self[node].total_metabolites)
-                    maplinks.extend(self[node].maplinks)
-                v.measured_proteins = proteins
-                v.measured_genes = genes
-                v.measured_metabolites = metabolites
-                v.total_proteins = list(set(total_proteins))
-                v.total_metabolites = list(set(total_metabolites))
-                v.maplinks = list(set(maplinks))
-                v.subtree_ids = subtree_ids
+            #if not v.is_leaf:
+            subtree = self.get_subtree_target(v.reactome_sID)
+            proteins = v.measured_proteins
+            genes = v.measured_genes
+            metabolites = v.measured_metabolites
+            total_proteins = v.total_proteins
+            total_metabolites = v.total_metabolites
+            maplinks = v.maplinks
+            subtree_ids = subtree
+            subtree_ids.append(v.reactome_sID)
+            for node in subtree:
+                proteins = {**proteins, **self[node].measured_proteins}
+                genes = {**genes, **self[node].measured_genes}
+                metabolite = {**metabolites, **self[node].measured_metabolites}
+                total_proteins.extend(self[node].total_proteins)
+                total_metabolites.extend(self[node].total_metabolites)
+                maplinks.extend(self[node].maplinks)
+            v.measured_proteins = proteins
+            v.measured_genes = genes
+            v.measured_metabolites = metabolites
+            v.total_proteins = list(set(total_proteins))
+            v.total_metabolites = list(set(total_metabolites))
+            v.maplinks = list(set(maplinks))
+            v.subtree_ids = subtree_ids
             if ((len(v.measured_proteins) > 0) or (len(v.measured_genes) > 0) or (len(v.measured_metabolites) > 0)):
                 v.has_data = True
 
