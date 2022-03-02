@@ -399,8 +399,8 @@ export default Vue.extend({
 
   watch: {
     transcriptomicsSheetVal: function () { this.fetchTranscriptomicsTable(this.transcriptomicsFile) },
-    proteomicsSheetVal: function () { this.fetchProteomicsTable(this.transcriptomicsFile) },
-    metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.transcriptomicsFile) }
+    proteomicsSheetVal: function () { this.fetchProteomicsTable(this.proteomicsFile) },
+    metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.metabolomicsFile) }
   },
 
   // functions to call on mount (after DOM etc. is built)
