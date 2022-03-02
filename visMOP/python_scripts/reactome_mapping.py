@@ -12,8 +12,9 @@ def generate_pickles(file_path, mapping_file):
     data_path = pathlib.Path(file_path)
     databse_2_reactome = {}
     # mapping_file e.g. 'UniProt2Reactome_PE_Pathway.txt' for uniprot
-    with open(data_path / mapping_file) as fh:
+    with open(data_path / mapping_file, encoding="utf8") as fh:
         for line in fh:
+            #print(line)
             line_split = line.strip().split('\t')
             uniprot_ID = line_split[0]
             reactome_entity_ID = line_split[1]
