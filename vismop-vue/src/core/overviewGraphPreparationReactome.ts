@@ -20,7 +20,6 @@ export function generateGraphData (
   glyphs: {[key: string]: string},
   rootIds: string[]
 ): graphData {
-  const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
     attributes: { name: 'BaseNetwork' },
     nodes: [],
@@ -36,7 +35,6 @@ export function generateGraphData (
     const id = entry.pathwayId
     const initPosX = Math.random() * 100
     const initPosY = Math.random() * 100
-    const color = '#FFFFFF'
     const currentNode = {
       key: id,
       // label: "",
@@ -45,12 +43,12 @@ export function generateGraphData (
         type: 'image',
         image: glyphs[id],
         name: _.escape(name),
-        color: color,
+        color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
         label: `Name: ${_.escape(name)}`,
         x: initPosX,
         y: initPosY,
         zIndex: 1,
-        size: 10,
+        size: entry.rootId === entry.pathwayId ? 15 : 10,
         fixed: false // fixed property on nodes excludes nodes from layouting
       } as baseNodeAttr
     } as node
@@ -103,6 +101,7 @@ function generateForceGraphEdge (sourceID: string, targetID: string, type: strin
     undirected: true,
     attributes: {
       zIndex: 0,
+      type: type === 'maplink' ? 'dashed' : 'line',
       color: type === 'maplink' ? edgeColors.maplink : edgeColors.hierarchy
     } as baseEdgeAttr
   } as edge

@@ -22,7 +22,7 @@ const float bias = 255.0 / 254.0;
 
 
 void main() {
-float normalLength = length(a_normal);
+  float normalLength = length(a_normal);
   vec2 unitNormal = a_normal / normalLength;
 
   // We require edges to be at least `minThickness` pixels thick *on screen*
@@ -41,7 +41,10 @@ float normalLength = length(a_normal);
   float adaptedWebGLThickness = webGLThickness * u_sqrtZoomRatio;
 
   // Here is the proper position of the vertex
-  gl_Position = vec4((u_matrix * vec3(a_position + unitNormal * adaptedWebGLThickness, 1)).xy, 0, 1);
+  vec2 position = vec3(u_matrix * vec3(a_position + unitNormal * adaptedWebGLThickness, 1)).xy;
+  gl_Position = vec4(position, 0, 1);
+  vertexPos = vec3(position,0);
+  startPos = vertexPos;
 
   // For the fragment shader though, we need a thickness that takes the "magic"
   // correction ratio into account (as in webGLThickness), but so that the

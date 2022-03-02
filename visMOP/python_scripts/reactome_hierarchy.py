@@ -120,30 +120,30 @@ class PathwayHierarchy(dict):
         as the supplied omics data is only mapped to leaf nodes, data has to be aggregated to the higher level nodes
         """
         for k, v in self.items():
-            if not v.is_leaf:
-                subtree = self.get_subtree_target(v.reactome_sID)
-                proteins = v.measured_proteins
-                genes = v.measured_genes
-                metabolites = v.measured_metabolites
-                total_proteins = v.total_proteins
-                total_metabolites = v.total_metabolites
-                maplinks = v.maplinks
-                subtree_ids = subtree
-                subtree_ids.append(v.reactome_sID)
-                for node in subtree:
-                    proteins = {**proteins, **self[node].measured_proteins}
-                    genes = {**genes, **self[node].measured_genes}
-                    metabolite = {**metabolites, **self[node].measured_metabolites}
-                    total_proteins.extend(self[node].total_proteins)
-                    total_metabolites.extend(self[node].total_metabolites)
-                    maplinks.extend(self[node].maplinks)
-                v.measured_proteins = proteins
-                v.measured_genes = genes
-                v.measured_metabolites = metabolites
-                v.total_proteins = list(set(total_proteins))
-                v.total_metabolites = list(set(total_metabolites))
-                v.maplinks = list(set(maplinks))
-                v.subtree_ids = subtree_ids
+            #if not v.is_leaf:
+            subtree = self.get_subtree_target(v.reactome_sID)
+            proteins = v.measured_proteins
+            genes = v.measured_genes
+            metabolites = v.measured_metabolites
+            total_proteins = v.total_proteins
+            total_metabolites = v.total_metabolites
+            maplinks = v.maplinks
+            subtree_ids = subtree
+            subtree_ids.append(v.reactome_sID)
+            for node in subtree:
+                proteins = {**proteins, **self[node].measured_proteins}
+                genes = {**genes, **self[node].measured_genes}
+                metabolite = {**metabolites, **self[node].measured_metabolites}
+                total_proteins.extend(self[node].total_proteins)
+                total_metabolites.extend(self[node].total_metabolites)
+                maplinks.extend(self[node].maplinks)
+            v.measured_proteins = proteins
+            v.measured_genes = genes
+            v.measured_metabolites = metabolites
+            v.total_proteins = list(set(total_proteins))
+            v.total_metabolites = list(set(total_metabolites))
+            v.maplinks = list(set(maplinks))
+            v.subtree_ids = subtree_ids
             if ((len(v.measured_proteins) > 0) or (len(v.measured_genes) > 0) or (len(v.measured_metabolites) > 0)):
                 v.has_data = True
 
@@ -220,6 +220,16 @@ class PathwayHierarchy(dict):
         self.add_hierarchy_levels()
     
     def generate_overview_data(self, level, verbose):
+        """ Generates data to be exported to the frontend
+            Args:
+                level: target aggregation level
+                verbose: boolean: If total proteins/metabolite ids should be transmitted
+            Returns:
+                List of pathway overview entries, with each element being one pathway
+                Dictionary of which query (accession Ids, e.g. uniprot/ensmbl) maps to which pathways
+                List of pathways
+                List of contained hierarchy nodes
+        """
         out_data = []
         pathway_ids = self.levels[level]
         pathway_ids.extend(self.levels[0])
@@ -278,12 +288,35 @@ class PathwayHierarchy(dict):
         return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids))
 
 def format_content_graph_json(json_file):
+    """ Formats .graph.json file to be easily accessible in dictionary form with
+        the keys being node Ids
+
+        Args:
+            json_file: loaded json file
+        
+        Returns:
+            formatted json file dictionary
+    """
     intermediate_node_dict = {}
 
     for v in json_file['nodes']:
         intermediate_node_dict[v['dbId']] = v
     return intermediate_node_dict
+
 def get_contained_entities_graph_json(formatted_json):
+    """ Gets contained entities (protein/genes, molecules, maplinks)
+        In order to properly generate the glyphs and links of the overview visualization,
+        all contained entities and maplinks (non hierarchical links from one pathway to another)
+        have to be caluclated for a given pathway.
+
+        Args:
+            formatted_json: json file formatted by 'format_content_graph_json'
+
+        Return:
+            contained_proteins: list of Ids ofcontained proteins/genes
+            contained_molecules: list of Ids of contained molecules
+            contained_maplinks: list of Ids of contained maplinks
+    """
     contained_proteins = []
     contained_molecules = []
     contained_maplinks = []
@@ -305,11 +338,25 @@ def get_contained_entities_graph_json(formatted_json):
     return contained_proteins, contained_molecules, contained_maplinks
 
 def get_leaves_graph_json(intermediate_node_dict, entry_id):
-        leaves = []
-        leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves)
-        return leaves
+    """ Gets leaves of an .graph.json entry
+        Reactome graphs can contain complexes, which in turn can contain
+        a multide of proteins (or other entities), thus we have to descend
+        to the leaves to identify the actual entites and count them.
+
+        Args:
+            intermediate_node_dict: node dictionary containing the graph nodes,
+            entry_id: id for which to collect the leaves
+        
+        Returns:
+            list of leaf-ids
+    """
+    leaves = []
+    leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves)
+    return leaves
 
 def leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves):
+    """ recursive function to get .graph.json leaves
+    """
     if entry_id is not None:
         #print(intermediate_node_dict[entry_id]['children'])
         if 'children' not in intermediate_node_dict[entry_id]:

@@ -536,19 +536,38 @@ App route for querying and parsing on reactome data
 """
 @app.route('/reactome_parsing', methods=['POST'])
 def reactome_parsing():
+    """ Generates reactome hierarchy and maps query data to it
+        returns: json:
+                "omicsRecieved": dictionary containing for which omics type data was recieved
+                "used_symbol_cols" : dictionary containing string which indicate which column in the data-table contains the queried accession IDs
+                "fcs": fold changes of the queries
+    """
+
+    ###
+    # Parse POST data
+    ###
     target_db = request.json['targetOrganism']
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
     slider_vals = request.json['sliderVals']
 
+    ##
+    # Initialize Reactome Hierarchy
+    ##
     reactome_hierarchy = PathwayHierarchy()
     reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
 
+    ##
+    # Add query Data to Hierarchy
+    ##
     node_pathway_dict = {}
     fold_changes = {'transcriptomics': [], 'proteomics': [], 'metabolomics': []}
-    #Handle Proteomics if available
+    
+    ##
+    # Add Proteomics Data
+    ##
     if proteomics["recieved"]:
         proteomics_query_data_tuples = []
         try:
@@ -572,7 +591,9 @@ def reactome_parsing():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
         
-    
+    ##
+    # Add Metabolomics Data
+    ##
     if metabolomics["recieved"]:
         metabolomics_query_data_tuples = []
 
@@ -603,6 +624,9 @@ def reactome_parsing():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'metbolite', query_key)
     
+    ##
+    # Add Transcriptomics Data Data
+    ##
     if transcriptomics["recieved"]:
         transcriptomics_query_data_tuples = []
         transcriptomics_df_global = pd.read_json(cache.get('transcriptomics_df_global'),orient='columns')
@@ -633,6 +657,9 @@ def reactome_parsing():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'gene', query_key)
 
+    ##
+    # Aggregate Data in Hierarcy, and set session cache
+    ##
     reactome_hierarchy.aggregate_pathways()
     cache.set('reactome_hierarchy', reactome_hierarchy)
     dropdown_pathways = [] # TODO 
@@ -646,7 +673,17 @@ def reactome_parsing():
 
 @app.route('/reactome_overview/<targetLevel>', methods=['GET'])
 def reactome_overview(targetLevel):
-    # TODO sent to frontend
+    """ Generates and sends data to the frontend needed to display the reactome overview graph
+        Args:
+            targetLevel: Hierarchy level for which to aggregate the info
+        Returns:
+            json string containting overview data and pathway layouting data
+                overview data: list of pathways and their data
+                pathway layouting:  list of pathways
+                                    dictionary mapping query to pathway ids
+                                    list of Ids belonging to root nodes 
+    """
+
     target_level = int(targetLevel)
     reactome_hierarchy = cache.get('reactome_hierarchy')
     out_data, pathway_dict, dropdown_data, root_ids = reactome_hierarchy.generate_overview_data(target_level, False)

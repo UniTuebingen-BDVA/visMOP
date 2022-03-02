@@ -12,15 +12,14 @@ flat in vec3 startPos;
 
 out vec4 outColor;
 
-uniform vec2 u_viewPortResolution;
+uniform vec2 u_viewportResolution;
 uniform float u_dashLength;
 uniform float u_gapLength;
 
 const float feather = 0.001;
 const vec4 color0 = vec4(0.0, 0.0, 0.0, 0.0);
-
 void main(void) {
-  vec2 dir = (vertexPos.xy-startPos.xy) * u_viewPortResolution/2.0;
+  vec2 dir = (vertexPos.xy-startPos.xy) * u_viewportResolution/2.0;
   float distFromStart = length(dir);
 
   float dist = length(v_normal) * v_thickness;
@@ -33,7 +32,7 @@ void main(void) {
   );
 
   if (fract(distFromStart / (u_dashLength + u_gapLength)) > u_gapLength/(u_dashLength + u_gapLength))
-    discard;
-
-  outColor = mix(v_color, color0, t);
+    discard; 
+  
+  outColor =  mix(v_color, color0, t);
 }

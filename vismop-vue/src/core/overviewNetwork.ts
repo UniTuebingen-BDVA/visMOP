@@ -4,6 +4,7 @@ import noverlap from 'graphology-layout-noverlap'
 import Sigma from 'sigma'
 import { graphData } from '@/core/graphTypes'
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
+import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program'
 import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import store from '@/store'
@@ -109,6 +110,10 @@ export default class overviewGraph {
       edgeReducer: edgeReducer,
       zIndex: true, // enabling zIndex parameter
       renderLabels: false, // do not render labels w/o hover
+      edgeProgramClasses: {
+        ...DEFAULT_SETTINGS.edgeProgramClasses,
+        dashed: DashedEdgeProgram
+      },
       nodeProgramClasses: {
         ...DEFAULT_SETTINGS.nodeProgramClasses,
         image: getNodeProgramImage()
