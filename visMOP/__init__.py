@@ -43,6 +43,7 @@ stringGraph = None
 try:
     script_dir = data_path
     dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
+    # comment out stringgraph for debugging purposes
     stringGraph = StringGraph(dest_dir)
 except:
     print("Stringraph Error")
@@ -427,7 +428,7 @@ def reactome_parsing():
     # Initialize Reactome Hierarchy
     ##
     reactome_hierarchy = PathwayHierarchy()
-    reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
+    reactome_hierarchy.load_data(data_path / "reactome_data", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
 
     ##

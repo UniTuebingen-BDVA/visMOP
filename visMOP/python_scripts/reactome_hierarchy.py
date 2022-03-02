@@ -2,6 +2,7 @@ import json
 import pathlib
 
 import pickle
+import os
 
 class ReactomePathway:
     """ Pathway Class for ractome pathway entries
@@ -10,10 +11,11 @@ class ReactomePathway:
         Reactome_sID: Stable Reactome ID for pathway
 
     """ 
-    def __init__(self, reactome_sID):
+    def __init__(self, reactome_sID, has_diagram):
         self.is_root= False
         self.is_leaf= False
         self.has_data = False
+        self.has_diagram = has_diagram
         self.name= ''
         self.json_file = None
         self.graph_json_file = None
@@ -58,11 +60,11 @@ class PathwayHierarchy(dict):
             level = 0
             not_at_root = True
             next_elem = k
-            partent_name = ''
+            parent_name = ''
             while not_at_root:
                 if len(self[next_elem].parents) < 1:
                     not_at_root = False
-                    partent_name = next_elem
+                    parent_name = next_elem
                     break
                 else:
                     level += 1
@@ -130,6 +132,7 @@ class PathwayHierarchy(dict):
             maplinks = v.maplinks
             subtree_ids = subtree
             subtree_ids.append(v.reactome_sID)
+            tree_has_diagram = v.has_diagram
             for node in subtree:
                 proteins = {**proteins, **self[node].measured_proteins}
                 genes = {**genes, **self[node].measured_genes}
@@ -137,6 +140,8 @@ class PathwayHierarchy(dict):
                 total_proteins.extend(self[node].total_proteins)
                 total_metabolites.extend(self[node].total_metabolites)
                 maplinks.extend(self[node].maplinks)
+                if self[node].has_diagram:
+                    tree_has_diagram = True
             v.measured_proteins = proteins
             v.measured_genes = genes
             v.measured_metabolites = metabolites
@@ -194,23 +199,27 @@ class PathwayHierarchy(dict):
         """ Load hierarchy data into datastructure
 
             Args:
-                path: path to "ReactomePathwaysRelation.txt" File
+                path: path to data folder
 
                 organism: 3 letter abbrev for target organism
         """
-        with open(path) as fh:
+        diagram_files = os.listdir(path/'diagram')
+        with open(path/'ReactomePathwaysRelation.txt') as fh:
+           
             for line in fh:
                 line_list = line.strip().split('\t')
                 left_entry = line_list[0]
                 right_entry = line_list[1]
+                left_entry_has_diagram = left_entry + '.graph.json' in diagram_files
+                right_entry_has_diagram = right_entry + '.graph.json' in diagram_files
                 if(organism in left_entry):
                     if left_entry not in self.keys():
-                        self[left_entry] = ReactomePathway(left_entry)
+                        self[left_entry] = ReactomePathway(left_entry, left_entry_has_diagram)
                         self[left_entry].children.append(right_entry)
                     else:
                         self[left_entry].children.append(right_entry)
                     if right_entry not in self.keys():
-                        self[right_entry] = ReactomePathway(right_entry)
+                        self[right_entry] = ReactomePathway(right_entry, right_entry_has_diagram)
                         self[right_entry].parents.append(left_entry)
                     else:
                         self[right_entry].parents.append(left_entry)
@@ -250,7 +259,6 @@ class PathwayHierarchy(dict):
                     'metabolomics': {'measured':{}, 'total':0}
                     }
                 }
-                
                 pathway_dict['pathwayName'] = entry.name
                 pathway_dict['pathwayId'] = entry.reactome_sID
                 pathway_dict['rootId'] = entry.root_id
