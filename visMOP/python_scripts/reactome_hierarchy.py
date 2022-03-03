@@ -94,27 +94,49 @@ class PathwayHierarchy(dict):
         Args:
             json_path: path at which to find the json diagram files
         """
-        for key, entry in self.items():
-            try:
-                with open(json_path / (key+'.json')) as fh:
-                    json_file = json.load(fh)
-                    entry.json_file = json_file
-                    entry.name = json_file['displayName']
-            except:
-                pass
+        current_level = 0
 
-            try:
-                with open(json_path / (key+'.graph.json')) as fh:
-                    json_file = json.load(fh)
-                    json_file['nodes'] = format_content_graph_json(json_file)
-                    entry.graph_json_file = json_file
-                    prot, molec, contained_maplinks = get_contained_entities_graph_json(entry.graph_json_file)
+        while current_level in self.levels:
+            current_level_ids = self.levels[current_level]
+            current_level += 1
+            for key in current_level_ids:
+                entry = self[key]
+                
+                try:
+                    with open(json_path / (key+'.json')) as fh:
+                        json_file = json.load(fh)
+                        entry.json_file = json_file
+                        entry.name = json_file['displayName']
+                except:
+                    pass
+
+                if entry.has_diagram:
+                    with open(json_path / (key+'.graph.json')) as fh:
+                        json_file = json.load(fh)
+                        json_file = format_graph_json(json_file)
+                        entry.graph_json_file = json_file
+                        prot, molec, contained_maplinks = get_contained_entities_graph_json(entry.graph_json_file['nodes'].keys(), entry.graph_json_file)
+                        entry.total_proteins = prot
+                        entry.total_metabolites = molec
+                        entry.maplinks = contained_maplinks
+                else:
+                    current_entry = entry
+                    next_entry = entry.parents[0] #todo might cause problems (does not consider branches)
+                    arrived_at_diagram = False
+                    while not arrived_at_diagram:
+                        current_entry = self[next_entry]
+                        arrived_at_diagram = current_entry.has_diagram
+                        if(len(current_entry.parents) > 0 ):
+                            next_entry = current_entry.parents[0]
+                        else:
+                            if not arrived_at_diagram:
+                                print('did not find diagram for: ', key)
+                                arrived_at_diagram = True
+                    prot, molec, contained_maplinks, name = get_subpathway_entities_graph_json(current_entry.graph_json_file, key)
+                    entry.name = name
                     entry.total_proteins = prot
                     entry.total_metabolites = molec
                     entry.maplinks = contained_maplinks
-            except Exception as e:
-                #print('Exception', e)
-                pass
     
     def aggregate_pathways(self):
         """ Aggregates data from low level nodes to higher level nodes
@@ -295,30 +317,51 @@ class PathwayHierarchy(dict):
                 out_data.append( pathway_dict )
         return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids))
 
-def format_content_graph_json(json_file):
-    """ Formats .graph.json file to be easily accessible in dictionary form with
+def format_graph_json(graph_json_file):
+    """ Formats .graph.json nodes to be easily accessible in dictionary form with
         the keys being node Ids
 
         Args:
-            json_file: loaded json file
+            graph_json_file: loaded graph.json file
         
         Returns:
             formatted json file dictionary
     """
     intermediate_node_dict = {}
+    intermediate_edge_dict = {}
+    intermediate_subpathway_dict = {}
 
-    for v in json_file['nodes']:
-        intermediate_node_dict[v['dbId']] = v
-    return intermediate_node_dict
+    try:
+        for v in graph_json_file['nodes']:
+            intermediate_node_dict[v['dbId']] = v
+    except:
+        pass
 
-def get_contained_entities_graph_json(formatted_json):
+    try:
+        for v in graph_json_file['edges']:
+            intermediate_edge_dict[v['dbId']] = v
+    except:
+        pass
+
+    try:
+        for v in graph_json_file['subpathways']:
+            intermediate_subpathway_dict[v['dbId']] = v
+    except:
+        pass
+    
+    graph_json_file['nodes'] = intermediate_node_dict
+    graph_json_file['edges'] = intermediate_edge_dict
+    graph_json_file['subpathways'] = intermediate_subpathway_dict
+    return graph_json_file
+
+def get_contained_entities_graph_json(node_ids, formatted_json):
     """ Gets contained entities (protein/genes, molecules, maplinks)
         In order to properly generate the glyphs and links of the overview visualization,
         all contained entities and maplinks (non hierarchical links from one pathway to another)
         have to be caluclated for a given pathway.
 
         Args:
-            formatted_json: json file formatted by 'format_content_graph_json'
+            formatted_json: json file formatted by 'format_graph_json'
 
         Return:
             contained_proteins: list of Ids ofcontained proteins/genes
@@ -330,7 +373,7 @@ def get_contained_entities_graph_json(formatted_json):
     contained_maplinks = []
 
     leaves_total = []
-    for k in formatted_json['nodes'].keys():
+    for k in node_ids:
         leaves = get_leaves_graph_json(formatted_json['nodes'], k)
         leaves_total.extend(leaves)
     leaves_set = list(set(leaves_total))
@@ -344,6 +387,41 @@ def get_contained_entities_graph_json(formatted_json):
         else:
             contained_molecules.append(leaf)
     return contained_proteins, contained_molecules, contained_maplinks
+
+def get_subpathway_entities_graph_json(formatted_json,subpathwayID):
+    
+    name = ''
+
+    contained_events = []
+    for k, v in formatted_json['subpathways'].items():
+        # todo we can get pathway name here!!!
+        if v['stId'] == subpathwayID:
+            contained_events = v['events']
+            name = v['displayName']
+            break
+    entities = []
+    for event in contained_events:
+        event_node = formatted_json['edges'][event]
+        try:
+            entities.extend(event_node['inputs'])
+        except:
+            pass
+        try:
+            entities.extend(event_node['outputs'])
+        except:
+            pass
+        try:
+            entities.extend(event_node['catalysts'])
+        except:
+            pass
+        try:
+            entities.extend(event_node['inhibitors'])
+        except:
+            pass
+
+    contained_proteins, contained_molecules, contained_maplinks = get_contained_entities_graph_json(entities, formatted_json)
+    
+    return contained_proteins, contained_molecules, contained_maplinks, name
 
 def get_leaves_graph_json(intermediate_node_dict, entry_id):
     """ Gets leaves of an .graph.json entry
