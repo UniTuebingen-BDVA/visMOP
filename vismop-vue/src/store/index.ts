@@ -422,7 +422,8 @@ export default new Vuex.Store({
       commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict, pathwayNodeDictionaryClean: pathwayNodeDictClean })
     },
     setPathwayLayoutingReactome ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
-      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: val.pathwayNodeDictionary, pathwayNodeDictionaryClean: {} })
+      console.log('TESTEST', val.pathwayNodeDictionary)
+      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: val.pathwayNodeDictionary, pathwayNodeDictionaryClean: val.pathwayNodeDictionary })
     },
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')

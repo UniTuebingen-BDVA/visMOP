@@ -300,28 +300,30 @@ export default Vue.extend({
         const typedArrayHeader = this.transcriptomicsTableHeaders as [{[key: string]: string}]
 
         typedArrayHeader.forEach(element => {
-          const valArr = typedArrayData.map(elem => elem[element.value])
-          const numArr: number[] = []
-          let amtNum = 0
-          let amtNonNum = 0
-          let empties = 0
-          valArr.forEach((val) => {
-            if (typeof val === 'number') {
-              amtNum += 1
-              numArr.push(val)
-            } else if (val === 'None') {
-              empties += 1
-            } else amtNonNum += 1
-          })
-          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
-            const min = Math.floor(Math.min(...numArr))
-            const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
-              this.sliderVals.transcriptomics[element.value] = { vals: [min, max], empties: true }
+          if (element.value !== 'available') { 
+            const valArr = typedArrayData.map(elem => elem[element.value])
+            const numArr: number[] = []
+            let amtNum = 0
+            let amtNonNum = 0
+            let empties = 0
+            valArr.forEach((val) => {
+              if (typeof val === 'number') {
+                amtNum += 1
+                numArr.push(val)
+              } else if (val === 'None') {
+                empties += 1
+              } else amtNonNum += 1
+            })
+            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+              console.log(element.value, numArr)
+              const min = Math.floor(Math.min(...numArr))
+              const max = Math.ceil(Math.max(...numArr))
+              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+              if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
+                this.sliderVals.transcriptomics[element.value] = { vals: [min, max], empties: true }
+              }
+              console.log(element.value, this.sliderVals)
             }
-            console.log(element.value, this.sliderVals)
           }
         })
         return outObj
@@ -334,28 +336,30 @@ export default Vue.extend({
         const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
 
         typedArrayHeader.forEach(element => {
-          const valArr = typedArrayData.map(elem => elem[element.value])
-          const numArr: number[] = []
-          let amtNum = 0
-          let amtNonNum = 0
-          let empties = 0
-          valArr.forEach((val) => {
-            if (typeof val === 'number') {
-              amtNum += 1
-              numArr.push(val)
-            } else if (val === 'None') {
-              empties += 1
-            } else amtNonNum += 1
-          })
-          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
-            const min = Math.floor(Math.min(...numArr))
-            const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
-              this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
+          if (element.value !== 'available') { 
+            const valArr = typedArrayData.map(elem => elem[element.value])
+            const numArr: number[] = []
+            let amtNum = 0
+            let amtNonNum = 0
+            let empties = 0
+            valArr.forEach((val) => {
+              if (typeof val === 'number') {
+                amtNum += 1
+                numArr.push(val)
+              } else if (val === 'None') {
+                empties += 1
+              } else amtNonNum += 1
+            })
+            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+              console.log(element.value, numArr)
+              const min = Math.floor(Math.min(...numArr))
+              const max = Math.ceil(Math.max(...numArr))
+              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+              if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
+                this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
+              }
+              console.log(element.value, this.sliderVals)
             }
-            console.log(element.value, this.sliderVals)
           }
         })
         return outObj
@@ -363,33 +367,36 @@ export default Vue.extend({
     },
     sliderMetabolomics: {
       get: function () {
+        
         const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
         const typedArrayData = this.metabolomicsTableData as [{[key: string]: number}]
         const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
 
         typedArrayHeader.forEach(element => {
-          const valArr = typedArrayData.map(elem => elem[element.value])
-          const numArr: number[] = []
-          let amtNum = 0
-          let amtNonNum = 0
-          let empties = 0
-          valArr.forEach((val) => {
-            if (typeof val === 'number') {
-              amtNum += 1
-              numArr.push(val)
-            } else if (val === 'None') {
-              empties += 1
-            } else amtNonNum += 1
-          })
-          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
-            const min = Math.floor(Math.min(...numArr))
-            const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
-              this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
+          if (element.value !== 'available') { 
+            const valArr = typedArrayData.map(elem => elem[element.value])
+            const numArr: number[] = []
+            let amtNum = 0
+            let amtNonNum = 0
+            let empties = 0
+            valArr.forEach((val) => {
+              if (typeof val === 'number') {
+                amtNum += 1
+                numArr.push(val)
+              } else if (val === 'None') {
+                empties += 1
+              } else amtNonNum += 1
+            })
+            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+              console.log(element.value, numArr)
+              const min = Math.floor(Math.min(...numArr))
+              const max = Math.ceil(Math.max(...numArr))
+              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+              if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
+                this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
+              }
+              console.log(element.value, this.sliderVals)
             }
-            console.log(element.value, this.sliderVals)
           }
         })
         return outObj

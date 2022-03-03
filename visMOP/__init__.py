@@ -158,26 +158,26 @@ def interaction_graph():
 
 def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
-    prot_table_global = pd.read_json(cache.get('prot_table_global'), orient="columns")
-    prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
+    prot_table = pd.read_json(cache.get('prot_table_global'), orient="columns")
+    prot_table = prot_table.drop_duplicates(subset=colname).set_index(colname)
     for k,v in filter_obj.items():
-        is_empty = (v['empties'] & (prot_table_global[k] == 'None'))
-        is_numeric = (pd.to_numeric(prot_table_global[k],errors='coerce').notnull())
-        df_numeric = prot_table_global.loc[is_numeric]
+        is_empty = (v['empties'] & (prot_table[k] == 'None'))
+        is_numeric = (pd.to_numeric(prot_table[k],errors='coerce').notnull())
+        df_numeric = prot_table.loc[is_numeric]
         df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
-        df_is_empty = prot_table_global.loc[is_empty]
+        df_is_empty = prot_table.loc[is_empty]
     
-        prot_table_global = prot_table_global.loc[prot_table_global.index.isin(df_is_in_range.index) | prot_table_global.index.isin(df_is_empty.index) ]
-    protein_dict = make_protein_dict(prot_table_global,colname)
+        prot_table = prot_table.loc[prot_table.index.isin(df_is_in_range.index) | prot_table.index.isin(df_is_empty.index) ]
+    protein_dict = make_protein_dict(prot_table,colname)
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
     add_uniprot_info(protein_dict)
     # add location to table
-    prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
+    # prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
     
     # set cache for structures
     cache.set('prot_dict_global', json.dumps(protein_dict))
-    cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
+    #cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
   
     
 
