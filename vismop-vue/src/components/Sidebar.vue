@@ -298,9 +298,8 @@ export default Vue.extend({
         const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
         const typedArrayData = this.transcriptomicsTableData as [{[key: string]: number}]
         const typedArrayHeader = this.transcriptomicsTableHeaders as [{[key: string]: string}]
-
         typedArrayHeader.forEach(element => {
-          if (element.value !== 'available') { 
+          if (element.value !== 'available') {
             const valArr = typedArrayData.map(elem => elem[element.value])
             const numArr: number[] = []
             let amtNum = 0
@@ -336,7 +335,7 @@ export default Vue.extend({
         const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
 
         typedArrayHeader.forEach(element => {
-          if (element.value !== 'available') { 
+          if (element.value !== 'available') {
             const valArr = typedArrayData.map(elem => elem[element.value])
             const numArr: number[] = []
             let amtNum = 0
@@ -367,13 +366,12 @@ export default Vue.extend({
     },
     sliderMetabolomics: {
       get: function () {
-        
         const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
         const typedArrayData = this.metabolomicsTableData as [{[key: string]: number}]
         const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
 
         typedArrayHeader.forEach(element => {
-          if (element.value !== 'available') { 
+          if (element.value !== 'available') {
             const valArr = typedArrayData.map(elem => elem[element.value])
             const numArr: number[] = []
             let amtNum = 0
