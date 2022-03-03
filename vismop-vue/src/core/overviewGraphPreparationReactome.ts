@@ -27,10 +27,8 @@ export function generateGraphData (
     options: []
   } as graphData
   const addedEdges: string[] = []
-  console.log('TESTEST', nodeList)
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey]
-    console.log('ENTRY', entry)
     const name = entry.pathwayName
     const id = entry.pathwayId
     const initPosX = Math.random() * 100
@@ -58,7 +56,6 @@ export function generateGraphData (
       graph.edges.push(currentEdge)
       addedEdges.push(currentEdge.key)
     }
-    console.log(rootIds)
     for (const maplink of entry.maplinks) {
       if (!rootIds.includes(entry.pathwayId)) {
         for (const entryKey in nodeList) {

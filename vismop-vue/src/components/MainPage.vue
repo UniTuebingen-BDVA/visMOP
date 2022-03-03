@@ -295,9 +295,6 @@ export default Vue.extend({
     }
   },
   watch: {
-    targetDatabase: function () {
-      console.log('TESTEST', this.targetDatabase)
-    },
     pathwayLayouting: function () {
       let transcriptomicsAvailable = 0
       let transcriptomicsTotal = 0

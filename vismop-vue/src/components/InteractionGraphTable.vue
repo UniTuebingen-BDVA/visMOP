@@ -64,7 +64,7 @@ export default Vue.extend({
   data: (): Data => ({
     tableSearch: '',
     selectedNodesHeader: [
-      { value: 'id', text: 'Kegg ID' },
+      { value: 'id', text: 'ID' },
       { value: 'name', text: 'Name' },
       { value: 'fcTranscript', text: 'FC Trans.' },
       { value: 'fcProt', text: 'FC Prot' },
