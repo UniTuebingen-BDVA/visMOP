@@ -388,8 +388,21 @@ def get_contained_entities_graph_json(node_ids, formatted_json):
             contained_molecules.append(leaf)
     return contained_proteins, contained_molecules, contained_maplinks
 
-def get_subpathway_entities_graph_json(formatted_json,subpathwayID):
+def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
+    """ Gets entities for subpathways from higherlevel pathways
+
+        Args:
+            formatted_json: formatted json file for SUPERPATHWAY
+            subpathwayID: ID of sub-pathway to query
+
+        Return:
+            contained_proteins: list of Ids ofcontained proteins/genes
+            contained_molecules: list of Ids of contained molecules
+            contained_maplinks: list of Ids of contained maplinks
+            name: name of query-sub-pathway
+
     
+    """
     name = ''
 
     contained_events = []
