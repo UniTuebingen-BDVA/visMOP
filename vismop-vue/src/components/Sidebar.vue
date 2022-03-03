@@ -43,7 +43,7 @@
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disabled="overlay"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -99,7 +99,7 @@
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disabled="overlay"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -155,7 +155,7 @@
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disabled="overlay"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -210,7 +210,7 @@ import Vue from 'vue'
 import { Function } from 'lodash'
 
 interface Data{
-   overlay: boolean,
+  overlay: boolean,
   transcriptomicsFile: File | null,
   transcriptomicsSheetVal: string,
   transcriptomicsSymbolCol: string,
@@ -240,7 +240,6 @@ export default Vue.extend({
   components: {},
 
   data: () => ({
-    overlay: false,
     transcriptomicsFile: null,
     transcriptomicsSheetVal: '0',
     transcriptomicsSymbolCol: '',
@@ -282,7 +281,8 @@ export default Vue.extend({
       metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders,
       transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
       proteomicsTableData: (state: any) => state.proteomicsTableData,
-      metabolomicsTableData: (state: any) => state.metabolomicsTableData
+      metabolomicsTableData: (state: any) => state.metabolomicsTableData,
+      overlay: (state: any) => state.overlay
     }),
     chosenOmics: {
       get: function () {
@@ -424,7 +424,7 @@ export default Vue.extend({
       )
       Vue.set(this.sliderVals, 'transcriptomics', {})
       if (fileInput !== null) {
-        this.overlay = true
+        this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.transcriptomicsSheetVal)
@@ -449,7 +449,7 @@ export default Vue.extend({
             )
             this.recievedTranscriptomicsData = true
           })
-          .then(() => (this.overlay = false))
+          .then(() => (this.$store.dispatch('setOverlay', false)))
       } else {
         // more errorhandling?
         this.recievedTranscriptomicsData = false
@@ -472,7 +472,7 @@ export default Vue.extend({
       )
       Vue.set(this.sliderVals, 'proteomics', {})
       if (fileInput !== null) {
-        this.overlay = true
+        this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.proteomicsSheetVal)
@@ -500,7 +500,7 @@ export default Vue.extend({
             )
             this.recievedProteomicsData = true
           })
-          .then(() => (this.overlay = false))
+          .then(() => (this.$store.dispatch('setOverlay', false)))
       } else {
         // more errorhandling?
         this.recievedProteomicsData = false
@@ -522,7 +522,7 @@ export default Vue.extend({
       )
       Vue.set(this.sliderVals, 'metabolomics', {})
       if (fileInput !== null) {
-        this.overlay = true
+        this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.metabolomicsSheetVal)
@@ -549,7 +549,7 @@ export default Vue.extend({
             )
             this.recievedMetabolomicsData = true
           })
-          .then(() => (this.overlay = false))
+          .then(() => (this.$store.dispatch('setOverlay', false)))
       } else {
         // more errorhandling?
         this.recievedMetabolomicsData = false
