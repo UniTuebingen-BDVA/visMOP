@@ -8,9 +8,6 @@
       @click="lockHover"
       @input="unlockHover"
     ></v-select>
-    <div v-if="targetDatabase === 'reactome'">
-      <v-text-field :rules="sheetRules" label="Reactome Target Tier" :value="reactomeLevelSelection" v-model="reactomeLevelSelection"></v-text-field>
-    </div>
     <v-select
       :items="targetOrganisms"
       label="Target Organism"
@@ -608,7 +605,7 @@ export default Vue.extend({
     },
 
     getReactomeData () {
-      fetch(`/reactome_overview/${this.reactomeLevelSelection}`, {
+      fetch('/reactome_overview', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

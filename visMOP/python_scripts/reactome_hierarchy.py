@@ -16,6 +16,7 @@ class ReactomePathway:
         self.is_leaf= False
         self.has_data = False
         self.has_diagram = has_diagram
+        self.is_overview = True
         self.name= ''
         self.json_file = None
         self.graph_json_file = None
@@ -115,10 +116,12 @@ class PathwayHierarchy(dict):
                         json_file = json.load(fh)
                         json_file = format_graph_json(json_file)
                         entry.graph_json_file = json_file
-                        prot, molec, contained_maplinks = get_contained_entities_graph_json(entry.graph_json_file['nodes'].keys(), entry.graph_json_file)
+                        prot, molec, contained_maplinks, is_overview = get_contained_entities_graph_json(entry.graph_json_file['nodes'].keys(), entry.graph_json_file)
                         entry.total_proteins = prot
                         entry.total_metabolites = molec
                         entry.maplinks = contained_maplinks
+                        entry.is_overview = is_overview
+
                 else:
                     current_entry = entry
                     next_entry = entry.parents[0] #todo might cause problems (does not consider branches)
@@ -132,11 +135,12 @@ class PathwayHierarchy(dict):
                             if not arrived_at_diagram:
                                 print('did not find diagram for: ', key)
                                 arrived_at_diagram = True
-                    prot, molec, contained_maplinks, name = get_subpathway_entities_graph_json(current_entry.graph_json_file, key)
+                    prot, molec, contained_maplinks, is_overview, name = get_subpathway_entities_graph_json(current_entry.graph_json_file, key)
                     entry.name = name
                     entry.total_proteins = prot
                     entry.total_metabolites = molec
                     entry.maplinks = contained_maplinks
+                    entry.is_overview = is_overview
     
     def aggregate_pathways(self):
         """ Aggregates data from low level nodes to higher level nodes
@@ -178,7 +182,7 @@ class PathwayHierarchy(dict):
         """ Gets all leaves found for target entry
 
         Args:
-            tar_id: String: entry id for which to retrieve leafes
+            tar_id: String: entry id for which to retrieve leaves
         """
         subtree = []
         self._subtree_recursive(tar_id,subtree)
@@ -250,10 +254,31 @@ class PathwayHierarchy(dict):
             v.assert_leaf_root_state()
         self.add_hierarchy_levels()
     
-    def generate_overview_data(self, level, verbose):
+    def get_subtree_non_overview(self, tar_id):
+        """ Gets all leaves found for target entry
+
+        Args:
+            tar_id: String: entry id for which to retrieve leaves
+        """
+        subtree = []
+        self._get_subtree_non_overview_recursion(tar_id,subtree)
+        return subtree
+
+    def _get_subtree_non_overview_recursion(self, entry_id, subtree):
+        """ Recursive function for leaf retrieval
+        """
+        if entry_id is not None:
+            if not self[entry_id].is_overview:
+                subtree.append(entry_id)
+                return
+            if self[entry_id].is_overview:
+                for elem in self[entry_id].children:
+                    self._get_subtree_non_overview_recursion(elem, subtree)
+
+
+    def generate_overview_data(self, verbose):
         """ Generates data to be exported to the frontend
             Args:
-                level: target aggregation level
                 verbose: boolean: If total proteins/metabolite ids should be transmitted
             Returns:
                 List of pathway overview entries, with each element being one pathway
@@ -262,8 +287,12 @@ class PathwayHierarchy(dict):
                 List of contained hierarchy nodes
         """
         out_data = []
-        pathway_ids = self.levels[level]
+        #pathway_ids = self.levels[level]
+        pathway_ids = []
+        for root in self.levels[0]:
+            pathway_ids.extend(self.get_subtree_non_overview(root))
         pathway_ids.extend(self.levels[0])
+        pathway_ids = list(set(pathway_ids))
         query_pathway_dict = {}
         pathway_dropdown = []
         root_ids = []
@@ -367,10 +396,12 @@ def get_contained_entities_graph_json(node_ids, formatted_json):
             contained_proteins: list of Ids ofcontained proteins/genes
             contained_molecules: list of Ids of contained molecules
             contained_maplinks: list of Ids of contained maplinks
+            is_overview: boolean, is pathway overview (i.e. only contains maplinks)
     """
     contained_proteins = []
     contained_molecules = []
     contained_maplinks = []
+    is_overview = True
 
     leaves_total = []
     for k in node_ids:
@@ -382,11 +413,13 @@ def get_contained_entities_graph_json(node_ids, formatted_json):
         entry = formatted_json['nodes'][leaf]
         if entry['schemaClass'] == 'EntityWithAccessionedSequence':
             contained_proteins.append(leaf)
+            is_overview = False
         elif entry['schemaClass'] == 'Pathway':
             contained_maplinks.append(entry['stId'])
         else:
             contained_molecules.append(leaf)
-    return contained_proteins, contained_molecules, contained_maplinks
+            is_overview = False
+    return contained_proteins, contained_molecules, contained_maplinks, is_overview
 
 def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
     """ Gets entities for subpathways from higherlevel pathways
@@ -432,9 +465,9 @@ def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
         except:
             pass
 
-    contained_proteins, contained_molecules, contained_maplinks = get_contained_entities_graph_json(entities, formatted_json)
+    contained_proteins, contained_molecules, contained_maplinks, is_overview = get_contained_entities_graph_json(entities, formatted_json)
     
-    return contained_proteins, contained_molecules, contained_maplinks, name
+    return contained_proteins, contained_molecules, contained_maplinks, is_overview, name
 
 def get_leaves_graph_json(intermediate_node_dict, entry_id):
     """ Gets leaves of an .graph.json entry

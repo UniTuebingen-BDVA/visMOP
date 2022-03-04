@@ -44,7 +44,7 @@ try:
     script_dir = data_path
     dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
     # comment out stringgraph for debugging purposes
-    stringGraph = StringGraph(dest_dir)
+    stringGraph = ''#StringGraph(dest_dir)
 except:
     print("Stringraph Error")
 
@@ -543,11 +543,9 @@ def reactome_parsing():
     return json.dumps(out_dat)
 
 
-@app.route('/reactome_overview/<targetLevel>', methods=['GET'])
-def reactome_overview(targetLevel):
+@app.route('/reactome_overview', methods=['GET'])
+def reactome_overview():
     """ Generates and sends data to the frontend needed to display the reactome overview graph
-        Args:
-            targetLevel: Hierarchy level for which to aggregate the info
         Returns:
             json string containting overview data and pathway layouting data
                 overview data: list of pathways and their data
@@ -555,10 +553,8 @@ def reactome_overview(targetLevel):
                                     dictionary mapping query to pathway ids
                                     list of Ids belonging to root nodes 
     """
-
-    target_level = int(targetLevel)
     reactome_hierarchy = cache.get('reactome_hierarchy')
-    out_data, pathway_dict, dropdown_data, root_ids = reactome_hierarchy.generate_overview_data(target_level, False)
+    out_data, pathway_dict, dropdown_data, root_ids = reactome_hierarchy.generate_overview_data(False)
     
     return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
