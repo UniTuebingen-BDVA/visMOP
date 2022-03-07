@@ -24,6 +24,7 @@ class ReactomePathway:
         self.reactome_sID= reactome_sID
         self.children = []
         self.subtree_ids = []
+        self.diagram_id = ''
         self.measured_proteins = {}
         self.measured_genes = {}
         self.measured_metabolites = {}
@@ -136,6 +137,7 @@ class PathwayHierarchy(dict):
                     shortest_path_key = min(entries_with_diagram, key=itemgetter(1))[0]
                     entry_with_diagram = self[shortest_path_key]
                     prot, molec, contained_maplinks, is_overview, name = get_subpathway_entities_graph_json(entry_with_diagram.graph_json_file, key)
+                    entry.diagram_id = entry_with_diagram
                     entry.name = name
                     entry.total_proteins = prot
                     entry.total_metabolites = molec

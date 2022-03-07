@@ -154,7 +154,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   const thirdCircle = 2 * (Math.PI / availableOmics)
   const thirdCircleElement = 1.8 * (Math.PI / availableOmics)
   const circlePadding = 0.1 * (Math.PI / availableOmics)
-  const diameter = 56
+  const diameter = 28
   const layerWidth = diameter / 7
   const width = diameter + (drawLabels ? 7 : 0)
   const height = diameter + (drawLabels ? 7 : 0)

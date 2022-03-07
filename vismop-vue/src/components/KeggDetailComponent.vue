@@ -54,7 +54,7 @@ interface Data{
 
 export default Vue.extend({
   // name of the component
-  name: 'NetworkGraphComponent',
+  name: 'KeggDetailComponent',
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({

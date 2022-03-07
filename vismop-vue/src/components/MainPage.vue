@@ -196,16 +196,30 @@
 
                 </v-col>
                 </v-row>
+                <div v-if="targetDatabase === 'kegg'">
                   <keep-alive>
-                    <network-graph-component
+                    <kegg-detail-component
                       contextID="detailContext"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
                       :isActive="activeOverview"
                     >
-                    </network-graph-component>
+                    </kegg-detail-component>
                   </keep-alive>
+                </div>
+                <div v-if="targetDatabase === 'reactome'">
+                  <keep-alive>
+                    <reactome-detail-component
+                      contextID="detailContext"
+                      :transcriptomicsSelection="transcriptomicsSelectionData"
+                      :proteomicsSelection="proteomicsSelectionData"
+                      :metabolomicsSelection="metabolomicsSelectionData"
+                      :isActive="activeOverview"
+                    >
+                    </reactome-detail-component>
+                  </keep-alive>
+                </div>
             </v-tab-item>
 
             <v-tab-item value="detailNetwork">
@@ -224,7 +238,8 @@
 </template>
 <script lang="ts">
 import { mapState } from 'vuex'
-import NetworkGraphComponent from './NetworkGraphComponent.vue'
+import KeggDetailComponent from './KeggDetailComponent.vue'
+import ReactomeDetailComponent from './ReactomeDetailComponent.vue'
 import OverviewComponent from './OverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
@@ -247,7 +262,7 @@ interface Data{
 }
 
 export default Vue.extend({
-  components: { NetworkGraphComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, OverviewComponentReactome },
+  components: { KeggDetailComponent, ReactomeDetailComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, OverviewComponentReactome },
   // name of the component
   name: 'MainPage',
 
