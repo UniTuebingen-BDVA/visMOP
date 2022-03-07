@@ -59,25 +59,28 @@ class PathwayHierarchy(dict):
         With 0 Being root and each increase is one level further
         """
         for k,v in self.items():
-            level = 0
-            not_at_root = True
-            next_elem = k
-            parent_name = ''
-            while not_at_root:
-                if len(self[next_elem].parents) < 1:
-                    not_at_root = False
-                    parent_name = next_elem
-                    break
-                else:
-                    level += 1
-                    next_elem = self[next_elem].parents[0] # [0] is temp fix disregards more than one parent
+            final_entries = []
+            self._hierarchy_levels_recursion(k, [], final_entries)
+            shortest_path = min(final_entries, key=len)
+            level = len(shortest_path)-1
             v.level = level
-            v.root_id= next_elem
+            v.root_id = shortest_path[level]
             if level in self.levels:
                 self.levels[level].append(v.reactome_sID)
             else:
                 self.levels[level] = [v.reactome_sID]
 
+    def _hierarchy_levels_recursion(self, entry_id, path, final_entries):
+        at_root = False
+        current_entry = self[entry_id]
+       
+        arrived_at_diagram = current_entry.has_diagram
+        path.append(entry_id)
+        if self[entry_id].is_root:
+            final_entries.append(path)
+        else:
+            for parent in current_entry.parents:
+                self._hierarchy_levels_recursion(parent, path, final_entries)
 
     def hierarchyInfo(self):
         """ Prints info about hierarchy
@@ -102,8 +105,6 @@ class PathwayHierarchy(dict):
             current_level += 1
             for key in current_level_ids:
                 entry = self[key]
-                if key =='R-MMU-3247509':
-                    print('arrived')
                 if entry.has_diagram:
                     with open(json_path / (key+'.json')) as fh:
                         json_file = json.load(fh)
@@ -128,12 +129,10 @@ class PathwayHierarchy(dict):
             current_level += 1
             
             for key in current_level_ids:
-                if key =='R-MMU-3247509':
-                    print('arrived')
                 entry = self[key]
                 if not entry.has_diagram:
                     entries_with_diagram = []
-                    self.find_diagram_recursion(key, entries_with_diagram, 0)
+                    self._find_diagram_recursion(key, entries_with_diagram, 0)
                     shortest_path_key = min(entries_with_diagram, key=itemgetter(1))[0]
                     entry_with_diagram = self[shortest_path_key]
                     prot, molec, contained_maplinks, is_overview, name = get_subpathway_entities_graph_json(entry_with_diagram.graph_json_file, key)
@@ -143,7 +142,7 @@ class PathwayHierarchy(dict):
                     entry.maplinks = contained_maplinks
                     entry.is_overview = is_overview
         
-    def find_diagram_recursion(self, entry_id, final_entries, steps):
+    def _find_diagram_recursion(self, entry_id, final_entries, steps):
         arrived_at_diagram = False
         current_entry = self[entry_id]
        
@@ -153,7 +152,7 @@ class PathwayHierarchy(dict):
         else:
             if len(current_entry.parents) > 0:
                 for parent in current_entry.parents:
-                    self.find_diagram_recursion(parent, final_entries, steps + 1)
+                    self._find_diagram_recursion(parent, final_entries, steps + 1)
             else:
                 if not arrived_at_diagram:
                     print('did not find diagram for: ', key)
@@ -286,8 +285,9 @@ class PathwayHierarchy(dict):
         if entry_id is not None:
             if not self[entry_id].is_overview:
                 subtree.append(entry_id)
-                return
-            if self[entry_id].is_overview:
+                if not self[entry_id].is_root:
+                    return
+            if self[entry_id].is_overview or self[entry_id].is_root:
                 for elem in self[entry_id].children:
                     self._get_subtree_non_overview_recursion(elem, subtree)
 
