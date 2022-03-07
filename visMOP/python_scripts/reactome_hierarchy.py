@@ -3,6 +3,7 @@ import pathlib
 
 import pickle
 import os
+from operator import itemgetter
 
 class ReactomePathway:
     """ Pathway Class for ractome pathway entries
@@ -96,20 +97,18 @@ class PathwayHierarchy(dict):
             json_path: path at which to find the json diagram files
         """
         current_level = 0
-
         while current_level in self.levels:
             current_level_ids = self.levels[current_level]
             current_level += 1
             for key in current_level_ids:
                 entry = self[key]
-                
-                try:
+                if key =='R-MMU-3247509':
+                    print('arrived')
+                if entry.has_diagram:
                     with open(json_path / (key+'.json')) as fh:
                         json_file = json.load(fh)
                         entry.json_file = json_file
                         entry.name = json_file['displayName']
-                except:
-                    pass
 
                 if entry.has_diagram:
                     with open(json_path / (key+'.graph.json')) as fh:
@@ -122,26 +121,43 @@ class PathwayHierarchy(dict):
                         entry.maplinks = contained_maplinks
                         entry.is_overview = is_overview
 
-                else:
-                    current_entry = entry
-                    next_entry = entry.parents[0] #todo might cause problems (does not consider branches)
-                    arrived_at_diagram = False
-                    while not arrived_at_diagram:
-                        current_entry = self[next_entry]
-                        arrived_at_diagram = current_entry.has_diagram
-                        if(len(current_entry.parents) > 0 ):
-                            next_entry = current_entry.parents[0]
-                        else:
-                            if not arrived_at_diagram:
-                                print('did not find diagram for: ', key)
-                                arrived_at_diagram = True
-                    prot, molec, contained_maplinks, is_overview, name = get_subpathway_entities_graph_json(current_entry.graph_json_file, key)
+        current_level = 0
+
+        while current_level in self.levels:
+            current_level_ids = self.levels[current_level]
+            current_level += 1
+            
+            for key in current_level_ids:
+                if key =='R-MMU-3247509':
+                    print('arrived')
+                entry = self[key]
+                if not entry.has_diagram:
+                    entries_with_diagram = []
+                    self.find_diagram_recursion(key, entries_with_diagram, 0)
+                    shortest_path_key = min(entries_with_diagram, key=itemgetter(1))[0]
+                    entry_with_diagram = self[shortest_path_key]
+                    prot, molec, contained_maplinks, is_overview, name = get_subpathway_entities_graph_json(entry_with_diagram.graph_json_file, key)
                     entry.name = name
                     entry.total_proteins = prot
                     entry.total_metabolites = molec
                     entry.maplinks = contained_maplinks
                     entry.is_overview = is_overview
-    
+        
+    def find_diagram_recursion(self, entry_id, final_entries, steps):
+        arrived_at_diagram = False
+        current_entry = self[entry_id]
+       
+        arrived_at_diagram = current_entry.has_diagram
+        if arrived_at_diagram:
+            final_entries.append((entry_id, steps))
+        else:
+            if len(current_entry.parents) > 0:
+                for parent in current_entry.parents:
+                    self.find_diagram_recursion(parent, final_entries, steps + 1)
+            else:
+                if not arrived_at_diagram:
+                    print('did not find diagram for: ', key)
+
     def aggregate_pathways(self):
         """ Aggregates data from low level nodes to higher level nodes
         
@@ -439,12 +455,14 @@ def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
     name = ''
 
     contained_events = []
+
     for k, v in formatted_json['subpathways'].items():
         # todo we can get pathway name here!!!
         if v['stId'] == subpathwayID:
             contained_events = v['events']
             name = v['displayName']
             break
+
     entities = []
     for event in contained_events:
         event_node = formatted_json['edges'][event]
