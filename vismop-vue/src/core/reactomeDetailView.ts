@@ -2,6 +2,22 @@ import * as d3 from 'd3'
 import { entries } from 'lodash'
 import { layoutJSON, reactomeEdge } from '../core/reactomeTypes'
 
+const colors: {[key: string]: string} = {
+  // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
+  Chemical: '#A5D791',
+  ChemicalDrug: '#B89AE6',
+  compartment: 'rgba(235, 178, 121, 0.5)',
+  Complex: '#ABD1E3',
+  Entity: '#A5D791',
+  EntitySet: '#A0BBCD',
+  Gene: '#F3D1AF',
+  ProcessNode: '#A5D791',
+  EncapsulatedNode: '#A5D791',
+  Protein: '#8DC7BB',
+  RNA: '#A5D791'
+
+}
+
 export default class ReactomeDetailView {
   private mainSVG: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>
   private mainChartArea: d3.Selection<SVGGElement, unknown, HTMLElement, any>
@@ -15,6 +31,7 @@ export default class ReactomeDetailView {
     const height = box?.height as number
     this.mainSVG = d3.select(containerID).append('svg').attr('width', width).attr('height', height).attr('viewBox', [0, 0, this.layoutData.maxX, this.layoutData.maxY])
     this.mainChartArea = this.mainSVG.append('g')
+    this.drawCompartments()
     this.drawNodes()
     this.drawSegments()
     const zoom = d3.zoom<SVGSVGElement, unknown>()
@@ -24,6 +41,41 @@ export default class ReactomeDetailView {
       })
     this.mainSVG.call(zoom)
     console.log('DRAW DETAIL')
+  }
+
+  private drawCompartments () {
+    this.mainChartArea.append('g')
+      .selectAll('rect')
+      .data(this.layoutData.compartments)
+      .enter()
+      .append('rect')
+      .attr('id', function (d, i) {
+        return 'compartment' + i
+      })
+      .attr('x', d => d.prop.x)
+      .attr('y', d => d.prop.y)
+      .attr('width', d => d.prop.width)
+      .attr('height', d => d.prop.height)
+      .attr('stroke-width', 6)
+      .attr('stroke', 'orange')
+      .attr('fill', colors.compartment)
+      .attr('opacity', 0.7)
+
+    this.mainChartArea.append('g')
+      .selectAll('rect')
+      .data(this.layoutData.compartments)
+      .enter()
+      .append('rect')
+      .attr('id', function (d, i) {
+        return 'compartment_inset' + i
+      })
+      .attr('x', d => d.insets.x)
+      .attr('y', d => d.insets.y)
+      .attr('width', d => d.insets.width)
+      .attr('height', d => d.insets.height)
+      .attr('stroke-width', 6)
+      .attr('stroke', 'orange')
+      .attr('fill', 'none')
   }
 
   private drawNodes () {
@@ -40,7 +92,8 @@ export default class ReactomeDetailView {
       .attr('width', d => d.prop.width)
       .attr('height', d => d.prop.height)
       .attr('stroke-width', 1)
-      .attr('fill', ('red'))
+      .attr('stroke', 'black')
+      .attr('fill', d => colors[d.renderableClass])
   }
 
   private drawSegments () {
