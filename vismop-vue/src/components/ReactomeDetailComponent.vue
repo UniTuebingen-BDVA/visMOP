@@ -126,6 +126,7 @@ export default Vue.extend({
         }).then(() => this.$store.dispatch('setOverlay', false))
     },
     drawDetailView () {
+      this.currentView?.clearView()
       this.currentView = new ReactomeDetailView(this.currentLayoutJson, '#' + this.contextID)
     },
     expandComponent () {

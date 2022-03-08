@@ -60,7 +60,7 @@ export default class ReactomeDetailView {
       .attr('stroke', 'orange')
       .attr('fill', colors.compartment)
       .attr('opacity', 0.7)
-
+  
     this.mainChartArea.append('g')
       .selectAll('rect')
       .data(this.layoutData.compartments)
@@ -153,6 +153,10 @@ export default class ReactomeDetailView {
       }
     }
     return outStr
+  }
+
+  clearView () {
+    this.mainSVG.remove()
   }
 
   refreshSize () {
