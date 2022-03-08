@@ -211,7 +211,7 @@
                 <div v-if="targetDatabase === 'reactome'">
                   <keep-alive>
                     <reactome-detail-component
-                      contextID="detailContext"
+                      contextID="reactomeDetail"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"

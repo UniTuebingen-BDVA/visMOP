@@ -558,6 +558,12 @@ def reactome_overview():
     
     return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
+
+@app.route('/get_reactome_json_files/<pathway>', methods=['GET'])
+def get_reactome_json(pathway):
+    hierarchy = cache.get('reactome_hierarchy')
+    json_file = hierarchy[pathway].layout_json_file
+    return json.dumps({'layoutJson': json_file})
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)
 

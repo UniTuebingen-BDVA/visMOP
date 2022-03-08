@@ -19,7 +19,7 @@ class ReactomePathway:
         self.has_diagram = has_diagram
         self.is_overview = True
         self.name= ''
-        self.json_file = None
+        self.layout_json_file = None
         self.graph_json_file = None
         self.reactome_sID= reactome_sID
         self.children = []
@@ -109,7 +109,7 @@ class PathwayHierarchy(dict):
                 if entry.has_diagram:
                     with open(json_path / (key+'.json')) as fh:
                         json_file = json.load(fh)
-                        entry.json_file = json_file
+                        entry.layout_json_file = json_file
                         entry.name = json_file['displayName']
 
                 if entry.has_diagram:

@@ -36,20 +36,21 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import DetailNetwork from '../core/detailNetwork'
-import { generateGraphData } from '../core/detailGraphPreparation'
+import ReactomeDetailView from '../core/reactomeDetailView'
+import { layoutJSON } from '../core/reactomeTypes'
 import Vue from 'vue'
-import Sigma from 'sigma'
 
 interface Data{
   mutationObserver: (MutationObserver | undefined)
   tableSearch: string
   selectedTab: string
   outstandingDraw: boolean
-  networkGraph: (DetailNetwork | undefined)
   pathwaySelection: string
   expandButton: boolean
   minimizeButton: boolean
+  currentLayoutJson: layoutJSON
+  currentView: (ReactomeDetailView | undefined)
+
 }
 
 export default Vue.extend({
@@ -62,38 +63,24 @@ export default Vue.extend({
     tableSearch: '',
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
-    networkGraph: undefined,
     pathwaySelection: '',
     expandButton: false,
-    minimizeButton: false
-
+    minimizeButton: false,
+    // currentGraphJson: {},
+    currentLayoutJson: {} as layoutJSON,
+    currentView: undefined
   }),
 
   computed: {
     ...mapState({
       sideBarExpand: (state:any) => state.sideBarExpand,
-      graphData: (state:any) => state.graphData,
-      fcs: (state:any) => state.fcs,
-      fcQuantiles: (state:any) => state.fcQuantiles,
-      transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
-      proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict,
-      usedSymbolCols: (state:any) => state.usedSymbolCols,
       overlay: (state:any) => state.overlay,
-      pathwayLayouting: (state: any) => state.pathwayLayouting,
-      pathwayDropdown: (state: any) => state.pathwayDropdown
-
+      pathwayDropdown: (state: any) => state.pathwayDropdown,
+      pathwayLayouting: (state: any) => state.pathwayLayouting
     })
   },
   watch: {
-    graphData: function () {
-      if (this.isActive) {
-        console.log(this.contextID)
-        this.drawNetwork()
-      } else {
-        console.log(this.contextID, 'outstanding draw')
-        this.outstandingDraw = true
-      }
-    },
+
     isActive: function () {
       console.log(
         this.contextID,
@@ -101,25 +88,9 @@ export default Vue.extend({
         this.isActive,
         this.outstandingDraw
       )
-      if (this.outstandingDraw) {
-        setTimeout(() => {
-          this.drawNetwork()
-        }, 1000)
-        this.outstandingDraw = false
-      }
     },
     pathwaySelection: function () {
-      this.selectPathway(this.pathwaySelection)
-      this.$store.dispatch('focusPathwayViaDropdown', this.pathwaySelection)
-    },
-    transcriptomicsSelection: function () {
-      // this.focusNodeTranscriptomics(this.transcriptomicsSelection)
-    },
-    proteomicsSelection: function () {
-      // this.focusNodeProteomics(this.proteomicsSelection)
-    },
-    metabolomicsSelection: function () {
-      // this.focusNodeMetabolomics(this.metabolomicsSelection)
+      this.getJsonFiles(this.pathwaySelection)
     },
     pathwayDropdown: function () {
       this.pathwaySelection = this.pathwayDropdown
@@ -127,13 +98,11 @@ export default Vue.extend({
   },
 
   mounted () {
-    this.mutationObserver = new MutationObserver(this.refreshGraph)
+    // allows to run function when tar changes
+    this.mutationObserver = new MutationObserver(this.refreshSize)
     const config = { attributes: true }
     const tar = document.getElementById(this.contextID)
     if (tar) this.mutationObserver.observe(tar, config)
-    if (this.graphData) {
-      this.drawNetwork()
-    }
   },
   props: {
     contextID: String,
@@ -143,62 +112,31 @@ export default Vue.extend({
     isActive: Boolean
   },
   methods: {
-    drawNetwork () {
-      if (this.networkGraph) { this.networkGraph.killGraph() }
-      const fcExtents = this.fcQuantiles
-      const networkData = generateGraphData(this.graphData, fcExtents)
-      console.log('base dat', networkData)
-      const key = this.pathwayDropdown ? this.pathwayDropdown : Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
-      const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
-      this.networkGraph = new DetailNetwork(networkData, this.contextID, key, nodeList)
+    getJsonFiles (reactomeID: string) {
+      fetch(`/get_reactome_json_files/${reactomeID}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then((response) => response.json())
+        .then((dataContent) => {
+          this.currentLayoutJson = dataContent.layoutJson as layoutJSON
+          console.log(this.currentLayoutJson)
+          this.drawDetailView()
+        }).then(() => this.$store.dispatch('setOverlay', false))
     },
-    focusNodeTranscriptomics (row: {[key: string]: string}) {
-      const symbol = row[this.usedSymbolCols.transcriptomics]
-      // console.log('Symbol', symbol)
-      // console.log('dict', this.transcriptomicsSymbolDict)
-      // const keggID = this.transcriptomicsSymbolDict[symbol]
-      // console.log('ID', keggID)
-      // panToNode(this.networkGraph as Sigma, keggID)
-    },
-    focusNodeProteomics (row: {[key: string]: string}) {
-      const symbol = row[this.usedSymbolCols.proteomics]
-      const keggID = this.proteomicsSymbolDict[symbol]
-      // panToNode(this.networkGraph as Sigma, keggID)
-    },
-    focusNodeMetabolomics (row: {[key: string]: string}) {
-      const symbol = row[this.usedSymbolCols.metabolomics]
-      //  const keggID = this.proteomicsSymbolDict[symbol]
-      let queryString = symbol
-      if (symbol.startsWith('C')) {
-        queryString = 'cpd:' + symbol
-      }
-      if (symbol.startsWith('G')) {
-        queryString = 'gl:' + symbol
-      }
-      // panToNode(this.networkGraph as Sigma, queryString)
-    },
-    selectPathway (key: string) {
-      console.log('KEY', key)
-      if (key !== undefined && key !== null) {
-        const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
-        this.networkGraph?.selectNewPathway(key, nodeList)
-      } else {
-        console.log('TEST')
-        // relaxLayout(this.networkGraph as Sigma)
-      }
+    drawDetailView () {
+      this.currentView = new ReactomeDetailView(this.currentLayoutJson, '#' + this.contextID)
     },
     expandComponent () {
       this.expandButton = !this.expandButton
-      this.networkGraph?.refresh()
     },
     minimizeComponent () {
       this.minimizeButton = !this.minimizeButton
-      this.networkGraph?.refresh()
     },
-    refreshGraph () {
-      this.networkGraph?.refresh()
+    refreshSize () {
+      this.currentView?.refreshSize()
     }
-
   }
 })
 </script>
