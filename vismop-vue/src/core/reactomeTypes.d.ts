@@ -26,7 +26,7 @@ export interface reactomeNode extends reactomeDiagramObject, reactomeNodeCommon 
   nodeAttachments : reactomeNodeAttachment[]
   interactorsSummary : {pressed: boolean, shape: shape, hit: boolean, type: string, number: number}
   trivial : boolean
-  connectors : Connector[]
+  connectors : connector[]
 }
 
 export interface reactomeNote extends reactomeNodeCommon, reactomeDiagramObject {
