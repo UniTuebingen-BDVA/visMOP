@@ -1,5 +1,4 @@
 import * as d3 from 'd3'
-import { entries } from 'lodash'
 import { layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode } from '../core/reactomeTypes'
 
 const colors: {[key: string]: string} = {
@@ -17,6 +16,8 @@ const colors: {[key: string]: string} = {
   RNA: '#A5D791'
 
 }
+
+const fontSize = '10px'
 
 export default class ReactomeDetailView {
   private mainSVG: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>
@@ -50,7 +51,6 @@ export default class ReactomeDetailView {
         this.mainChartArea.attr('transform', transform)
       })
     this.mainSVG.call(zoom)
-    console.log('DRAW DETAIL')
   }
 
   private drawCompartments () {
@@ -180,10 +180,14 @@ export default class ReactomeDetailView {
 
   private drawNodes () {
     const chemicals = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Chemical') })
-    const nonChemicals = this.layoutData.nodes.filter(d => { return (d.renderableClass !== 'Chemical') })
+    const complexes = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Complex') })
+    const proteins = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Protein') })
+    const nonChemicals = this.layoutData.nodes.filter(d => { return ((d.renderableClass !== 'Chemical') && (d.renderableClass !== 'Complex') && ((d.renderableClass !== 'Protein'))) })
 
     this.drawRect(nonChemicals)
+    this.drawProtein(proteins)
     this.drawChemical(chemicals)
+    this.drawComplex(complexes)
   }
 
   private drawRect (data: reactomeNode[]) {
@@ -216,7 +220,7 @@ export default class ReactomeDetailView {
       .attr('width', d => d.prop.width * 0.9)
       .style('text-anchor', 'middle')
       .style('alignment-baseline', 'middle')
-      .style('font-size', '11px')
+      .style('font-size', fontSize)
       .selectAll('tspan')
       .data((d, i) => textLines[i])
       .enter()
@@ -224,6 +228,94 @@ export default class ReactomeDetailView {
       .attr('x', 0)
       .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text(d => d.text)
+  }
+
+  private drawProtein (data: reactomeNode[]) {
+    const nodeG = this.nodesG.append('g').selectAll().data(data)
+    const enterG = nodeG.enter().append('g').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const textLines: { text: string, textLength: number }[][] = []
+
+    for (const node of data) {
+      textLines.push(this.generateLinesFromText(node.displayName, node.prop.width))
+    }
+
+    for (const lines of textLines) {
+      for (const line of lines) {
+        line.textLength = lines.length
+      }
+    }
+
+    enterG.append('rect')
+      .attr('id', function (d, i) { return 'protein' + i })
+      .attr('x', d => -d.prop.width / 2)
+      .attr('y', d => -d.prop.height / 2)
+      .attr('rx', 8)
+      .attr('ry', 8)
+      .attr('width', d => d.prop.width)
+      .attr('height', d => d.prop.height)
+      .attr('stroke-width', 1)
+      .attr('stroke', 'black')
+      .attr('fill', d => colors[d.renderableClass])
+    enterG
+      .append('text')
+      .append('tspan')
+      .attr('width', d => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
+      .data((d, i) => textLines[i])
+      .enter()
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .text(d => d.text)
+  }
+
+  private drawComplex (data: reactomeNode[]) {
+    const nodeG = this.nodesG.append('g').selectAll().data(data)
+    const enterG = nodeG.enter().append('g').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const textLines: { text: string, textLength: number }[][] = []
+
+    for (const node of data) {
+      textLines.push(this.generateLinesFromText(node.displayName, node.prop.width))
+    }
+
+    for (const lines of textLines) {
+      for (const line of lines) {
+        line.textLength = lines.length
+      }
+    }
+
+    enterG.append('path')
+      .attr('id', function (d, i) { return 'node' + i })
+      .attr('d', d => this.complexPath(d))
+      .attr('stroke-width', 1)
+      .attr('stroke', 'black')
+      .attr('fill', d => colors[d.renderableClass])
+    enterG
+      .append('text')
+      .append('tspan')
+      .attr('width', d => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
+      .data((d, i) => textLines[i])
+      .enter()
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .text(d => d.text)
+  }
+
+  private complexPath (node: reactomeNode) {
+    const yHalf = node.prop.height / 2
+    const yTwoFifth = node.prop.height / 4
+    const xHalf = node.prop.width / 2
+    const xTwoFifth = 3 * node.prop.width / 7
+    const pathText = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}z`
+    return pathText
   }
 
   private drawChemical (data: reactomeNode[]) {
@@ -245,7 +337,7 @@ export default class ReactomeDetailView {
       .style('text-anchor', 'middle')
       .style('alignment-baseline', 'middle')
       .style('dominant-baseline', 'central')
-      .style('font-size', '11px')
+      .style('font-size', fontSize)
       .text(d => d.displayName)
   }
 
@@ -367,31 +459,24 @@ export default class ReactomeDetailView {
   private generateLinesFromText (text: string, width: number) {
     // adapted from https://observablehq.com/@mbostock/fit-text-to-circle
 
-    if (this.getTextWidth(text.trim()) > width) {
-      const words = text.split(/\s+/g) // To hyphenate: /\s+|(?<=-)/
-      if (!words[words.length - 1]) words.pop()
-      if (!words[0]) words.shift()
+    const words = text.split(/\s+|,|:/g)
+    if (!words[words.length - 1]) words.pop()
+    if (!words[0]) words.shift()
 
-      const targetWidth = Math.sqrt(this.getTextWidth(text.trim()) * 12)
-
-      let line : { text: string, textLength: number } = { text: '', textLength: 0 }
-      let lineWidth0 = Infinity
-      const lines = []
-      for (let i = 0, n = words.length; i < n; ++i) {
-        const lineText1 = (line ? line.text + ' ' : '') + words[i]
-        const lineWidth1 = this.getTextWidth(lineText1)
-        if ((lineWidth0 + lineWidth1) / 2 < targetWidth) {
-          line.text = lineText1
-        } else {
-          lineWidth0 = this.getTextWidth(words[i])
-          line = { text: words[i], textLength: 0 }
-          lines.push(line)
-        }
+    let line : { text: string, textLength: number } = { text: '', textLength: 0 }
+    const lines = []
+    for (let i = 0; i < words.length; ++i) {
+      const lineText = (line.text ? line.text + ' ' : '') + words[i]
+      const lineWidth = this.getTextWidth(lineText)
+      if (lineWidth < width) {
+        line.text = lineText
+      } else {
+        lines.push(line)
+        line = { text: words[i], textLength: 0 }
       }
-      return lines
-    } else {
-      return [{ width: 0, text: text, textLength: 1 }]
     }
+    lines.push(line)
+    return lines
   }
 
   clearView () {
