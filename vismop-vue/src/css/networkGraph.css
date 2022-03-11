@@ -182,3 +182,11 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
   background-color: white;
   color:rgb(207, 207, 207)
 }
+
+.nodeText{
+  mix-blend-mode: difference;
+}
+
+.nodeG{
+  fill: white
+}

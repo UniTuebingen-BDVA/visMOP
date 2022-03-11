@@ -16,7 +16,7 @@ import store from '@/store'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string, maplinks: string[], subtreeIds: string[]} },
+  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string, maplinks: {[key: string]: {'own_id': number, 'toplevel_id': number}}, subtreeIds: string[]} },
   glyphs: {[key: string]: string},
   rootIds: string[]
 ): graphData {
@@ -56,7 +56,7 @@ export function generateGraphData (
       graph.edges.push(currentEdge)
       addedEdges.push(currentEdge.key)
     }
-    for (const maplink of entry.maplinks) {
+    for (const maplink in entry.maplinks) {
       if (!rootIds.includes(entry.pathwayId)) {
         for (const entryKey in nodeList) {
           const loopEntry = nodeList[entryKey]

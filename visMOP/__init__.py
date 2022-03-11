@@ -34,7 +34,7 @@ app.config.from_mapping(
 
     CACHE_TYPE='FileSystemCache',
     CACHE_DIR=data_path/'session_cache',
-    CACHE_DEFAULT_TIMEOUT= 300
+    CACHE_DEFAULT_TIMEOUT= 43200
 )
 cache = Cache(app)
 

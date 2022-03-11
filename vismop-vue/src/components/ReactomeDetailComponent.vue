@@ -76,7 +76,8 @@ export default Vue.extend({
       sideBarExpand: (state:any) => state.sideBarExpand,
       overlay: (state:any) => state.overlay,
       pathwayDropdown: (state: any) => state.pathwayDropdown,
-      pathwayLayouting: (state: any) => state.pathwayLayouting
+      pathwayLayouting: (state: any) => state.pathwayLayouting,
+      overviewData: (state: any) => state.overviewData
     })
   },
   watch: {
@@ -91,6 +92,7 @@ export default Vue.extend({
     },
     pathwaySelection: function () {
       this.getJsonFiles(this.pathwaySelection)
+      this.$store.dispatch('focusPathwayViaDropdown', this.pathwaySelection)
     },
     pathwayDropdown: function () {
       this.pathwaySelection = this.pathwayDropdown
@@ -127,7 +129,41 @@ export default Vue.extend({
     },
     drawDetailView () {
       this.currentView?.clearView()
-      this.currentView = new ReactomeDetailView(this.currentLayoutJson, '#' + this.contextID)
+      const fcs: {prot: { [key: number]: number}, gen:{ [key: number]: number}, chem:{ [key: number]: number} } = { prot: {}, gen: {}, chem: {} }
+      console.log(this.overviewData)
+      console.log(this.pathwaySelection)
+      const pathwayData = this.overviewData.find((elem: { pathwayId: string }) => elem.pathwayId === this.pathwaySelection)
+      for (const entry in pathwayData.entries.proteomics.measured) {
+        const measureEntry = pathwayData.entries.proteomics.measured[entry] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
+        const val = measureEntry.value
+        for (const entity in measureEntry.forms) {
+          const entityElem = measureEntry.forms[entity]
+          for (const id of entityElem.toplevelId) {
+            fcs.prot[id] = val
+          }
+        }
+      }
+      for (const entry in pathwayData.entries.transcriptomics.measured) {
+        const measureEntry = pathwayData.entries.transcriptomics.measured[entry] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
+        const val = measureEntry.value
+        for (const entity in measureEntry.forms) {
+          const entityElem = measureEntry.forms[entity]
+          for (const id of entityElem.toplevelId) {
+            fcs.gen[id] = val
+          }
+        }
+      }
+      for (const entry in pathwayData.entries.metabolomics.measured) {
+        const measureEntry = pathwayData.entries.metabolomics.measured[entry] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
+        const val = measureEntry.value
+        for (const entity in measureEntry.forms) {
+          const entityElem = measureEntry.forms[entity]
+          for (const id of entityElem.toplevelId) {
+            fcs.chem[id] = val
+          }
+        }
+      }
+      this.currentView = new ReactomeDetailView(this.currentLayoutJson, '#' + this.contextID, fcs)
     },
     expandComponent () {
       this.expandButton = !this.expandButton

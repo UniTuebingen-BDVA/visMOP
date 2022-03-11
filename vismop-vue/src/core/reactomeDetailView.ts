@@ -1,11 +1,13 @@
+import store from '@/store'
 import * as d3 from 'd3'
 import { layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode } from '../core/reactomeTypes'
 
-const colors: {[key: string]: string} = {
+const colorsAlternative: {[key: string]: string} = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
   Chemical: '#A5D791',
   ChemicalDrug: '#B89AE6',
   compartment: 'rgba(235, 178, 121, 0.5)',
+  compartmentEdge: 'rgb(235, 178, 121)',
   Complex: '#ABD1E3',
   Entity: '#A5D791',
   EntitySet: '#A0BBCD',
@@ -13,11 +15,30 @@ const colors: {[key: string]: string} = {
   ProcessNode: '#A5D791',
   EncapsulatedNode: '#A5D791',
   Protein: '#8DC7BB',
-  RNA: '#A5D791'
+  RNA: '#A5D791',
+  ComplexDrug: '#FFFFFF',
+  EntitySetDrug: '#FFFFFF'
+}
 
+const colors: {[key: string]: string} = {
+  Chemical: '#FFFFFF',
+  ChemicalDrug: '#FFFFFF',
+  compartment: 'rgba(180, 180, 180, 0.5)',
+  compartmentEdge: 'rgb(180, 180, 180)',
+  Complex: '#FFFFFF',
+  Entity: '#FFFFFF',
+  EntitySet: '#FFFFFF',
+  Gene: '#FFFFFF',
+  ProcessNode: '#FFFFFF',
+  EncapsulatedNode: '#FFFFFF',
+  Protein: '#FFFFFF',
+  RNA: '#FFFFFF',
+  ComplexDrug: '#FFFFFF',
+  EntitySetDrug: '#FFFFFF'
 }
 
 const fontSize = '10px'
+const compartmentFontSize = '16px'
 
 export default class ReactomeDetailView {
   private mainSVG: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>
@@ -27,9 +48,14 @@ export default class ReactomeDetailView {
   private linesG: d3.Selection<SVGGElement, unknown, HTMLElement, any>
   private layoutData: layoutJSON
   private containerID: string
-  constructor (layoutData: layoutJSON, containerID: string) {
+  private colorScaleTranscriptomics = store.state.fcScales.transcriptomics
+  private colorScaleProteomics = store.state.fcScales.proteomics
+  private colorScaleMetabolomics = store.state.fcScales.metabolomics
+  private foldChanges: {prot: {[key: number]: number}, gen:{[key: number]: number}, chem:{[key: number]: number}}
+  constructor (layoutData: layoutJSON, containerID: string, foldchanges: {prot: {[key: number]: number}, gen:{[key: number]: number}, chem:{[key: number]: number}}) {
     this.containerID = containerID
     this.layoutData = layoutData
+    this.foldChanges = foldchanges
     const box = document.querySelector(containerID)?.getBoundingClientRect()
     const width = box?.width as number
     const height = box?.height as number
@@ -67,9 +93,8 @@ export default class ReactomeDetailView {
       .attr('width', d => d.prop.width)
       .attr('height', d => d.prop.height)
       .attr('stroke-width', 6)
-      .attr('stroke', 'orange')
+      .attr('stroke', colors.compartmentEdge)
       .attr('fill', colors.compartment)
-      .attr('opacity', 0.7)
 
     const entriesWithInsets = this.layoutData.compartments.filter(d => { return ('insets' in d) })
     this.comparmentG
@@ -85,8 +110,19 @@ export default class ReactomeDetailView {
       .attr('width', d => d.insets.width)
       .attr('height', d => d.insets.height)
       .attr('stroke-width', 6)
-      .attr('stroke', 'orange')
+      .attr('stroke', colors.compartmentEdge)
       .attr('fill', 'none')
+    this.comparmentG
+      .selectAll()
+      .data(this.layoutData.compartments)
+      .enter()
+      .append('text')
+      .attr('x', d => d.textPosition.x)
+      .attr('y', d => d.textPosition.y)
+      .attr('dy', '1em')
+      .style('font-size', compartmentFontSize)
+      .style('font-weight', 'bold')
+      .text(d => d.displayName)
   }
 
   private drawReactionNodes () {
@@ -192,7 +228,7 @@ export default class ReactomeDetailView {
 
   private drawRect (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
-    const enterG = nodeG.enter().append('g').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
     const textLines: { text: string, textLength: number }[][] = []
 
     for (const node of data) {
@@ -206,7 +242,7 @@ export default class ReactomeDetailView {
     }
 
     enterG.append('rect')
-      .attr('id', function (d, i) { return 'node' + i })
+      .attr('id', function (d, i) { return '' + d.renderableClass + i })
       .attr('x', d => -d.prop.width / 2)
       .attr('y', d => -d.prop.height / 2)
       .attr('width', d => d.prop.width)
@@ -215,7 +251,7 @@ export default class ReactomeDetailView {
       .attr('stroke', 'black')
       .attr('fill', d => colors[d.renderableClass])
     enterG
-      .append('text')
+      .append('text').attr('class', 'nodeText')
       .append('tspan')
       .attr('width', d => d.prop.width * 0.9)
       .style('text-anchor', 'middle')
@@ -232,7 +268,7 @@ export default class ReactomeDetailView {
 
   private drawProtein (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
-    const enterG = nodeG.enter().append('g').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
     const textLines: { text: string, textLength: number }[][] = []
 
     for (const node of data) {
@@ -255,9 +291,9 @@ export default class ReactomeDetailView {
       .attr('height', d => d.prop.height)
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => colors[d.renderableClass])
+      .attr('fill', d => (d.reactomeId in this.foldChanges.prot) ? this.colorScaleProteomics(this.foldChanges.prot[d.reactomeId]) : (d.reactomeId in this.foldChanges.gen) ? this.colorScaleTranscriptomics(this.foldChanges.gen[d.reactomeId]) : colors[d.renderableClass])
     enterG
-      .append('text')
+      .append('text').attr('class', 'nodeText')
       .append('tspan')
       .attr('width', d => d.prop.width * 0.9)
       .style('text-anchor', 'middle')
@@ -274,7 +310,7 @@ export default class ReactomeDetailView {
 
   private drawComplex (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
-    const enterG = nodeG.enter().append('g').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
     const textLines: { text: string, textLength: number }[][] = []
 
     for (const node of data) {
@@ -286,15 +322,14 @@ export default class ReactomeDetailView {
         line.textLength = lines.length
       }
     }
-
     enterG.append('path')
       .attr('id', function (d, i) { return 'node' + i })
       .attr('d', d => this.complexPath(d))
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => colors[d.renderableClass])
+      .attr('fill', d => (d.reactomeId in this.foldChanges.prot) ? this.colorScaleProteomics(this.foldChanges.prot[d.reactomeId]) : (d.reactomeId in this.foldChanges.gen) ? this.colorScaleTranscriptomics(this.foldChanges.gen[d.reactomeId]) : colors[d.renderableClass])
     enterG
-      .append('text')
+      .append('text').attr('class', 'nodeText')
       .append('tspan')
       .attr('width', d => d.prop.width * 0.9)
       .style('text-anchor', 'middle')
@@ -320,7 +355,7 @@ export default class ReactomeDetailView {
 
   private drawChemical (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
-    const enterG = nodeG.enter().append('g').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
 
     enterG
       .append('ellipse')
@@ -331,9 +366,9 @@ export default class ReactomeDetailView {
       .attr('ry', d => d.prop.height / 2)
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => colors[d.renderableClass])
+      .attr('fill', d => (d.reactomeId in this.foldChanges.chem) ? this.colorScaleProteomics(this.foldChanges.chem[d.reactomeId]) : colors[d.renderableClass])
     enterG
-      .append('text')
+      .append('text').attr('class', 'nodeText')
       .style('text-anchor', 'middle')
       .style('alignment-baseline', 'middle')
       .style('dominant-baseline', 'central')
@@ -355,35 +390,36 @@ export default class ReactomeDetailView {
 
   private makeEdgePath (datum: reactomeEdge) {
     let outStr = ''
-    const startPoint = datum.segments[0]
-    const endPoint = datum.segments[datum.segments.length - 1]
-    if ('inputs' in datum) {
-      for (const input of datum.inputs) {
-        if ('points' in input) {
-          outStr += `M${input.points[0].x},${input.points[0].y}`
-          for (const point of input.points) {
-            outStr += `L${point.x},${point.y}`
+    if (('segments' in datum) && (datum.segments.length > 0)) {
+      const startPoint = datum.segments[0]
+      const endPoint = datum.segments[datum.segments.length - 1]
+      if ('inputs' in datum) {
+        for (const input of datum.inputs) {
+          if ('points' in input) {
+            outStr += `M${input.points[0].x},${input.points[0].y}`
+            for (const point of input.points) {
+              outStr += `L${point.x},${point.y}`
+            }
+            outStr += `L${startPoint.from.x},${startPoint.from.y}`
           }
-          outStr += `L${startPoint.from.x},${startPoint.from.y}`
         }
       }
-    }
-    if ('outputs' in datum) {
-      for (const output of datum.outputs) {
-        if ('points' in output) {
-          outStr += `M${output.points[0].x},${output.points[0].y}`
-          for (const point of output.points) {
-            outStr += `L${point.x},${point.y}`
+      if ('outputs' in datum) {
+        for (const output of datum.outputs) {
+          if ('points' in output) {
+            outStr += `M${output.points[0].x},${output.points[0].y}`
+            for (const point of output.points) {
+              outStr += `L${point.x},${point.y}`
+            }
+            outStr += `L${endPoint.to.x},${endPoint.to.y}`
           }
-          outStr += `L${endPoint.to.x},${endPoint.to.y}`
         }
       }
+      outStr += `M${startPoint.from.x},${startPoint.from.y}`
+      for (const entry of datum.segments) {
+        outStr += `L${entry.to.x},${entry.to.y}`
+      }
     }
-    outStr += `M${startPoint.from.x},${startPoint.from.y}`
-    for (const entry of datum.segments) {
-      outStr += `L${entry.to.x},${entry.to.y}`
-    }
-
     // outStr += this.catalystPaths(datum)
     return outStr
   }
