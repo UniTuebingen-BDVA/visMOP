@@ -176,18 +176,25 @@ export default Vue.extend({
   },
   methods: {
     drawNetwork () {
+      console.log('1')
       if (this.networkGraph) { this.networkGraph.killGraph() }
       // const fcExtents = this.fcQuantiles
       const glyphData = generateGlyphDataReactome()
+      console.log('2')
       this.$store.dispatch('setGlyphData', glyphData)
       // console.log('GLYPH DATA', glyphData)
+      console.log('3')
       const generatedGlyphs = generateGlyphs(glyphData)
+      console.log('4')
       this.$store.dispatch('setGlyphs', generatedGlyphs)
       const glyphsURL = generatedGlyphs.url
+      console.log('5')
       console.log('GLYPHs', this.$store.state.glyphs)
       const networkData = generateGraphData(this.overviewData, glyphsURL, this.pathwayLayouting.rootIds)
       console.log('base dat', networkData)
+      console.log('6')
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
+      console.log('7')
     }
   }
 })

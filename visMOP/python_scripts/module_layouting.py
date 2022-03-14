@@ -228,7 +228,7 @@ class Module_layout:
         distance_similarities = {
             m_p: 1 for m_p in combinations(range(len(self.modules)), 2)}
         for maxiteration in range(100):
-            print(maxiteration)
+            # print(maxiteration)
             possibleLayout = False
             while not possibleLayout:
                 new_module_centers = [self.getNewModuleCenter(

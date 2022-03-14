@@ -3,7 +3,7 @@ from visMOP.python_scripts.networkx_layouting import  get_spring_layout_pos, add
 from visMOP.python_scripts.kegg_parsing import parse_KGML, generate_networkx_dict, drop_empty, add_incoming_edges
 from visMOP.python_scripts.keggAccess import gene_symbols_to_keggID, multiple_query, kegg_get, parse_get, get_unique_pathways, query_kgmls, associacte_value_keggID
 from visMOP.python_scripts.data_table_parsing import generate_vue_table_entries, generate_vue_table_header, create_df
-from visMOP.python_scripts.create_overview import get_overview
+from visMOP.python_scripts.create_overview import get_overview, get_overview_reactome
 from visMOP.python_scripts.uniprot_access import make_protein_dict, get_uniprot_entry, add_uniprot_info
 from visMOP.python_scripts.interaction_graph import StringGraph
 from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
@@ -56,6 +56,38 @@ try:
     stringGraph = ''#StringGraph(dest_dir)
 except:
     print("Stringraph Error")
+
+
+def getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict):
+    up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
+    num_vals_per_omic = sum(omics_recieved)
+    data_col_used = omic_stats_used * num_vals_per_omic + [use_pathway_size]
+   
+    omics_names = ['t', 'p', 'm']
+    stat_value_names = ['num values', 'mean exp (high ', '% vals (higher ',
+                                        'mean exp(lower ', '% vals (lower ', '% Reg (', '% Unreg (', "% p with val"]
+    # for diagramms 
+    complete_stat_names = []
+    for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
+        if omic_r:
+            for pos, stat in enumerate(stat_value_names):
+                next_col_name = omic + '_' + stat
+                if pos in [1,2]:#
+                    next_col_name += str(limits[1]) + ')'
+                elif pos in [3,4]:#
+                    next_col_name += str(limits[0]) + ')'
+                elif pos in [5,6]:#
+                    next_col_name += str(limits) + ')'
+                complete_stat_names.append(next_col_name)
+    complete_stat_names += ['pathway size']
+
+    statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
+    statistic_data_complete.columns = complete_stat_names
+    module_layout = Module_layout(statistic_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic)
+    module_node_pos = module_layout.get_final_node_positions()
+        
+    return module_node_pos 
+
 
 """
 Default app routes for index and favicon
@@ -352,39 +384,6 @@ def kegg_parsing():
     # generate list of pathways for pathway selection
     dropdown_pathways = [pathway.return_formated_title() for pathway in parsed_pathways]
     
-    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
-    up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
-    omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
-    omics_names = ['t', 'p', 'm']
-    stat_value_names = ['num values', 'mean exp (high ', '% vals (higher ',
-                                        'mean exp(lower ', '% vals (lower ', '% Reg (', '% Unreg (', "% p with val"]
-    complete_stat_names = []
-    for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
-        if omic_r:
-            for pos, stat in enumerate(stat_value_names):
-                next_col_name = omic + '_' + stat
-                if pos in [1,2]:#
-                    next_col_name += str(limits[1]) + ')'
-                elif pos in [3,4]:#
-                    next_col_name += str(limits[0]) + ')'
-                elif pos in [5,6]:#
-                    next_col_name += str(limits) + ')'
-                complete_stat_names.append(next_col_name)
-    complete_stat_names += ['pathway size']
-    
-
-    # user choice 
-    use_pathway_size = False
-    omic_stats_used = [True, True, True, True, True, True, True, False]
-    num_vals_per_omic = sum(omics_recieved)
-    data_col_used = omic_stats_used * num_vals_per_omic + [use_pathway_size]
-    # generate dataframe of summary Data for all pathways
-    data_driven_layout_data_complete = pd.DataFrame.from_dict({'path:'+pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
-    data_driven_layout_data_complete.columns = complete_stat_names
-    data_driven_layout_data_user = data_driven_layout_data_complete.iloc[:, data_col_used]
-    #print(data_driven_layout_data_user.columns)
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
-
     # add incoming edges to nodes 
     add_incoming_edges(overall_entries)
 
@@ -417,87 +416,25 @@ def kegg_parsing():
         pathway_titles["path:" + i.keggID] = [i.title]
 
     
-    
-    up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
-    
-    pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries,pathway_titles, parsed_pathways)
+    pathway_connection_dict = get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_titles, parsed_pathways)
     # network_overview = generate_networkx_dict(pathway_connection_dict)
-    # print(pathway_connection_dict)
     print('-------------------------------------------------------------------------------------------')
-    module_layout = Module_layout(data_driven_layout_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic)
-    module_node_pos = module_layout.get_final_node_positions()
     
-    #with open('modul_layout.pkl', "rb") as f:
-    #    module_node_pos = pickle.load(f)
-    #a_file = open("modul_layout.pkl", "wb")
-    #pickle.dump(module_node_pos, a_file)
-    #a_file.close()
-    # pos_dict = get_spring_layout_pos(network_overview)
-    # pos_dict = normalize_all_x_y_to_ndc(pos_dict, [-1,1])
-    print('-------------------------------------------------------------------------------------------')
-    # pd.set_option("display.max_rows", None, "display.max_columns", None)
-    #with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data_user, omics_recieved, up_down_reg_means, num_vals_per_omic)
+    omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
     
-    # pre_pos_options
-    #z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data_user.index))
-    #double_centring_df = double_centring(copy.deepcopy(z_score_df))
-    # network_smooting_df = NetworkSmoothing(nx.Graph(network_overview), copy.deepcopy(with_miss_val_df), None)
+    # user choice 
+    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
+    up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
+    use_pathway_size = False
+    omic_stats_used = [True, True, True, True, True, True, True, True]
+    # generate dataframe of summary Data for all pathways
+    statistic_data_complete = pd.DataFrame.from_dict({'path:'+ pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
     
-    # PCA --> without normalization
-    # _, pos_dict = get_pca_layout_pos(with_miss_val_df)
-    
-    # PCA --> z-score normalization
-    # _, pos_dict = get_pca_layout_pos(z_score_df)
-    
-    # PCA --> double centering normalization
-    #_, pos_dict = get_pca_layout_pos(double_centring_df)
+    module_node_pos = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
+    pd.set_option("display.max_rows", None, "display.max_columns", None)
 
-    # PCA --> network smooting
-    # _, pos_dict = get_pca_layout_pos(network_smooting_df)
-
-    
-    # umap --> without normalization
-    # _, pos_dict1 = get_umap_layout_pos(with_miss_val_df)
-
-    # umap --> z-score normalization
-    # _, pos_dict = get_umap_layout_pos(z_score_df)
-
-    # umap --> double centering normalization
-    # _, pos_dict3 = get_umap_layout_pos(double_centring_df)
-
-    # umap --> network smooting
-    # _, pos_dict4 = get_umap_layout_pos(network_smooting_df)
-
-    # with open('zs_umap.pkl', "rb") as f:
-    #     pos_dict = pickle.load(f)
-
-    # with open('force_dir.pkl', "rb") as f:
-    #     pos_dict_forc_dir = pickle.load(f)
-
-    
-
-    
-    
-    
-    # force directed Layout with additional edge weight
-    # print('now my force dir layout')
-    # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
-    # network_with_edge_weight = get_networkx_with_edge_weights_all_nodes_connected(pathway_info_dict, stringGraph)
-
-    # pos_dict_forc_dir = get_pos_in_force_dir_layout(network_with_edge_weight)
-    # a_file = open("force_dir.pkl", "wb")
-    # pickle.dump(pos_dict_forc_dir, a_file)
-    # a_file.close()
-
-    # pos_dict_forc_dir = normalize_all_x_y_to_ndc(pos_dict_forc_dir, [-1,1])
-    # print('finish')
-
-    # pos_dict = {node_name: [x/100 for x in random.sample(range(0, 100),2)] for node_name in list(data_driven_layout_data.index)}
-    # rot_to_ref = rotate_to_ref(pos_dict_forc_dir, pos_dict)
-    # morph_pos = morph_layouts(pos_dict, rot_to_ref, 0.5)
-    
     pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
-    # pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
+    
 
     """
     for i in with_init_pos.keys():
@@ -555,7 +492,9 @@ def reactome_parsing():
     ##
     # Initialize Reactome Hierarchy
     ##
+    omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
     reactome_hierarchy = PathwayHierarchy()
+    reactome_hierarchy.set_omics_recieved(omics_recieved)
     reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
 
@@ -586,7 +525,7 @@ def reactome_parsing():
         protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'UniProt', data_path / "reactome_data/pickles/")
         fold_changes['proteomics'] = protein_query.get_measurement_levels()
         # add entries to hierarchy
-        # node_pathway_dict = {**node_pathway_dict, **protein_query.get_query_pathway_dict()}
+        node_pathway_dict = {**node_pathway_dict, **protein_query.get_query_pathway_dict()}
         for query_key, query_result in protein_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'protein', query_key)
@@ -618,7 +557,7 @@ def reactome_parsing():
         metabolite_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'ChEBI', data_path / "reactome_data/pickles/")
         fold_changes['metabolites'] = metabolite_query.get_measurement_levels()
         # add entries to hierarchy
-        # node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
+        node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
 
         for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
@@ -652,15 +591,15 @@ def reactome_parsing():
         transcriptomics_query = ReactomeQuery(transcriptomics_query_data_tuples, tar_organism, 'Ensembl', data_path / "reactome_data/pickles/")
         fold_changes['transcriptomics'] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy
-        # node_pathway_dict = {**node_pathway_dict, **transcriptomics_query.get_query_pathway_dict()}
+        node_pathway_dict = {**node_pathway_dict, **transcriptomics_query.get_query_pathway_dict()}
         for query_key, query_result in transcriptomics_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, 'gene', query_key)
 
-    ##
     # Aggregate Data in Hierarcy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
+    
     cache.set('reactome_hierarchy', reactome_hierarchy)
     dropdown_pathways = [] # TODO 
     out_dat = {
@@ -686,11 +625,98 @@ def reactome_overview(targetLevel):
 
     target_level = int(targetLevel)
     reactome_hierarchy = cache.get('reactome_hierarchy')
-    out_data, pathway_dict, dropdown_data, root_ids = reactome_hierarchy.generate_overview_data(target_level, False)
+
+    # user choice
+    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
+    up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
+    use_pathway_size = False
+    omic_stats_used = [True, True, True, True, True, True, True, True]
+   
+    out_data, pathway_dict, dropdown_data, root_ids, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(target_level, up_down_reg_limits, False)
+
+    pathway_connection_dict = get_overview_reactome(out_data)
+    module_node_pos = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
+    
+    for pathway in out_data:
+        x_y_pos = module_node_pos[pathway['pathwayId']]
+        pathway["initialPosX"] = x_y_pos[0]
+        pathway["initialPosY"] = x_y_pos[1]
     
     return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)
 
+
+"""OLD form Forschungsprojekt"""
+#   pd.set_option("display.max_rows", None, "display.max_columns", None)
+
+#with open('modul_layout.pkl', "rb") as f:
+    #    module_node_pos = pickle.load(f)
+    #a_file = open("modul_layout.pkl", "wb")
+    #pickle.dump(module_node_pos, a_file)
+    #a_file.close()
+    # pos_dict = get_spring_layout_pos(network_overview)
+    # pos_dict = normalize_all_x_y_to_ndc(pos_dict, [-1,1])
+    # pd.set_option("display.max_rows", None, "display.max_columns", None)
+    #with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data_user, omics_recieved, up_down_reg_means, num_vals_per_omic)
+    
+    # pre_pos_options
+    #z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data_user.index))
+    #double_centring_df = double_centring(copy.deepcopy(z_score_df))
+    # network_smooting_df = NetworkSmoothing(nx.Graph(network_overview), copy.deepcopy(with_miss_val_df), None)
+    
+    # PCA --> without normalization
+    # _, pos_dict = get_pca_layout_pos(with_miss_val_df)
+    
+    # PCA --> z-score normalization
+    # _, pos_dict = get_pca_layout_pos(z_score_df)
+    
+    # PCA --> double centering normalization
+    #_, pos_dict = get_pca_layout_pos(double_centring_df)
+
+    # PCA --> network smooting
+    # _, pos_dict = get_pca_layout_pos(network_smooting_df)
+
+    
+    # umap --> without normalization
+    # _, pos_dict1 = get_umap_layout_pos(with_miss_val_df)
+
+    # umap --> z-score normalization
+    # _, pos_dict = get_umap_layout_pos(z_score_df)
+
+    # umap --> double centering normalization
+    # _, pos_dict3 = get_umap_layout_pos(double_centring_df)
+
+    # umap --> network smooting
+    # _, pos_dict4 = get_umap_layout_pos(network_smooting_df)
+
+    # with open('zs_umap.pkl', "rb") as f:
+    #     pos_dict = pickle.load(f)
+
+    # with open('force_dir.pkl', "rb") as f:
+    #     pos_dict_forc_dir = pickle.load(f)
+
+
+    
+    
+    # force directed Layout with additional edge weight
+    # print('now my force dir layout')
+    # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
+    # network_with_edge_weight = get_networkx_with_edge_weights_all_nodes_connected(pathway_info_dict, stringGraph)
+
+    # pos_dict_forc_dir = get_pos_in_force_dir_layout(network_with_edge_weight)
+    # a_file = open("force_dir.pkl", "wb")
+    # pickle.dump(pos_dict_forc_dir, a_file)
+    # a_file.close()
+
+    # pos_dict_forc_dir = normalize_all_x_y_to_ndc(pos_dict_forc_dir, [-1,1])
+    # print('finish')
+
+    # pos_dict = {node_name: [x/100 for x in random.sample(range(0, 100),2)] for node_name in list(data_driven_layout_data.index)}
+    # rot_to_ref = rotate_to_ref(pos_dict_forc_dir, pos_dict)
+    # morph_pos = morph_layouts(pos_dict, rot_to_ref, 0.5)
+    
+    #pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
+    # pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)
     

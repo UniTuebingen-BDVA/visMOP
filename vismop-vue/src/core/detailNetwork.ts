@@ -36,7 +36,7 @@ export default class pathwayGraph {
     }
 
     const inferredSettings = forceAtlas2.inferSettings(this.currentGraphModel)
-
+    console.log('hier')
     // from events SIGMA2 example, initialze sets for highlight on hover:
     let highlighedNodes = new Set()
     let highlighedEdges = new Set()

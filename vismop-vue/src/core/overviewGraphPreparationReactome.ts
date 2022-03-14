@@ -16,7 +16,7 @@ import store from '@/store'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string, maplinks: string[], subtreeIds: string[]} },
+  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string, maplinks: string[], subtreeIds: string[], initialPosX: number, initialPosY: number} },
   glyphs: {[key: string]: string},
   rootIds: string[]
 ): graphData {
@@ -33,8 +33,10 @@ export function generateGraphData (
     console.log('ENTRY', entry)
     const name = entry.pathwayName
     const id = entry.pathwayId
-    const initPosX = Math.random() * 100
-    const initPosY = Math.random() * 100
+    const initPosX = entry.initialPosX
+    const initPosY = entry.initialPosY
+    // const initPosX = Math.random() * 100
+    // const initPosY = Math.random() * 100
     const currentNode = {
       key: id,
       // label: "",

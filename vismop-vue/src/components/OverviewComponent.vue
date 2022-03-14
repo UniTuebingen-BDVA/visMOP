@@ -188,7 +188,7 @@ export default Vue.extend({
       const glyphsURL = generatedGlyphs.url
       console.log('GLYPHs', this.$store.state.glyphs)
       const networkData = generateGraphData(this.overviewData, fcExtents, glyphsURL)
-      console.log('base dat', networkData)
+      console.log('base data', networkData)
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }
   }

@@ -612,6 +612,7 @@ export default Vue.extend({
         .then((dataContent) => {
           this.$store.dispatch('setOverviewData', dataContent.overviewData)
           this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
+          // this.$store.dispatch('setOverviewData', dataContent.overview_data)
         }).then(() => this.$store.dispatch('setOverlay', false))
     },
     generateKGMLs () {
