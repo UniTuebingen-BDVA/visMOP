@@ -180,7 +180,7 @@ class PathwayHierarchy(dict):
             for node in subtree:
                 proteins = {**proteins, **self[node].measured_proteins}
                 genes = {**genes, **self[node].measured_genes}
-                metabolite = {**metabolites, **self[node].measured_metabolites}
+                metabolites = {**metabolites, **self[node].measured_metabolites}
                 total_proteins = {**total_proteins, **self[node].total_proteins}
                 total_metabolites = {**total_metabolites, **self[node].total_metabolites}
                 maplinks = {**maplinks, **self[node].maplinks}
