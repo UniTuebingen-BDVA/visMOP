@@ -11,7 +11,7 @@ interface omicsData {
   nodeState: { total: number, regulated: number }
 }
 
-interface glyphData {
+export interface glyphData {
   pathwayID: string
   proteomics: omicsData;
   metabolomics: omicsData;
@@ -145,7 +145,7 @@ export function generateGlyphs (inputData: { [key: string]: glyphData }): { url:
   return { url: outObjURL, svg: outObjSVG }
 }
 
-function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyphIdx: number): SVGElement {
+export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyphIdx: number, pathwayCompare = true): SVGElement {
   let availableOmics = 0
   if (glyphDat.transcriptomics.available) availableOmics += 1
   if (glyphDat.proteomics.available) availableOmics += 1
@@ -280,14 +280,15 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
 
   if (drawLabels) {
     svg = d3.create('svg')
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('width', '100%')
-      .attr('height', '100%')
+      .attr('viewBox', pathwayCompare ? `0 0 ${width} ${height}` : '0 0 35 35')
+      .attr('width', pathwayCompare ? '100%' : '100px')
+      .attr('height', pathwayCompare ? '100%' : '100px')
     g = svg.append('g')
+      .attr('class', 'glyph')
       .attr('id', `glyph${glyphIdx}`)
       .attr('transform', `translate(${width / 2},${height / 2})`)
     // DOMMouseScroll seems to work in FF
-    g.on('mouseenter', (d, event) => {
+    g.on('mouseenter', (event, dat) => {
       const amtElems = d3.select(`#glyph${glyphIdx}`).selectAll('.foldArc').size()
       highlightSection = 0 % amtElems
       d3.select(`#glyph${glyphIdx}`)
@@ -301,7 +302,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
           } else return 0.2
         })
     })
-    g.on('mouseleave', (d, event) => {
+    g.on('mouseleave', (event, dat) => {
       highlightSection = 0
       d3.select(`#glyph${glyphIdx}`)
         .selectAll('.foldArc')
@@ -311,9 +312,9 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
           return 1.0
         })
     })
-    g.on('DOMMouseScroll', (d, event) => {
+    g.on('wheel.zoom', (event, dat) => {
       const amtElems = d3.select(`#glyph${glyphIdx}`).selectAll('.foldArc').size()
-      highlightSection = ((highlightSection + ((d.detail > 0) ? 1 : -1)) % amtElems + amtElems) % amtElems
+      highlightSection = ((highlightSection + ((event.detail > 0) ? 1 : -1)) % amtElems + amtElems) % amtElems
       d3.select(`#glyph${glyphIdx}`)
         .selectAll('.foldArc')
         .data(outerArcDat)
@@ -324,6 +325,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
             return 1.0
           } else return 0.2
         })
+      event.stopPropagation()
     })
   } else {
     svg = d3.create('svg')
@@ -353,8 +355,8 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
     .append('path')
     .attr('d', arcMiddle)
     .attr('fill', (d, i) => innerColors[i])
-  graySegments
-    .on('mouseover', (d, i) => console.log('HOVERTEST', i))
+  // graySegments
+    // .on('mouseover', (d, i) => console.log('HOVERTEST', i))
     // .append('title')
     // .text((d) => d.hoverData)
 

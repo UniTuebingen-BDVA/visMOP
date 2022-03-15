@@ -227,6 +227,7 @@ class PathwayHierarchy(dict):
                     self[pathway[0]].measured_proteins[query_key]['forms'][current_reactome_id] = {'name':entity_data['name'], 'toplevelId': self[pathway[0]].total_proteins[current_reactome_id]['toplevel_id'] }
                 else:
                     try:
+                        A = self[pathway[0]]
                         self[pathway[0]].measured_proteins[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': self[pathway[0]].total_proteins[current_reactome_id]['toplevel_id'] }}}
                     except Exception as e:
                         a = self[pathway[0]]
@@ -531,6 +532,7 @@ def leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves, toplevel
         #print(intermediate_node_dict[entry_id]['children'])
         entry = intermediate_node_dict[entry_id]
         if 'children' not in entry:
+            toplevel_ID.append(entry_id)
             leaves[entry['stId']]={'own_id': entry_id, 'toplevel_id': toplevel_ID}
         if 'children' in entry:
             toplevel_ID.append(entry_id)

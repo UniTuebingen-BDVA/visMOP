@@ -63,7 +63,7 @@ export interface coordinateBound extends coordinate {
 
 export interface color {
   r: number
-  b: number 
+  b: number
   g: number
 }
 
@@ -90,8 +90,8 @@ export interface reactomeNodeCommon {
   insets : coordinateBound
   bgColor : color
   fgColor : color
-  isCrossed : Boolean
-  needDashedBorder : Boolean
+  isCrossed : boolean
+  needDashedBorder : boolean
 }
 
 export interface reactomeEdgeCommon {

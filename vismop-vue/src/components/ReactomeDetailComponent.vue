@@ -38,6 +38,7 @@
 import { mapState } from 'vuex'
 import ReactomeDetailView from '../core/reactomeDetailView'
 import { layoutJSON } from '../core/reactomeTypes'
+import { glyphData } from '../core/overviewGlyph'
 import Vue from 'vue'
 
 interface Data{
@@ -130,6 +131,7 @@ export default Vue.extend({
     drawDetailView () {
       this.currentView?.clearView()
       const fcs: {prot: { [key: number]: number}, gen:{ [key: number]: number}, chem:{ [key: number]: number} } = { prot: {}, gen: {}, chem: {} }
+      const fcsReactomeKey: { [key: number]: glyphData } = {}
       console.log(this.overviewData)
       console.log(this.pathwaySelection)
       const pathwayData = this.overviewData.find((elem: { pathwayId: string }) => elem.pathwayId === this.pathwaySelection)
@@ -140,30 +142,51 @@ export default Vue.extend({
           const entityElem = measureEntry.forms[entity]
           for (const id of entityElem.toplevelId) {
             fcs.prot[id] = val
+            if (id in fcsReactomeKey) {
+              fcsReactomeKey[id].proteomics.available = true
+              fcsReactomeKey[id].proteomics.foldChanges.push({ value: val, symbol: entityElem.name })
+              fcsReactomeKey[id].proteomics.nodeState.regulated += 1
+            } else {
+              fcsReactomeKey[id] = { pathwayID: '' + entityElem.toplevelId, proteomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: 0, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: 0, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: 0, regulated: 0 } } }
+            }
           }
         }
       }
       for (const entry in pathwayData.entries.transcriptomics.measured) {
-        const measureEntry = pathwayData.entries.transcriptomics.measured[entry] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
+        const measureEntry = pathwayData.entries.transcriptomics.measured[entry] as {value: number, forms: { [key: string]: {name: string, toplevelId: number[] }}}
         const val = measureEntry.value
         for (const entity in measureEntry.forms) {
           const entityElem = measureEntry.forms[entity]
           for (const id of entityElem.toplevelId) {
             fcs.gen[id] = val
+            if (id in fcsReactomeKey) {
+              fcsReactomeKey[id].transcriptomics.available = true
+              fcsReactomeKey[id].transcriptomics.foldChanges.push({ value: val, symbol: entityElem.name })
+              fcsReactomeKey[id].transcriptomics.nodeState.regulated += 1
+            } else {
+              fcsReactomeKey[id] = { pathwayID: '' + entityElem.toplevelId, transcriptomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: 0, regulated: 1 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: 0, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: 0, regulated: 0 } } }
+            }
           }
         }
       }
       for (const entry in pathwayData.entries.metabolomics.measured) {
-        const measureEntry = pathwayData.entries.metabolomics.measured[entry] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
+        const measureEntry = pathwayData.entries.metabolomics.measured[entry] as {value: number, forms: { [key: string]: {name: string, toplevelId: number[] }}}
         const val = measureEntry.value
         for (const entity in measureEntry.forms) {
           const entityElem = measureEntry.forms[entity]
           for (const id of entityElem.toplevelId) {
             fcs.chem[id] = val
+            if (id in fcsReactomeKey) {
+              fcsReactomeKey[id].metabolomics.available = true
+              fcsReactomeKey[id].metabolomics.foldChanges.push({ value: val, symbol: entityElem.name })
+              fcsReactomeKey[id].metabolomics.nodeState.regulated += 1
+            } else {
+              fcsReactomeKey[id] = { pathwayID: '' + entityElem.toplevelId, metabolomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: 0, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: 0, regulated: 0 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: 0, regulated: 0 } } }
+            }
           }
         }
       }
-      this.currentView = new ReactomeDetailView(this.currentLayoutJson, '#' + this.contextID, fcs)
+      this.currentView = new ReactomeDetailView(this.currentLayoutJson, '#' + this.contextID, fcs, fcsReactomeKey)
     },
     expandComponent () {
       this.expandButton = !this.expandButton
