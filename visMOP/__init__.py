@@ -562,8 +562,10 @@ def reactome_overview():
 @app.route('/get_reactome_json_files/<pathway>', methods=['GET'])
 def get_reactome_json(pathway):
     hierarchy = cache.get('reactome_hierarchy')
-    json_file = hierarchy[pathway].layout_json_file
-    return json.dumps({'layoutJson': json_file})
+    layout_json = hierarchy[pathway].layout_json_file
+    graph_json = hierarchy[pathway].graph_json_file
+
+    return json.dumps({'layoutJson': layout_json, 'graphJson': graph_json})
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)
 

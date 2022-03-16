@@ -1,6 +1,6 @@
 import store from '@/store'
 import * as d3 from 'd3'
-import { layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode } from '../core/reactomeTypes'
+import { layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode, graphJSON } from '../core/reactomeTypes'
 import { glyphData, generateGlyphVariation } from '../core/overviewGlyph'
 
 const colorsAlternative: {[key: string]: string} = {
@@ -49,15 +49,17 @@ export default class ReactomeDetailView {
   private linesG: d3.Selection<SVGGElement, unknown, HTMLElement, any>
   private tooltipG: d3.Selection<SVGGElement, unknown, HTMLElement, any>
   private layoutData: layoutJSON
+  private graphData: graphJSON
   private containerID: string
   private colorScaleTranscriptomics = store.state.fcScales.transcriptomics
   private colorScaleProteomics = store.state.fcScales.proteomics
   private colorScaleMetabolomics = store.state.fcScales.metabolomics
   private foldChanges: {prot: {[key: number]: number}, gen:{[key: number]: number}, chem:{[key: number]: number}}
   private foldChangeReactome: { [key: number]: glyphData }
-  constructor (layoutData: layoutJSON, containerID: string, foldchanges: {prot: {[key: number]: number}, gen:{[key: number]: number}, chem:{[key: number]: number}}, foldChangeReactome: { [key: number]: glyphData}) {
+  constructor (layoutData: layoutJSON, graphData: graphJSON, containerID: string, foldchanges: {prot: {[key: number]: number}, gen:{[key: number]: number}, chem:{[key: number]: number}}, foldChangeReactome: { [key: number]: glyphData}) {
     this.containerID = containerID
     this.layoutData = layoutData
+    this.graphData = graphData
     this.foldChanges = foldchanges
     this.foldChangeReactome = foldChangeReactome
     console.log(foldChangeReactome)
@@ -69,7 +71,10 @@ export default class ReactomeDetailView {
     this.comparmentG = this.mainChartArea.append('g')
     this.linesG = this.mainChartArea.append('g')
     this.nodesG = this.mainChartArea.append('g')
-    this.tooltipG = this.mainChartArea.append('g').attr('id', 'tooltipG').on('click', (event, d) => { d3.select('#tooltipG').selectAll('svg').remove() })
+    this.tooltipG = this.mainChartArea.append('g').attr('id', 'tooltipG').on('click', (event, d) => {
+      d3.select('#tooltipG').selectAll('svg').remove()
+      d3.select('#tooltipG').selectAll('circle').remove()
+    })
     this.drawCompartments()
     this.drawNodes()
     this.drawSegments()
@@ -318,9 +323,8 @@ export default class ReactomeDetailView {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
     const textLines: { text: string, textLength: number }[][] = []
-    // tslint:disable no-this-alias
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
-    // tslint:enable no-this-alias
     for (const node of data) {
       textLines.push(this.generateLinesFromText(node.displayName, node.prop.width))
     }
@@ -339,7 +343,9 @@ export default class ReactomeDetailView {
 
     complex.on('click', (event, d) => {
       self.tooltipG.selectAll('svg').remove()
+      self.tooltipG.selectAll('circle').remove()
       self.tooltipG.attr('transform', `translate(${d.position.x - 50},${d.position.y - 50})`)
+      self.tooltipG.append('circle').attr('r', 50).attr('cx', 50).attr('cy', 50).attr('fill', 'white')
       self.tooltipG.append(() => generateGlyphVariation(self.foldChangeReactome[d.reactomeId], true, d.reactomeId, false))
     })
     enterG

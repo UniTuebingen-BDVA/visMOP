@@ -1,7 +1,46 @@
 // https://reactome.org/dev/diagram/pathway-diagram-specs for infos
 
 export interface graphJSON {
+  nodes: { [key: number]: entityNode }
+  edges: { [key: number]: eventNode }
+  subpathways: { [key: number]: eventNode }
+  dbId: number
+  stId: string
+}
 
+interface graphNode {
+  schameClass: string
+  dbId: number
+  stId: string
+  speciesID: number
+  displayName: string
+}
+
+interface entityNode extends graphNode {
+  identifier : string
+  parents : number[]
+  children : number[]
+  geneNames : string[]
+  diagramIds : number[]
+}
+
+interface subpathwayNode {
+  dbId : number
+  stId : string
+  events : number[]
+  displayName : string
+}
+
+interface eventNode extends graphNode {
+  catalysts : number[]
+  inhibitors : number[]
+  activators : number[]
+  inputs : number[]
+  outputs : number[]
+  diagramIds : number[]
+  preceding : number[]
+  following : number[]
+  requirements : number[]
 }
 
 export interface layoutJSON {
