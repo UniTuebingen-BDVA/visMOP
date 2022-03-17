@@ -133,7 +133,7 @@ export default Vue.extend({
     drawDetailView () {
       console.log('GRAPHJSON', this.currentGraphJson)
       this.currentView?.clearView()
-      const fcs: {prot: { [key: number]: number}, gen:{ [key: number]: number}, chem:{ [key: number]: number} } = { prot: {}, gen: {}, chem: {} }
+      const fcs: {proteomics: { [key: number]: number}, transcriptomics:{ [key: number]: number}, metabolomics:{ [key: number]: number} } = { proteomics: {}, transcriptomics: {}, metabolomics: {} }
       const fcsReactomeKey: { [key: number]: glyphData } = {}
       console.log(this.overviewData)
       console.log(this.pathwaySelection)
@@ -144,9 +144,14 @@ export default Vue.extend({
         for (const entity in measureEntry.forms) {
           const entityElem = measureEntry.forms[entity]
           for (const id of entityElem.toplevelId) {
-            fcs.prot[id] = val
+            fcs.proteomics[id] = val
             console.log('GRAPHTEST', id, this.currentGraphJson)
-            const totalAmount = ('children' in this.currentGraphJson.nodes[id]) ? this.currentGraphJson.nodes[id].children.length : 1
+            let totalAmount = 0
+            try {
+              totalAmount = ('children' in this.currentGraphJson.nodes[id]) ? this.currentGraphJson.nodes[id].children.length : 1
+            } catch (error) {
+              totalAmount = 1
+            }
             if (id in fcsReactomeKey) {
               fcsReactomeKey[id].proteomics.available = true
               fcsReactomeKey[id].proteomics.foldChanges.push({ value: val, symbol: entityElem.name })
@@ -163,8 +168,13 @@ export default Vue.extend({
         for (const entity in measureEntry.forms) {
           const entityElem = measureEntry.forms[entity]
           for (const id of entityElem.toplevelId) {
-            fcs.gen[id] = val
-            const totalAmount = ('children' in this.currentGraphJson.nodes[id]) ? this.currentGraphJson.nodes[id].children.length : 1
+            fcs.transcriptomics[id] = val
+            let totalAmount = 0
+            try {
+              totalAmount = ('children' in this.currentGraphJson.nodes[id]) ? this.currentGraphJson.nodes[id].children.length : 1
+            } catch (error) {
+              totalAmount = 1
+            }
             if (id in fcsReactomeKey) {
               fcsReactomeKey[id].transcriptomics.available = true
               fcsReactomeKey[id].transcriptomics.foldChanges.push({ value: val, symbol: entityElem.name })
@@ -181,9 +191,13 @@ export default Vue.extend({
         for (const entity in measureEntry.forms) {
           const entityElem = measureEntry.forms[entity]
           for (const id of entityElem.toplevelId) {
-            fcs.chem[id] = val
-            const totalAmount = ('children' in this.currentGraphJson.nodes[id]) ? this.currentGraphJson.nodes[id].children.length : 1
-            if (id in fcsReactomeKey) {
+            fcs.metabolomics[id] = val
+            let totalAmount = 0
+            try {
+              totalAmount = ('children' in this.currentGraphJson.nodes[id]) ? this.currentGraphJson.nodes[id].children.length : 1
+            } catch (error) {
+              totalAmount = 1
+            } if (id in fcsReactomeKey) {
               fcsReactomeKey[id].metabolomics.available = true
               fcsReactomeKey[id].metabolomics.foldChanges.push({ value: val, symbol: entityElem.name })
               fcsReactomeKey[id].metabolomics.nodeState.regulated += 1

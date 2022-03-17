@@ -108,7 +108,8 @@ export default class overviewGraph {
       nodeReducer: nodeReducer,
       edgeReducer: edgeReducer,
       zIndex: true, // enabling zIndex parameter
-      renderLabels: false, // do not render labels w/o hover
+      renderLabels: true, // do not render labels w/o hover
+      labelRenderedSizeThreshold: 20,
       edgeProgramClasses: {
         ...DEFAULT_SETTINGS.edgeProgramClasses,
         dashed: DashedEdgeProgram
@@ -133,7 +134,7 @@ export default class overviewGraph {
 
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
-      console.log('Entering: ', node)
+      // console.log('Entering: ', node)
       highlighedNodesHover = new Set(graph.neighbors(node))
       highlighedNodesHover.add(node)
       highlightedCenterHover = node

@@ -54,9 +54,9 @@ export default class ReactomeDetailView {
   private colorScaleTranscriptomics = store.state.fcScales.transcriptomics
   private colorScaleProteomics = store.state.fcScales.proteomics
   private colorScaleMetabolomics = store.state.fcScales.metabolomics
-  private foldChanges: {prot: {[key: number]: number}, gen:{[key: number]: number}, chem:{[key: number]: number}}
+  private foldChanges: {proteomics: {[key: number]: number}, transcriptomics:{[key: number]: number}, metabolomics:{[key: number]: number}}
   private foldChangeReactome: { [key: number]: glyphData }
-  constructor (layoutData: layoutJSON, graphData: graphJSON, containerID: string, foldchanges: {prot: {[key: number]: number}, gen:{[key: number]: number}, chem:{[key: number]: number}}, foldChangeReactome: { [key: number]: glyphData}) {
+  constructor (layoutData: layoutJSON, graphData: graphJSON, containerID: string, foldchanges: {proteomics: {[key: number]: number}, transcriptomics:{[key: number]: number}, metabolomics:{[key: number]: number}}, foldChangeReactome: { [key: number]: glyphData}) {
     this.containerID = containerID
     this.layoutData = layoutData
     this.graphData = graphData
@@ -302,7 +302,7 @@ export default class ReactomeDetailView {
       .attr('height', d => d.prop.height)
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => (d.reactomeId in this.foldChanges.prot) ? this.colorScaleProteomics(this.foldChanges.prot[d.reactomeId]) : (d.reactomeId in this.foldChanges.gen) ? this.colorScaleTranscriptomics(this.foldChanges.gen[d.reactomeId]) : colors[d.renderableClass])
+      .attr('fill', d => (d.reactomeId in this.foldChanges.proteomics) ? this.colorScaleProteomics(this.foldChanges.proteomics[d.reactomeId]) : (d.reactomeId in this.foldChanges.transcriptomics) ? this.colorScaleTranscriptomics(this.foldChanges.transcriptomics[d.reactomeId]) : colors[d.renderableClass])
     enterG
       .append('text').attr('class', 'nodeText')
       .append('tspan')
@@ -317,6 +317,14 @@ export default class ReactomeDetailView {
       .attr('x', 0)
       .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text(d => d.text)
+  }
+
+  private complexColor (reactomeId: number) {
+    let color = colors.complex
+    if (reactomeId in this.foldChanges.proteomics) color = this.colorScaleProteomics(this.foldChanges.proteomics[reactomeId])
+    if (reactomeId in this.foldChanges.transcriptomics) color = this.colorScaleTranscriptomics(this.foldChanges.transcriptomics[reactomeId])
+    if (reactomeId in this.foldChanges.metabolomics) color = this.colorScaleMetabolomics(this.foldChanges.metabolomics[reactomeId])
+    return color
   }
 
   private drawComplex (data: reactomeNode[]) {
@@ -339,7 +347,7 @@ export default class ReactomeDetailView {
       .attr('d', d => this.complexPath(d))
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => (d.reactomeId in this.foldChanges.prot) ? this.colorScaleProteomics(this.foldChanges.prot[d.reactomeId]) : (d.reactomeId in this.foldChanges.gen) ? this.colorScaleTranscriptomics(this.foldChanges.gen[d.reactomeId]) : colors[d.renderableClass])
+      .attr('fill', d => self.complexColor(d.reactomeId))
 
     complex.on('click', (event, d) => {
       self.tooltipG.selectAll('svg').remove()
@@ -386,7 +394,7 @@ export default class ReactomeDetailView {
       .attr('ry', d => d.prop.height / 2)
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => (d.reactomeId in this.foldChanges.chem) ? this.colorScaleProteomics(this.foldChanges.chem[d.reactomeId]) : colors[d.renderableClass])
+      .attr('fill', d => (d.reactomeId in this.foldChanges.metabolomics) ? this.colorScaleMetabolomics(this.foldChanges.metabolomics[d.reactomeId]) : colors[d.renderableClass])
     enterG
       .append('text').attr('class', 'nodeText')
       .style('text-anchor', 'middle')

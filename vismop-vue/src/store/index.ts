@@ -373,7 +373,7 @@ export default new Vuex.Store({
       const fcsTranscriptomicsAsc = Object.values(val.transcriptomics).sort((a, b) => a - b)
       const fcsProteomicsAsc = Object.values(val.proteomics).sort((a, b) => a - b)
       const fcsMetabolomicsAsc = Object.values(val.metabolomics).sort((a, b) => a - b)
-
+      console.log('metafc', fcsMetabolomicsAsc)
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
         const pos = (arr.length - 1) * q

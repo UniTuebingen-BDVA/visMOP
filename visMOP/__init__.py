@@ -454,7 +454,8 @@ def reactome_parsing():
             print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
           
         # target organism is a little bit annoying at the moment
-        tar_organism = 'Mus_musculus'
+        tar_organism = 'Mus_musculus' if target_db == 'mmu' else 'Homo_sapiens'
+        print(tar_organism)
         protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'UniProt', data_path / "reactome_data/pickles/")
         fold_changes['proteomics'] = protein_query.get_measurement_levels()
         # add entries to hierarchy
@@ -482,19 +483,21 @@ def reactome_parsing():
         metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_IDs =  list(metabolomics_dict.keys())
         for ID in metabolomics_IDs:
-            metabolomics_query_data_tuples.append( (ID, metabolomics_dict[ID][metabolomics["value"]]) ) 
+            ID_number = str(ID).replace('CHEBI:','')
+            metabolomics_query_data_tuples.append((ID_number, metabolomics_dict[ID][metabolomics["value"]]) ) 
 
           
         # target organism is a little bit annoying at the moment
-        tar_organism = 'Mus_musculus'
+        tar_organism = 'Mus_musculus' if target_db == 'mmu' else 'Homo_sapiens'
+        print(tar_organism)
         metabolite_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'ChEBI', data_path / "reactome_data/pickles/")
-        fold_changes['metabolites'] = metabolite_query.get_measurement_levels()
+        fold_changes['metabolomics'] = metabolite_query.get_measurement_levels()
         # add entries to hierarchy
         # node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
 
         for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
-                reactome_hierarchy.add_query_data(entity_data, 'metbolite', query_key)
+                reactome_hierarchy.add_query_data(entity_data, 'metabolite', query_key)
     
     ##
     # Add Transcriptomics Data Data
@@ -520,7 +523,8 @@ def reactome_parsing():
             transcriptomics_query_data_tuples.append( (ID, transcriptomics_dict[ID][transcriptomics["value"]]) ) 
 
         # target organism is a little bit annoying at the moment
-        tar_organism = 'Mus_musculus'
+        tar_organism = 'Mus_musculus' if target_db == 'mmu' else 'Homo_sapiens'
+        print(tar_organism)
         transcriptomics_query = ReactomeQuery(transcriptomics_query_data_tuples, tar_organism, 'Ensembl', data_path / "reactome_data/pickles/")
         fold_changes['transcriptomics'] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy

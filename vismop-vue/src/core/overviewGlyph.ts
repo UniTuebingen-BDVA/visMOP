@@ -296,7 +296,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
         .data(outerArcDat)
         .attr('fill-opacity', (d, i) => {
           if (i === highlightSection) {
-            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol)
+            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol.split(' ')[0]) // more of a temp fix
             d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(d.fc.toFixed(3))
             return 1.0
           } else return 0.2
@@ -320,7 +320,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
         .data(outerArcDat)
         .attr('fill-opacity', (d, i) => {
           if (i === highlightSection) {
-            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol)
+            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol.split(' ')[0]) // more of a temp fix
             d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(d.fc.toFixed(3))
             return 1.0
           } else return 0.2

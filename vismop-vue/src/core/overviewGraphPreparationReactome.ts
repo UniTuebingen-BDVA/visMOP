@@ -42,7 +42,7 @@ export function generateGraphData (
         image: glyphs[id],
         name: _.escape(name),
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
-        label: `Name: ${_.escape(name)}`,
+        label: `${_.escape(name)}`,
         x: initPosX,
         y: initPosY,
         zIndex: 1,
@@ -86,7 +86,7 @@ function generateForceGraphEdge (sourceID: string, targetID: string, type: strin
 
   const edgeColors: { [key: string]: string } = {
     hierarchy: '#999999',
-    maplink: '#FF0000'
+    maplink: 'rgba(0.2,0.2,0.2,1.0)'
   }
 
   const entry1 = sourceID

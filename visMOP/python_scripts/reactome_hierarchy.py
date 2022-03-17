@@ -166,8 +166,11 @@ class PathwayHierarchy(dict):
         
         as the supplied omics data is only mapped to leaf nodes, data has to be aggregated to the higher level nodes
         """
+        # TODO aggregating does not check if there is a "separate" diagram for a subtree element, thus it can happen that measured data is mapped to a pathway which itself does not contain the measured val but a embedded pathway does
         for k, v in self.items():
             #if not v.is_leaf:
+            if v.name == 'Mitochondrial biogenesis':
+                print('TEST')
             subtree = self.get_subtree_target(v.reactome_sID)
             proteins = v.measured_proteins
             genes = v.measured_genes
@@ -178,6 +181,7 @@ class PathwayHierarchy(dict):
             subtree_ids = subtree
             subtree_ids.append(v.reactome_sID)
             tree_has_diagram = v.has_diagram
+            
             for node in subtree:
                 proteins = {**proteins, **self[node].measured_proteins}
                 genes = {**genes, **self[node].measured_genes}
@@ -251,9 +255,9 @@ class PathwayHierarchy(dict):
                         print('C')
             elif query_type == 'metabolite':
                 if query_key in self[pathway[0]].measured_metabolites:
-                    self[pathway[0]].measured_metabolites[query_key]['forms'][current_reactome_id] =  {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolite[current_reactome_id].keys()) }
+                    self[pathway[0]].measured_metabolites[query_key]['forms'][current_reactome_id] =  {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }
                 else:
-                    self[pathway[0]].measured_metabolites[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolite[current_reactome_id].keys()) }}}
+                    self[pathway[0]].measured_metabolites[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }}}
     def load_data(self, path, organism):
         """ Load hierarchy data into datastructure
 
@@ -371,7 +375,7 @@ class PathwayHierarchy(dict):
                     else:
                         query_pathway_dict[k] = [pathway]
                 for k, v in entry.measured_metabolites.items():
-                    name = v['forms'][list(v['forms'].keys())[0]].split(' [')[0]
+                    name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
                     pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
                     if k in query_pathway_dict.keys():
                         query_pathway_dict[k].append(pathway)
