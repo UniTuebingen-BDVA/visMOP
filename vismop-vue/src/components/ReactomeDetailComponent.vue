@@ -131,12 +131,9 @@ export default Vue.extend({
         }).then(() => this.$store.dispatch('setOverlay', false))
     },
     drawDetailView () {
-      console.log('GRAPHJSON', this.currentGraphJson)
       this.currentView?.clearView()
       const fcs: {proteomics: { [key: number]: number}, transcriptomics:{ [key: number]: number}, metabolomics:{ [key: number]: number} } = { proteomics: {}, transcriptomics: {}, metabolomics: {} }
       const fcsReactomeKey: { [key: number]: glyphData } = {}
-      console.log(this.overviewData)
-      console.log(this.pathwaySelection)
       const pathwayData = this.overviewData.find((elem: { pathwayId: string }) => elem.pathwayId === this.pathwaySelection)
       for (const entry in pathwayData.entries.proteomics.measured) {
         const measureEntry = pathwayData.entries.proteomics.measured[entry] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
@@ -145,7 +142,6 @@ export default Vue.extend({
           const entityElem = measureEntry.forms[entity]
           for (const id of entityElem.toplevelId) {
             fcs.proteomics[id] = val
-            console.log('GRAPHTEST', id, this.currentGraphJson)
             let totalAmount = 0
             try {
               totalAmount = ('children' in this.currentGraphJson.nodes[id]) ? this.currentGraphJson.nodes[id].children.length : 1

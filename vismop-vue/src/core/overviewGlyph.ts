@@ -55,9 +55,9 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
         } catch (error) {}
       })
     })
-    transcriptomicsData.foldChanges.sort((a, b) => a.value - b.value)
-    proteomicsData.foldChanges.sort((a, b) => a.value - b.value)
-    metabolomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    // transcriptomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    // proteomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    // metabolomicsData.foldChanges.sort((a, b) => a.value - b.value)
     proteomicsData.nodeState.total = currentAmounts.genes
     transcriptomicsData.nodeState.total = currentAmounts.genes
     metabolomicsData.nodeState.total = currentAmounts.compounds
@@ -190,6 +190,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
   let totalNodes = 0
   if (glyphDat.transcriptomics.available) {
     totalNodes += glyphDat.transcriptomics.nodeState.total
+    glyphDat.transcriptomics.foldChanges.sort((a, b) => a.value - b.value)
     const colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleTranscriptomics(elem.value))
     outerColors.push(...colorsTranscriptomics)
     const angleRangeTranscriptomicsFCs = _.range(circlePadding, circlePadding + thirdCircleElement + (thirdCircleElement / colorsTranscriptomics.length), thirdCircleElement / colorsTranscriptomics.length)
@@ -218,6 +219,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
   // prepare proteomics
   if (glyphDat.proteomics.available) {
     totalNodes += glyphDat.proteomics.nodeState.total
+    glyphDat.proteomics.foldChanges.sort((a, b) => a.value - b.value)
     const colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleProteomics(elem.value))
     outerColors.push(...colorsProteomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
@@ -247,6 +249,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
   // prepare metabolomics
   if (glyphDat.metabolomics.available) {
     totalNodes += glyphDat.metabolomics.nodeState.total
+    glyphDat.metabolomics.foldChanges.sort((a, b) => a.value - b.value)
     const colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScaleMetabolomics(elem.value))
     outerColors.push(...colorsMetabolomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
@@ -314,7 +317,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
     })
     g.on('wheel.zoom', (event, dat) => {
       const amtElems = d3.select(`#glyph${glyphIdx}`).selectAll('.foldArc').size()
-      highlightSection = ((highlightSection + ((event.detail > 0) ? 1 : -1)) % amtElems + amtElems) % amtElems
+      highlightSection = ((highlightSection + ((event.wheelDelta > 0) ? 1 : -1)) % amtElems + amtElems) % amtElems
       d3.select(`#glyph${glyphIdx}`)
         .selectAll('.foldArc')
         .data(outerArcDat)

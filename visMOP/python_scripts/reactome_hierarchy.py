@@ -169,8 +169,8 @@ class PathwayHierarchy(dict):
         # TODO aggregating does not check if there is a "separate" diagram for a subtree element, thus it can happen that measured data is mapped to a pathway which itself does not contain the measured val but a embedded pathway does
         for k, v in self.items():
             #if not v.is_leaf:
-            if v.name == 'Mitochondrial biogenesis':
-                print('TEST')
+            #if v.name == 'Mitochondrial biogenesis':
+            #    print('TEST')
             subtree = self.get_subtree_target(v.reactome_sID)
             proteins = v.measured_proteins
             genes = v.measured_genes
