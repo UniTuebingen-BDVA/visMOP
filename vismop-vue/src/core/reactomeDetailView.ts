@@ -60,8 +60,8 @@ export default class ReactomeDetailView {
     this.containerID = containerID
     this.layoutData = layoutData
     this.graphData = graphData
-    this.foldChanges = foldchanges
-    this.foldChangeReactome = foldChangeReactome
+    this.foldChanges = foldchanges // by stable ID: R-MMU-12345
+    this.foldChangeReactome = foldChangeReactome // by internal ID: 12345
     console.log(foldChangeReactome)
     const box = document.querySelector(containerID)?.getBoundingClientRect()
     const width = box?.width as number
@@ -229,12 +229,14 @@ export default class ReactomeDetailView {
     const chemicals = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Chemical') })
     const complexes = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Complex') })
     const proteins = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Protein') })
-    const nonChemicals = this.layoutData.nodes.filter(d => { return ((d.renderableClass !== 'Chemical') && (d.renderableClass !== 'Complex') && ((d.renderableClass !== 'Protein'))) })
+    const processNode = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'ProcessNode') })
+    const nonChemicals = this.layoutData.nodes.filter(d => { return ((d.renderableClass !== 'Chemical') && (d.renderableClass !== 'Complex') && (d.renderableClass !== 'Protein') && (d.renderableClass !== 'ProcessNode')) })
 
     this.drawRect(nonChemicals)
     this.drawProtein(proteins)
     this.drawChemical(chemicals)
     this.drawComplex(complexes)
+    this.drawProcesses(processNode)
   }
 
   private drawRect (data: reactomeNode[]) {
@@ -379,6 +381,56 @@ export default class ReactomeDetailView {
     const xTwoFifth = 3 * node.prop.width / 7
     const pathText = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}z`
     return pathText
+  }
+
+  private drawProcesses (data: reactomeNode[]) {
+    const nodeG = this.nodesG.append('g').selectAll().data(data)
+    const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const textLines: { text: string, textLength: number }[][] = []
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    for (const node of data) {
+      textLines.push(this.generateLinesFromText(node.displayName, node.prop.width))
+    }
+
+    for (const lines of textLines) {
+      for (const line of lines) {
+        line.textLength = lines.length
+      }
+    }
+
+    const processNode = enterG.append('rect')
+      .attr('id', function (d, i) { return '' + d.renderableClass + i })
+      .attr('x', d => -d.prop.width / 2)
+      .attr('y', d => -d.prop.height / 2)
+      .attr('width', d => d.prop.width)
+      .attr('height', d => d.prop.height)
+      .attr('stroke-width', 1)
+      .attr('stroke', 'black')
+      .attr('fill', d => self.foldChangeReactome[d.reactomeId] ? 'green' : 'white')
+
+    processNode.on('click', (event, d) => {
+      self.tooltipG.selectAll('svg').remove()
+      self.tooltipG.selectAll('circle').remove()
+      self.tooltipG.attr('transform', `translate(${d.position.x - 50},${d.position.y - 50})`)
+      self.tooltipG.append('circle').attr('r', 50).attr('cx', 50).attr('cy', 50).attr('fill', 'white')
+      self.tooltipG.append(() => generateGlyphVariation(self.foldChangeReactome[d.reactomeId], true, d.reactomeId, false))
+    })
+
+    enterG
+      .append('text').attr('class', 'nodeText')
+      .append('tspan')
+      .attr('width', d => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
+      .data((d, i) => textLines[i])
+      .enter()
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .text(d => d.text)
   }
 
   private drawChemical (data: reactomeNode[]) {

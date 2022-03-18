@@ -568,6 +568,9 @@ def get_reactome_json(pathway):
     hierarchy = cache.get('reactome_hierarchy')
     layout_json = hierarchy[pathway].layout_json_file
     graph_json = hierarchy[pathway].graph_json_file
+    inset_pathways = {}
+    for inset_pathway in list(set(list(hierarchy[pathway].total_measured_proteins.keys()) + list(hierarchy[pathway].total_measured_proteins.keys()) + list(hierarchy[pathway].total_measured_proteins.keys()))):
+        pass
 
     return json.dumps({'layoutJson': layout_json, 'graphJson': graph_json})
 if __name__ == "__main__":

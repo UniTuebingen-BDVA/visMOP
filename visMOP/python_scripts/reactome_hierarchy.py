@@ -23,12 +23,22 @@ class ReactomePathway:
         self.layout_json_file = None
         self.graph_json_file = None
         self.reactome_sID= reactome_sID
+        self.db_Id = ''
         self.children = []
         self.subtree_ids = []
         self.diagram_entry = ''
-        self.measured_proteins = {}
-        self.measured_genes = {}
-        self.measured_metabolites = {}
+        self.own_measured_proteins = {}
+        self.own_measured_genes = {}
+        self.own_measured_metabolites = {}
+        self.own_measured_maplinks = {}
+        self.total_measured_proteins = {}
+        self.total_measured_genes = {}
+        self.total_measured_metabolites = {}
+        self.total_measured_maplinks = {}
+        self.subdiagrams_measured_proteins = {}
+        self.subdiagrams_measured_genes = {}
+        self.subdiagrams_measured_metabolites = {}
+        self.subdiagrams_measured_maplinks = {}
         self.total_proteins = {}
         self.total_metabolites = {}
         self.maplinks = {}
@@ -125,6 +135,7 @@ class PathwayHierarchy(dict):
                         entry.diagram_entry = entry
                         entry.maplinks = contained_maplinks
                         entry.is_overview = is_overview
+                        entry.db_Id = entry.graph_json_file['dbId']
 
         current_level = 0
 
@@ -138,9 +149,10 @@ class PathwayHierarchy(dict):
                     self._find_diagram_recursion(key, entries_with_diagram, 0)
                     shortest_path_key = min(entries_with_diagram, key=itemgetter(1))[0]
                     entry_with_diagram = self[shortest_path_key]
-                    prot, molec, contained_maplinks, is_overview, name = get_subpathway_entities_graph_json(entry_with_diagram.graph_json_file, key)
+                    prot, molec, contained_maplinks, is_overview, name, db_Id = get_subpathway_entities_graph_json(entry_with_diagram.graph_json_file, key)
                     entry.diagram_entry = entry_with_diagram
                     entry.name = name
+                    entry.db_Id = db_Id
                     entry.total_proteins = prot
                     entry.total_metabolites = molec
                     entry.maplinks = contained_maplinks
@@ -169,36 +181,67 @@ class PathwayHierarchy(dict):
         # TODO aggregating does not check if there is a "separate" diagram for a subtree element, thus it can happen that measured data is mapped to a pathway which itself does not contain the measured val but a embedded pathway does
         for k, v in self.items():
             #if not v.is_leaf:
-            #if v.name == 'Mitochondrial biogenesis':
-            #    print('TEST')
             subtree = self.get_subtree_target(v.reactome_sID)
-            proteins = v.measured_proteins
-            genes = v.measured_genes
-            metabolites = v.measured_metabolites
+            own_measured_proteins = list(v.total_measured_proteins.keys())
+            own_measured_genes = list(v.total_measured_genes.keys())
+            own_measured_metabolites = list(v.total_measured_metabolites.keys())
+            own_measured_maplinks = list(v.total_measured_maplinks.keys()) #?
+            total_measured_proteins = v.total_measured_proteins
+            total_measured_genes = v.total_measured_genes
+            total_measured_metabolites = v.total_measured_metabolites
+            total_measured_maplinks = v.total_measured_maplinks #?
+            subdiagrams_measured_proteins = {}
+            subdiagrams_measured_genes = {}
+            subdiagrams_measured_metabolites = {}
+            subdiagrams_measured_maplinks = {} #?
             total_proteins = v.total_proteins
             total_metabolites = v.total_metabolites
-            maplinks = v.maplinks
+            total_maplinks = v.maplinks
             subtree_ids = subtree
             subtree_ids.append(v.reactome_sID)
             tree_has_diagram = v.has_diagram
             
             for node in subtree:
-                proteins = {**proteins, **self[node].measured_proteins}
-                genes = {**genes, **self[node].measured_genes}
-                metabolites = {**metabolites, **self[node].measured_metabolites}
-                total_proteins = {**total_proteins, **self[node].total_proteins}
-                total_metabolites = {**total_metabolites, **self[node].total_metabolites}
-                maplinks = {**maplinks, **self[node].maplinks}
-                if self[node].has_diagram:
+                current_node = self[node]
+                if current_node.has_diagram and (current_node.reactome_sID != v.reactome_sID):
+                    if len(current_node.total_measured_proteins.keys()) > 0:
+                        # current_node.db_Id is only internal ID, later we might also need the stable id
+                        subdiagrams_measured_proteins[current_node.db_Id] = list(current_node.total_measured_proteins.keys())
+                    if len(current_node.total_measured_genes.keys()) > 0:
+                        subdiagrams_measured_genes[current_node.db_Id] = list(current_node.total_measured_genes.keys())
+                    if len(current_node.total_measured_metabolites.keys()) > 0:
+                        subdiagrams_measured_metabolites[current_node.db_Id] = list(current_node.total_measured_metabolites.keys())
+                    if len(current_node.total_measured_maplinks.keys()) > 0:
+                        subdiagrams_measured_maplinks[current_node.db_Id] = list(current_node.total_measured_maplinks.keys())
+                else:
+                    own_measured_proteins = list(set(own_measured_proteins + list(current_node.total_measured_proteins.keys())))
+                    own_measured_genes = list(set(own_measured_genes + list(current_node.total_measured_genes.keys())))
+                    own_measured_metabolites = list(set(own_measured_metabolites + list(current_node.total_measured_metabolites.keys())))
+                    own_measured_maplinks = list(set(own_measured_maplinks + list(current_node.total_measured_maplinks.keys())))
+                total_measured_proteins = {**total_measured_proteins, **current_node.total_measured_proteins}
+                total_measured_genes = {**total_measured_genes, **current_node.total_measured_genes}
+                total_measured_metabolites = {**total_measured_metabolites, **current_node.total_measured_metabolites}
+                total_measured_maplinks = {**total_measured_maplinks, **current_node.total_measured_maplinks}
+                total_proteins = {**total_proteins, **current_node.total_proteins}
+                total_metabolites = {**total_metabolites, **current_node.total_metabolites}
+                if current_node.has_diagram:
                     tree_has_diagram = True
-            v.measured_proteins = proteins
-            v.measured_genes = genes
-            v.measured_metabolites = metabolites
+            v.total_measured_proteins = total_measured_proteins
+            v.total_measured_genes = total_measured_genes
+            v.total_measured_metabolites = total_measured_metabolites
+            v.total_measured_maplinks = total_measured_maplinks
+            v.own_measured_proteins = own_measured_proteins
+            v.own_measured_genes = own_measured_genes
+            v.own_measured_metabolites = own_measured_metabolites
+            v.own_measured_maplinks = own_measured_maplinks
+            v.subdiagrams_measured_proteins = subdiagrams_measured_proteins
+            v.subdiagrams_measured_genes = subdiagrams_measured_genes
+            v.subdiagrams_measured_metabolites = subdiagrams_measured_metabolites
+            v.subdiagrams_measured_maplinks = subdiagrams_measured_maplinks
             v.total_proteins = total_proteins
             v.total_metabolites = total_metabolites
-            v.maplinks = maplinks
             v.subtree_ids = subtree_ids
-            if ((len(v.measured_proteins) > 0) or (len(v.measured_genes) > 0) or (len(v.measured_metabolites) > 0)):
+            if ((len(v.total_measured_proteins) > 0) or (len(v.total_measured_genes) > 0) or (len(v.total_measured_metabolites) > 0)):
                 v.has_data = True
 
     def get_subtree_target(self, tar_id):
@@ -228,36 +271,36 @@ class PathwayHierarchy(dict):
         for pathway in entity_data["pathways"]:
             if self[pathway[0]].name == '': self[pathway[0]].name = pathway[1]
             if query_type == 'protein':
-                if query_key in self[pathway[0]].measured_proteins:
+                if query_key in self[pathway[0]].total_measured_proteins:
                     try:
-                        self[pathway[0]].measured_proteins[query_key]['forms'][current_reactome_id] = {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys())}
+                        self[pathway[0]].total_measured_proteins[query_key]['forms'][current_reactome_id] = {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys())}
                     except Exception as e:
                         a = self[pathway[0]]
                         print(e)
                         print('A')
                 else:
                     try:
-                        self[pathway[0]].measured_proteins[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
+                        self[pathway[0]].total_measured_proteins[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
                     except Exception as e:
                         a = self[pathway[0]]
                         print(e)
                         print('B')
             elif query_type == 'gene':
                 b = self[pathway[0]]
-                if query_key in self[pathway[0]].measured_genes:
-                    self[pathway[0]].measured_genes[query_key]['forms'][current_reactome_id] = {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }
+                if query_key in self[pathway[0]].total_measured_genes:
+                    self[pathway[0]].total_measured_genes[query_key]['forms'][current_reactome_id] = {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }
                 else:
                     try:
-                        self[pathway[0]].measured_genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
+                        self[pathway[0]].total_measured_genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
                     except Exception as e:
                         a = self[pathway[0]]
                         print(e)
                         print('C')
             elif query_type == 'metabolite':
-                if query_key in self[pathway[0]].measured_metabolites:
-                    self[pathway[0]].measured_metabolites[query_key]['forms'][current_reactome_id] =  {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }
+                if query_key in self[pathway[0]].total_measured_metabolites:
+                    self[pathway[0]].total_measured_metabolites[query_key]['forms'][current_reactome_id] =  {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }
                 else:
-                    self[pathway[0]].measured_metabolites[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }}}
+                    self[pathway[0]].total_measured_metabolites[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }}}
     def load_data(self, path, organism):
         """ Load hierarchy data into datastructure
 
@@ -337,52 +380,77 @@ class PathwayHierarchy(dict):
         for pathway in pathway_ids:
             entry = self[pathway]
             if entry.has_data:
-                pathway_dict = {'pathwayName': '',
-                'pathwayId': '',
-                'rootId': '',
-                'maplinks': [],
-                'subtreeIds': [],
-                'entries': {
-                    'proteomics': {'measured':{}, 'total':0},
-                    'transcriptomics': {'measured':{}, 'total':0},
-                    'metabolomics': {'measured':{}, 'total':0}
-                    }
-                }
-                pathway_dict['pathwayName'] = entry.name
-                pathway_dict['pathwayId'] = entry.reactome_sID
-                pathway_dict['rootId'] = entry.root_id
-                root_ids.append(entry.root_id)
-                pathway_dict['maplinks'] = entry.maplinks
-                pathway_dict['subtreeIds'] = entry.subtree_ids
-                pathway_dropdown.append({"text": entry.reactome_sID +" - "+ entry.name, "value" : entry.reactome_sID, "title": entry.name})
-
-                pathway_dict['entries']['proteomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
-                pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
-                pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites if verbose else len(entry.total_metabolites)
-
-                for k, v in entry.measured_proteins.items():
-                    name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-                    pathway_dict['entries']['proteomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
-                    if k in query_pathway_dict.keys():
-                        query_pathway_dict[k].append(pathway)
-                    else:
-                        query_pathway_dict[k] = [pathway]
-                for k, v in entry.measured_genes.items():
-                    name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-                    pathway_dict['entries']['transcriptomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
-                    if k in query_pathway_dict.keys():
-                        query_pathway_dict[k].append(pathway)
-                    else:
-                        query_pathway_dict[k] = [pathway]
-                for k, v in entry.measured_metabolites.items():
-                    name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-                    pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
-                    if k in query_pathway_dict.keys():
-                        query_pathway_dict[k].append(pathway)
-                    else:
-                        query_pathway_dict[k] = [pathway]
+                pathway_dict, dropdown_entry = generate_overview_pathway_entry(entry, pathway, query_pathway_dict, True, verbose)
+                pathway_dropdown.append(dropdown_entry)
                 out_data.append( pathway_dict )
+                root_ids.append(entry.root_id)
         return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids))
+
+def generate_overview_pathway_entry(entry, pathway_Id, query_pathway_dict, draw_in_overview, verbose):
+        pathway_dict = {'pathwayName': '',
+        'pathwayId': '',
+        'rootId': '',
+        'maplinks': [],
+        'subtreeIds': [],
+        'insetPathwayEntryIDs': {
+            'proteomics': {},
+            'transcriptomics': {},
+            'metabolomics': {}
+        },
+        'ownMeasuredEntryIDs': {
+            'proteomics': [],
+            'transcriptomics': [],
+            'metabolomics': []
+        },
+        'entries': {
+            'proteomics': {'measured':{}, 'total':0},
+            'transcriptomics': {'measured':{}, 'total':0},
+            'metabolomics': {'measured':{}, 'total':0}
+            }
+        }
+        pathway_dict['pathwayName'] = entry.name
+        pathway_dict['pathwayId'] = entry.reactome_sID
+        pathway_dict['rootId'] = entry.root_id
+        pathway_dict['maplinks'] = entry.maplinks
+        pathway_dict['subtreeIds'] = entry.subtree_ids
+        pathway_dict['ownMeasuredEntryIDs']['proteomics'] = entry.own_measured_proteins
+        pathway_dict['ownMeasuredEntryIDs']['transcriptomics'] = entry.own_measured_genes
+        pathway_dict['ownMeasuredEntryIDs']['metabolomics'] = entry.own_measured_metabolites
+        pathway_dict['insetPathwayEntryIDs']['proteomics'] = entry.subdiagrams_measured_proteins
+        pathway_dict['insetPathwayEntryIDs']['transcriptomics'] = entry.subdiagrams_measured_genes
+        pathway_dict['insetPathwayEntryIDs']['metabolomics'] = entry.subdiagrams_measured_metabolites
+
+        pathway_dropdown_entry = {"text": entry.reactome_sID +" - "+ entry.name, "value" : entry.reactome_sID, "title": entry.name}
+
+        pathway_dict['entries']['proteomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
+        pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
+        pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites if verbose else len(entry.total_metabolites)
+
+        for k in entry.total_measured_proteins:
+            v = entry.total_measured_proteins[k]
+            name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
+            pathway_dict['entries']['proteomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+            if k in query_pathway_dict.keys():
+                query_pathway_dict[k].append(pathway_Id)
+            else:
+                query_pathway_dict[k] = [pathway_Id]
+        for k in entry.total_measured_genes:
+            v = entry.total_measured_genes[k]
+            name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
+            pathway_dict['entries']['transcriptomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+            if k in query_pathway_dict.keys():
+                query_pathway_dict[k].append(pathway_Id)
+            else:
+                query_pathway_dict[k] = [pathway_Id]
+        for k in entry.total_measured_metabolites:
+            v = entry.total_measured_metabolites[k]
+            name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
+            pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+            if k in query_pathway_dict.keys():
+                query_pathway_dict[k].append(pathway_Id)
+            else:
+                query_pathway_dict[k] = [pathway_Id]
+        return pathway_dict, pathway_dropdown_entry
 
 def format_graph_json(graph_json_file):
     """ Formats .graph.json nodes to be easily accessible in dictionary form with
@@ -470,7 +538,7 @@ def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
     
     """
     name = ''
-
+    db_Id = ''
     contained_events = []
 
     for k, v in formatted_json['subpathways'].items():
@@ -478,9 +546,8 @@ def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
         if v['stId'] == subpathwayID:
             contained_events = v['events']
             name = v['displayName']
+            db_Id = v['dbId']
             break
-    if name == 'Beta-oxidation of very long chain fatty acids':
-        print('test')
     entities = []
     for event in contained_events:
         event_node = formatted_json['edges'][event]
@@ -523,7 +590,7 @@ def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
 
     contained_proteins, contained_molecules, contained_maplinks, is_overview = get_contained_entities_graph_json(entities, formatted_json)
     
-    return contained_proteins, contained_molecules, contained_maplinks, is_overview, name
+    return contained_proteins, contained_molecules, contained_maplinks, is_overview, name, db_Id
 
 def get_occurrences_graph_json(intermediate_node_dict, entry_id):
     """ Gets occurences of an .graph.json entry
