@@ -135,9 +135,10 @@ export default Vue.extend({
       const fcs: {proteomics: { [key: number]: number}, transcriptomics:{ [key: number]: number}, metabolomics:{ [key: number]: number} } = { proteomics: {}, transcriptomics: {}, metabolomics: {} }
       const fcsReactomeKey: { [key: number]: glyphData } = {}
       const pathwayData = this.overviewData.find((elem: { pathwayId: string }) => elem.pathwayId === this.pathwaySelection)
-      try {
-        // Regular node parsing
-        for (const entry of pathwayData.ownMeasuredEntryIDs.proteomics) {
+      // Regular node parsing
+
+      for (const entry of pathwayData.ownMeasuredEntryIDs.proteomics) {
+        try {
           const measureEntry = pathwayData.entries.proteomics.measured[entry] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
           const val = measureEntry.value
           for (const entity in measureEntry.forms) {
@@ -149,17 +150,19 @@ export default Vue.extend({
               if (id in fcsReactomeKey) {
                 fcsReactomeKey[id].proteomics.available = true
                 fcsReactomeKey[id].proteomics.foldChanges.push({ value: val, symbol: entityElem.name })
+                fcsReactomeKey[id].proteomics.meanFoldchange = ((fcsReactomeKey[id].proteomics.nodeState.regulated * fcsReactomeKey[id].proteomics.meanFoldchange) + val) / (fcsReactomeKey[id].proteomics.nodeState.regulated + 1)
                 fcsReactomeKey[id].proteomics.nodeState.regulated += 1
               } else {
-                fcsReactomeKey[id] = { pathwayID: '' + entityElem.toplevelId, proteomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } } }
+                fcsReactomeKey[id] = { pathwayID: '' + id, proteomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } } }
               }
             }
           }
-        }
-      } catch (error) { console.log(error, pathwayData.ownMeasuredEntryIDs) }
-      try {
-        // Inset Pathways
-        for (const entry in pathwayData.insetPathwayEntryIDs.proteomics as {[key:number]: string[]}) {
+        } catch (error) { console.log(error, pathwayData.ownMeasuredEntryIDs) }
+      }
+
+      // Inset Pathways
+      for (const entry in pathwayData.insetPathwayEntryIDs.proteomics as {[key:number]: string[]}) {
+        try {
           const entryList = pathwayData.insetPathwayEntryIDs.proteomics[entry]
           console.log('TEST', entryList)
           for (const measureEntryID of entryList) {
@@ -173,17 +176,19 @@ export default Vue.extend({
               if (entry in fcsReactomeKey) {
                 fcsReactomeKey[entry].proteomics.available = true
                 fcsReactomeKey[entry].proteomics.foldChanges.push({ value: val, symbol: entityElem.name })
+                fcsReactomeKey[entry].proteomics.meanFoldchange = ((fcsReactomeKey[entry].proteomics.nodeState.regulated * fcsReactomeKey[entry].proteomics.meanFoldchange) + val) / (fcsReactomeKey[entry].proteomics.nodeState.regulated + 1)
                 fcsReactomeKey[entry].proteomics.nodeState.regulated += 1
               } else {
-                fcsReactomeKey[entry] = { pathwayID: '' + entityElem.toplevelId, proteomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } } }
+                fcsReactomeKey[entry] = { pathwayID: '' + entry, proteomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } } }
               }
             }
           }
-        }
-      } catch (error) { console.log('INSET', error, pathwayData.insetPathwayEntryIDs) }
-      try {
-        // regular node parsing
-        for (const entry of pathwayData.ownMeasuredEntryIDs.transcriptomics) {
+        } catch (error) { console.log('INSET', error, pathwayData.insetPathwayEntryIDs) }
+      }
+
+      // regular node parsing
+      for (const entry of pathwayData.ownMeasuredEntryIDs.transcriptomics) {
+        try {
           const measureEntry = pathwayData.entries.transcriptomics.measured[entry] as {value: number, forms: { [key: string]: {name: string, toplevelId: number[] }}}
           const val = measureEntry.value
           for (const entity in measureEntry.forms) {
@@ -199,17 +204,19 @@ export default Vue.extend({
               if (id in fcsReactomeKey) {
                 fcsReactomeKey[id].transcriptomics.available = true
                 fcsReactomeKey[id].transcriptomics.foldChanges.push({ value: val, symbol: entityElem.name })
+                fcsReactomeKey[id].transcriptomics.meanFoldchange = ((fcsReactomeKey[id].transcriptomics.nodeState.regulated * fcsReactomeKey[id].transcriptomics.meanFoldchange) + val) / (fcsReactomeKey[id].transcriptomics.nodeState.regulated + 1)
                 fcsReactomeKey[id].transcriptomics.nodeState.regulated += 1
               } else {
-                fcsReactomeKey[id] = { pathwayID: '' + entityElem.toplevelId, transcriptomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } } }
+                fcsReactomeKey[id] = { pathwayID: '' + id, transcriptomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } } }
               }
             }
           }
-        }
-      } catch (error) { console.log(error, pathwayData.ownMeasuredEntryIDs) }
-      try {
-        // Inset Pathways
-        for (const entry in pathwayData.insetPathwayEntryIDs.transcriptomics as {[key:number]: string[]}) {
+        } catch (error) { console.log(error, pathwayData.ownMeasuredEntryIDs) }
+      }
+
+      // Inset Pathways
+      for (const entry in pathwayData.insetPathwayEntryIDs.transcriptomics as {[key:number]: string[]}) {
+        try {
           const entryList = pathwayData.insetPathwayEntryIDs.transcriptomics[entry]
           console.log('TEST', entryList)
           for (const measureEntryID of entryList) {
@@ -223,17 +230,19 @@ export default Vue.extend({
               if (entry in fcsReactomeKey) {
                 fcsReactomeKey[entry].transcriptomics.available = true
                 fcsReactomeKey[entry].transcriptomics.foldChanges.push({ value: val, symbol: entityElem.name })
+                fcsReactomeKey[entry].transcriptomics.meanFoldchange = ((fcsReactomeKey[entry].transcriptomics.nodeState.regulated * fcsReactomeKey[entry].transcriptomics.meanFoldchange) + val) / (fcsReactomeKey[entry].transcriptomics.nodeState.regulated + 1)
                 fcsReactomeKey[entry].transcriptomics.nodeState.regulated += 1
               } else {
-                fcsReactomeKey[entry] = { pathwayID: '' + entityElem.toplevelId, transcriptomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } } }
+                fcsReactomeKey[entry] = { pathwayID: '' + entry, transcriptomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } }, metabolomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } } }
               }
             }
           }
-        }
-      } catch (error) { console.log('INSET', error, pathwayData.insetPathwayEntryIDs) }
-      try {
-        // regular node parsing
-        for (const entry of pathwayData.ownMeasuredEntryIDs.metabolomics) {
+        } catch (error) { console.log('INSET', error, pathwayData.insetPathwayEntryIDs) }
+      }
+
+      // regular node parsing
+      for (const entry of pathwayData.ownMeasuredEntryIDs.metabolomics) {
+        try {
           const measureEntry = pathwayData.entries.metabolomics.measured[entry] as {value: number, forms: { [key: string]: {name: string, toplevelId: number[] }}}
           const val = measureEntry.value
           for (const entity in measureEntry.forms) {
@@ -248,17 +257,19 @@ export default Vue.extend({
               } if (id in fcsReactomeKey) {
                 fcsReactomeKey[id].metabolomics.available = true
                 fcsReactomeKey[id].metabolomics.foldChanges.push({ value: val, symbol: entityElem.name })
+                fcsReactomeKey[id].metabolomics.meanFoldchange = ((fcsReactomeKey[id].metabolomics.nodeState.regulated * fcsReactomeKey[id].metabolomics.meanFoldchange) + val) / (fcsReactomeKey[id].metabolomics.nodeState.regulated + 1)
                 fcsReactomeKey[id].metabolomics.nodeState.regulated += 1
               } else {
-                fcsReactomeKey[id] = { pathwayID: '' + entityElem.toplevelId, metabolomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } } }
+                fcsReactomeKey[id] = { pathwayID: '' + id, metabolomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } } }
               }
             }
           }
-        }
-      } catch (error) { console.log(error, pathwayData.ownMeasuredEntryIDs) }
-      try {
-        // Inset Pathways
-        for (const entry in pathwayData.insetPathwayEntryIDs.metabolomics as {[key:number]: string[]}) {
+        } catch (error) { console.log(error, pathwayData.ownMeasuredEntryIDs) }
+      }
+
+      // Inset Pathways
+      for (const entry in pathwayData.insetPathwayEntryIDs.metabolomics as {[key:number]: string[]}) {
+        try {
           const entryList = pathwayData.insetPathwayEntryIDs.metabolomics[entry]
           for (const measureEntryID of entryList) {
             const measureEntry = pathwayData.entries.metabolomics.measured[measureEntryID] as {value: number, forms: {[key: string]: {name: string, toplevelId: number[]}}}
@@ -271,14 +282,15 @@ export default Vue.extend({
               if (entry in fcsReactomeKey) {
                 fcsReactomeKey[entry].metabolomics.available = true
                 fcsReactomeKey[entry].metabolomics.foldChanges.push({ value: val, symbol: entityElem.name })
+                fcsReactomeKey[entry].metabolomics.meanFoldchange = ((fcsReactomeKey[entry].metabolomics.nodeState.regulated * fcsReactomeKey[entry].metabolomics.meanFoldchange) + val) / (fcsReactomeKey[entry].metabolomics.nodeState.regulated + 1)
                 fcsReactomeKey[entry].metabolomics.nodeState.regulated += 1
               } else {
-                fcsReactomeKey[entry] = { pathwayID: '' + entityElem.toplevelId, metabolomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 0 } } }
+                fcsReactomeKey[entry] = { pathwayID: '' + entry, metabolomics: { available: true, foldChanges: [{ value: val, symbol: entityElem.name }], meanFoldchange: val, nodeState: { total: totalAmount, regulated: 1 } }, proteomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } }, transcriptomics: { available: false, foldChanges: [], meanFoldchange: -100, nodeState: { total: totalAmount, regulated: 0 } } }
               }
             }
           }
-        }
-      } catch (error) { console.log('INSET', error, pathwayData.insetPathwayEntryIDs) }
+        } catch (error) { console.log('INSET', error, pathwayData.insetPathwayEntryIDs) }
+      }
       this.currentView = new ReactomeDetailView(this.currentLayoutJson, this.currentGraphJson, '#' + this.contextID, fcs, fcsReactomeKey)
     },
     expandComponent () {

@@ -360,9 +360,9 @@ export default new Vuex.Store({
       const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
       const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
-      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
-      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0]])
-      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+      const colorScaleTranscriptomics = d3.scaleDiverging(d => d3.interpolateRdBu(1 - d)).domain([quantTranscriptomics[0], quantTranscriptomics[0] < 0.0 ? 0.0 : 1.0, quantTranscriptomics[1]])
+      const colorScaleProteomics = d3.scaleDiverging(d => d3.interpolateRdBu(1 - d)).domain([quantProteomics[0], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantProteomics[1]])
+      const colorScaleMetabolomics = d3.scaleDiverging(d3.interpolatePRGn).domain([quantMetabolomics[0], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantMetabolomics[1]])
 
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
       commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
@@ -389,9 +389,9 @@ export default new Vuex.Store({
       const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
       const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
-      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
-      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0]])
-      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+      const colorScaleTranscriptomics = d3.scaleDiverging(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0] < 0.0 ? 0.0 : 1.0, quantTranscriptomics[0]])
+      const colorScaleProteomics = d3.scaleDiverging(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantProteomics[0]])
+      const colorScaleMetabolomics = d3.scaleDiverging(d3.interpolatePRGn).domain([quantMetabolomics[0], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantMetabolomics[1]])
 
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
       commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })

@@ -22,20 +22,20 @@ const colorsAlternative: {[key: string]: string} = {
 }
 
 const colors: {[key: string]: string} = {
-  Chemical: '#FFFFFF',
-  ChemicalDrug: '#FFFFFF',
+  Chemical: '#999999',
+  ChemicalDrug: '#999999',
   compartment: 'rgba(180, 180, 180, 0.5)',
   compartmentEdge: 'rgb(180, 180, 180)',
-  Complex: '#FFFFFF',
-  Entity: '#FFFFFF',
-  EntitySet: '#FFFFFF',
-  Gene: '#FFFFFF',
-  ProcessNode: '#FFFFFF',
-  EncapsulatedNode: '#FFFFFF',
-  Protein: '#FFFFFF',
-  RNA: '#FFFFFF',
-  ComplexDrug: '#FFFFFF',
-  EntitySetDrug: '#FFFFFF'
+  Complex: '#999999',
+  Entity: '#999999',
+  EntitySet: '#999999',
+  Gene: '#999999',
+  ProcessNode: '#999999',
+  EncapsulatedNode: '#999999',
+  Protein: '#999999',
+  RNA: '#999999',
+  ComplexDrug: '#999999',
+  EntitySetDrug: '#999999'
 }
 
 const fontSize = '10px'
@@ -321,11 +321,19 @@ export default class ReactomeDetailView {
       .text(d => d.text)
   }
 
-  private complexColor (reactomeId: number) {
-    let color = colors.complex
-    if (reactomeId in this.foldChanges.proteomics) color = this.colorScaleProteomics(this.foldChanges.proteomics[reactomeId])
-    if (reactomeId in this.foldChanges.transcriptomics) color = this.colorScaleTranscriptomics(this.foldChanges.transcriptomics[reactomeId])
-    if (reactomeId in this.foldChanges.metabolomics) color = this.colorScaleMetabolomics(this.foldChanges.metabolomics[reactomeId])
+  private complexColor (reactomeId: number, type: string) {
+    let color = colors.Complex
+    if (reactomeId in this.foldChangeReactome) {
+      if (type === 'proteomics') {
+        color = this.foldChangeReactome[reactomeId].proteomics.meanFoldchange !== -100 ? this.colorScaleProteomics(this.foldChangeReactome[reactomeId].proteomics.meanFoldchange) : colors.Complex
+      }
+      if (type === 'transcriptomics') {
+        color = this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange !== -100 ? this.colorScaleTranscriptomics(this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange) : colors.Complex
+      }
+      if (type === 'metabolomics') {
+        color = this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange !== -100 ? this.colorScaleMetabolomics(this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange) : colors.Complex
+      }
+    }
     return color
   }
 
@@ -333,6 +341,7 @@ export default class ReactomeDetailView {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
     const textLines: { text: string, textLength: number }[][] = []
+    const size = 100
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     for (const node of data) {
@@ -346,16 +355,25 @@ export default class ReactomeDetailView {
     }
     const complex = enterG.append('path')
       .attr('id', function (d, i) { return 'node' + i })
-      .attr('d', d => this.complexPath(d))
+      .attr('d', d => this.complexPath(d, 'full'))
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => self.complexColor(d.reactomeId))
+      .attr('fill', 'none')
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'left'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'transcriptomics'))
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'center'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'proteomics'))
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'right'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'metabolomics'))
 
-    complex.on('click', (event, d) => {
+    enterG.on('click', (event, d) => {
       self.tooltipG.selectAll('svg').remove()
       self.tooltipG.selectAll('circle').remove()
-      self.tooltipG.attr('transform', `translate(${d.position.x - 50},${d.position.y - 50})`)
-      self.tooltipG.append('circle').attr('r', 50).attr('cx', 50).attr('cy', 50).attr('fill', 'white')
+      self.tooltipG.attr('transform', `translate(${d.position.x - size},${d.position.y - size})`)
+      self.tooltipG.append('circle').attr('r', size).attr('cx', size).attr('cy', size).attr('fill', 'white')
       self.tooltipG.append(() => generateGlyphVariation(self.foldChangeReactome[d.reactomeId], true, d.reactomeId, false))
     })
     enterG
@@ -374,19 +392,33 @@ export default class ReactomeDetailView {
       .text(d => d.text)
   }
 
-  private complexPath (node: reactomeNode) {
+  private complexPath (node: reactomeNode, type: string) {
     const yHalf = node.prop.height / 2
     const yTwoFifth = node.prop.height / 4
     const xHalf = node.prop.width / 2
     const xTwoFifth = 3 * node.prop.width / 7
-    const pathText = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}z`
-    return pathText
+    const xSixth = node.prop.width / 6
+    let pathString = ''
+    if (type === 'full') {
+      pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}z`
+    }
+    if (type === 'left') {
+      pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${-xSixth},${-yHalf}L${-xSixth},${yHalf}z`
+    }
+    if (type === 'center') {
+      pathString = `M${-xSixth},${-yHalf}L${-xSixth},${yHalf}L${xSixth},${yHalf}L${xSixth},${-yHalf}z`
+    }
+    if (type === 'right') {
+      pathString = `M${xSixth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}L${xSixth},${yHalf}z`
+    }
+    return pathString
   }
 
   private drawProcesses (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
     const textLines: { text: string, textLength: number }[][] = []
+    const size = 100
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     for (const node of data) {
@@ -407,13 +439,38 @@ export default class ReactomeDetailView {
       .attr('height', d => d.prop.height)
       .attr('stroke-width', 1)
       .attr('stroke', 'black')
-      .attr('fill', d => self.foldChangeReactome[d.reactomeId] ? 'green' : 'white')
+      .attr('fill', 'none')
 
-    processNode.on('click', (event, d) => {
+    enterG.append('rect')
+      .attr('id', function (d, i) { return '' + d.renderableClass + i })
+      .attr('x', d => -d.prop.width / 2)
+      .attr('y', d => -d.prop.height / 2)
+      .attr('width', d => d.prop.width / 3)
+      .attr('height', d => d.prop.height)
+      .attr('stroke', 'none')
+      .attr('fill', d => this.complexColor(d.reactomeId, 'transcriptomics'))
+    enterG.append('rect')
+      .attr('id', function (d, i) { return '' + d.renderableClass + i })
+      .attr('x', d => -d.prop.width / 6)
+      .attr('y', d => -d.prop.height / 2)
+      .attr('width', d => d.prop.width / 3)
+      .attr('height', d => d.prop.height)
+      .attr('stroke', 'none')
+      .attr('fill', d => this.complexColor(d.reactomeId, 'proteomics'))
+    enterG.append('rect')
+      .attr('id', function (d, i) { return '' + d.renderableClass + i })
+      .attr('x', d => +d.prop.width / 6)
+      .attr('y', d => -d.prop.height / 2)
+      .attr('width', d => d.prop.width / 3)
+      .attr('height', d => d.prop.height)
+      .attr('stroke', 'none')
+      .attr('fill', d => this.complexColor(d.reactomeId, 'metabolomics'))
+
+    enterG.on('click', (event, d) => {
       self.tooltipG.selectAll('svg').remove()
       self.tooltipG.selectAll('circle').remove()
-      self.tooltipG.attr('transform', `translate(${d.position.x - 50},${d.position.y - 50})`)
-      self.tooltipG.append('circle').attr('r', 50).attr('cx', 50).attr('cy', 50).attr('fill', 'white')
+      self.tooltipG.attr('transform', `translate(${d.position.x - size},${d.position.y - size})`)
+      self.tooltipG.append('circle').attr('r', size).attr('cx', size).attr('cy', size).attr('fill', 'white')
       self.tooltipG.append(() => generateGlyphVariation(self.foldChangeReactome[d.reactomeId], true, d.reactomeId, false))
     })
 
@@ -535,6 +592,7 @@ export default class ReactomeDetailView {
         .attr('stroke-dasharray', d => (d.renderableClass === 'EntitySetAndMemberLink' || d.renderableClass === 'EntitySetAndEntitySetLink') ? '4 2' : null)
 
       const entriesWithReactionShape = this.layoutData.links.filter(d => { return ('reactionShape' in d) })
+      /*
       this.nodesG.append('g')
         .selectAll('path')
         .data(entriesWithReactionShape)
@@ -543,7 +601,7 @@ export default class ReactomeDetailView {
         .attr('d', d => this.drawDecorators(d.reactionShape))
         .attr('stroke', 'black')
         .attr('fill', d => d.reactionShape.empty ? 'white' : 'black')
-
+      */
       const entriesWithEndShape = this.layoutData.links.filter(d => { return ('endShape' in d) })
       this.nodesG.append('g')
         .selectAll('path')

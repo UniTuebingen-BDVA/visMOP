@@ -387,70 +387,83 @@ class PathwayHierarchy(dict):
         return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids))
 
 def generate_overview_pathway_entry(entry, pathway_Id, query_pathway_dict, draw_in_overview, verbose):
-        pathway_dict = {'pathwayName': '',
-        'pathwayId': '',
-        'rootId': '',
-        'maplinks': [],
-        'subtreeIds': [],
-        'insetPathwayEntryIDs': {
-            'proteomics': {},
-            'transcriptomics': {},
-            'metabolomics': {}
-        },
-        'ownMeasuredEntryIDs': {
-            'proteomics': [],
-            'transcriptomics': [],
-            'metabolomics': []
-        },
-        'entries': {
-            'proteomics': {'measured':{}, 'total':0},
-            'transcriptomics': {'measured':{}, 'total':0},
-            'metabolomics': {'measured':{}, 'total':0}
-            }
+    """ generates pathway entry for overview
+        Args:
+            entry: entry object
+            pathway_Id: if of pathway
+            query_pathway_dict: dictionary associating query id to pathways in which query is appearing
+            draw_in_overview: ????
+            verbose: boolean if total proteins should be enumerated or if only number should be used
+
+        
+        Returns:
+            formatted json file dictionary
+
+    """
+    pathway_dict = {'pathwayName': '',
+    'pathwayId': '',
+    'rootId': '',
+    'maplinks': [],
+    'subtreeIds': [],
+    'insetPathwayEntryIDs': {
+        'proteomics': {},
+        'transcriptomics': {},
+        'metabolomics': {}
+    },
+    'ownMeasuredEntryIDs': {
+        'proteomics': [],
+        'transcriptomics': [],
+        'metabolomics': []
+    },
+    'entries': {
+        'proteomics': {'measured':{}, 'total':0},
+        'transcriptomics': {'measured':{}, 'total':0},
+        'metabolomics': {'measured':{}, 'total':0}
         }
-        pathway_dict['pathwayName'] = entry.name
-        pathway_dict['pathwayId'] = entry.reactome_sID
-        pathway_dict['rootId'] = entry.root_id
-        pathway_dict['maplinks'] = entry.maplinks
-        pathway_dict['subtreeIds'] = entry.subtree_ids
-        pathway_dict['ownMeasuredEntryIDs']['proteomics'] = entry.own_measured_proteins
-        pathway_dict['ownMeasuredEntryIDs']['transcriptomics'] = entry.own_measured_genes
-        pathway_dict['ownMeasuredEntryIDs']['metabolomics'] = entry.own_measured_metabolites
-        pathway_dict['insetPathwayEntryIDs']['proteomics'] = entry.subdiagrams_measured_proteins
-        pathway_dict['insetPathwayEntryIDs']['transcriptomics'] = entry.subdiagrams_measured_genes
-        pathway_dict['insetPathwayEntryIDs']['metabolomics'] = entry.subdiagrams_measured_metabolites
+    }
+    pathway_dict['pathwayName'] = entry.name
+    pathway_dict['pathwayId'] = entry.reactome_sID
+    pathway_dict['rootId'] = entry.root_id
+    pathway_dict['maplinks'] = entry.maplinks
+    pathway_dict['subtreeIds'] = entry.subtree_ids
+    pathway_dict['ownMeasuredEntryIDs']['proteomics'] = entry.own_measured_proteins
+    pathway_dict['ownMeasuredEntryIDs']['transcriptomics'] = entry.own_measured_genes
+    pathway_dict['ownMeasuredEntryIDs']['metabolomics'] = entry.own_measured_metabolites
+    pathway_dict['insetPathwayEntryIDs']['proteomics'] = entry.subdiagrams_measured_proteins
+    pathway_dict['insetPathwayEntryIDs']['transcriptomics'] = entry.subdiagrams_measured_genes
+    pathway_dict['insetPathwayEntryIDs']['metabolomics'] = entry.subdiagrams_measured_metabolites
 
-        pathway_dropdown_entry = {"text": entry.reactome_sID +" - "+ entry.name, "value" : entry.reactome_sID, "title": entry.name}
+    pathway_dropdown_entry = {"text": entry.reactome_sID +" - "+ entry.name, "value" : entry.reactome_sID, "title": entry.name}
 
-        pathway_dict['entries']['proteomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
-        pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
-        pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites if verbose else len(entry.total_metabolites)
+    pathway_dict['entries']['proteomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
+    pathway_dict['entries']['transcriptomics']['total'] = entry.total_proteins if verbose else len(entry.total_proteins)
+    pathway_dict['entries']['metabolomics']['total'] = entry.total_metabolites if verbose else len(entry.total_metabolites)
 
-        for k in entry.total_measured_proteins:
-            v = entry.total_measured_proteins[k]
-            name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-            pathway_dict['entries']['proteomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
-            if k in query_pathway_dict.keys():
-                query_pathway_dict[k].append(pathway_Id)
-            else:
-                query_pathway_dict[k] = [pathway_Id]
-        for k in entry.total_measured_genes:
-            v = entry.total_measured_genes[k]
-            name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-            pathway_dict['entries']['transcriptomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
-            if k in query_pathway_dict.keys():
-                query_pathway_dict[k].append(pathway_Id)
-            else:
-                query_pathway_dict[k] = [pathway_Id]
-        for k in entry.total_measured_metabolites:
-            v = entry.total_measured_metabolites[k]
-            name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-            pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
-            if k in query_pathway_dict.keys():
-                query_pathway_dict[k].append(pathway_Id)
-            else:
-                query_pathway_dict[k] = [pathway_Id]
-        return pathway_dict, pathway_dropdown_entry
+    for k in entry.total_measured_proteins:
+        v = entry.total_measured_proteins[k]
+        name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
+        pathway_dict['entries']['proteomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+        if k in query_pathway_dict.keys():
+            query_pathway_dict[k].append(pathway_Id)
+        else:
+            query_pathway_dict[k] = [pathway_Id]
+    for k in entry.total_measured_genes:
+        v = entry.total_measured_genes[k]
+        name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
+        pathway_dict['entries']['transcriptomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+        if k in query_pathway_dict.keys():
+            query_pathway_dict[k].append(pathway_Id)
+        else:
+            query_pathway_dict[k] = [pathway_Id]
+    for k in entry.total_measured_metabolites:
+        v = entry.total_measured_metabolites[k]
+        name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
+        pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+        if k in query_pathway_dict.keys():
+            query_pathway_dict[k].append(pathway_Id)
+        else:
+            query_pathway_dict[k] = [pathway_Id]
+    return pathway_dict, pathway_dropdown_entry
 
 def format_graph_json(graph_json_file):
     """ Formats .graph.json nodes to be easily accessible in dictionary form with

@@ -284,8 +284,8 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
   if (drawLabels) {
     svg = d3.create('svg')
       .attr('viewBox', pathwayCompare ? `0 0 ${width} ${height}` : '0 0 35 35')
-      .attr('width', pathwayCompare ? '100%' : '100px')
-      .attr('height', pathwayCompare ? '100%' : '100px')
+      .attr('width', pathwayCompare ? '100%' : '200px')
+      .attr('height', pathwayCompare ? '100%' : '200px')
     g = svg.append('g')
       .attr('class', 'glyph')
       .attr('id', `glyph${glyphIdx}`)
