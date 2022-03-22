@@ -184,7 +184,12 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 }
 
 .nodeText{
-  mix-blend-mode: difference;
+  /*mix-blend-mode: difference;*/
+  stroke: white;
+  stroke-width: 4;
+  fill: black;
+  paint-order: stroke fill;
+  stroke-miterlimit: 2;
 }
 
 .nodeG{

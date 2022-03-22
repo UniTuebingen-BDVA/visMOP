@@ -2,6 +2,7 @@ import store from '@/store'
 import * as d3 from 'd3'
 import { layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode, graphJSON } from '../core/reactomeTypes'
 import { glyphData, generateGlyphVariation } from '../core/overviewGlyph'
+import { fill } from 'lodash'
 
 const colorsAlternative: {[key: string]: string} = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
@@ -37,7 +38,7 @@ const colors: {[key: string]: string} = {
   ComplexDrug: '#999999',
   EntitySetDrug: '#999999'
 }
-
+const lineColor = '#333333'
 const fontSize = '10px'
 const compartmentFontSize = '16px'
 
@@ -144,8 +145,8 @@ export default class ReactomeDetailView {
       .enter()
       .append('path')
       .attr('d', d => this.drawDecorators(d.reactionShape))
-      .attr('stroke', 'black')
-      .attr('fill', d => d.reactionShape.empty ? 'white' : 'black')
+      .attr('stroke', lineColor)
+      .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
   }
 
   private drawConnectors () {
@@ -166,7 +167,7 @@ export default class ReactomeDetailView {
       .enter()
       .append('path')
       .attr('d', d => this.segmentsToPath(d.segments))
-      .attr('stroke', 'black')
+      .attr('stroke', lineColor)
       .attr('fill', 'none')
 
     const connectorsWithEndShape = connectors.filter(d => { return ('endShape' in d) })
@@ -176,8 +177,8 @@ export default class ReactomeDetailView {
       .enter()
       .append('path')
       .attr('d', d => this.drawDecorators(d.endShape))
-      .attr('stroke', 'black')
-      .attr('fill', d => d.endShape.empty ? 'white' : 'black')
+      .attr('stroke', lineColor)
+      .attr('fill', d => d.endShape.empty ? 'white' : lineColor)
   }
 
   private drawEndShapes () {
@@ -188,8 +189,8 @@ export default class ReactomeDetailView {
       .enter()
       .append('path')
       .attr('d', d => this.drawDecorators(d.endShape))
-      .attr('stroke', 'black')
-      .attr('fill', d => d.endShape.empty ? 'white' : 'black')
+      .attr('stroke', lineColor)
+      .attr('fill', d => d.endShape.empty ? 'white' : lineColor)
   }
 
   private drawDecorators (shape: shape): string {
@@ -261,7 +262,7 @@ export default class ReactomeDetailView {
       .attr('width', d => d.prop.width)
       .attr('height', d => d.prop.height)
       .attr('stroke-width', 1)
-      .attr('stroke', 'black')
+      .attr('stroke', lineColor)
       .attr('fill', d => colors[d.renderableClass])
     enterG
       .append('text').attr('class', 'nodeText')
@@ -294,17 +295,25 @@ export default class ReactomeDetailView {
       }
     }
 
-    enterG.append('rect')
+    enterG.append('path')
       .attr('id', function (d, i) { return 'protein' + i })
-      .attr('x', d => -d.prop.width / 2)
-      .attr('y', d => -d.prop.height / 2)
-      .attr('rx', 8)
-      .attr('ry', 8)
-      .attr('width', d => d.prop.width)
-      .attr('height', d => d.prop.height)
+      .attr('d', d => this.proteinPath(d, 'left'))
+      .attr('fill', d => (d.reactomeId in this.foldChanges.transcriptomics) ? this.colorScaleTranscriptomics(this.foldChanges.transcriptomics[d.reactomeId]) : colors[d.renderableClass])
+      .append('title').text(d => (d.reactomeId in this.foldChanges.transcriptomics) ? 'Transcriptomics:' + this.foldChanges.transcriptomics[d.reactomeId] : '')
+
+    enterG.append('path')
+      .attr('id', function (d, i) { return 'protein' + i })
+      .attr('d', d => this.proteinPath(d, 'right'))
+      .attr('fill', d => (d.reactomeId in this.foldChanges.proteomics) ? this.colorScaleProteomics(this.foldChanges.proteomics[d.reactomeId]) : colors[d.renderableClass])
+      .append('title').text(d => (d.reactomeId in this.foldChanges.proteomics) ? 'Proteomics:' + this.foldChanges.proteomics[d.reactomeId] : '')
+
+    enterG.append('path')
+      .attr('id', function (d, i) { return 'protein' + i })
+      .attr('d', d => this.proteinPath(d, 'full'))
       .attr('stroke-width', 1)
-      .attr('stroke', 'black')
-      .attr('fill', d => (d.reactomeId in this.foldChanges.proteomics) ? this.colorScaleProteomics(this.foldChanges.proteomics[d.reactomeId]) : (d.reactomeId in this.foldChanges.transcriptomics) ? this.colorScaleTranscriptomics(this.foldChanges.transcriptomics[d.reactomeId]) : colors[d.renderableClass])
+      .attr('stroke', lineColor)
+      .attr('fill', 'none')
+
     enterG
       .append('text').attr('class', 'nodeText')
       .append('tspan')
@@ -319,6 +328,41 @@ export default class ReactomeDetailView {
       .attr('x', 0)
       .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text(d => d.text)
+  }
+
+  private proteinPath (node: reactomeNode, type: string) {
+    const yHalf = node.prop.height / 2
+    const xHalf = node.prop.width / 2
+    const radius = 4
+
+    let pathString = ''
+    if (type === 'full') {
+      pathString += `M${-xHalf + radius},${yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`
+      pathString += `L${-xHalf},${-yHalf + radius}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf + radius},${-yHalf}`
+      pathString += `L${xHalf - radius},${-yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf},${-yHalf + radius}`
+      pathString += `L${xHalf},${yHalf - radius}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf - radius},${yHalf}z`
+    }
+    if (type === 'left') {
+      pathString += `M${-xHalf + radius},${yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`
+      pathString += `L${-xHalf},${-yHalf + radius}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf + radius},${-yHalf}`
+      pathString += `L0,${-yHalf}`
+      pathString += `L0,${yHalf}z`
+    }
+    if (type === 'right') {
+      pathString += `M0,${-yHalf}`
+      pathString += `L${xHalf - radius},${-yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf},${-yHalf + radius}`
+      pathString += `L${xHalf},${yHalf - radius}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf - radius},${yHalf}`
+      pathString += `L0,${yHalf}z`
+    }
+    return pathString
   }
 
   private complexColor (reactomeId: number, type: string) {
@@ -353,21 +397,27 @@ export default class ReactomeDetailView {
         line.textLength = lines.length
       }
     }
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'left'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'transcriptomics'))
+      .append('title').text(d => (d.reactomeId in this.foldChanges.transcriptomics) ? 'Transcriptomics:' + this.foldChanges.transcriptomics[d.reactomeId] : '')
+
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'center'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'proteomics'))
+      .append('title').text(d => (d.reactomeId in this.foldChanges.proteomics) ? 'Proteomics:' + this.foldChanges.proteomics[d.reactomeId] : '')
+
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'right'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'metabolomics'))
+      .append('title').text(d => (d.reactomeId in this.foldChanges.metabolomics) ? 'Metabolomics:' + this.foldChanges.metabolomics[d.reactomeId] : '')
+
     const complex = enterG.append('path')
       .attr('id', function (d, i) { return 'node' + i })
       .attr('d', d => this.complexPath(d, 'full'))
       .attr('stroke-width', 1)
-      .attr('stroke', 'black')
+      .attr('stroke', lineColor)
       .attr('fill', 'none')
-    enterG.append('path')
-      .attr('d', d => this.complexPath(d, 'left'))
-      .attr('fill', d => this.complexColor(d.reactomeId, 'transcriptomics'))
-    enterG.append('path')
-      .attr('d', d => this.complexPath(d, 'center'))
-      .attr('fill', d => this.complexColor(d.reactomeId, 'proteomics'))
-    enterG.append('path')
-      .attr('d', d => this.complexPath(d, 'right'))
-      .attr('fill', d => this.complexColor(d.reactomeId, 'metabolomics'))
 
     enterG.on('click', (event, d) => {
       self.tooltipG.selectAll('svg').remove()
@@ -438,7 +488,7 @@ export default class ReactomeDetailView {
       .attr('width', d => d.prop.width)
       .attr('height', d => d.prop.height)
       .attr('stroke-width', 1)
-      .attr('stroke', 'black')
+      .attr('stroke', lineColor)
       .attr('fill', 'none')
 
     enterG.append('rect')
@@ -502,8 +552,10 @@ export default class ReactomeDetailView {
       .attr('rx', d => d.prop.width / 2)
       .attr('ry', d => d.prop.height / 2)
       .attr('stroke-width', 1)
-      .attr('stroke', 'black')
+      .attr('stroke', lineColor)
       .attr('fill', d => (d.reactomeId in this.foldChanges.metabolomics) ? this.colorScaleMetabolomics(this.foldChanges.metabolomics[d.reactomeId]) : colors[d.renderableClass])
+      .append('title').text(d => (d.reactomeId in this.foldChanges.metabolomics) ? 'Metabolomics:' + this.foldChanges.metabolomics[d.reactomeId] : '')
+
     enterG
       .append('text').attr('class', 'nodeText')
       .style('text-anchor', 'middle')
@@ -521,7 +573,7 @@ export default class ReactomeDetailView {
       .enter()
       .append('path')
       .attr('d', d => this.makeEdgePath(d))
-      .attr('stroke', 'black')
+      .attr('stroke', lineColor)
       .attr('fill', 'none')
   }
 
@@ -587,7 +639,7 @@ export default class ReactomeDetailView {
         .append('path')
         .attr('id', (d, i) => 'test' + i)
         .attr('d', d => this.segmentsToPath(d.segments))
-        .attr('stroke', 'black')
+        .attr('stroke', lineColor)
         .attr('fill', 'none')
         .attr('stroke-dasharray', d => (d.renderableClass === 'EntitySetAndMemberLink' || d.renderableClass === 'EntitySetAndEntitySetLink') ? '4 2' : null)
 
@@ -599,8 +651,8 @@ export default class ReactomeDetailView {
         .enter()
         .append('path')
         .attr('d', d => this.drawDecorators(d.reactionShape))
-        .attr('stroke', 'black')
-        .attr('fill', d => d.reactionShape.empty ? 'white' : 'black')
+        .attr('stroke', lineColor)
+        .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
       */
       const entriesWithEndShape = this.layoutData.links.filter(d => { return ('endShape' in d) })
       this.nodesG.append('g')
@@ -609,8 +661,8 @@ export default class ReactomeDetailView {
         .enter()
         .append('path')
         .attr('d', d => this.drawDecorators(d.endShape))
-        .attr('stroke', 'black')
-        .attr('fill', d => d.reactionShape.empty ? 'white' : 'black')
+        .attr('stroke', lineColor)
+        .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
     }
   }
 
