@@ -9,7 +9,7 @@ export interface graphJSON {
 }
 
 interface graphNode {
-  schameClass: string
+  schemaClass: string
   dbId: number
   stId: string
   speciesID: number

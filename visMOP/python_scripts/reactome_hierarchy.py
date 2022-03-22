@@ -206,13 +206,13 @@ class PathwayHierarchy(dict):
                 if current_node.has_diagram and (current_node.reactome_sID != v.reactome_sID):
                     if len(current_node.total_measured_proteins.keys()) > 0:
                         # current_node.db_Id is only internal ID, later we might also need the stable id
-                        subdiagrams_measured_proteins[current_node.db_Id] = list(current_node.total_measured_proteins.keys())
+                        subdiagrams_measured_proteins[current_node.db_Id] = {'stableID': current_node.reactome_sID, 'nodes': list(current_node.total_measured_proteins.keys())}
                     if len(current_node.total_measured_genes.keys()) > 0:
-                        subdiagrams_measured_genes[current_node.db_Id] = list(current_node.total_measured_genes.keys())
+                        subdiagrams_measured_genes[current_node.db_Id] = {'stableID': current_node.reactome_sID, 'nodes': list(current_node.total_measured_genes.keys())}
                     if len(current_node.total_measured_metabolites.keys()) > 0:
-                        subdiagrams_measured_metabolites[current_node.db_Id] = list(current_node.total_measured_metabolites.keys())
+                        subdiagrams_measured_metabolites[current_node.db_Id] = {'stableID': current_node.reactome_sID, 'nodes': list(current_node.total_measured_metabolites.keys())}
                     if len(current_node.total_measured_maplinks.keys()) > 0:
-                        subdiagrams_measured_maplinks[current_node.db_Id] = list(current_node.total_measured_maplinks.keys())
+                        subdiagrams_measured_maplinks[current_node.db_Id] = {'stableID': current_node.reactome_sID, 'nodes': list(current_node.total_measured_maplinks.keys())}
                 else:
                     own_measured_proteins = list(set(own_measured_proteins + list(current_node.total_measured_proteins.keys())))
                     own_measured_genes = list(set(own_measured_genes + list(current_node.total_measured_genes.keys())))
