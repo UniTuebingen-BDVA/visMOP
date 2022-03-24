@@ -1,9 +1,9 @@
 # Pre-Run instructions:
 
 ### Setup Folder Structure
-make directories: `session_cache`, `reactome_data`, `kegg_cache`,in project root folder. And a subfolder `pickles` inside the `reactome_data` folder using the following command:
+make directories:`uniprot_files` `session_cache`, `reactome_data`, `kegg_cache`,in project root folder. And a subfolder `pickles` inside the `reactome_data` folder using the following command:
 ```
-mkdir session_cache reactome_data kegg_cache reactome_data/pickles
+mkdir uniprot_files session_cache reactome_data kegg_cache reactome_data/pickles
 ```
 
 ### Getting required files
