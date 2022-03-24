@@ -1,6 +1,5 @@
 import networkx as nx
 import gzip
-from fa2 import ForceAtlas2
 
 import timeit
 class StringGraph:
