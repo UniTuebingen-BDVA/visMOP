@@ -202,7 +202,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
     outerColors.push(...colorsTranscriptomics)
     const angleRangeTranscriptomicsFCs = _.range(circlePadding, circlePadding + thirdCircleElement + (thirdCircleElement / colorsTranscriptomics.length), thirdCircleElement / colorsTranscriptomics.length)
     colorsTranscriptomics.forEach((element, idx) => {
-      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0, name: glyphDat.transcriptomics.foldChanges[idx].name, fc: glyphDat.transcriptomics.foldChanges[idx].value, queryID: glyphDat.metabolomics.foldChanges[idx].queryID }
+      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0, name: glyphDat.transcriptomics.foldChanges[idx].name, fc: glyphDat.transcriptomics.foldChanges[idx].value, queryID: glyphDat.transcriptomics.foldChanges[idx].queryID }
       outerArcDat.push(pushDat)
     })
     const transcriptomicsRegulatedQuotient = glyphDat.transcriptomics.nodeState.regulated / glyphDat.transcriptomics.nodeState.total

@@ -575,7 +575,7 @@ def get_reactome_json(pathway):
     inset_pathway_ID_metabolomics =[ [k, v['stableID']] for k,v in pathway_entry.subdiagrams_measured_metabolites.items() ]
 
     for inset_pathway in inset_pathway_ID_transcriptomics + inset_pathway_ID_proteomics + inset_pathway_ID_metabolomics:
-        inset_pathways_totals[inset_pathway[0]] = {'prot': len(hierarchy[inset_pathway[1]].total_proteins), 'meta': len(hierarchy[inset_pathway[1]].total_metabolites)}
+        inset_pathways_totals[inset_pathway[0]] = {'proteomics': len(hierarchy[inset_pathway[1]].total_proteins), 'metabolomics': len(hierarchy[inset_pathway[1]].total_metabolites), 'transcriptomics': len(hierarchy[inset_pathway[1]].total_proteins)}
 
     return json.dumps({'layoutJson': layout_json, 'graphJson': graph_json, 'insetPathwayTotals': inset_pathways_totals})
 if __name__ == "__main__":
