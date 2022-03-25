@@ -171,26 +171,26 @@
                 <v-col cols="12">
                     <div v-if="targetDatabase === 'kegg'">
                       <keep-alive>
-                          <overview-component
+                          <kegg-overview-component
                           contextID="overviewContext"
                           :transcriptomicsSelection="transcriptomicsSelectionData"
                           :proteomicsSelection="proteomicsSelectionData"
                           :metabolomicsSelection="metabolomicsSelectionData"
                           :isActive="activeOverview"
                         >
-                        </overview-component>
+                        </kegg-overview-component>
                       </keep-alive>
                     </div>
                     <div v-if="targetDatabase === 'reactome'">
                       <keep-alive>
-                        <overview-component-reactome
+                        <reactome-overview-component
                           contextID="overviewContext"
                           :transcriptomicsSelection="transcriptomicsSelectionData"
                           :proteomicsSelection="proteomicsSelectionData"
                           :metabolomicsSelection="metabolomicsSelectionData"
                           :isActive="activeOverview"
                         >
-                        </overview-component-reactome>
+                        </reactome-overview-component>
                       </keep-alive>
                     </div>
 
@@ -240,12 +240,12 @@
 import { mapState } from 'vuex'
 import KeggDetailComponent from './KeggDetailComponent.vue'
 import ReactomeDetailComponent from './ReactomeDetailComponent.vue'
-import OverviewComponent from './OverviewComponent.vue'
+import KeggOverviewComponent from './KeggOverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
 import Vue from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
 import PathwayCompare from './PathwayCompare.vue'
-import OverviewComponentReactome from './OverviewComponentReactome.vue'
+import ReactomeOverviewComponent from './ReactomeOverviewComponent.vue'
 
 interface Data{
   tableSearch: string
@@ -262,7 +262,7 @@ interface Data{
 }
 
 export default Vue.extend({
-  components: { KeggDetailComponent, ReactomeDetailComponent, OverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, OverviewComponentReactome },
+  components: { KeggDetailComponent, ReactomeDetailComponent, KeggOverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, ReactomeOverviewComponent },
   // name of the component
   name: 'MainPage',
 

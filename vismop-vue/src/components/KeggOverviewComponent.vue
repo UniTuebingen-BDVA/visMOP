@@ -3,7 +3,7 @@
     <v-card>
       <v-row justify="space-between">
         <v-card-title>
-          Network Graph Reactome
+          Network Graph
           <v-spacer></v-spacer>
         </v-card-title>
       </v-row>
@@ -19,8 +19,8 @@
 <script lang="ts">
 import { mapState } from 'vuex'
 import OverviewGraph from '../core/overviewNetwork'
-import { generateGraphData } from '../core/overviewGraphPreparationReactome'
-import { generateGlyphData, generateGlyphDataReactome, generateGlyphs } from '../core/overviewGlyph'
+import { generateGraphData } from '../core/keggOverviewGraphPreparation'
+import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
 import Vue from 'vue'
 import Sigma from 'sigma'
 
@@ -39,7 +39,7 @@ interface Data{
 
 export default Vue.extend({
   // name of the component
-  name: 'OverviewComponentReactome',
+  name: 'KeggOverviewComponent',
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
@@ -96,7 +96,8 @@ export default Vue.extend({
       const foundPathways: string[][] = []
       this.transcriptomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.transcriptomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
+        const keggID = this.transcriptomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       console.log('foundPathways', foundPathways)
@@ -110,8 +111,9 @@ export default Vue.extend({
       const foundPathways: string[][] = []
       this.proteomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.proteomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
-        if (pathwaysContaining) foundPathways.push(pathwaysContaining); console.log('foundPathways', pathwaysContaining)
+        const keggID = this.proteomicsSymbolDict[symbol]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[keggID]
+        if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
@@ -124,7 +126,7 @@ export default Vue.extend({
       const foundPathways: string[][] = []
       this.metabolomicsSelection.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.metabolomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
+        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
@@ -177,15 +179,15 @@ export default Vue.extend({
   methods: {
     drawNetwork () {
       if (this.networkGraph) { this.networkGraph.killGraph() }
-      // const fcExtents = this.fcQuantiles
-      const glyphData = generateGlyphDataReactome()
+      const fcExtents = this.fcQuantiles
+      const glyphData = generateGlyphData(fcExtents)
       this.$store.dispatch('setGlyphData', glyphData)
-      // console.log('GLYPH DATA', glyphData)
+      console.log('GLYPH DATA', glyphData)
       const generatedGlyphs = generateGlyphs(glyphData)
       this.$store.dispatch('setGlyphs', generatedGlyphs)
       const glyphsURL = generatedGlyphs.url
       console.log('GLYPHs', this.$store.state.glyphs)
-      const networkData = generateGraphData(this.overviewData, glyphsURL, this.pathwayLayouting.rootIds)
+      const networkData = generateGraphData(this.overviewData, fcExtents, glyphsURL)
       console.log('base dat', networkData)
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }
