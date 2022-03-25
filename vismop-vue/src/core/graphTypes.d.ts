@@ -16,10 +16,6 @@ export interface baseEdgeAttr extends Attributes {
   zIndex: number;
   color: string;
 }
-export interface baseEdgeAttr extends Attributes {
-  zIndex: number;
-  color: string;
-}
 
 /**
  * Defines an edge
@@ -33,6 +29,18 @@ export interface edge {
 /**
  * Defines a set of node attributes
  */
+export interface baseNodeAttr extends Attributes {
+  name: string;
+  x: number;
+  y: number;
+  zIndex: number;
+  color: string;
+  size: number;
+  fixed: boolean;
+  type: string;
+  label: string;
+}
+
 export interface detailNodeAttr extends baseNodeAttr {
 
   origPos: { [key: string]: number[] };
@@ -47,17 +55,6 @@ export interface detailNodeAttr extends baseNodeAttr {
   initialY: number;
 }
 
-export interface baseNodeAttr extends Attributes {
-  name: string;
-  x: number;
-  y: number;
-  zIndex: number;
-  color: string;
-  size: number;
-  fixed: boolean;
-  type: string;
-  label: string;
-}
 /**
  * Defines a node
  */

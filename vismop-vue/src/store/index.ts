@@ -201,15 +201,15 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    addClickedNode ({ dispatch, state }, val: string) {
+    addClickedNode ({ dispatch, state }, val: {queryID: string, name: string}) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       // TODO multiIDs will not work at the moment
-      const keggIDs = val.split(';')
+      const keggIDs = val.queryID.split(';')
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
       keggIDs.forEach(element => {
         try {
           if (!enteredKeys.includes(element)) {
-            dispatch('appendClickedNode', element)
+            dispatch('appendClickedNode', val)
           }
         } catch (error) {
         }
@@ -224,21 +224,21 @@ export default new Vuex.Store({
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
       try {
         if (!enteredKeys.includes(id)) {
-          dispatch('appendClickedNode', id)
+          dispatch('appendClickedNode', { queryID: id, name: '' })
         }
       } catch (error) {
       }
     },
-    appendClickedNode ({ commit, state }, val: string) {
+    appendClickedNode ({ commit, state }, val: {queryID: string, name: string}) {
       let tableEntry = {}
       if (state.targetDatabase === 'kegg') {
-        const symbolProt = state.proteomicsKeggIDDict[val]
-        const symbolTrans = state.transcriptomicsKeggIDDict[val]
-        tableEntry = { id: val, name: `${symbolTrans}/${symbolProt}`, fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
+        const symbolProt = state.proteomicsKeggIDDict[val.queryID]
+        const symbolTrans = state.transcriptomicsKeggIDDict[val.queryID]
+        tableEntry = { id: val, name: `${symbolTrans}/${symbolProt}`, fcTranscript: state.fcs[val.queryID].transcriptomics, fcProt: state.fcs[val.queryID].proteomics, delete: val }
       }
       if (state.targetDatabase === 'reactome') {
         console.log('test', state.fcs)
-        tableEntry = { id: val, name: `${val}`, fcTranscript: -1, fcProt: state.fcsReactome.proteomics[val], delete: val }
+        tableEntry = { id: val.queryID, name: `${val.name}`, fcTranscript: -1, fcProt: state.fcsReactome.proteomics[val.queryID], delete: val }
       }
       commit('APPEND_CLICKEDNODE', tableEntry)
     },

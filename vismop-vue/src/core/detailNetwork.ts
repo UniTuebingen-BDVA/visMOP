@@ -103,7 +103,7 @@ export default class pathwayGraph {
 
     sigmaInstance.on('clickNode', ({ node }) => {
       console.log('clicking Node: ', node)
-      store.dispatch('addClickedNode', node)
+      store.dispatch('addClickedNode', { queryID: node, name: '' })
     })
     return sigmaInstance
   }

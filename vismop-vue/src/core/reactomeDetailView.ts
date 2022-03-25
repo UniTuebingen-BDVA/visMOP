@@ -1,6 +1,6 @@
 import store from '@/store'
 import * as d3 from 'd3'
-import { layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode, graphJSON } from '../core/reactomeTypes'
+import { foldChangesByID, foldChangesByType, layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode, graphJSON } from '../core/reactomeTypes'
 import { glyphData, generateGlyphVariation } from '../core/overviewGlyph'
 import { fill } from 'lodash'
 
@@ -21,7 +21,7 @@ const colorsAlternative: {[key: string]: string} = {
   ComplexDrug: '#FFFFFF',
   EntitySetDrug: '#FFFFFF'
 }
-
+// main color table containing grays for most nodes to indicated the unavailibility of the corresponding elements in the suppliet dataset
 const colors: {[key: string]: string} = {
   Chemical: '#999999',
   ChemicalDrug: '#999999',
@@ -55,9 +55,17 @@ export default class ReactomeDetailView {
   private colorScaleTranscriptomics = store.state.fcScales.transcriptomics
   private colorScaleProteomics = store.state.fcScales.proteomics
   private colorScaleMetabolomics = store.state.fcScales.metabolomics
-  private foldChanges: {proteomics: {[key: number]: number}, transcriptomics:{[key: number]: number}, metabolomics:{[key: number]: number}}
-  private foldChangeReactome: { [key: number]: glyphData }
-  constructor (layoutData: layoutJSON, graphData: graphJSON, containerID: string, foldchanges: {proteomics: {[key: number]: number}, transcriptomics:{[key: number]: number}, metabolomics:{[key: number]: number}}, foldChangeReactome: { [key: number]: glyphData}) {
+  private foldChanges: foldChangesByType
+  private foldChangeReactome: foldChangesByID
+  /**
+   * Initializes the Reactome detail View
+   * @param {layoutJSON} layoutData
+   * @param {graphJSON} graphData
+   * @param {string} containerID
+   * @param {proteomics: {[key: number]: number}, transcriptomics:{[key: number]: number}, metabolomics:{[key: number]: number}} foldchanges
+   * @param {foldChangesByID} foldChangeReactome
+   */
+  constructor (layoutData: layoutJSON, graphData: graphJSON, containerID: string, foldchanges: foldChangesByType, foldChangeReactome: foldChangesByID) {
     this.containerID = containerID
     this.layoutData = layoutData
     this.graphData = graphData
@@ -76,8 +84,14 @@ export default class ReactomeDetailView {
       d3.select('#tooltipG').selectAll('svg').remove()
       d3.select('#tooltipG').selectAll('circle').remove()
     })
+
+    // order of drawing corresponds to ordering of elements
+    // draw Compartments
     this.drawCompartments()
+    // todo draw shadows (i.e. the subpathways?!)
+    // draw Nodes
     this.drawNodes()
+
     this.drawSegments()
     this.drawConnectors()
     this.drawReactionNodes()
@@ -90,7 +104,13 @@ export default class ReactomeDetailView {
       })
     this.mainSVG.call(zoom)
   }
+  /*
+  Major drawing functions
+  */
 
+  /**
+   * Function to draw cellular compartments contained in the diagram.
+   */
   private drawCompartments () {
     this.comparmentG
       .selectAll()
@@ -137,18 +157,25 @@ export default class ReactomeDetailView {
       .text(d => d.displayName)
   }
 
-  private drawReactionNodes () {
-    const entriesWithReactionShape = this.layoutData.edges.filter(d => { return ('reactionShape' in d) })
-    this.nodesG.append('g')
+  /**
+   * Function to draw segments of edges in the layoutJSON file.
+   */
+  private drawSegments () {
+    const filteredData = this.layoutData.edges.filter(d => { return ('segments' in d) })
+    this.linesG.append('g')
       .selectAll('path')
-      .data(entriesWithReactionShape)
+      .data(filteredData)
       .enter()
       .append('path')
-      .attr('d', d => this.drawDecorators(d.reactionShape))
+      .attr('d', d => this.makeEdgePath(d))
       .attr('stroke', lineColor)
-      .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
+      .attr('fill', 'none')
   }
 
+  /**
+   * Function to draw connector lines between different nodes. Connectors can also contain end shapes which correspond
+   * to different acitons of the given connection, e.g. activation, inhibiton
+   */
   private drawConnectors () {
     const connectorsLineG = this.linesG.append('g')
     const connectorsShapeG = this.nodesG.append('g')
@@ -181,6 +208,63 @@ export default class ReactomeDetailView {
       .attr('fill', d => d.endShape.empty ? 'white' : lineColor)
   }
 
+  /**
+   * Draw links, which are connecting lines indicating distant nodes or related processes
+   */
+  private drawLinks () {
+    if ('links' in this.layoutData) {
+      this.linesG
+        .selectAll()
+        .data(this.layoutData.links)
+        .enter()
+        .append('path')
+        .attr('id', (d, i) => 'test' + i)
+        .attr('d', d => this.segmentsToPath(d.segments))
+        .attr('stroke', lineColor)
+        .attr('fill', 'none')
+        .attr('stroke-dasharray', d => (d.renderableClass === 'EntitySetAndMemberLink' || d.renderableClass === 'EntitySetAndEntitySetLink') ? '4 2' : null)
+
+      const entriesWithReactionShape = this.layoutData.links.filter(d => { return ('reactionShape' in d) })
+      /*
+      this.nodesG.append('g')
+        .selectAll('path')
+        .data(entriesWithReactionShape)
+        .enter()
+        .append('path')
+        .attr('d', d => this.drawDecorators(d.reactionShape))
+        .attr('stroke', lineColor)
+        .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
+      */
+      const entriesWithEndShape = this.layoutData.links.filter(d => { return ('endShape' in d) })
+      this.nodesG.append('g')
+        .selectAll('path')
+        .data(entriesWithEndShape)
+        .enter()
+        .append('path')
+        .attr('d', d => this.drawDecorators(d.endShape))
+        .attr('stroke', lineColor)
+        .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
+    }
+  }
+
+  /**
+   * Draws reaction nodes. As many Edges between nodes correspond to reactions between molecules, the reaction nodes indicate such reactions
+   */
+  private drawReactionNodes () {
+    const entriesWithReactionShape = this.layoutData.edges.filter(d => { return ('reactionShape' in d) })
+    this.nodesG.append('g')
+      .selectAll('path')
+      .data(entriesWithReactionShape)
+      .enter()
+      .append('path')
+      .attr('d', d => this.drawDecorators(d.reactionShape))
+      .attr('stroke', lineColor)
+      .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
+  }
+
+  /**
+   *  Draws end shapes of reaction participants. Many Reactions are inhibited or catalysed by other molecules, which is indicated by a specific shape for the nodes
+   */
   private drawEndShapes () {
     const entriesWithEndShape = this.layoutData.edges.filter(d => { return ('endShape' in d) })
     this.nodesG.append('g')
@@ -193,6 +277,11 @@ export default class ReactomeDetailView {
       .attr('fill', d => d.endShape.empty ? 'white' : lineColor)
   }
 
+  /**
+   * Function to generate edge decorated elements, given a shape object it returns a svg path string which then is used for direct drawing
+   * @param {shape} shape shape for which to generate the path string
+   * @returns string, a svg path string
+   */
   private drawDecorators (shape: shape): string {
     let outString = ''
     if (shape.type === 'BOX') {
@@ -226,8 +315,14 @@ export default class ReactomeDetailView {
     return outString
   }
 
+  /*
+  Node Drawing Functions
+  */
+  /**
+   * Wrapper function filtering and calling the drawing function for the acutal nodes (found in the nodes array of the layout file)
+   */
   private drawNodes () {
-    const chemicals = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Chemical') })
+    const chemicals = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Chemical') || (d.renderableClass === 'ChemicalDrug') })
     const complexes = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Complex') })
     const proteins = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'Protein') })
     const processNode = this.layoutData.nodes.filter(d => { return (d.renderableClass === 'ProcessNode') })
@@ -242,6 +337,12 @@ export default class ReactomeDetailView {
     this.drawProcesses(processNode)
   }
 
+  /**
+   * "Catch All" function to draw nodes which are not filtered in the draw nodes function, which are then drawn as a rectangle.
+   * Ideally this function can be deprecated at some point.
+   *
+   * @param {reactomeNode[]} data reactomeNode array containing all the nodes to be drawn
+   */
   private drawRect (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
@@ -282,10 +383,19 @@ export default class ReactomeDetailView {
       .text(d => d.text)
   }
 
+  /**
+   * Draw nodes as proteins. Protein nodes are squares with rounded corners and two subsegments, the left one corresponding the measurment
+   * values stemming from transcriptomics values of the protein in question and the right one corresponding to protomics measurement
+   * values
+   *
+   * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
+   */
   private drawProtein (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
     const textLines: { text: string, textLength: number }[][] = []
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
 
     for (const node of data) {
       textLines.push(this.generateLinesFromText(node.displayName, node.prop.width))
@@ -316,6 +426,12 @@ export default class ReactomeDetailView {
       .attr('stroke', lineColor)
       .attr('fill', 'none')
 
+    enterG.on('click', (event, d) => {
+      // maybe save uniprot id when drawing?
+      const uniprotID = self.graphData.nodes[d.reactomeId].identifier
+      store.dispatch('addClickedNode', { queryID: uniprotID, name: d.displayName })
+    })
+
     enterG
       .append('text').attr('class', 'nodeText')
       .append('tspan')
@@ -332,6 +448,84 @@ export default class ReactomeDetailView {
       .text(d => d.text)
   }
 
+  /**
+   * Draw nodes as complexes. Many biological molecules are available not as isolated entities but in complexes together with other
+   * molecules.
+   * Complexes are hexagonal nodes with three subsegments. The left, center and, right segments belong the measurements stemming from
+   * transcriptomics, proteomics and metabolomics data respectively. Colors show average values for said categories.
+   * Clicking on the node opens a glyph view showing each measurement value distinctly.
+   *
+   * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
+   */
+  private drawComplex (data: reactomeNode[]) {
+    const nodeG = this.nodesG.append('g').selectAll().data(data)
+    const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
+    const textLines: { text: string, textLength: number }[][] = []
+    const size = 100
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this
+    for (const node of data) {
+      textLines.push(this.generateLinesFromText(node.displayName, node.prop.width))
+    }
+
+    for (const lines of textLines) {
+      for (const line of lines) {
+        line.textLength = lines.length
+      }
+    }
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'left'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'transcriptomics'))
+      .append('title').text(d => (d.reactomeId in this.foldChanges.transcriptomics) ? 'Transcriptomics:' + this.foldChanges.transcriptomics[d.reactomeId] : '')
+
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'center'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'proteomics'))
+      .append('title').text(d => (d.reactomeId in this.foldChanges.proteomics) ? 'Proteomics:' + this.foldChanges.proteomics[d.reactomeId] : '')
+
+    enterG.append('path')
+      .attr('d', d => this.complexPath(d, 'right'))
+      .attr('fill', d => this.complexColor(d.reactomeId, 'metabolomics'))
+      .append('title').text(d => (d.reactomeId in this.foldChanges.metabolomics) ? 'Metabolomics:' + this.foldChanges.metabolomics[d.reactomeId] : '')
+
+    const complex = enterG.append('path')
+      .attr('id', function (d, i) { return 'node' + i })
+      .attr('d', d => this.complexPath(d, 'full'))
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', 'none')
+
+    enterG.on('click', (event, d) => {
+      self.tooltipG.selectAll('svg').remove()
+      self.tooltipG.selectAll('circle').remove()
+      self.tooltipG.attr('transform', `translate(${d.position.x - size},${d.position.y - size})`)
+      self.tooltipG.append('circle').attr('r', size).attr('cx', size).attr('cy', size).attr('fill', 'white')
+      self.tooltipG.append(() => generateGlyphVariation(self.foldChangeReactome[d.reactomeId], true, d.reactomeId, false))
+    })
+    enterG
+      .append('text').attr('class', 'nodeText')
+      .append('tspan')
+      .attr('width', d => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
+      .data((d, i) => textLines[i])
+      .enter()
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .text(d => d.text)
+  }
+
+  /**
+   * Draw nodes as entity sets. Some roles can be fullfilled by a set of entities (e.g. kinases) such entities are then shown in an
+   * entity set. Entity sets are quares with rounded edges, an inset second border and two subsegments, the left one corresponding the
+   * measurment values stemming from transcriptomics values of the protein in question and the right one corresponding to protomics
+   * measurement values. Clicking on the node opens a glyph view showing each measurement value distinctly.
+   *
+   * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
+   */
   private drawEntitySet (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
@@ -397,150 +591,14 @@ export default class ReactomeDetailView {
     })
   }
 
-  private proteinPath (node: reactomeNode, type: string) {
-    const yHalf = node.prop.height / 2
-    const xHalf = node.prop.width / 2
-    const radius = 4
-
-    let pathString = ''
-    if (type === 'outline') {
-      pathString += `M${-(xHalf - 3) + radius},${yHalf - 3}`
-      pathString += `A${radius},${radius},0,0,1,${-(xHalf - 3)},${(yHalf - 3) - radius}`
-      pathString += `L${-(xHalf - 3)},${-(yHalf - 3) + radius}`
-      pathString += `A${radius},${radius},0,0,1,${-(xHalf - 3) + radius},${-(yHalf - 3)}`
-      pathString += `L${(xHalf - 3) - radius},${-(yHalf - 3)}`
-      pathString += `A${radius},${radius},0,0,1,${(xHalf - 3)},${-(yHalf - 3) + radius}`
-      pathString += `L${(xHalf - 3)},${(yHalf - 3) - radius}`
-      pathString += `A${radius},${radius},0,0,1,${(xHalf - 3) - radius},${(yHalf - 3)}z`
-    }
-    if (type === 'full') {
-      pathString += `M${-xHalf + radius},${yHalf}`
-      pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`
-      pathString += `L${-xHalf},${-yHalf + radius}`
-      pathString += `A${radius},${radius},0,0,1,${-xHalf + radius},${-yHalf}`
-      pathString += `L${xHalf - radius},${-yHalf}`
-      pathString += `A${radius},${radius},0,0,1,${xHalf},${-yHalf + radius}`
-      pathString += `L${xHalf},${yHalf - radius}`
-      pathString += `A${radius},${radius},0,0,1,${xHalf - radius},${yHalf}z`
-    }
-    if (type === 'left') {
-      pathString += `M${-xHalf + radius},${yHalf}`
-      pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`
-      pathString += `L${-xHalf},${-yHalf + radius}`
-      pathString += `A${radius},${radius},0,0,1,${-xHalf + radius},${-yHalf}`
-      pathString += `L0,${-yHalf}`
-      pathString += `L0,${yHalf}z`
-    }
-    if (type === 'right') {
-      pathString += `M0,${-yHalf}`
-      pathString += `L${xHalf - radius},${-yHalf}`
-      pathString += `A${radius},${radius},0,0,1,${xHalf},${-yHalf + radius}`
-      pathString += `L${xHalf},${yHalf - radius}`
-      pathString += `A${radius},${radius},0,0,1,${xHalf - radius},${yHalf}`
-      pathString += `L0,${yHalf}z`
-    }
-    return pathString
-  }
-
-  private complexColor (reactomeId: number, type: string) {
-    let color = colors.Complex
-    if (reactomeId in this.foldChangeReactome) {
-      if (type === 'proteomics') {
-        color = this.foldChangeReactome[reactomeId].proteomics.meanFoldchange !== -100 ? this.colorScaleProteomics(this.foldChangeReactome[reactomeId].proteomics.meanFoldchange) : colors.Complex
-      }
-      if (type === 'transcriptomics') {
-        color = this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange !== -100 ? this.colorScaleTranscriptomics(this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange) : colors.Complex
-      }
-      if (type === 'metabolomics') {
-        color = this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange !== -100 ? this.colorScaleMetabolomics(this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange) : colors.Complex
-      }
-    }
-    return color
-  }
-
-  private drawComplex (data: reactomeNode[]) {
-    const nodeG = this.nodesG.append('g').selectAll().data(data)
-    const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
-    const textLines: { text: string, textLength: number }[][] = []
-    const size = 100
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this
-    for (const node of data) {
-      textLines.push(this.generateLinesFromText(node.displayName, node.prop.width))
-    }
-
-    for (const lines of textLines) {
-      for (const line of lines) {
-        line.textLength = lines.length
-      }
-    }
-    enterG.append('path')
-      .attr('d', d => this.complexPath(d, 'left'))
-      .attr('fill', d => this.complexColor(d.reactomeId, 'transcriptomics'))
-      .append('title').text(d => (d.reactomeId in this.foldChanges.transcriptomics) ? 'Transcriptomics:' + this.foldChanges.transcriptomics[d.reactomeId] : '')
-
-    enterG.append('path')
-      .attr('d', d => this.complexPath(d, 'center'))
-      .attr('fill', d => this.complexColor(d.reactomeId, 'proteomics'))
-      .append('title').text(d => (d.reactomeId in this.foldChanges.proteomics) ? 'Proteomics:' + this.foldChanges.proteomics[d.reactomeId] : '')
-
-    enterG.append('path')
-      .attr('d', d => this.complexPath(d, 'right'))
-      .attr('fill', d => this.complexColor(d.reactomeId, 'metabolomics'))
-      .append('title').text(d => (d.reactomeId in this.foldChanges.metabolomics) ? 'Metabolomics:' + this.foldChanges.metabolomics[d.reactomeId] : '')
-
-    const complex = enterG.append('path')
-      .attr('id', function (d, i) { return 'node' + i })
-      .attr('d', d => this.complexPath(d, 'full'))
-      .attr('stroke-width', 1)
-      .attr('stroke', lineColor)
-      .attr('fill', 'none')
-
-    enterG.on('click', (event, d) => {
-      self.tooltipG.selectAll('svg').remove()
-      self.tooltipG.selectAll('circle').remove()
-      self.tooltipG.attr('transform', `translate(${d.position.x - size},${d.position.y - size})`)
-      self.tooltipG.append('circle').attr('r', size).attr('cx', size).attr('cy', size).attr('fill', 'white')
-      self.tooltipG.append(() => generateGlyphVariation(self.foldChangeReactome[d.reactomeId], true, d.reactomeId, false))
-    })
-    enterG
-      .append('text').attr('class', 'nodeText')
-      .append('tspan')
-      .attr('width', d => d.prop.width * 0.9)
-      .style('text-anchor', 'middle')
-      .style('alignment-baseline', 'middle')
-      .style('font-size', fontSize)
-      .selectAll('tspan')
-      .data((d, i) => textLines[i])
-      .enter()
-      .append('tspan')
-      .attr('x', 0)
-      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
-      .text(d => d.text)
-  }
-
-  private complexPath (node: reactomeNode, type: string) {
-    const yHalf = node.prop.height / 2
-    const yTwoFifth = node.prop.height / 4
-    const xHalf = node.prop.width / 2
-    const xTwoFifth = 3 * node.prop.width / 7
-    const xSixth = node.prop.width / 6
-    let pathString = ''
-    if (type === 'full') {
-      pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}z`
-    }
-    if (type === 'left') {
-      pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${-xSixth},${-yHalf}L${-xSixth},${yHalf}z`
-    }
-    if (type === 'center') {
-      pathString = `M${-xSixth},${-yHalf}L${-xSixth},${yHalf}L${xSixth},${yHalf}L${xSixth},${-yHalf}z`
-    }
-    if (type === 'right') {
-      pathString = `M${xSixth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}L${xSixth},${yHalf}z`
-    }
-    return pathString
-  }
-
+  /**
+   * Draws nodes as procceses. Some pathways link to other pathways which are involved peripherally in the current pathways.
+   * Processes are drawn as recatngles with three subsegments. The left, center and, right segments belong the measurements stemming from
+   * transcriptomics, proteomics and metabolomics data respectively. Clicking on the node opens a glyph view showing each measurement
+   * value distinctly.
+   *
+   * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
+   */
   private drawProcesses (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
@@ -617,6 +675,12 @@ export default class ReactomeDetailView {
       .text(d => d.text)
   }
 
+  /**
+   * Draws nodes as chemical. Small molecules are drawn as chemical (both drugs and regular metabolites). The nodes are drawn
+   * as ellipses showing measurement values as a color.
+   *
+   * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
+   */
   private drawChemical (data: reactomeNode[]) {
     const nodeG = this.nodesG.append('g').selectAll().data(data)
     const enterG = nodeG.enter().append('g').attr('class', ' nodeG').attr('transform', d => `translate(${d.position.x},${d.position.y})`)
@@ -642,19 +706,122 @@ export default class ReactomeDetailView {
       .text(d => d.displayName)
   }
 
-  private drawSegments () {
-    const filteredData = this.layoutData.edges.filter(d => { return ('segments' in d) })
-    this.linesG.append('g')
-      .selectAll('path')
-      .data(filteredData)
-      .enter()
-      .append('path')
-      .attr('d', d => this.makeEdgePath(d))
-      .attr('stroke', lineColor)
-      .attr('fill', 'none')
+  /*
+  Node Drawing auxilliary functions
+  */
+
+  /**
+   * Generates a svg-path string corresponding to the indicated protein node type. This can be either 'full', 'left' or 'right' depending
+   *  if the complete shape, the shape corresponding to the transcriptomics measurements or the proteomics measurement should be drawn.
+   *
+   * @param {reactomeNode} node node for which to generate the path string
+   * @param {string} type one of 'full', 'left', 'right. String indicating which portion of the protein node should be generated
+   * @returns {string} a path string
+   */
+  private proteinPath (node: reactomeNode, type: string): string {
+    const yHalf = node.prop.height / 2
+    const xHalf = node.prop.width / 2
+    const radius = 4
+
+    let pathString = ''
+    if (type === 'outline') {
+      pathString += `M${-(xHalf - 3) + radius},${yHalf - 3}`
+      pathString += `A${radius},${radius},0,0,1,${-(xHalf - 3)},${(yHalf - 3) - radius}`
+      pathString += `L${-(xHalf - 3)},${-(yHalf - 3) + radius}`
+      pathString += `A${radius},${radius},0,0,1,${-(xHalf - 3) + radius},${-(yHalf - 3)}`
+      pathString += `L${(xHalf - 3) - radius},${-(yHalf - 3)}`
+      pathString += `A${radius},${radius},0,0,1,${(xHalf - 3)},${-(yHalf - 3) + radius}`
+      pathString += `L${(xHalf - 3)},${(yHalf - 3) - radius}`
+      pathString += `A${radius},${radius},0,0,1,${(xHalf - 3) - radius},${(yHalf - 3)}z`
+    }
+    if (type === 'full') {
+      pathString += `M${-xHalf + radius},${yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`
+      pathString += `L${-xHalf},${-yHalf + radius}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf + radius},${-yHalf}`
+      pathString += `L${xHalf - radius},${-yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf},${-yHalf + radius}`
+      pathString += `L${xHalf},${yHalf - radius}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf - radius},${yHalf}z`
+    }
+    if (type === 'left') {
+      pathString += `M${-xHalf + radius},${yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`
+      pathString += `L${-xHalf},${-yHalf + radius}`
+      pathString += `A${radius},${radius},0,0,1,${-xHalf + radius},${-yHalf}`
+      pathString += `L0,${-yHalf}`
+      pathString += `L0,${yHalf}z`
+    }
+    if (type === 'right') {
+      pathString += `M0,${-yHalf}`
+      pathString += `L${xHalf - radius},${-yHalf}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf},${-yHalf + radius}`
+      pathString += `L${xHalf},${yHalf - radius}`
+      pathString += `A${radius},${radius},0,0,1,${xHalf - radius},${yHalf}`
+      pathString += `L0,${yHalf}z`
+    }
+    return pathString
   }
 
-  private makeEdgePath (datum: reactomeEdge) {
+  /**
+   * Generates a color corresponding to the fold change which is belongs to the supplied reactome ID
+   *
+   * @param {number} reactomeId id of the entry for which the fold change color should be generated
+   * @param {string} type one of 'transcriptomics', 'proteomics', 'metabolomics' indicating for which type of measurment the color should be generated
+   * @returns {string} color string
+   */
+  private complexColor (reactomeId: number, type: string): string {
+    let color = colors.Complex
+    if (reactomeId in this.foldChangeReactome) {
+      if (type === 'proteomics') {
+        color = this.foldChangeReactome[reactomeId].proteomics.meanFoldchange !== -100 ? this.colorScaleProteomics(this.foldChangeReactome[reactomeId].proteomics.meanFoldchange) : colors.Complex
+      }
+      if (type === 'transcriptomics') {
+        color = this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange !== -100 ? this.colorScaleTranscriptomics(this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange) : colors.Complex
+      }
+      if (type === 'metabolomics') {
+        color = this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange !== -100 ? this.colorScaleMetabolomics(this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange) : colors.Complex
+      }
+    }
+    return color
+  }
+
+  /**
+   * Funciton generating a svg-path string corresponding to the selection of 'type' for the drawing of complex nodes.
+   *
+   * @param {reactomeNode} node reactome node object for which the svg-path string should be generated
+   * @param {string} type on of 'full', 'left', 'center', 'right' indicating the portion of the node for which the svg-path string should be generated
+   * @returns
+   */
+  private complexPath (node: reactomeNode, type: string): string {
+    const yHalf = node.prop.height / 2
+    const yTwoFifth = node.prop.height / 4
+    const xHalf = node.prop.width / 2
+    const xTwoFifth = 3 * node.prop.width / 7
+    const xSixth = node.prop.width / 6
+    let pathString = ''
+    if (type === 'full') {
+      pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}z`
+    }
+    if (type === 'left') {
+      pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${-xSixth},${-yHalf}L${-xSixth},${yHalf}z`
+    }
+    if (type === 'center') {
+      pathString = `M${-xSixth},${-yHalf}L${-xSixth},${yHalf}L${xSixth},${yHalf}L${xSixth},${-yHalf}z`
+    }
+    if (type === 'right') {
+      pathString = `M${xSixth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}L${xSixth},${yHalf}z`
+    }
+    return pathString
+  }
+
+  /**
+   * Generates svg-path string corresponding to the lines of the supplied edge-datum
+   *
+   * @param {reactomeEdge} datum datum of reactome edge type
+   * @returns {string} svg-path string
+   */
+  private makeEdgePath (datum: reactomeEdge): string {
     let outStr = ''
     if (('segments' in datum) && (datum.segments.length > 0)) {
       const startPoint = datum.segments[0]
@@ -690,60 +857,13 @@ export default class ReactomeDetailView {
     return outStr
   }
 
-  private catalystPaths (datum: reactomeEdge) {
-    let outStr = ''
-    if ('catalysts' in datum) {
-      for (const catalyst of datum.catalysts) {
-        if ('points' in catalyst) {
-          outStr += `M${catalyst.points[0].x},${catalyst.points[0].y}`
-          for (let index = 1; index < catalyst.points.length; index++) {
-            const point = catalyst.points[index]
-            outStr += `L${point.x},${point.y}`
-          }
-        }
-        outStr += `L${datum.position.x},${datum.position.y}`
-      }
-    }
-    return outStr
-  }
-
-  private drawLinks () {
-    if ('links' in this.layoutData) {
-      this.linesG
-        .selectAll()
-        .data(this.layoutData.links)
-        .enter()
-        .append('path')
-        .attr('id', (d, i) => 'test' + i)
-        .attr('d', d => this.segmentsToPath(d.segments))
-        .attr('stroke', lineColor)
-        .attr('fill', 'none')
-        .attr('stroke-dasharray', d => (d.renderableClass === 'EntitySetAndMemberLink' || d.renderableClass === 'EntitySetAndEntitySetLink') ? '4 2' : null)
-
-      const entriesWithReactionShape = this.layoutData.links.filter(d => { return ('reactionShape' in d) })
-      /*
-      this.nodesG.append('g')
-        .selectAll('path')
-        .data(entriesWithReactionShape)
-        .enter()
-        .append('path')
-        .attr('d', d => this.drawDecorators(d.reactionShape))
-        .attr('stroke', lineColor)
-        .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
-      */
-      const entriesWithEndShape = this.layoutData.links.filter(d => { return ('endShape' in d) })
-      this.nodesG.append('g')
-        .selectAll('path')
-        .data(entriesWithEndShape)
-        .enter()
-        .append('path')
-        .attr('d', d => this.drawDecorators(d.endShape))
-        .attr('stroke', lineColor)
-        .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
-    }
-  }
-
-  private segmentsToPath (segments: segment[]) {
+  /**
+   * Generates a svg-path string for the supplied array of segments
+   *
+   * @param {segment[]} segments array of segments to be converted to a svg-path string
+   * @returns {string} svg-path string corresponding to the supplied segment array
+   */
+  private segmentsToPath (segments: segment[]): string {
     let outStr = ''
     for (let index = 0; index < segments.length; index++) {
       const element = segments[index]
@@ -753,13 +873,26 @@ export default class ReactomeDetailView {
     return outStr
   }
 
-  private getTextWidth (text: string) {
+  /**
+   * Returns the width of the supplied text
+   *
+   * @param {string} text text for which the width should be returned
+   * @returns {number} width of supplied text in px
+   */
+  private getTextWidth (text: string): number {
     const context = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D
     const width = context.measureText(text).width
     return width
   }
 
-  private generateLinesFromText (text: string, width: number) {
+  /**
+   * Function which splits text into lines with a maximum width
+   *
+   * @param {string} text text which should be split into lines of text
+   * @param {number} width target width which corresponds to the maximum width of each line
+   * @returns lines of text which then can be placed in the svg
+   */
+  private generateLinesFromText (text: string, width: number): { text: string, textLength: number }[] {
     // adapted from https://observablehq.com/@mbostock/fit-text-to-circle
 
     const words = text.split(/\s+|,|:/g)
@@ -782,10 +915,16 @@ export default class ReactomeDetailView {
     return lines
   }
 
+  /**
+   * Clears the reactome detail view
+   */
   clearView () {
     this.mainSVG.remove()
   }
 
+  /**
+   * Refreshes the size of the svg
+   */
   refreshSize () {
     const box = document.querySelector(this.containerID)?.getBoundingClientRect()
     const width = box?.width as number

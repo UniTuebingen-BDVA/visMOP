@@ -447,7 +447,7 @@ def generate_overview_pathway_entry(entry, pathway_Id, query_pathway_dict, draw_
     for k in entry.total_measured_proteins:
         v = entry.total_measured_proteins[k]
         name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-        pathway_dict['entries']['proteomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+        pathway_dict['entries']['proteomics']['measured'][k] = {'queryId': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
         else:
@@ -455,7 +455,7 @@ def generate_overview_pathway_entry(entry, pathway_Id, query_pathway_dict, draw_
     for k in entry.total_measured_genes:
         v = entry.total_measured_genes[k]
         name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-        pathway_dict['entries']['transcriptomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+        pathway_dict['entries']['transcriptomics']['measured'][k] = {'queryId': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
         else:
@@ -463,7 +463,7 @@ def generate_overview_pathway_entry(entry, pathway_Id, query_pathway_dict, draw_
     for k in entry.total_measured_metabolites:
         v = entry.total_measured_metabolites[k]
         name = v['forms'][list(v['forms'].keys())[0]]['name'].split(' [')[0]
-        pathway_dict['entries']['metabolomics']['measured'][k] = {'id': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
+        pathway_dict['entries']['metabolomics']['measured'][k] = {'queryId': k, 'value': v['measurement'], 'name': name, 'forms': v['forms']}
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
         else:

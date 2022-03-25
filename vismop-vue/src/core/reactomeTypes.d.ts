@@ -1,12 +1,8 @@
 // https://reactome.org/dev/diagram/pathway-diagram-specs for infos
 
-export interface graphJSON {
-  nodes: { [key: number]: entityNode }
-  edges: { [key: number]: eventNode }
-  subpathways: { [key: number]: eventNode }
-  dbId: number
-  stId: string
-}
+/*
+Basic Types
+*/
 
 interface graphNode {
   schemaClass: string
@@ -43,53 +39,6 @@ interface eventNode extends graphNode {
   requirements : number[]
 }
 
-export interface layoutJSON {
-  nodes : reactomeNode[]
-  isDisease : boolean
-  minX : number
-  minY : number
-  maxX : number
-  maxY : number
-  notes : reactomeNote[]
-  edges : reactomeEdge[]
-  links : reactomeLink[]
-  compartments : reactomeCompartment[]
-  shadows : reactomeShadow[]
-  dbId : number
-  stableId : string
-  cPicture : string
-  forNormalDraw : boolean
-  displayName : string
-}
-export interface reactomeNode extends reactomeDiagramObject, reactomeNodeCommon {
-  nodeAttachments : reactomeNodeAttachment[]
-  interactorsSummary : {pressed: boolean, shape: shape, hit: boolean, type: string, number: number}
-  trivial : boolean
-  connectors : connector[]
-}
-
-export interface reactomeNote extends reactomeNodeCommon, reactomeDiagramObject {
-
-}
-
-export interface reactomeEdge extends reactomeEdgeCommon, reactomeDiagramObject {
-
-}
-
-export interface reactomeLink extends reactomeEdgeCommon, reactomeDiagramObject {
-
-}
-
-export interface reactomeCompartment extends reactomeNodeCommon, reactomeDiagramObject {
-  compontentIds: number[]
-}
-
-export interface reactomeShadow extends reactomeDiagramObject {
-  prop: coordinateBound
-  points: coordinate[]
-  colour: string
-}
-
 export interface coordinate {
   x: number
   y: number
@@ -105,6 +54,49 @@ export interface color {
   b: number
   g: number
 }
+
+export interface shape {
+  r: number
+  b: coordinate
+  a: coordinate
+  c: coordinate
+  s: string
+  r1: number
+  empty: boolean
+  type: string
+}
+
+export interface segment {
+  from: coordinate
+  to: coordinate
+}
+
+export interface connector{
+  edgeId : number
+  segments : segment[]
+  endShape : shape
+  stoichiometry : {shape: shape, value: number}
+  isDisease : boolean
+  isFadeOut : boolean
+  type : string
+}
+
+export interface reactomeNodeAttachment {
+  reactomeId : number
+  label : string
+  description : string
+  shape: shape
+}
+
+export interface reactionPart {
+  stoichiometry : number
+  points : coordinate[]
+  id : number
+}
+
+/*
+Core Node and Edge Classes
+*/
 
 export interface reactomeDiagramObject {
   reactomeId : number
@@ -148,41 +140,80 @@ export interface reactomeEdgeCommon {
   outputs : reactionPart[]
 }
 
-export interface shape {
-  r: number
-  b: coordinate
-  a: coordinate
-  c: coordinate
-  s: string
-  r1: number
-  empty: boolean
-  type: string
+/*
+More Specific Node and Edge classes
+*/
+
+export interface reactomeNode extends reactomeDiagramObject, reactomeNodeCommon {
+  nodeAttachments : reactomeNodeAttachment[]
+  interactorsSummary : {pressed: boolean, shape: shape, hit: boolean, type: string, number: number}
+  trivial : boolean
+  connectors : connector[]
 }
 
-export interface segment {
-  from: coordinate
-  to: coordinate
+export interface reactomeNote extends reactomeNodeCommon, reactomeDiagramObject {
+
 }
 
-export interface connector{
-  edgeId : number
-  segments : segment[]
-  endShape : shape
-  stoichiometry : {shape: shape, value: number}
+export interface reactomeEdge extends reactomeEdgeCommon, reactomeDiagramObject {
+
+}
+
+export interface reactomeLink extends reactomeEdgeCommon, reactomeDiagramObject {
+
+}
+
+export interface reactomeCompartment extends reactomeNodeCommon, reactomeDiagramObject {
+  compontentIds: number[]
+}
+
+export interface reactomeShadow extends reactomeDiagramObject {
+  prop: coordinateBound
+  points: coordinate[]
+  colour: string
+}
+
+/*
+Main JSON File definitions
+*/
+
+export interface graphJSON {
+  nodes: { [key: number]: entityNode }
+  edges: { [key: number]: eventNode }
+  subpathways: { [key: number]: eventNode }
+  dbId: number
+  stId: string
+}
+
+export interface layoutJSON {
+  nodes : reactomeNode[]
   isDisease : boolean
-  isFadeOut : boolean
-  type : string
+  minX : number
+  minY : number
+  maxX : number
+  maxY : number
+  notes : reactomeNote[]
+  edges : reactomeEdge[]
+  links : reactomeLink[]
+  compartments : reactomeCompartment[]
+  shadows : reactomeShadow[]
+  dbId : number
+  stableId : string
+  cPicture : string
+  forNormalDraw : boolean
+  displayName : string
 }
 
-export interface reactomeNodeAttachment {
-  reactomeId : number
-  label : string
-  description : string
-  shape: shape
+/*
+Misc. classes needed for detail View.
+*/
+
+export interface foldChangesByType {
+  proteomics: {[key: number]: number}
+  transcriptomics:{[key: number]: number}
+  metabolomics:{[key: number]: number}
 }
 
-export interface reactionPart {
-  stoichiometry : number
-  points : coordinate[]
-  id : number
+export interface foldChangesByID {
+  [key: number]: glyphData
 }
