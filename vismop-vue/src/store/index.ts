@@ -7,6 +7,7 @@ Vue.use(Vuex)
 interface State {
   sideBarExpand: boolean
   overviewData: unknown,
+  moduleAreas: unknown,
   targetDatabase: string,
   transcriptomicsTableHeaders: unknown,
   transcriptomicsTableData: unknown,
@@ -54,6 +55,7 @@ export default new Vuex.Store({
   state: {
     sideBarExpand: true,
     overviewData: null,
+    moduleAreas: null,
     targetDatabase: 'reactome',
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
@@ -106,6 +108,9 @@ export default new Vuex.Store({
     },
     SET_OVERVIEWDATA (state, val) {
       state.overviewData = val
+    },
+    SET_MODULEAREAS (state, val) {
+      state.moduleAreas = val
     },
     SET_TRANSCRIPTOMICSTABLEHEADERS (state, val) {
       state.transcriptomicsTableHeaders = val
@@ -256,6 +261,9 @@ export default new Vuex.Store({
     },
     setOverviewData ({ commit }, val) {
       commit('SET_OVERVIEWDATA', val)
+    },
+    setModuleAreas ({ commit }, val) {
+      commit('SET_MODULEAREAS', val)
     },
     setTranscriptomicsTableHeaders ({ commit }, val) {
       commit('SET_TRANSCRIPTOMICSTABLEHEADERS', val)

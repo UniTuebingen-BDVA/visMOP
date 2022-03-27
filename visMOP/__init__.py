@@ -85,8 +85,9 @@ def getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pat
     statistic_data_complete.columns = complete_stat_names
     module_layout = Module_layout(statistic_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic)
     module_node_pos = module_layout.get_final_node_positions()
+    module_areas = module_layout.get_module_areas()
         
-    return module_node_pos 
+    return module_node_pos, module_areas 
 
 
 """
@@ -430,7 +431,7 @@ def kegg_parsing():
     # generate dataframe of summary Data for all pathways
     statistic_data_complete = pd.DataFrame.from_dict({'path:'+ pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
     
-    module_node_pos = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
     pd.set_option("display.max_rows", None, "display.max_columns", None)
 
     pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
@@ -457,6 +458,7 @@ def kegg_parsing():
     out_dat = {
         "omicsRecieved": {"transcriptomics": transcriptomics["recieved"], "proteomics": proteomics["recieved"], "metabolomics": metabolomics["recieved"]},
         "overview_data": pathway_connection_dict, #pathway_connection_dict_new, #pathway_connection_dict,
+        "moduleAreas": module_areas,
         "main_data": without_empty,
         "fcs": fold_changes,
         "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
@@ -635,14 +637,21 @@ def reactome_overview(targetLevel):
     out_data, pathway_dict, dropdown_data, root_ids, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(target_level, up_down_reg_limits, False)
 
     pathway_connection_dict = get_overview_reactome(out_data)
-    module_node_pos = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
+    # with open('modul_layout.pkl', "rb") as f:
+    #      module_node_pos = pickle.load(f)
+    # a_file = open("modul_layout.pkl", "wb")
+    # pickle.dump(module_node_pos, a_file)
+    # a_file.close()
     
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway['pathwayId']]
         pathway["initialPosX"] = x_y_pos[0]
         pathway["initialPosY"] = x_y_pos[1]
+        pathway["moduleNum"] = x_y_pos[2]
+
     
-    return json.dumps({'overviewData': out_data, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
+    return json.dumps({'overviewData': out_data, 'moduleAreas': module_areas, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)

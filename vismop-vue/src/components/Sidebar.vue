@@ -611,6 +611,7 @@ export default Vue.extend({
       }).then((response) => response.json())
         .then((dataContent) => {
           this.$store.dispatch('setOverviewData', dataContent.overviewData)
+          this.$store.dispatch('setModuleAreas', dataContent.moduleAreas)
           this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
           // this.$store.dispatch('setOverviewData', dataContent.overview_data)
         }).then(() => this.$store.dispatch('setOverlay', false))
@@ -648,6 +649,7 @@ export default Vue.extend({
         .then((dataContent) => {
           if (dataContent === 1) return 1
           this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
+          this.$store.dispatch('setModuleAreas', dataContent.moduleAreas)
           this.$store.dispatch('setPathayAmountDict', dataContent.pathways_amount_dict)
           this.$store.dispatch('setOverviewData', dataContent.overview_data)
           this.$store.dispatch('setGraphData', dataContent.main_data)

@@ -58,6 +58,7 @@ export default Vue.extend({
   computed: {
     ...mapState({
       overviewData: (state:any) => state.overviewData,
+      moduleAreas: (state:any) => state.moduleAreas,
       fcs: (state:any) => state.fcs,
       overlay: (state:any) => state.overlay,
       fcQuantiles: (state:any) => state.fcQuantiles,
@@ -187,7 +188,7 @@ export default Vue.extend({
       this.$store.dispatch('setGlyphs', generatedGlyphs)
       const glyphsURL = generatedGlyphs.url
       console.log('GLYPHs', this.$store.state.glyphs)
-      const networkData = generateGraphData(this.overviewData, fcExtents, glyphsURL)
+      const networkData = generateGraphData(this.overviewData, fcExtents, glyphsURL, this.moduleAreas)
       console.log('base data', networkData)
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }

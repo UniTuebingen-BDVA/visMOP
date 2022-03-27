@@ -6,9 +6,11 @@ import {
   graphData,
   relation,
   baseNodeAttr,
-  baseEdgeAttr
+  baseEdgeAttr,
+  upDatedPos
 } from '@/core/graphTypes'
 import store from '@/store'
+import { pfsPrime } from '@/core/noverlap_pfsp'
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -17,9 +19,10 @@ import store from '@/store'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: entry },
+  nodeList: { [key: string]: entry},
   fcsExtent: number[],
-  glyphs: {[key: string]: string}
+  glyphs: {[key: string]: string},
+  moduleAreas: [number[]] = [[]]
 ): graphData {
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
@@ -29,6 +32,8 @@ export function generateGraphData (
     options: []
   } as graphData
   const addedEdges: string[] = []
+  let index = 0
+  let maxModuleNum = 0
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey]
     if (!entry.isempty) {
@@ -37,9 +42,12 @@ export function generateGraphData (
       if (currentNames) {
         const initPosX = entry.initialPosX
         const initPosY = entry.initialPosY
+        const modNum = entry.moduleNum
+        maxModuleNum = Math.max(maxModuleNum, modNum)
         const color = '#FFFFFF'
         const trueName = store.state.pathwayLayouting.pathwayList.find(elem => elem.value === currentNames[0].replace('path:', ''))?.text
         const currentNode = {
+          index: index,
           key: keggID,
           // label: "",
           attributes: {
@@ -51,6 +59,7 @@ export function generateGraphData (
             label: `Name: ${_.escape(trueName)}`,
             x: initPosX,
             y: initPosY,
+            up: { x: initPosX, y: initPosY, gamma: 0 },
             zIndex: 1,
             size: 10,
             fixed: false // fixed property on nodes excludes nodes from layouting
@@ -71,9 +80,12 @@ export function generateGraphData (
             addedEdges.push(currentEdge.key)
           }
         }
+        index += 1
       }
     }
   }
+  graph.nodes = pfsPrime(graph.nodes, maxModuleNum, moduleAreas)
+  console.log('here I am', graph)
   return graph
 }
 

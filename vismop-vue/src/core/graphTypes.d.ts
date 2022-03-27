@@ -51,6 +51,8 @@ export interface baseNodeAttr extends Attributes {
   name: string;
   x: number;
   y: number;
+  modNum?: number;
+  up: upDatedPos;
   zIndex: number;
   color: string;
   size: number;
@@ -58,11 +60,27 @@ export interface baseNodeAttr extends Attributes {
   type: string;
   label: string;
 }
+
+export interface CartesianVector {
+  x: number;
+  y: number;
+
+}
+/**
+ * Defines a updated node position
+ */
+export interface upDatedPos {
+  x: number;
+  y: number;
+  gamma: number;
+}
+
 /**
  * Defines a node
  */
 export interface node {
   key: string;
+  index: number;
   attributes: Attributes;
 }
 /**
@@ -93,6 +111,7 @@ export interface relation {
  * Defines an kegg entry
  */
 export interface entry {
+  moduleNum: any;
   name: string;
   entryType: string;
   keggID: string;

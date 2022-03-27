@@ -6,9 +6,12 @@ import {
   graphData,
   relation,
   baseNodeAttr,
-  baseEdgeAttr
+  baseEdgeAttr,
+  upDatedPos
 } from '@/core/graphTypes'
 import store from '@/store'
+import { pfsPrime } from '@/core/noverlap_pfsp'
+import { vpsc } from '@/core/noverlap_vpsc'
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -16,9 +19,10 @@ import store from '@/store'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string, maplinks: string[], subtreeIds: string[], initialPosX: number, initialPosY: number} },
+  nodeList: { [key: string]: {pathwayId: string, moduleNum: number, up: upDatedPos, rootId: string, pathwayName: string, maplinks: string[], subtreeIds: string[], initialPosX: number, initialPosY: number} },
   glyphs: {[key: string]: string},
-  rootIds: string[]
+  rootIds: string[],
+  moduleAreas: [number[]] = [[]]
 ): graphData {
   const graph = {
     attributes: { name: 'BaseNetwork' },
@@ -28,27 +32,33 @@ export function generateGraphData (
   } as graphData
   const addedEdges: string[] = []
   console.log('TESTEST', nodeList)
+  let index = 0
+  let maxModuleNum = 0
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey]
-    console.log('ENTRY', entry)
     const name = entry.pathwayName
     const id = entry.pathwayId
     const initPosX = entry.initialPosX
     const initPosY = entry.initialPosY
+    const modNum = entry.moduleNum
+    maxModuleNum = Math.max(maxModuleNum, modNum)
     // const initPosX = Math.random() * 100
     // const initPosY = Math.random() * 100
     const currentNode = {
       key: id,
+      index: index,
       // label: "",
       attributes: {
         entryType: 'temp',
         type: 'image',
+        modNum: modNum,
         image: glyphs[id],
         name: _.escape(name),
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
         label: `Name: ${_.escape(name)}`,
         x: initPosX,
         y: initPosY,
+        up: { x: initPosX, y: initPosY, gamma: 0 },
         zIndex: 1,
         size: entry.rootId === entry.pathwayId ? 15 : 10,
         fixed: false // fixed property on nodes excludes nodes from layouting
@@ -60,7 +70,6 @@ export function generateGraphData (
       graph.edges.push(currentEdge)
       addedEdges.push(currentEdge.key)
     }
-    console.log(rootIds)
     for (const maplink of entry.maplinks) {
       if (!rootIds.includes(entry.pathwayId)) {
         for (const entryKey in nodeList) {
@@ -77,7 +86,11 @@ export function generateGraphData (
         }
       }
     }
+    index += 1
   }
+  console.log('here I am', graph)
+  graph.nodes = pfsPrime(graph.nodes, maxModuleNum, moduleAreas)
+  console.log('here I am', graph)
   return graph
 }
 

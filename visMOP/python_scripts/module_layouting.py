@@ -139,12 +139,17 @@ class Module_layout:
 
     def get_umap_layout_pos(self):
         new_pos = UMAP().fit_transform(self.data_table_scaled_filled)
-        pos_dic = {node_name: row for row, node_name in zip(
+        pos_dic = {node_name: row  for row, node_name in zip(
             new_pos, list(self.data_table.index))}
         norm_vals_dict = self.normalizeNodePositionInRange(
             pos_dic, [0, 1, 0, 1])
         return norm_vals_dict
 
+    '''
+    get clusteres
+    sort nodes, so that nodes in same Clusteres are together
+    return list of list with one list for eacery cluster
+    '''
     def get_cluster(self):
         kmeans_fit = self.kmeans.fit_predict(
             self.data_table_scaled_filled)
@@ -383,15 +388,18 @@ class Module_layout:
             return val_space[0]
         return numerator/devisor + val_space[0]
 
-    def normalizeNodePositionInRange(self, node_positions, x_y_ranges):
-        x_vals = [val[0] for key, val in node_positions.items()]
-        y_vals = [val[1] for key, val in node_positions.items()]
+    def normalizeNodePositionInRange(self, node_positions, x_y_ranges, withModuleNum = False):
+        x_vals = [val[0] for _, val in node_positions.items()]
+        y_vals = [val[1] for _, val in node_positions.items()]
 
         min_x, max_x, min_y, max_y = min(x_vals), max(
             x_vals), min(y_vals), max(y_vals)
-       
-        adjusted_node_positions = {node: [self.normalize_in_range(xy[0], min_x, max_x, [x_y_ranges[0], x_y_ranges[1]]), self.normalize_in_range(
-            xy[1], min_y, max_y, [x_y_ranges[2], x_y_ranges[3]])] for node, xy in node_positions.items()}
+        if withModuleNum:
+            adjusted_node_positions = {node: [self.normalize_in_range(xy[0], min_x, max_x, [x_y_ranges[0], x_y_ranges[1]]), self.normalize_in_range(
+                xy[1], min_y, max_y, [x_y_ranges[2], x_y_ranges[3]]), xy[2]] for node, xy in node_positions.items()}
+        else: 
+            adjusted_node_positions = {node: [self.normalize_in_range(xy[0], min_x, max_x, [x_y_ranges[0], x_y_ranges[1]]), self.normalize_in_range(
+                xy[1], min_y, max_y, [x_y_ranges[2], x_y_ranges[3]])] for node, xy in node_positions.items()}
         return adjusted_node_positions
 
     def getNodePositions(self):
@@ -402,20 +410,25 @@ class Module_layout:
         2. return node positions 
         '''
         node_positions = {}
-        for module, module_area in zip(self.modules, self.modules_area):
+        for mod_num, (module, module_area) in enumerate(zip(self.modules, self.modules_area)):
             sub_graph = self.full_graph.subgraph(module)
-            module_node_positions = get_pos_in_force_dir_layout(sub_graph)
+            module_node_positions = get_pos_in_force_dir_layout(sub_graph, mod_num)
             adjusted_node_positions = self.normalizeNodePositionInRange(
-                module_node_positions, module_area)
+                module_node_positions, module_area, True)
             node_positions = {**node_positions, **adjusted_node_positions}
 
-        adjusted_to_ncd = self.normalizeNodePositionInRange(
-            node_positions, [-1, 1, -1, 1])
+        # kann man sich vllt sparen?
+        # adjusted_to_ncd = self.normalizeNodePositionInRange(
+        #     node_positions, [-1, 1, -1, 1])
 
-        return adjusted_to_ncd
+        return node_positions
 
     def get_final_node_positions(self):
+        print(self.final_node_pos)
         return self.final_node_pos
+
+    def get_module_areas(self):
+        return self.modules_area
 
 
 ''' OLD '''

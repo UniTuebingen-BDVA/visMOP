@@ -41,10 +41,12 @@ export function generateInteractionGraphData (
     edges: [],
     options: []
   } as graphData
+  let index = 0
   nodeLink.nodes.forEach(node => {
     graph.nodes.push(
       {
         key: node.key,
+        index: index,
         attributes:
         {
           label: node.labelName ? node.labelName : node.key,
@@ -56,6 +58,7 @@ export function generateInteractionGraphData (
           size: node.size ? node.size : 5
         }
       })
+    index += 1
   })
   nodeLink.links.forEach(edge => {
     graph.edges.push({

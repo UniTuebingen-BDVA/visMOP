@@ -35,6 +35,7 @@ export function generateGraphData (
   const colorScaleMetabolomics = store.state.fcScales.metabolomics
 
   // console.log("NodeList", nodeList)
+  let index = 0
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey]
     // console.log("entry", entry)
@@ -42,12 +43,12 @@ export function generateGraphData (
       if (entry.name) {
         keggIDGenesymbolDict[entry.keggID] = entry.name[0]
       }
-
       const currentNames = entry.name
       const keggID = entry.keggID
       if (currentNames) {
         // const initPosX = entry.initialPosX
         // const initPosY = entry.initialPosY
+        const modNum = entry.moduleNum
         const initPosX = (Math.random() * 2 - 1)
         const initPosY = (Math.random() * 2 - 1)
         const color =
@@ -66,11 +67,13 @@ export function generateGraphData (
             : '#808080'
         const currentNode = {
           key: keggID,
+          index: index,
           // label: "",
           attributes: {
             entryType: _.escape(entry.entryType),
             type: entry.entryType === 'gene' ? 'splitSquares' : 'outlineCircle',
             name: _.escape(currentNames[0]),
+            modNum: modNum,
             color: color,
             secondaryColor: secondaryColor,
             outlineColor: 'rgba(30,30,30,1.0)',
@@ -81,6 +84,7 @@ export function generateGraphData (
             label: generateLabel(_.escape(currentNames[0]), entry),
             x: initPosX,
             y: initPosY,
+            up: { x: initPosX, y: initPosY, gamma: 0 },
             zIndex: 1,
             initialX: initPosX,
             initialY: initPosY,
@@ -104,6 +108,7 @@ export function generateGraphData (
         }
       }
     }
+    index += 1
   }
   store.dispatch('setKeggIDGeneSymbolDict', keggIDGenesymbolDict)
   return graph
