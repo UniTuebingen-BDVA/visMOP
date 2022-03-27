@@ -36,7 +36,7 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import DetailNetwork from '../core/detailNetwork'
+import DetailNetwork from '../core/keggDetailView'
 import { generateGraphData } from '../core/detailGraphPreparation'
 import Vue from 'vue'
 import Sigma from 'sigma'
@@ -54,7 +54,7 @@ interface Data{
 
 export default Vue.extend({
   // name of the component
-  name: 'NetworkGraphComponent',
+  name: 'KeggDetailComponent',
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({

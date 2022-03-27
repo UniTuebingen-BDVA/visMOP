@@ -8,9 +8,6 @@
       @click="lockHover"
       @input="unlockHover"
     ></v-select>
-    <div v-if="targetDatabase === 'reactome'">
-      <v-text-field :rules="sheetRules" label="Reactome Target Tier" :value="reactomeLevelSelection" v-model="reactomeLevelSelection"></v-text-field>
-    </div>
     <v-select
       :items="targetOrganisms"
       label="Target Organism"
@@ -43,7 +40,7 @@
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disabled="overlay"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -99,7 +96,7 @@
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disabled="overlay"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -155,7 +152,7 @@
 
           <v-spacer></v-spacer>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal"></v-text-field>
+          <v-text-field :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disabled="overlay"></v-text-field>
 
           <v-spacer></v-spacer>
 
@@ -210,7 +207,7 @@ import Vue from 'vue'
 import { Function } from 'lodash'
 
 interface Data{
-   overlay: boolean,
+  overlay: boolean,
   transcriptomicsFile: File | null,
   transcriptomicsSheetVal: string,
   transcriptomicsSymbolCol: string,
@@ -240,7 +237,6 @@ export default Vue.extend({
   components: {},
 
   data: () => ({
-    overlay: false,
     transcriptomicsFile: null,
     transcriptomicsSheetVal: '0',
     transcriptomicsSymbolCol: '',
@@ -282,7 +278,8 @@ export default Vue.extend({
       metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders,
       transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
       proteomicsTableData: (state: any) => state.proteomicsTableData,
-      metabolomicsTableData: (state: any) => state.metabolomicsTableData
+      metabolomicsTableData: (state: any) => state.metabolomicsTableData,
+      overlay: (state: any) => state.overlay
     }),
     chosenOmics: {
       get: function () {
@@ -298,30 +295,31 @@ export default Vue.extend({
         const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
         const typedArrayData = this.transcriptomicsTableData as [{[key: string]: number}]
         const typedArrayHeader = this.transcriptomicsTableHeaders as [{[key: string]: string}]
-
         typedArrayHeader.forEach(element => {
-          const valArr = typedArrayData.map(elem => elem[element.value])
-          const numArr: number[] = []
-          let amtNum = 0
-          let amtNonNum = 0
-          let empties = 0
-          valArr.forEach((val) => {
-            if (typeof val === 'number') {
-              amtNum += 1
-              numArr.push(val)
-            } else if (val === 'None') {
-              empties += 1
-            } else amtNonNum += 1
-          })
-          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
-            const min = Math.floor(Math.min(...numArr))
-            const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
-              this.sliderVals.transcriptomics[element.value] = { vals: [min, max], empties: true }
+          if (element.value !== 'available') {
+            const valArr = typedArrayData.map(elem => elem[element.value])
+            const numArr: number[] = []
+            let amtNum = 0
+            let amtNonNum = 0
+            let empties = 0
+            valArr.forEach((val) => {
+              if (typeof val === 'number') {
+                amtNum += 1
+                numArr.push(val)
+              } else if (val === 'None') {
+                empties += 1
+              } else amtNonNum += 1
+            })
+            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+              console.log(element.value, numArr)
+              const min = Math.floor(Math.min(...numArr))
+              const max = Math.ceil(Math.max(...numArr))
+              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+              if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
+                this.sliderVals.transcriptomics[element.value] = { vals: [min, max], empties: true }
+              }
+              console.log(element.value, this.sliderVals)
             }
-            console.log(element.value, this.sliderVals)
           }
         })
         return outObj
@@ -334,28 +332,30 @@ export default Vue.extend({
         const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
 
         typedArrayHeader.forEach(element => {
-          const valArr = typedArrayData.map(elem => elem[element.value])
-          const numArr: number[] = []
-          let amtNum = 0
-          let amtNonNum = 0
-          let empties = 0
-          valArr.forEach((val) => {
-            if (typeof val === 'number') {
-              amtNum += 1
-              numArr.push(val)
-            } else if (val === 'None') {
-              empties += 1
-            } else amtNonNum += 1
-          })
-          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
-            const min = Math.floor(Math.min(...numArr))
-            const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
-              this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
+          if (element.value !== 'available') {
+            const valArr = typedArrayData.map(elem => elem[element.value])
+            const numArr: number[] = []
+            let amtNum = 0
+            let amtNonNum = 0
+            let empties = 0
+            valArr.forEach((val) => {
+              if (typeof val === 'number') {
+                amtNum += 1
+                numArr.push(val)
+              } else if (val === 'None') {
+                empties += 1
+              } else amtNonNum += 1
+            })
+            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+              console.log(element.value, numArr)
+              const min = Math.floor(Math.min(...numArr))
+              const max = Math.ceil(Math.max(...numArr))
+              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+              if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
+                this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
+              }
+              console.log(element.value, this.sliderVals)
             }
-            console.log(element.value, this.sliderVals)
           }
         })
         return outObj
@@ -368,28 +368,30 @@ export default Vue.extend({
         const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
 
         typedArrayHeader.forEach(element => {
-          const valArr = typedArrayData.map(elem => elem[element.value])
-          const numArr: number[] = []
-          let amtNum = 0
-          let amtNonNum = 0
-          let empties = 0
-          valArr.forEach((val) => {
-            if (typeof val === 'number') {
-              amtNum += 1
-              numArr.push(val)
-            } else if (val === 'None') {
-              empties += 1
-            } else amtNonNum += 1
-          })
-          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
-            const min = Math.floor(Math.min(...numArr))
-            const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
-              this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
+          if (element.value !== 'available') {
+            const valArr = typedArrayData.map(elem => elem[element.value])
+            const numArr: number[] = []
+            let amtNum = 0
+            let amtNonNum = 0
+            let empties = 0
+            valArr.forEach((val) => {
+              if (typeof val === 'number') {
+                amtNum += 1
+                numArr.push(val)
+              } else if (val === 'None') {
+                empties += 1
+              } else amtNonNum += 1
+            })
+            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+              console.log(element.value, numArr)
+              const min = Math.floor(Math.min(...numArr))
+              const max = Math.ceil(Math.max(...numArr))
+              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+              if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
+                this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
+              }
+              console.log(element.value, this.sliderVals)
             }
-            console.log(element.value, this.sliderVals)
           }
         })
         return outObj
@@ -399,8 +401,8 @@ export default Vue.extend({
 
   watch: {
     transcriptomicsSheetVal: function () { this.fetchTranscriptomicsTable(this.transcriptomicsFile) },
-    proteomicsSheetVal: function () { this.fetchProteomicsTable(this.transcriptomicsFile) },
-    metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.transcriptomicsFile) }
+    proteomicsSheetVal: function () { this.fetchProteomicsTable(this.proteomicsFile) },
+    metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.metabolomicsFile) }
   },
 
   // functions to call on mount (after DOM etc. is built)
@@ -424,7 +426,7 @@ export default Vue.extend({
       )
       Vue.set(this.sliderVals, 'transcriptomics', {})
       if (fileInput !== null) {
-        this.overlay = true
+        this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.transcriptomicsSheetVal)
@@ -449,7 +451,7 @@ export default Vue.extend({
             )
             this.recievedTranscriptomicsData = true
           })
-          .then(() => (this.overlay = false))
+          .then(() => (this.$store.dispatch('setOverlay', false)))
       } else {
         // more errorhandling?
         this.recievedTranscriptomicsData = false
@@ -472,7 +474,7 @@ export default Vue.extend({
       )
       Vue.set(this.sliderVals, 'proteomics', {})
       if (fileInput !== null) {
-        this.overlay = true
+        this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.proteomicsSheetVal)
@@ -500,7 +502,7 @@ export default Vue.extend({
             )
             this.recievedProteomicsData = true
           })
-          .then(() => (this.overlay = false))
+          .then(() => (this.$store.dispatch('setOverlay', false)))
       } else {
         // more errorhandling?
         this.recievedProteomicsData = false
@@ -522,7 +524,7 @@ export default Vue.extend({
       )
       Vue.set(this.sliderVals, 'metabolomics', {})
       if (fileInput !== null) {
-        this.overlay = true
+        this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.metabolomicsSheetVal)
@@ -549,7 +551,7 @@ export default Vue.extend({
             )
             this.recievedMetabolomicsData = true
           })
-          .then(() => (this.overlay = false))
+          .then(() => (this.$store.dispatch('setOverlay', false)))
       } else {
         // more errorhandling?
         this.recievedMetabolomicsData = false
@@ -603,7 +605,7 @@ export default Vue.extend({
     },
 
     getReactomeData () {
-      fetch(`/reactome_overview/${this.reactomeLevelSelection}`, {
+      fetch('/reactome_overview', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

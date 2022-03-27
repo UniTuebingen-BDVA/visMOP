@@ -179,6 +179,5 @@ function generateSinglePieChart (segments: number, colors: string[], diameter: n
     .attr('d', arc)
     .attr('fill', (d, i) => colors[i % colors.length])
 
-  console.log('PIECHART', svg.node())
   return svg.node() as SVGElement
 }

@@ -4,14 +4,20 @@ import { stratify } from 'd3'
 import { PieArcDatum } from 'd3-shape'
 import * as _ from 'lodash'
 
+interface measureData {
+  name: string
+  value: number
+  queryID: string
+}
+
 interface omicsData {
   available: boolean
-  foldChanges: {symbol: string, value: number}[]
+  foldChanges: measureData[]
   meanFoldchange: number
   nodeState: { total: number, regulated: number }
 }
 
-interface glyphData {
+export interface glyphData {
   pathwayID: string
   proteomics: omicsData;
   metabolomics: omicsData;
@@ -39,15 +45,15 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
           if (!(usedIDs.includes(currentEntry))) {
             const fcsCurrent = fcs[currentEntry]
             if (typeof fcsCurrent.transcriptomics === 'number') {
-              transcriptomicsData.foldChanges.push({ symbol: store.state.transcriptomicsKeggIDDict[currentEntry], value: fcsCurrent.transcriptomics })
+              transcriptomicsData.foldChanges.push({ name: store.state.transcriptomicsKeggIDDict[currentEntry], value: fcsCurrent.transcriptomics, queryID: '' })
               transcriptomicsData.nodeState.regulated += 1
             }
             if (typeof fcsCurrent.proteomics === 'number') {
-              proteomicsData.foldChanges.push({ symbol: store.state.proteomicsKeggIDDict[currentEntry], value: fcsCurrent.proteomics })
+              proteomicsData.foldChanges.push({ name: store.state.proteomicsKeggIDDict[currentEntry], value: fcsCurrent.proteomics, queryID: '' })
               proteomicsData.nodeState.regulated += 1
             }
             if (typeof fcsCurrent.metabolomics === 'number') {
-              metabolomicsData.foldChanges.push({ symbol: currentEntry, value: fcsCurrent.metabolomics })
+              metabolomicsData.foldChanges.push({ name: currentEntry, value: fcsCurrent.metabolomics, queryID: '' })
               metabolomicsData.nodeState.regulated += 1
             }
             usedIDs.push(currentEntry)
@@ -55,9 +61,9 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
         } catch (error) {}
       })
     })
-    transcriptomicsData.foldChanges.sort((a, b) => a.value - b.value)
-    proteomicsData.foldChanges.sort((a, b) => a.value - b.value)
-    metabolomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    // transcriptomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    // proteomicsData.foldChanges.sort((a, b) => a.value - b.value)
+    // metabolomicsData.foldChanges.sort((a, b) => a.value - b.value)
     proteomicsData.nodeState.total = currentAmounts.genes
     transcriptomicsData.nodeState.total = currentAmounts.genes
     metabolomicsData.nodeState.total = currentAmounts.compounds
@@ -77,9 +83,9 @@ export function generateGlyphDataReactome (): { [key: string]: glyphData } {
   const fcs = store.state.fcs
   const omicsRecieved = store.state.omicsRecieved
   const overviewData = store.state.overviewData as {pathwayName: string, pathwayId: string, entries: {
-    transcriptomics: {measured: {[key: string]: {id: string, value: number, name: string}}, total: number},
-    proteomics: {measured: {[key: string]: {id: string, value: number, name: string}}, total: number},
-    metabolomics: {measured: {[key: string]: {id: string, value: number, name: string}}, total: number}
+    transcriptomics: {measured: {[key: string]: measureData}, total: number},
+    proteomics: {measured: {[key: string]: measureData}, total: number},
+    metabolomics: {measured: {[key: string]: measureData}, total: number}
     }
   }[]
 
@@ -91,21 +97,21 @@ export function generateGlyphDataReactome (): { [key: string]: glyphData } {
     transcriptomicsData.nodeState.total = pathway.entries.transcriptomics.total
     for (const measureKey in pathway.entries.transcriptomics.measured) {
       const entry = pathway.entries.transcriptomics.measured[measureKey]
-      transcriptomicsData.foldChanges.push({ symbol: entry.name, value: entry.value })
+      transcriptomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryID })
       transcriptomicsData.nodeState.regulated += 1
     }
 
     proteomicsData.nodeState.total = pathway.entries.proteomics.total
     for (const measureKey in pathway.entries.proteomics.measured) {
       const entry = pathway.entries.proteomics.measured[measureKey]
-      proteomicsData.foldChanges.push({ symbol: entry.name, value: entry.value })
+      proteomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryID })
       proteomicsData.nodeState.regulated += 1
     }
 
     metabolomicsData.nodeState.total = pathway.entries.metabolomics.total
     for (const measureKey in pathway.entries.metabolomics.measured) {
       const entry = pathway.entries.metabolomics.measured[measureKey]
-      metabolomicsData.foldChanges.push({ symbol: entry.name, value: entry.value })
+      metabolomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryID })
       metabolomicsData.nodeState.regulated += 1
     }
 
@@ -145,7 +151,7 @@ export function generateGlyphs (inputData: { [key: string]: glyphData }): { url:
   return { url: outObjURL, svg: outObjSVG }
 }
 
-function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyphIdx: number): SVGElement {
+export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyphIdx: number, pathwayCompare = true): SVGElement {
   let availableOmics = 0
   if (glyphDat.transcriptomics.available) availableOmics += 1
   if (glyphDat.proteomics.available) availableOmics += 1
@@ -154,7 +160,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   const thirdCircle = 2 * (Math.PI / availableOmics)
   const thirdCircleElement = 1.8 * (Math.PI / availableOmics)
   const circlePadding = 0.1 * (Math.PI / availableOmics)
-  const diameter = 56
+  const diameter = 28
   const layerWidth = diameter / 7
   const width = diameter + (drawLabels ? 7 : 0)
   const height = diameter + (drawLabels ? 7 : 0)
@@ -168,14 +174,15 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   let highlightSection = 0
 
   const outerArcDat: {
-    data: number;
-    value: number;
-    index: number;
-    startAngle: number;
-    endAngle: number;
-    padAngle: number;
-    symbol: string;
+    data: number
+    value: number
+    index: number
+    startAngle: number
+    endAngle: number
+    padAngle: number
+    name: string
     fc: number
+    queryID: string
   }[] = []
   const innerArcDat = []
   const outerColors : string[] = []
@@ -190,11 +197,12 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   let totalNodes = 0
   if (glyphDat.transcriptomics.available) {
     totalNodes += glyphDat.transcriptomics.nodeState.total
+    glyphDat.transcriptomics.foldChanges.sort((a, b) => a.value - b.value)
     const colorsTranscriptomics = glyphDat.transcriptomics.foldChanges.map(elem => colorScaleTranscriptomics(elem.value))
     outerColors.push(...colorsTranscriptomics)
     const angleRangeTranscriptomicsFCs = _.range(circlePadding, circlePadding + thirdCircleElement + (thirdCircleElement / colorsTranscriptomics.length), thirdCircleElement / colorsTranscriptomics.length)
     colorsTranscriptomics.forEach((element, idx) => {
-      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0, symbol: glyphDat.transcriptomics.foldChanges[idx].symbol, fc: glyphDat.transcriptomics.foldChanges[idx].value }
+      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeTranscriptomicsFCs[idx], endAngle: angleRangeTranscriptomicsFCs[idx + 1], padAngle: 0, name: glyphDat.transcriptomics.foldChanges[idx].name, fc: glyphDat.transcriptomics.foldChanges[idx].value, queryID: glyphDat.transcriptomics.foldChanges[idx].queryID }
       outerArcDat.push(pushDat)
     })
     const transcriptomicsRegulatedQuotient = glyphDat.transcriptomics.nodeState.regulated / glyphDat.transcriptomics.nodeState.total
@@ -218,13 +226,15 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   // prepare proteomics
   if (glyphDat.proteomics.available) {
     totalNodes += glyphDat.proteomics.nodeState.total
+    glyphDat.proteomics.foldChanges.sort((a, b) => a.value - b.value)
     const colorsProteomics = glyphDat.proteomics.foldChanges.map(elem => colorScaleProteomics(elem.value))
     outerColors.push(...colorsProteomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
 
     const angleRangeProteomicsFCs = _.range(startAngleVal, startAngleVal + thirdCircleElement + (thirdCircleElement / colorsProteomics.length), thirdCircleElement / colorsProteomics.length)
     colorsProteomics.forEach((element, idx) => {
-      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0, symbol: glyphDat.proteomics.foldChanges[idx].symbol, fc: glyphDat.proteomics.foldChanges[idx].value })
+      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeProteomicsFCs[idx], endAngle: angleRangeProteomicsFCs[idx + 1], padAngle: 0, name: glyphDat.proteomics.foldChanges[idx].name, fc: glyphDat.proteomics.foldChanges[idx].value, queryID: glyphDat.proteomics.foldChanges[idx].queryID }
+      outerArcDat.push(pushDat)
     })
     const proteomicsRegulatedQuotient = glyphDat.proteomics.nodeState.regulated / glyphDat.proteomics.nodeState.total
     innerArcDat.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal, endAngle: startAngleVal + thirdCircleElement * proteomicsRegulatedQuotient, padAngle: 0, hoverData: '' })
@@ -247,13 +257,15 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   // prepare metabolomics
   if (glyphDat.metabolomics.available) {
     totalNodes += glyphDat.metabolomics.nodeState.total
+    glyphDat.metabolomics.foldChanges.sort((a, b) => a.value - b.value)
     const colorsMetabolomics = glyphDat.metabolomics.foldChanges.map(elem => colorScaleMetabolomics(elem.value))
     outerColors.push(...colorsMetabolomics)
     const startAngleVal = addedElements * thirdCircle + circlePadding
 
     const angleRangeMetabolomicsFCs = _.range(startAngleVal, startAngleVal + thirdCircleElement + (thirdCircleElement / colorsMetabolomics.length), thirdCircleElement / colorsMetabolomics.length)
     colorsMetabolomics.forEach((element, idx) => {
-      outerArcDat.push({ data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0, symbol: glyphDat.metabolomics.foldChanges[idx].symbol, fc: glyphDat.metabolomics.foldChanges[idx].value })
+      const pushDat = { data: idx + 1, value: idx + 1, index: idx, startAngle: angleRangeMetabolomicsFCs[idx], endAngle: angleRangeMetabolomicsFCs[idx + 1], padAngle: 0, name: glyphDat.metabolomics.foldChanges[idx].name, fc: glyphDat.metabolomics.foldChanges[idx].value, queryID: glyphDat.metabolomics.foldChanges[idx].queryID }
+      outerArcDat.push(pushDat)
     })
     const metabolomicsRegulatedQuotient = glyphDat.metabolomics.nodeState.regulated / glyphDat.metabolomics.nodeState.total
     innerArcDat.push({ data: 1, value: 1, index: 0, startAngle: startAngleVal, endAngle: startAngleVal + thirdCircleElement * metabolomicsRegulatedQuotient, padAngle: 0, hoverData: `${glyphDat.metabolomics.nodeState.regulated} / ${glyphDat.metabolomics.nodeState.total}` })
@@ -280,14 +292,15 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
 
   if (drawLabels) {
     svg = d3.create('svg')
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('width', '100%')
-      .attr('height', '100%')
+      .attr('viewBox', pathwayCompare ? `0 0 ${width} ${height}` : '0 0 35 35')
+      .attr('width', pathwayCompare ? '100%' : '200px')
+      .attr('height', pathwayCompare ? '100%' : '200px')
     g = svg.append('g')
+      .attr('class', 'glyph')
       .attr('id', `glyph${glyphIdx}`)
       .attr('transform', `translate(${width / 2},${height / 2})`)
     // DOMMouseScroll seems to work in FF
-    g.on('mouseenter', (d, event) => {
+    g.on('mouseenter', (event, dat) => {
       const amtElems = d3.select(`#glyph${glyphIdx}`).selectAll('.foldArc').size()
       highlightSection = 0 % amtElems
       d3.select(`#glyph${glyphIdx}`)
@@ -295,13 +308,13 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
         .data(outerArcDat)
         .attr('fill-opacity', (d, i) => {
           if (i === highlightSection) {
-            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol)
+            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.name.split(' ')[0]) // more of a temp fix
             d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(d.fc.toFixed(3))
             return 1.0
           } else return 0.2
         })
     })
-    g.on('mouseleave', (d, event) => {
+    g.on('mouseleave', (event, dat) => {
       highlightSection = 0
       d3.select(`#glyph${glyphIdx}`)
         .selectAll('.foldArc')
@@ -311,19 +324,20 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
           return 1.0
         })
     })
-    g.on('DOMMouseScroll', (d, event) => {
+    g.on('wheel.zoom', (event, dat) => {
       const amtElems = d3.select(`#glyph${glyphIdx}`).selectAll('.foldArc').size()
-      highlightSection = ((highlightSection + ((d.detail > 0) ? 1 : -1)) % amtElems + amtElems) % amtElems
+      highlightSection = ((highlightSection + ((event.wheelDelta > 0) ? 1 : -1)) % amtElems + amtElems) % amtElems
       d3.select(`#glyph${glyphIdx}`)
         .selectAll('.foldArc')
         .data(outerArcDat)
         .attr('fill-opacity', (d, i) => {
           if (i === highlightSection) {
-            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.symbol)
+            d3.select(`#glyph${glyphIdx}`).select('#tspan1').text(d.name.split(' ')[0]) // more of a temp fix
             d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(d.fc.toFixed(3))
             return 1.0
           } else return 0.2
         })
+      event.stopPropagation()
     })
   } else {
     svg = d3.create('svg')
@@ -337,7 +351,7 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
   const arcMiddle = d3.arc<PieArcDatum<number>>().innerRadius(secondLayer).outerRadius(firstLayer)
 
   // segment order: transcriptomics = outer, proteomics = middle, metabolomics = inner
-  g.selectAll('g')
+  const arcSeg = g.selectAll('g')
     .data(outerArcDat)
     .enter()
     .append('path')
@@ -345,16 +359,24 @@ function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyph
     .attr('fill', (d, i) => outerColors[i])
     .attr('class', 'foldArc')
     .attr('strokewidth', -2)
+  if (!pathwayCompare) {
+    arcSeg.on('click', (event, d) => {
+      store.dispatch('addClickedNode', { queryID: d.queryID, name: d.name })
+      event.stopPropagation()
+    })
+  }
+
+  arcSeg
     .append('title')
-    .text((d) => d.symbol + '\n' + d.fc.toFixed(3))
+    .text((d) => d.name + '\n' + d.fc.toFixed(3))
   const graySegments = g.selectAll('g')
     .data(innerArcDat)
     .enter()
     .append('path')
     .attr('d', arcMiddle)
     .attr('fill', (d, i) => innerColors[i])
-  graySegments
-    .on('mouseover', (d, i) => console.log('HOVERTEST', i))
+  // graySegments
+    // .on('mouseover', (d, i) => console.log('HOVERTEST', i))
     // .append('title')
     // .text((d) => d.hoverData)
 

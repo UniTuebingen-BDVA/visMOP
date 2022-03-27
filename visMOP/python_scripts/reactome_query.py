@@ -39,6 +39,7 @@ class ReactomeQuery:
         """
         with open(pickle_path / ('{}_{}2Reactome.pickle'.format(target_organism, id_database)), 'rb') as handle:
             reactome_data = pickle.load(handle)
+            not_found = 0
             for elem in self.query_data:
                 try:
                     reactome_elem = reactome_data[elem[0]]
@@ -46,7 +47,9 @@ class ReactomeQuery:
                         reactome_elem[pathway_id]['measurement'] = elem[1]
                     self.query_results[elem[0]] = reactome_elem
                 except:
-                     print("{} not found in REACTOME DB".format(elem[0]))
+                    not_found += 1
+            print("{} entries from {} were not found in REACTOME DB".format(not_found, id_database))
+
     def calc_all_pathways(self):
         """ Calculates the set of all reactome low level pathways contained in the query
         """
@@ -71,11 +74,11 @@ class ReactomeQuery:
     def get_measurement_levels(self):
         """ gets measurement levels of query
         """
-        fold_changes = []
+        fold_changes = {}
         for k,v in self.query_results.items():
             k2, entry = list(v.items())[0]
             measurement_val = entry['measurement']
-            fold_changes.append(measurement_val)
+            fold_changes[k] = measurement_val
         return fold_changes
        
     def get_levels_of_query(self, hierarchy, level):

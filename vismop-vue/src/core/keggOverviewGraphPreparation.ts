@@ -114,6 +114,7 @@ function generateForceGraphEdge (relation: relation): edge {
       target: entry2,
       undirected: true,
       attributes: {
+        type: '',
         zIndex: 0,
         color: edgeColors[relationType]
       } as baseEdgeAttr
@@ -129,6 +130,7 @@ function generateForceGraphEdge (relation: relation): edge {
       target: entry2,
       undirected: true,
       attributes: {
+        type: '',
         zIndex: 0,
         color: edgeColors[relationType]
       } as baseEdgeAttr

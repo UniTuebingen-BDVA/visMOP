@@ -44,7 +44,7 @@ app.config.from_mapping(
 
     CACHE_TYPE='FileSystemCache',
     CACHE_DIR=data_path/'session_cache',
-    CACHE_DEFAULT_TIMEOUT= 300
+    CACHE_DEFAULT_TIMEOUT= 43200
 )
 cache = Cache(app)
 
@@ -53,6 +53,7 @@ stringGraph = None
 try:
     script_dir = data_path
     dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
+    # comment out stringgraph for debugging purposes
     stringGraph = ''#StringGraph(dest_dir)
 except:
     print("Stringraph Error")
@@ -200,26 +201,26 @@ def interaction_graph():
 
 def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
-    prot_table_global = pd.read_json(cache.get('prot_table_global'), orient="columns")
-    prot_table_global = prot_table_global.drop_duplicates(subset=colname).set_index(colname)
+    prot_table = pd.read_json(cache.get('prot_table_global'), orient="columns")
+    prot_table = prot_table.drop_duplicates(subset=colname).set_index(colname)
     for k,v in filter_obj.items():
-        is_empty = (v['empties'] & (prot_table_global[k] == 'None'))
-        is_numeric = (pd.to_numeric(prot_table_global[k],errors='coerce').notnull())
-        df_numeric = prot_table_global.loc[is_numeric]
+        is_empty = (v['empties'] & (prot_table[k] == 'None'))
+        is_numeric = (pd.to_numeric(prot_table[k],errors='coerce').notnull())
+        df_numeric = prot_table.loc[is_numeric]
         df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
-        df_is_empty = prot_table_global.loc[is_empty]
+        df_is_empty = prot_table.loc[is_empty]
     
-        prot_table_global = prot_table_global.loc[prot_table_global.index.isin(df_is_in_range.index) | prot_table_global.index.isin(df_is_empty.index) ]
-    protein_dict = make_protein_dict(prot_table_global,colname)
+        prot_table = prot_table.loc[prot_table.index.isin(df_is_in_range.index) | prot_table.index.isin(df_is_empty.index) ]
+    protein_dict = make_protein_dict(prot_table,colname)
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
     add_uniprot_info(protein_dict)
     # add location to table
-    prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
+    # prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
     
     # set cache for structures
     cache.set('prot_dict_global', json.dumps(protein_dict))
-    cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
+    #cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
   
     
 
@@ -496,8 +497,7 @@ def reactome_parsing():
     ##
     omics_recieved = [transcriptomics["recieved"], proteomics["recieved"], metabolomics["recieved"]]
     reactome_hierarchy = PathwayHierarchy()
-    reactome_hierarchy.set_omics_recieved(omics_recieved)
-    reactome_hierarchy.load_data(data_path / "reactome_data" / "ReactomePathwaysRelation.txt", target_db.upper())
+    reactome_hierarchy.load_data(data_path / "reactome_data", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
 
     ##
@@ -523,7 +523,8 @@ def reactome_parsing():
             print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
           
         # target organism is a little bit annoying at the moment
-        tar_organism = 'Mus_musculus'
+        tar_organism = 'Mus_musculus' if target_db == 'mmu' else 'Homo_sapiens'
+        print(tar_organism)
         protein_query = ReactomeQuery(proteomics_query_data_tuples, tar_organism, 'UniProt', data_path / "reactome_data/pickles/")
         fold_changes['proteomics'] = protein_query.get_measurement_levels()
         # add entries to hierarchy
@@ -551,19 +552,21 @@ def reactome_parsing():
         metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_IDs =  list(metabolomics_dict.keys())
         for ID in metabolomics_IDs:
-            metabolomics_query_data_tuples.append( (ID, metabolomics_dict[ID][metabolomics["value"]]) ) 
+            ID_number = str(ID).replace('CHEBI:','')
+            metabolomics_query_data_tuples.append((ID_number, metabolomics_dict[ID][metabolomics["value"]]) ) 
 
           
         # target organism is a little bit annoying at the moment
-        tar_organism = 'Mus_musculus'
+        tar_organism = 'Mus_musculus' if target_db == 'mmu' else 'Homo_sapiens'
+        print(tar_organism)
         metabolite_query = ReactomeQuery(metabolomics_query_data_tuples, tar_organism, 'ChEBI', data_path / "reactome_data/pickles/")
-        fold_changes['metabolites'] = metabolite_query.get_measurement_levels()
+        fold_changes['metabolomics'] = metabolite_query.get_measurement_levels()
         # add entries to hierarchy
         node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
 
         for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
-                reactome_hierarchy.add_query_data(entity_data, 'metbolite', query_key)
+                reactome_hierarchy.add_query_data(entity_data, 'metabolite', query_key)
     
     ##
     # Add Transcriptomics Data Data
@@ -589,7 +592,8 @@ def reactome_parsing():
             transcriptomics_query_data_tuples.append( (ID, transcriptomics_dict[ID][transcriptomics["value"]]) ) 
 
         # target organism is a little bit annoying at the moment
-        tar_organism = 'Mus_musculus'
+        tar_organism = 'Mus_musculus' if target_db == 'mmu' else 'Homo_sapiens'
+        print(tar_organism)
         transcriptomics_query = ReactomeQuery(transcriptomics_query_data_tuples, tar_organism, 'Ensembl', data_path / "reactome_data/pickles/")
         fold_changes['transcriptomics'] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy
@@ -612,11 +616,9 @@ def reactome_parsing():
     return json.dumps(out_dat)
 
 
-@app.route('/reactome_overview/<targetLevel>', methods=['GET'])
-def reactome_overview(targetLevel):
+@app.route('/reactome_overview', methods=['GET'])
+def reactome_overview():
     """ Generates and sends data to the frontend needed to display the reactome overview graph
-        Args:
-            targetLevel: Hierarchy level for which to aggregate the info
         Returns:
             json string containting overview data and pathway layouting data
                 overview data: list of pathways and their data
@@ -624,8 +626,6 @@ def reactome_overview(targetLevel):
                                     dictionary mapping query to pathway ids
                                     list of Ids belonging to root nodes 
     """
-
-    target_level = int(targetLevel)
     reactome_hierarchy = cache.get('reactome_hierarchy')
 
     # user choice
@@ -634,7 +634,7 @@ def reactome_overview(targetLevel):
     use_pathway_size = False
     omic_stats_used = [True, True, True, True, True, True, True, True]
    
-    out_data, pathway_dict, dropdown_data, root_ids, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(target_level, up_down_reg_limits, False)
+    out_data, pathway_dict, dropdown_data, root_ids, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(up_down_reg_limits, False)
 
     pathway_connection_dict = get_overview_reactome(out_data)
     module_node_pos, module_areas = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
@@ -653,6 +653,22 @@ def reactome_overview(targetLevel):
     
     return json.dumps({'overviewData': out_data, 'moduleAreas': module_areas, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
+
+@app.route('/get_reactome_json_files/<pathway>', methods=['GET'])
+def get_reactome_json(pathway):
+    hierarchy = cache.get('reactome_hierarchy')
+    layout_json = hierarchy[pathway].layout_json_file
+    graph_json = hierarchy[pathway].graph_json_file
+    pathway_entry = hierarchy[pathway]
+    inset_pathways_totals = {}
+    inset_pathway_ID_transcriptomics = [ [k, v['stableID']] for k,v in pathway_entry.subdiagrams_measured_genes.items() ]
+    inset_pathway_ID_proteomics =[ [k, v['stableID']] for k,v in pathway_entry.subdiagrams_measured_proteins.items() ]
+    inset_pathway_ID_metabolomics =[ [k, v['stableID']] for k,v in pathway_entry.subdiagrams_measured_metabolites.items() ]
+
+    for inset_pathway in inset_pathway_ID_transcriptomics + inset_pathway_ID_proteomics + inset_pathway_ID_metabolomics:
+        inset_pathways_totals[inset_pathway[0]] = {'proteomics': len(hierarchy[inset_pathway[1]].total_proteins), 'metabolomics': len(hierarchy[inset_pathway[1]].total_metabolites), 'transcriptomics': len(hierarchy[inset_pathway[1]].total_proteins)}
+
+    return json.dumps({'layoutJson': layout_json, 'graphJson': graph_json, 'insetPathwayTotals': inset_pathways_totals})
 if __name__ == "__main__":
     app.run(host='localhost', port=8000, debug=True)
 

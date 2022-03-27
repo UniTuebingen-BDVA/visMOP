@@ -19,7 +19,7 @@
 <script lang="ts">
 import { mapState } from 'vuex'
 import OverviewGraph from '../core/overviewNetwork'
-import { generateGraphData } from '../core/overviewGraphPreparation'
+import { generateGraphData } from '../core/keggOverviewGraphPreparation'
 import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
 import Vue from 'vue'
 import Sigma from 'sigma'
@@ -39,7 +39,7 @@ interface Data{
 
 export default Vue.extend({
   // name of the component
-  name: 'OverviewComponent',
+  name: 'KeggOverviewComponent',
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({

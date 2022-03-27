@@ -39,6 +39,7 @@ interface State {
   overlay: unknown,
   graphData: unknown,
   fcs: { [key: string]: { transcriptomics: (string | number), proteomics: (string | number), metabolomics: (string | number)} },
+  fcsReactome: { transcriptomics: {[key: string]:number}, proteomics: {[key: string]:number}, metabolomics: {[key: string]:number}},
   fcQuantiles: {transcriptomics: [number, number], proteomics: [number, number], metabolomics: [number, number]},
   fcScales: {transcriptomics: d3.ScaleSequential<string, never>, proteomics: d3.ScaleSequential<string, never>, metabolomics: d3.ScaleSequential<string, never>}
   interactionGraphData: unknown,
@@ -75,6 +76,7 @@ export default new Vuex.Store({
     overlay: false,
     graphData: null,
     fcs: {},
+    fcsReactome: { transcriptomics: {}, proteomics: {}, metabolomics: {} },
     fcQuantiles: { transcriptomics: [0, 0], proteomics: [0, 0], metabolomics: [0, 0] },
     fcScales: { transcriptomics: d3.scaleSequential(), proteomics: d3.scaleSequential(), metabolomics: d3.scaleSequential() },
     interactionGraphData: null,
@@ -169,6 +171,9 @@ export default new Vuex.Store({
     SET_FCSCALES (state, val) {
       state.fcScales = val
     },
+    SET_FCSREACTOME (state, val) {
+      state.fcsReactome = val
+    },
     SET_PATHWAYLAYOUTING (state, val) {
       state.pathwayLayouting = val
     },
@@ -201,39 +206,55 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    addClickedNode ({ dispatch, state }, val: string) {
+    addClickedNode ({ dispatch, state }, val: {queryID: string, name: string}) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       // TODO multiIDs will not work at the moment
-      const keggIDs = val.split(';')
+      const keggIDs = val.queryID.split(';')
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
       keggIDs.forEach(element => {
         try {
           if (!enteredKeys.includes(element)) {
-            dispatch('appendClickedNode', element)
+            dispatch('appendClickedNode', val)
           }
         } catch (error) {
         }
       })
     },
     addClickedNodeFromTable ({ dispatch, state }, val: {[key: string]: string}) {
-      const symbolProt = val[state.usedSymbolCols.proteomics]
-      const keggID = state.proteomicsSymbolDict[symbolProt]
+      let id = val[state.usedSymbolCols.proteomics]
+      if (state.targetDatabase === 'kegg') {
+        id = state.proteomicsSymbolDict[id]
+      }
+      console.log(state.targetDatabase)
       const enteredKeys = state.clickedNodes.map(row => { return row.id })
       try {
-        if (!enteredKeys.includes(keggID)) {
-          dispatch('appendClickedNode', keggID)
+        if (!enteredKeys.includes(id)) {
+          dispatch('appendClickedNode', { queryID: id, name: '' })
         }
       } catch (error) {
       }
     },
-    appendClickedNode ({ commit, state }, val) {
-      const symbolProt = state.proteomicsKeggIDDict[val]
-      const symbolTrans = state.transcriptomicsKeggIDDict[val]
-      const tableEntry = { id: val, name: `${symbolTrans}/${symbolProt}`, fcTranscript: state.fcs[val].transcriptomics, fcProt: state.fcs[val].proteomics, delete: val }
+    appendClickedNode ({ commit, state }, val: {queryID: string, name: string}) {
+      let tableEntry = {}
+      if (state.targetDatabase === 'kegg') {
+        const symbolProt = state.proteomicsKeggIDDict[val.queryID]
+        const symbolTrans = state.transcriptomicsKeggIDDict[val.queryID]
+        tableEntry = { id: val, name: `${symbolTrans}/${symbolProt}`, fcTranscript: state.fcs[val.queryID].transcriptomics, fcProt: state.fcs[val.queryID].proteomics, delete: val }
+      }
+      if (state.targetDatabase === 'reactome') {
+        console.log('test', state.fcs)
+        tableEntry = { id: val.queryID, name: `${val.name}`, fcTranscript: -1, fcProt: state.fcsReactome.proteomics[val.queryID], delete: val }
+      }
       commit('APPEND_CLICKEDNODE', tableEntry)
     },
     queryEgoGraps ({ commit, state }, val) {
-      const ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggIDDict[elem.id] })
+      let ids: string[] = []
+      if (state.targetDatabase === 'kegg') {
+        ids = state.clickedNodes.map((elem) => { return state.proteomicsKeggIDDict[elem.id] })
+      }
+      if (state.targetDatabase === 'reactome') {
+        ids = state.clickedNodes.map((elem) => { return elem.id })
+      }
       fetch('/interaction_graph', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -347,20 +368,20 @@ export default new Vuex.Store({
       const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
       const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
-      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
-      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0]])
-      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+      const colorScaleTranscriptomics = d3.scaleDiverging(d => d3.interpolateRdBu(1 - d)).domain([quantTranscriptomics[0], quantTranscriptomics[0] < 0.0 ? 0.0 : 1.0, quantTranscriptomics[1]])
+      const colorScaleProteomics = d3.scaleDiverging(d => d3.interpolateRdBu(1 - d)).domain([quantProteomics[0], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantProteomics[1]])
+      const colorScaleMetabolomics = d3.scaleDiverging(d3.interpolatePRGn).domain([quantMetabolomics[0], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantMetabolomics[1]])
 
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
       commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
     },
-    setFCSReactome ({ commit }, val: {transcriptomics: number[], proteomics: number[], metabolomics: number[]}) {
-      commit('SET_FCS', val)
+    setFCSReactome ({ commit }, val: {transcriptomics: {[key: string]: number}, proteomics: {[key: string]: number}, metabolomics: {[key: string]: number}}) {
+      commit('SET_FCSREACTOME', val)
       console.log('fcs', val)
-      const fcsTranscriptomicsAsc = val.transcriptomics.sort((a, b) => a - b)
-      const fcsProteomicsAsc = val.proteomics.sort((a, b) => a - b)
-      const fcsMetabolomicsAsc = val.metabolomics.sort((a, b) => a - b)
-
+      const fcsTranscriptomicsAsc = Object.values(val.transcriptomics).sort((a, b) => a - b)
+      const fcsProteomicsAsc = Object.values(val.proteomics).sort((a, b) => a - b)
+      const fcsMetabolomicsAsc = Object.values(val.metabolomics).sort((a, b) => a - b)
+      console.log('metafc', fcsMetabolomicsAsc)
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
         const pos = (arr.length - 1) * q
@@ -376,9 +397,9 @@ export default new Vuex.Store({
       const quantProteomics = [quantile(fcsProteomicsAsc, 0.05), quantile(fcsProteomicsAsc, 0.95)]
       const quantMetabolomics = [quantile(fcsMetabolomicsAsc, 0.05), quantile(fcsMetabolomicsAsc, 0.95)]
 
-      const colorScaleTranscriptomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0]])
-      const colorScaleProteomics = d3.scaleSequential(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0]])
-      const colorScaleMetabolomics = d3.scaleSequential(d3.interpolatePRGn).domain(quantMetabolomics)
+      const colorScaleTranscriptomics = d3.scaleDiverging(d3.interpolateRdBu).domain([quantTranscriptomics[1], quantTranscriptomics[0] < 0.0 ? 0.0 : 1.0, quantTranscriptomics[0]])
+      const colorScaleProteomics = d3.scaleDiverging(d3.interpolateRdBu).domain([quantProteomics[1], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantProteomics[0]])
+      const colorScaleMetabolomics = d3.scaleDiverging(d3.interpolatePRGn).domain([quantMetabolomics[0], quantProteomics[0] < 0.0 ? 0.0 : 1.0, quantMetabolomics[1]])
 
       commit('SET_FCQUANTILES', { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics })
       commit('SET_FCSCALES', { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics })
@@ -409,7 +430,8 @@ export default new Vuex.Store({
       commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: nodePathwayDict, pathwayNodeDictionaryClean: pathwayNodeDictClean })
     },
     setPathwayLayoutingReactome ({ commit }, val: {pathwayList: string[], pathwayNodeDictionary: { [key: string]: string[]} }) {
-      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: val.pathwayNodeDictionary, pathwayNodeDictionaryClean: {} })
+      console.log('TESTEST', val.pathwayNodeDictionary)
+      commit('SET_PATHWAYLAYOUTING', { ...val, nodePathwayDictionary: val.pathwayNodeDictionary, pathwayNodeDictionaryClean: val.pathwayNodeDictionary })
     },
     focusPathwayViaOverview ({ commit }, val) {
       const valClean = val.replace('path:', '')
