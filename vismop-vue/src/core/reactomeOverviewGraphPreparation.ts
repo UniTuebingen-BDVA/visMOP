@@ -70,7 +70,7 @@ export function generateGraphData (
       graph.edges.push(currentEdge)
       addedEdges.push(currentEdge.key)
     }
-    for (const maplink of entry.maplinks) {
+    for (const [maplink, value] of Object.entries(entry.maplinks)) {
       if (!rootIds.includes(entry.pathwayId)) {
         for (const entryKey in nodeList) {
           const loopEntry = nodeList[entryKey]

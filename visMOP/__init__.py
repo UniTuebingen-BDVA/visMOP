@@ -499,7 +499,7 @@ def reactome_parsing():
     reactome_hierarchy = PathwayHierarchy()
     reactome_hierarchy.load_data(data_path / "reactome_data", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
-
+    reactome_hierarchy.set_omics_recieved(omics_recieved)
     ##
     # Add query Data to Hierarchy
     ##

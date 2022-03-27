@@ -366,7 +366,7 @@ class PathwayHierarchy(dict):
                     self._get_subtree_non_overview_recursion(elem, subtree)
 
 
-    def generate_overview_data(self, verbose, omic_limits):
+    def generate_overview_data(self, omic_limits, verbose):
         """ Generates data to be exported to the frontend
             Args:
                 verbose: boolean: If total proteins/metabolite ids should be transmitted
@@ -386,6 +386,7 @@ class PathwayHierarchy(dict):
         query_pathway_dict = {}
         pathway_dropdown = []
         root_ids = []
+        pathway_summary_stats_dict = {}
         
         for pathway in pathway_ids:
             entry = self[pathway]
@@ -394,7 +395,8 @@ class PathwayHierarchy(dict):
                 pathway_dropdown.append(dropdown_entry)
                 out_data.append( pathway_dict )
                 root_ids.append(entry.root_id)
-        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)) , pathway_summary_data, self.omics_recieved
+                pathway_summary_stats_dict[entry.reactome_sID] = pathway_summary_data
+        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index'), self.omics_recieved
 
 ###
 #Auxilliary Functions
@@ -455,17 +457,14 @@ def generate_overview_pathway_entry(entry, pathway_Id, query_pathway_dict, draw_
 
     # fill statistical datat for pathway 
     pathway_summary_data = []
-    pathway_summary_stats_dict = {}
-    num_entries = len(set(list(entry.measured_genes.keys()) + list(entry.measured_proteins.keys())+ list(entry.measured_metabolites.keys())))
-    values_per_omic = [entry.measured_genes.values(), entry.measured_proteins.values(), entry.measured_metabolites.values()]
+    num_entries = len(set(list(entry.total_measured_genes.keys()) + list(entry.total_measured_proteins.keys())+ list(entry.total_measured_metabolites.keys())))
+    values_per_omic = [entry.total_measured_genes.values(), entry.total_measured_proteins.values(), entry.total_measured_metabolites.values()]
     
-        
     for omic_recieved, omic_values_dict, limits in zip(omics_recieved, values_per_omic, omic_limits):
         if omic_recieved:
             omic_values = [vals['measurement'] for vals in omic_values_dict]
             pathway_summary_data += get_PathwaySummaryData_omic(num_entries, omic_values, limits)
     pathway_summary_data.append(num_entries)
-    pathway_summary_stats_dict[entry.reactome_sID] = pathway_summary_data
 
     for k in entry.total_measured_proteins:
         v = entry.total_measured_proteins[k]
@@ -491,7 +490,7 @@ def generate_overview_pathway_entry(entry, pathway_Id, query_pathway_dict, draw_
             query_pathway_dict[k].append(pathway_Id)
         else:
             query_pathway_dict[k] = [pathway_Id]
-    return pathway_dict, pathway_dropdown_entry, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index')
+    return pathway_dict, pathway_dropdown_entry, pathway_summary_data 
 
 def format_graph_json(graph_json_file):
     """ Formats .graph.json nodes to be easily accessible in dictionary form with
