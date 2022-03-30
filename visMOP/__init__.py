@@ -636,12 +636,19 @@ def reactome_overview():
    
     out_data, pathway_dict, dropdown_data, root_ids, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(up_down_reg_limits, False)
 
-    pathway_connection_dict = get_overview_reactome(out_data)
-    module_node_pos, module_areas = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
-    # with open('modul_layout.pkl', "rb") as f:
-    #      module_node_pos = pickle.load(f)
+    # pathway_connection_dict = get_overview_reactome(out_data)
+    # module_node_pos, module_areas = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
+    with open('modul_layout.pkl', "rb") as f:
+        module_node_pos = pickle.load(f)
+
+    with open('module_areas.pkl', "rb") as f:
+        module_areas = pickle.load(f)
+
     # a_file = open("modul_layout.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
+
+    # a_file = open("module_areas.pkl", "wb")
+    # pickle.dump(module_areas, a_file)
     # a_file.close()
     
     for pathway in out_data:

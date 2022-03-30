@@ -27,18 +27,16 @@ export function pfsPrime (
   options: { padding: number } = { padding: 0 }
 ): node[] {
   // TODO: add padding
+  console.log(moduleAreas)
   console.log('before', allNodes[0].attributes.x, allNodes[0].attributes.y)
   let updatedNodes = [] as node[]
   for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
-    console.log(curModuleNum, allNodes)
     const moduleNodes = []
     for (let index = 0; index < allNodes.length; index++) {
       const currentNode = allNodes[index]
       if (currentNode.attributes.modNum === curModuleNum) {
         moduleNodes.push(currentNode)
         // allNodes.splice(index, 1)
-      } else {
-        console.log(currentNode.key, currentNode.attributes.modNum)
       }
     }
 
@@ -49,41 +47,37 @@ export function pfsPrime (
     })
 
     verticalScan(moduleNodes)
-    let maxMinXY = [Infinity, -Infinity, Infinity, -Infinity] as number[]
+    normInArea(moduleNodes, moduleAreas[curModuleNum])
 
-    _.forEach(moduleNodes, n => {
-      n.attributes.up.x += n.attributes.size / (2 * redParam)
-      n.attributes.up.y += n.attributes.size / (2 * redParam)
-      // console.log('in')
-      maxMinXY = [Math.min(maxMinXY[0], n.attributes.up.x), Math.max(maxMinXY[1], n.attributes.up.x), Math.min(maxMinXY[2], n.attributes.up.y), Math.max(maxMinXY[3], n.attributes.up.y)]
-      // delete n.up;
-    })
-
-    _.forEach(moduleNodes, n => {
-      n.attributes.x = ((moduleAreas[curModuleNum][1] - moduleAreas[curModuleNum][0]) * (n.attributes.up.x - maxMinXY[0])) / (maxMinXY[1] - maxMinXY[0])
-      n.attributes.y = ((moduleAreas[curModuleNum][3] - moduleAreas[curModuleNum][2]) * (n.attributes.up.y - maxMinXY[2])) / (maxMinXY[2] - maxMinXY[3])
-      // delete n.up;
-    })
     updatedNodes = updatedNodes.concat(moduleNodes)
   }
-  let maxMinXY = [Infinity, -Infinity, Infinity, -Infinity] as number[]
+  let upupdatedNodes = [] as node[]
+  for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
+    const moduleNodes = []
+    for (let index = 0; index < updatedNodes.length; index++) {
+      const currentNode = updatedNodes[index]
+      if (currentNode.attributes.modNum === curModuleNum) {
+        moduleNodes.push(currentNode)
+        // allNodes.splice(index, 1)
+      }
+    }
+    verticalScan(moduleNodes)
 
-  _.forEach(updatedNodes, n => {
-    n.attributes.up.x += n.attributes.size / (2 * redParam)
-    n.attributes.up.y += n.attributes.size / (2 * redParam)
-    // console.log('in')
-    maxMinXY = [Math.min(maxMinXY[0], n.attributes.up.x), Math.max(maxMinXY[1], n.attributes.up.x), Math.min(maxMinXY[2], n.attributes.up.y), Math.max(maxMinXY[3], n.attributes.up.y)]
-    // delete n.up;
-  })
-  const borders = [-1, 1, -1, 1]
-  _.forEach(updatedNodes, n => {
-    n.attributes.x = ((borders[1] - borders[0]) * (n.attributes.up.x - maxMinXY[0])) / (maxMinXY[1] - maxMinXY[0])
-    n.attributes.y = ((borders[3] - borders[2]) * (n.attributes.up.y - maxMinXY[2])) / (maxMinXY[2] - maxMinXY[3])
-    // delete n.up;
-  })
-  console.log('last', allNodes)
-  console.log('after', updatedNodes[0].attributes.x, updatedNodes[0].attributes.y)
-  return updatedNodes
+    _.forEach(moduleNodes, n => {
+      n.attributes.up.gamma = 0
+    })
+    horizontalScan(moduleNodes)
+
+    normInArea(moduleNodes, moduleAreas[curModuleNum])
+
+    upupdatedNodes = upupdatedNodes.concat(moduleNodes)
+  }
+
+  // const wholeArea = [-1, 1, -1, 1]
+
+  // normInArea(updatedNodes, wholeArea)
+  console.log('after', upupdatedNodes[0].attributes.x, upupdatedNodes[0].attributes.y)
+  return upupdatedNodes
 }
 
 // export default PFSPAlgorithm;
@@ -101,6 +95,22 @@ function sameX (nodes: node[], i: number): number {
   return index
 }
 
+function normInArea (nodes: node[], area: number[]) {
+  let maxMinXY = [Infinity, -Infinity, Infinity, -Infinity] as number[]
+  _.forEach(nodes, n => {
+    n.attributes.up.x += n.attributes.size / (2 * redParam)
+    n.attributes.up.y += n.attributes.size / (2 * redParam)
+    // console.log('in')
+    maxMinXY = [Math.min(maxMinXY[0], n.attributes.up.x), Math.max(maxMinXY[1], n.attributes.up.x), Math.min(maxMinXY[2], n.attributes.up.y), Math.max(maxMinXY[3], n.attributes.up.y)]
+    // delete n.up;
+  })
+
+  _.forEach(nodes, n => {
+    n.attributes.x = area[0] + (((area[1] - area[0]) * (n.attributes.up.x - maxMinXY[0])) / (maxMinXY[1] - maxMinXY[0]))
+    n.attributes.y = area[2] + (((area[3] - area[2]) * (n.attributes.up.y - maxMinXY[2])) / (maxMinXY[3] - maxMinXY[2]))
+    // delete n.up;
+  })
+}
 /**
  *
  * @param {Array.<node>} nodes list of nodes

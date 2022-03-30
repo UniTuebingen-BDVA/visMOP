@@ -10,6 +10,7 @@ import drawHover from '@/core/customHoverRenderer'
 import store from '@/store'
 import { DEFAULT_SETTINGS } from 'sigma/settings'
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path'
+import * as d3 from 'd3'
 
 export default class overviewGraph {
   private currentPathway = '';
@@ -32,7 +33,17 @@ export default class overviewGraph {
     console.log(graphData)
 
     // select target div and initialize graph
-    const elem = document.getElementById(elemID) as HTMLElement
+    const elem = document.getElementById(elemID) as HTMLCanvasElement
+    // draw rectangle per cluster
+    // const ctx = elem.getContext('2d') as CanvasRenderingContext2D
+    // ctx.rect(20, 20, 100, 100)
+    // ctx.fill()
+    // Blue rectangle
+    // ctx.beginPath()
+    // ctx.lineWidth = 10
+    // ctx.strokeStyle = 'blue'
+    // ctx.rect(50, 50, 150, 80)
+    // ctx.stroke()
     const graph = UndirectedGraph.from(graphData)
     // console.log('NODES', graph.nodes())
     // noverlap.assign(graph)
