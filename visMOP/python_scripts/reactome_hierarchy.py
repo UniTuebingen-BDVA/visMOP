@@ -127,13 +127,13 @@ class PathwayHierarchy(dict):
             for key in current_level_ids:
                 entry = self[key]
                 if entry.has_diagram:
-                    with open(json_path / (key+'.json')) as fh:
+                    with open(json_path / (key+'.json'), encoding="utf8") as fh:
                         json_file = json.load(fh)
                         entry.layout_json_file = json_file
                         entry.name = json_file['displayName']
 
                 if entry.has_diagram:
-                    with open(json_path / (key+'.graph.json')) as fh:
+                    with open(json_path / (key+'.graph.json'), encoding="utf8") as fh:
                         json_file = json.load(fh)
                         json_file = format_graph_json(json_file)
                         entry.graph_json_file = json_file

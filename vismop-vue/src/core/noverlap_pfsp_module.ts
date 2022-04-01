@@ -14,12 +14,12 @@ import _ from 'lodash'
 import { node, CartesianVector } from '@/core/graphTypes'
 const redParam = 1
 /**
- * Executes the Push Force Scan' (PFS') algorithm on this graph
- *
- * @param {Array.<node>} nodes graph to update
- * @param {object} [options] options
- * @param {number} options.padding padding to add between nodes
- */
+  * Executes the Push Force Scan' (PFS') algorithm on this graph
+  *
+  * @param {Array.<node>} nodes graph to update
+  * @param {object} [options] options
+  * @param {number} options.padding padding to add between nodes
+  */
 export function pfsPrime (
   allNodes: node[],
   maxModuleNum: number,
@@ -29,32 +29,68 @@ export function pfsPrime (
   // TODO: add padding
   console.log(moduleAreas)
   console.log('before', allNodes[0].attributes.x, allNodes[0].attributes.y)
+  let updatedNodes = [] as node[]
+  for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
+    const moduleNodes = []
+    for (let index = 0; index < allNodes.length; index++) {
+      const currentNode = allNodes[index]
+      if (currentNode.attributes.modNum === curModuleNum) {
+        moduleNodes.push(currentNode)
+        // allNodes.splice(index, 1)
+      }
+    }
 
-  horizontalScan(allNodes)
+    horizontalScan(moduleNodes)
 
-  _.forEach(allNodes, n => {
-    n.attributes.up.gamma = 0
-  })
+    _.forEach(moduleNodes, n => {
+      n.attributes.up.gamma = 0
+    })
 
-  verticalScan(allNodes)
-  _.forEach(allNodes, n => {
-    n.attributes.x = n.attributes.up.x - n.attributes.size / (2 * redParam)
-    n.attributes.y = n.attributes.up.y - n.attributes.size / (2 * redParam)
-    // delete n.up;
-  })
+    verticalScan(moduleNodes)
+
+    // _.forEach(moduleNodes, n => {
+    //   n.attributes.x = n.attributes.up.x + n.attributes.size / (2 * redParam)
+    //   n.attributes.y = n.attributes.up.y + n.attributes.size / (2 * redParam)
+    // })
+    normInArea(moduleNodes, moduleAreas[curModuleNum])
+
+    updatedNodes = updatedNodes.concat(moduleNodes)
+  }
+  //   let upupdatedNodes = [] as node[]
+  //   for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
+  //     const moduleNodes = []
+  //     for (let index = 0; index < updatedNodes.length; index++) {
+  //       const currentNode = updatedNodes[index]
+  //       if (currentNode.attributes.modNum === curModuleNum) {
+  //         moduleNodes.push(currentNode)
+  //         // allNodes.splice(index, 1)
+  //       }
+  //     }
+  //     horizontalScan(moduleNodes)
+
+  //     _.forEach(moduleNodes, n => {
+  //       n.attributes.up.gamma = 0
+  //     })
+  //     verticalScan(moduleNodes)
+
+  //     normInArea(moduleNodes, moduleAreas[curModuleNum])
+
+  //     upupdatedNodes = upupdatedNodes.concat(moduleNodes)
+  //   }
+
   // const wholeArea = [-1, 1, -1, 1]
 
   // normInArea(updatedNodes, wholeArea)
-  console.log('after', allNodes[0].attributes.x, allNodes[0].attributes.y)
-  return allNodes
+  console.log('after', updatedNodes[0].attributes.x, updatedNodes[0].attributes.y)
+  return updatedNodes
 }
 
 // export default PFSPAlgorithm;
 /**
- *
- * @param {Array.<node>} nodes list of nodes
- * @param {number} i index
- */
+  *
+  * @param {Array.<node>} nodes list of nodes
+  * @param {number} i index
+  */
 function sameX (nodes: node[], i: number): number {
   let index = i
   for (; index < nodes.length - 1; index++) {
@@ -65,6 +101,16 @@ function sameX (nodes: node[], i: number): number {
 }
 
 function normInArea (nodes: node[], area: number[]) {
+  const maxMinXY = setXY(nodes)
+
+  _.forEach(nodes, n => {
+    n.attributes.x = area[0] + (((area[1] - area[0]) * (n.attributes.up.x - maxMinXY[0])) / (maxMinXY[1] - maxMinXY[0]))
+    n.attributes.y = area[2] + (((area[3] - area[2]) * (n.attributes.up.y - maxMinXY[2])) / (maxMinXY[3] - maxMinXY[2]))
+    // delete n.up;
+  })
+}
+
+function setXY (nodes: node[]) {
   let maxMinXY = [Infinity, -Infinity, Infinity, -Infinity] as number[]
   _.forEach(nodes, n => {
     n.attributes.up.x += n.attributes.size / (2 * redParam)
@@ -73,18 +119,13 @@ function normInArea (nodes: node[], area: number[]) {
     maxMinXY = [Math.min(maxMinXY[0], n.attributes.up.x), Math.max(maxMinXY[1], n.attributes.up.x), Math.min(maxMinXY[2], n.attributes.up.y), Math.max(maxMinXY[3], n.attributes.up.y)]
     // delete n.up;
   })
-
-  _.forEach(nodes, n => {
-    n.attributes.x = area[0] + (((area[1] - area[0]) * (n.attributes.up.x - maxMinXY[0])) / (maxMinXY[1] - maxMinXY[0]))
-    n.attributes.y = area[2] + (((area[3] - area[2]) * (n.attributes.up.y - maxMinXY[2])) / (maxMinXY[3] - maxMinXY[2]))
-    // delete n.up;
-  })
+  return maxMinXY
 }
 /**
- *
- * @param {Array.<node>} nodes list of nodes
- * @param {number} i index
- */
+  *
+  * @param {Array.<node>} nodes list of nodes
+  * @param {number} i index
+  */
 function sameY (nodes: node[], i: number): number {
   let index = i
   for (; index < nodes.length - 1; index++) {
@@ -94,9 +135,9 @@ function sameY (nodes: node[], i: number): number {
   return index
 }
 /**
- * smallest x belonging to the node list (the left border of the label box)
- * @param {Array.<node>}, node
- */
+  * smallest x belonging to the node list (the left border of the label box)
+  * @param {Array.<node>}, node
+  */
 // export function minX(nodes: node[]): node;
 export function minXY (node: node | node[], xy: string): any {
   if (node instanceof Array) {
@@ -109,8 +150,8 @@ export function minXY (node: node | node[], xy: string): any {
 }
 
 /** biggest x belonging to the node list (the rigth border of the label box)
- * @param {Array.<node>}
- */
+  * @param {Array.<node>}
+  */
 // export function maxX(nodes: node[]): node;
 export function maxXY (node: node | node[], xy: string): any {
   if (node instanceof Array) {
@@ -124,9 +165,9 @@ export function maxXY (node: node | node[], xy: string): any {
 }
 
 /**
- *
- * @param {Array.<node>} nodes node list
- */
+  *
+  * @param {Array.<node>} nodes node list
+  */
 function horizontalScan (nodes: Array<node>) {
   nodes.sort((a, b) => a.attributes.x - b.attributes.x)
   let i = 0
@@ -184,9 +225,9 @@ function horizontalScan (nodes: Array<node>) {
 }
 
 /**
- *
- * @param {Array.<node>} nodes node list
- */
+  *
+  * @param {Array.<node>} nodes node list
+  */
 function verticalScan (nodes: Array<node>) {
   nodes.sort((a, b) => a.attributes.y - b.attributes.y)
 
@@ -243,30 +284,30 @@ function verticalScan (nodes: Array<node>) {
   }
 }
 /**
- * @param {node} p1
- * @param {node} p2
- *
- * @returns {number} the delta (x axis) between two points
- */
+  * @param {node} p1
+  * @param {node} p2
+  *
+  * @returns {number} the delta (x axis) between two points
+  */
 export function deltaX (p1: node, p2: node): number {
   return p2.attributes.x - p1.attributes.x
 }
 
 /**
- * @param {node} p1
- * @param {node} p2
- *
- * @returns {number} the delta (y axis) between two points
- */
+  * @param {node} p1
+  * @param {node} p2
+  *
+  * @returns {number} the delta (y axis) between two points
+  */
 export function deltaY (p1: node, p2: node): number {
   return p2.attributes.y - p1.attributes.y
 }
 
 /**
- *
- * @param {node} vi
- * @param {node} vj
- */
+  *
+  * @param {node} vi
+  * @param {node} vj
+  */
 function force (vi: node, vj: node): CartesianVector {
   const f = { x: 0, y: 0 }
 

@@ -10,7 +10,7 @@ import {
   upDatedPos
 } from '@/core/graphTypes'
 import store from '@/store'
-import { pfsPrime } from '@/core/noverlap_pfsp'
+import { pfsPrime } from '@/core/noverlap_pfsp_module'
 import { vpsc } from '@/core/noverlap_vpsc'
 
 /**
