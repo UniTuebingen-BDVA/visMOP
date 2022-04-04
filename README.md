@@ -66,7 +66,7 @@ python ./visMOP/python_scripts/reactome_mapping.py ./reactome_data UniProt2React
 ```
 and repeat for the other (UniProt, ChEBI) files.
 
-### Dev Notes:
+## Dev Notes:
 Export envs with either:
 ```
 conda env export > environment.yml
@@ -77,3 +77,6 @@ or for pip:
 ```
 pip list --format=freeze > requirements.txt
 ```
+### Unit Test:
+Python: ```pytest```
+Typescript: ```npm run test```
