@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
+    "resolveJsonModule": true,
     "target": "esnext",
-    "module": "esnext",
+    "module": "commonjs", // was "esnext" but this didnt work with mocha
     "strict": true,
     "jsx": "preserve",
     "importHelpers": true,
@@ -12,7 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": ["webpack-env"],
+    "types": ["webpack-env", "mocha", "chai"],
     "paths": {
       "@/*": ["src/*"]
     },
