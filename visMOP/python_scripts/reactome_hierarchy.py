@@ -639,8 +639,6 @@ def _occurrences_recursive_graph_json(intermediate_node_dict, entry_id, occurren
             occurrences[entry['dbId']] = {'internalID': entry['dbId'], 'stableID': entry['stId']}
             for elem in entry['parents']:
                 _occurrences_recursive_graph_json(intermediate_node_dict, elem, occurrences)
-    else:
-        print('end recursion')
 
 def get_leaves_graph_json(intermediate_node_dict, entry_id):
     """ Gets leaves of an .graph.json entry

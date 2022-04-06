@@ -2,12 +2,12 @@ from html import entities
 import pathlib
 import pytest
 
-from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
+from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy, get_occurrences_graph_json
 
 data_path = pathlib.Path().resolve()
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(scope="module")
 def hierarchy():
     """ Generate hierarchy as fixture for the unit tests"""
     target_db = 'MMU'
@@ -62,19 +62,44 @@ class TestGetSubtreeNonOverview():
         assert set(non_overview_diagrams) == set(hierarchy.get_subtree_non_overview('R-MMU-9716542')) # check if results contain the same pathways
 class TestFindDiagram():
     def test_already_at_diagram(self, hierarchy):
+        """test case where target already has a diagram"""
         entries = []
         hierarchy._find_diagram_recursion('R-MMU-9717189', entries, 0)
         true_diagram_parent = [('R-MMU-9717189', 0)]
         assert true_diagram_parent == entries
     
     def test_simple_example(self, hierarchy):
+        """test case where direct parent has a diagram"""
         entries = []
         hierarchy._find_diagram_recursion('R-MMU-9730628', entries, 0)
         true_diagram_parent = [('R-MMU-9717189', 1)]
         assert true_diagram_parent == entries
 
     def test_branch_example(self, hierarchy):
+        """test where mutiple diagram parents should be found"""
         entries = []
         hierarchy._find_diagram_recursion('R-MMU-162699', entries, 0)
         true_diagram_parents = [('R-MMU-163125', 1), ('R-MMU-446203', 3)]
         assert set(true_diagram_parents) == set(entries)
+
+class TestFindOccurences():
+    @pytest.fixture(scope="class")
+    def get_intermediate_node_dict(self, hierarchy):
+        yield hierarchy["R-MMU-68884"].graph_json_file['nodes']
+
+    def test_no_parents(self, get_intermediate_node_dict):
+        """test case with no parents"""
+        expected_result = {9768535: {'internalID': 9768535, 'stableID': 'R-MMU-156721'}}        
+        assert expected_result == get_occurrences_graph_json(get_intermediate_node_dict, 9768535)
+
+    def test_with_parents(self, get_intermediate_node_dict):
+        """test case with multiple parents"""
+        expected_result = {
+            912410: {'internalID': 912410, 'stableID': 'R-MMU-912410'},
+            9820451:  {'internalID': 9820451, 'stableID': 'R-MMU-1641505'},
+            9820461:  {'internalID': 9820461, 'stableID': 'R-MMU-2468042'},
+            9820523:  {'internalID': 9820523, 'stableID': 'R-MMU-2470943'},
+            9820527:  {'internalID': 9820527, 'stableID': 'R-MMU-2537688'},
+            9820525:  {'internalID': 9820525, 'stableID': 'R-MMU-2470928'},
+        }
+        assert expected_result == get_occurrences_graph_json(get_intermediate_node_dict, 912410)
