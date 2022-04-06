@@ -4,8 +4,8 @@
 import { AbstractNodeProgram } from 'sigma/rendering/webgl/programs/common/node'
 import { SplitNodeDisplayData } from './types'
 import { floatColor } from 'sigma/utils'
-import vertexShaderSource from './square-node-vertex-shader.glsl'
-import fragmentShaderSource from './square-node-fragment-shader.glsl'
+import vertexShaderSource from './square-node-vertex-shader.glsl?raw'
+import fragmentShaderSource from './square-node-fragment-shader.glsl?raw'
 import { RenderParams } from 'sigma/rendering/webgl/programs/common/program'
 
 const POINTS = 1

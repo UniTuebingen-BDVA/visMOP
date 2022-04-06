@@ -21,7 +21,8 @@ import { mapState } from 'vuex'
 import OverviewGraph from '../core/overviewNetwork'
 import { generateGraphData } from '../core/keggOverviewGraphPreparation'
 import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
-import Vue from 'vue'
+import {defineComponent} from 'vue'
+import vue from 'vue'
 import Sigma from 'sigma'
 
 interface Data{
@@ -37,7 +38,7 @@ interface Data{
   metabolomicsUnion: string[]
 }
 
-export default Vue.extend({
+export default new vue({
   // name of the component
   name: 'KeggOverviewComponent',
 

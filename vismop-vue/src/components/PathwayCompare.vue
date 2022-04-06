@@ -63,15 +63,17 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import * as d3 from 'd3'
+import vue from 'vue'
+
 
 interface Data {
   tableSearch: string;
   model: null;
 }
 
-export default Vue.extend({
+export default new vue({
   // name of the component
   name: 'PathwayCompare',
 

@@ -38,8 +38,10 @@
 import { mapState } from 'vuex'
 import DetailNetwork from '../core/keggDetailView'
 import { generateGraphData } from '../core/detailGraphPreparation'
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import Sigma from 'sigma'
+import vue from 'vue'
+
 
 interface Data{
   mutationObserver: (MutationObserver | undefined)
@@ -52,7 +54,7 @@ interface Data{
   minimizeButton: boolean
 }
 
-export default Vue.extend({
+export default new vue({
   // name of the component
   name: 'KeggDetailComponent',
 

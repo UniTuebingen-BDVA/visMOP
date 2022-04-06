@@ -49,14 +49,16 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import Vue from 'vue'
+import { defineComponent } from 'vue'
+import vue from 'vue'
+
 
 interface Data {
   tableSearch: string;
   selectedNodesHeader: {value: string; text: string}[]
 }
 
-export default Vue.extend({
+export default new vue({
   // name of the component
   name: 'InteractionGraphTable',
 

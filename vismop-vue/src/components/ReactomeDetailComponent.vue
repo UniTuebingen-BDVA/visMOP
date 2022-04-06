@@ -40,7 +40,9 @@ import ReactomeDetailView from '../core/reactomeDetailView'
 import { graphJSON, layoutJSON, foldChangesByType, foldChangesByID } from '../core/reactomeTypes'
 import { glyphData } from '../core/overviewGlyph'
 import { getEntryAmounts } from '../core/reactomeUtils'
-import Vue from 'vue'
+import { defineComponent } from 'vue'
+import vue from 'vue'
+
 
 interface Data{
   mutationObserver: (MutationObserver | undefined)
@@ -57,7 +59,7 @@ interface Data{
 
 }
 
-export default Vue.extend({
+export default new vue({
   // name of the component
   name: 'ReactomeDetailComponent',
 

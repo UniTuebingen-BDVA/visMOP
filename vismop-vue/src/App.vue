@@ -27,7 +27,7 @@
           <v-img
             class="shrink mr-2"
             contain
-            :src="require('./assets/vmod_icon.svg')"
+            :src="svgIcon"
             transition="scale-transition"
             width="40"
           />
@@ -51,7 +51,7 @@
         <v-img
           class="shrink mr-2"
           contain
-          :src="require('./assets/vmod_icon.svg')"
+          :src="svgIcon"
           transition="scale-transition"
           width="40"
         />
@@ -107,11 +107,12 @@
   </v-app>
 </template>
 <script lang="ts">
-
-import Vue from 'vue'
 import MainPage from './components/MainPage.vue'
 import SideBar from './components/Sidebar.vue'
-export default Vue.extend({
+import svgIcon from './assets/vmod_icon.svg'
+import { defineComponent } from 'vue'
+import vue from 'vue'
+export default new vue({
   name: 'App',
 
   components: {
@@ -121,7 +122,8 @@ export default Vue.extend({
   data: () => ({
     drawer: true,
     navbarKey: true,
-    infoDialog: false
+    infoDialog: false,
+    svgIcon: svgIcon
   }),
   methods: {
 

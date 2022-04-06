@@ -18,7 +18,7 @@ import sys
 import numbers
 import secrets
 from flask_caching import Cache
-app = Flask(__name__, static_folder = "../dist/static", template_folder="../dist")
+app = Flask(__name__, static_folder = "../dist/assets", template_folder="../dist")
 
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()

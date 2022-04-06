@@ -242,10 +242,12 @@ import KeggDetailComponent from './KeggDetailComponent.vue'
 import ReactomeDetailComponent from './ReactomeDetailComponent.vue'
 import KeggOverviewComponent from './KeggOverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
 import PathwayCompare from './PathwayCompare.vue'
 import ReactomeOverviewComponent from './ReactomeOverviewComponent.vue'
+import vue from 'vue'
+
 
 interface Data{
   tableSearch: string
@@ -261,7 +263,7 @@ interface Data{
   selectedMetabolomics: { [key: string]: string }[]
 }
 
-export default Vue.extend({
+export default new vue({
   components: { KeggDetailComponent, ReactomeDetailComponent, KeggOverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, ReactomeOverviewComponent },
   // name of the component
   name: 'MainPage',

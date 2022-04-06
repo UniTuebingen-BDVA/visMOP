@@ -203,8 +203,10 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import { Function } from 'lodash'
+import vue from 'vue'
+
 
 interface Data{
   overlay: boolean,
@@ -232,7 +234,7 @@ interface Data{
   sheetRules(value: string): boolean | string
 }
 
-export default Vue.extend({
+export default new vue({
   name: 'SideBar',
   components: {},
 

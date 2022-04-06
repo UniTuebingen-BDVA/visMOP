@@ -33,7 +33,8 @@
 <script lang="ts">
 import { mapState } from 'vuex'
 import { generateInteractionGraph } from '../core/interactionGraph'
-import Vue from 'vue'
+import { defineComponent } from 'vue'
+import vue from 'vue'
 import Sigma from 'sigma'
 
 interface Data {
@@ -41,7 +42,7 @@ interface Data {
   interactionGraph: Sigma | undefined;
 }
 
-export default Vue.extend({
+export default new vue({
   // name of the component
   name: 'InteractionGraph',
 
