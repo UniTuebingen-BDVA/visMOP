@@ -1,24 +1,24 @@
 
 <template>
         <div>
-          <v-card class="inputTable">
-            <v-card-title>
-              <v-row align="center">
-                 <v-col cols="5">Selected Nodes</v-col>
-                <v-col cols="7">
-                  <v-text-field
+          <q-card class="inputTable">
+            <div>
+              <div class="row" align="center">
+                 <div class="col-5">Selected Nodes</div>
+                <div class="col-7">
+                  <q-input
                     class="pt-0"
                     v-model="tableSearch"
                     append-icon="mdi-magnify"
                     label="Search"
                     single-line
                     hide-details
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-            </v-card-title>
+                  ></q-input>
+                </div>
+              </div>
+            </div>
 
-            <v-data-table
+            <q-table
               dense
               :headers="selectedNodesHeader"
               :items="clickedNodes"
@@ -28,22 +28,22 @@
               id="selectedNodes"
             >
               <template v-slot:[`item.fcTranscript`]="{ item }">
-                <v-chip :color="fcScales.transcriptomics(item.fcTranscript)" dark>
+                <q-chip :color="fcScales.transcriptomics(item.fcTranscript)" dark>
                   {{ parseFloat(item.fcTranscript).toFixed(3) }}
-                </v-chip>
+                </q-chip>
               </template>
               <template v-slot:[`item.fcProt`]="{ item }">
-                <v-chip :color="fcScales.proteomics(item.fcProt)" dark>
+                <q-chip :color="fcScales.proteomics(item.fcProt)" dark>
                   {{ parseFloat(item.fcProt).toFixed(3) }}
-                </v-chip>
+                </q-chip>
               </template>
               <template v-slot:[`item.delete`]="{ item }">
-                <v-icon dark left color="red" @click="deleteRow(item.id)">
+                <q-icon dark left color="red" @click="deleteRow(item.id)">
                   mdi-close
-                </v-icon>
+                </q-icon>
               </template>
-            </v-data-table>
-          </v-card>
+            </q-table>
+          </q-card>
         </div>
 </template>
 

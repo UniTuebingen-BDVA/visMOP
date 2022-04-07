@@ -1,3 +1,4 @@
+/*
 .webglContainer {
   height: 75vh;
   min-height: 75vh;
@@ -38,15 +39,11 @@
 }
 .expandButton{
   z-index:4;
-  /*position: absolute;
   bottom: 2vh;
-  left: 2vh;*/
+  left: 2vh;
 }
 .minimizeButton{
   z-index:4;
-  /*position: absolute;
-  top: 8vh;
-  right: 2vh;*/
 }
 .webglContainerSmall {
   height: 20vh;
@@ -87,7 +84,6 @@
 }
 
 .prot {
-  /*border: 1px solid #ccc;*/
   display: block;
   padding: 10px;
   box-sizing: border-box;
@@ -118,9 +114,9 @@
   background-color: darkgrey;
 }
 
-/*
-Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
-*/
+
+//Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
+
 .range-wrap {
   position: relative;
   margin: 0 auto 3rem;
@@ -165,7 +161,7 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
   height: 15%;
 }
 
-.scrollableTable .v-data-table__wrapper{
+.scrollableTable .q-table__wrapper{
   scrollbar-width: thin;
   overflow-y: scroll;
   max-height: 60vh;
@@ -185,7 +181,6 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 }
 
 .nodeText{
-  /*mix-blend-mode: difference;*/
   stroke: white;
   stroke-width: 4;
   fill: black;
@@ -196,3 +191,4 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 .nodeG{
   fill: white
 }
+*/

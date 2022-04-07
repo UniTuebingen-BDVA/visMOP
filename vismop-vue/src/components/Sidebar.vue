@@ -1,79 +1,82 @@
 <template>
-  <v-list nav dense>
-    <v-select
-      :items="targetDatabases"
+  <q-list nav dense>
+    <q-select
+      :options="targetDatabases"
       label="Target Database"
       v-model="targetDatabase"
-      item-text="text"
-      item-value="value"
+      option-label="text"
+      option-value="value"
       v-on:change="setTargetDatabase"
-      @click="lockHover"
-      @input="unlockHover"
-    ></v-select>
-    <v-select
-      :items="targetOrganisms"
+    ></q-select>
+    <q-select
+      :options="targetOrganisms"
       label="Target Organism"
       v-model="targetOrganism"
-      @click="lockHover"
-      @input="unlockHover"
-    ></v-select>
+      option-label="text"
+      option-value="value"
+    ></q-select>
       Selected Omics:
       {{ chosenOmics.length }}
-    <v-chip-group active-class="primary--text" column>
-      <v-chip
+    <!--
+    <q-chip-group active-class="primary--text" column>
+      <q-chip
         v-for="variable in chosenOmics"
         :key="variable"
       >
         {{ variable }}
-      </v-chip>
-    </v-chip-group>
-    <v-expansion-panels>
-      <v-expansion-panel>
-        <v-expansion-panel-title>
-          Transcriptomics Data
-        </v-expansion-panel-title>
-        <v-expansion-panel-text>
-          <v-file-input
+      </q-chip>
+    </q-chip-group>
+    -->
+    <q-list>
+      <q-expansion-item
+        label = "Transcriptomics Data"
+      >
+        <q-card>
+          <q-file
             v-on:update:modelValue="fetchTranscriptomicsTable"
             v-model="transcriptomicsFile"
             chips
             label=".xlsx File Input"
-          ></v-file-input>
+          ></q-file>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disabled="overlay"></v-text-field>
+          <q-input :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disabled="overlay"></q-input>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-select
-            :items="transcriptomicsTableHeaders"
+          <q-select
+            :options="transcriptomicsTableHeaders"
             v-model="transcriptomicsSymbolCol"
+            option-label="label"
+            option-value="name"
             label="Genesymbol Col."
             @click="lockHover"
             @input="unlockHover"
-          ></v-select>
+          ></q-select>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-select
-            :items="transcriptomicsTableHeaders"
+          <q-select
+            :options="transcriptomicsTableHeaders"
             v-model="transcriptomicsValueCol"
+            option-label="label"
+            option-value="name"
             label="Value Col."
             @click="lockHover"
             @input="unlockHover"
-          ></v-select>
-          <v-spacer></v-spacer>
+          ></q-select>
+          <q-separator></q-separator>
           Input Filter:
-          <v-row
+          <div class="row"
             v-for="variable in sliderTranscriptomics"
             :key="variable.text"
           >
-            <v-checkbox
+            <q-checkbox
               v-model="sliderVals.transcriptomics[variable.text].empties"
               :label="'Empties'"
-            ></v-checkbox>
-            <v-range-slider
+            ></q-checkbox>
+            <q-range
               v-model="sliderVals.transcriptomics[variable.text].vals"
               :max="variable.max"
               :min="variable.min"
@@ -82,54 +85,59 @@
               thumb-label
               persistent-hint
             >
-            </v-range-slider>
-          </v-row>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel>
-        <v-expansion-panel-title> Proteomics Data </v-expansion-panel-title>
-         <v-expansion-panel-text>
-          <v-file-input
+            </q-range>
+          </div>
+        </q-card>
+      </q-expansion-item>
+      <q-expansion-item
+        label="Proteomics Data"
+      >
+         <q-card>
+          <q-file
             v-on:update:modelValue="fetchProteomicsTable"
             v-model="proteomicsFile"
             chips
             label=".xlsx File Input"
-          ></v-file-input>
+          ></q-file>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disabled="overlay"></v-text-field>
+          <q-input :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disabled="overlay"></q-input>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-select
-            :items="proteomicsTableHeaders"
+          <q-select
+            :options="proteomicsTableHeaders"
             v-model="proteomicsSymbolCol"
             label="Symbol Col."
+            option-label="label"
+            option-value="name"
             @click="lockHover"
             @input="unlockHover"
-          ></v-select>
+          ></q-select>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-select
-            :items="proteomicsTableHeaders"
+          <q-select
+            :options="proteomicsTableHeaders"
             v-model="proteomicsValueCol"
+            option-label="label"
+            option-value="name"
             label="Value Col."
             @click="lockHover"
             @input="unlockHover"
-          ></v-select>
-          <v-spacer></v-spacer>
+          ></q-select>
+          <q-separator></q-separator>
           Input Filter:
-           <v-row
+           <div class="row"
             v-for="variable in sliderProteomics"
             :key="variable.text"
           >
-            <v-checkbox
+            <q-checkbox
               v-model="sliderVals.proteomics[variable.text].empties"
               :label="'Empties'"
-            ></v-checkbox>
-            <v-range-slider
+            ></q-checkbox>
+            <q-range
               v-model="sliderVals.proteomics[variable.text].vals"
               :max="variable.max"
               :min="variable.min"
@@ -138,54 +146,59 @@
               thumb-label
               persistent-hint
             >
-            </v-range-slider>
-          </v-row>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-      <v-expansion-panel>
-        <v-expansion-panel-title> Metabolomics Data </v-expansion-panel-title>
-         <v-expansion-panel-text>
-          <v-file-input
+            </q-range>
+          </div>
+        </q-card>
+      </q-expansion-item>
+      <q-expansion-item
+        label="Metabolomics Data"
+      >
+         <q-card>
+          <q-file
             v-on:update:modelValue="fetchMetabolomicsTable"
             v-model="metabolomicsFile"
             chips
             label=".xlsx File Input"
-          ></v-file-input>
+          ></q-file>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-text-field :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disabled="overlay"></v-text-field>
+          <q-input :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disabled="overlay"></q-input>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-select
-            :items="metabolomicsTableHeaders"
+          <q-select
+            :options="metabolomicsTableHeaders"
             v-model="metabolomicsSymbolCol"
+            option-label="label"
+            option-value="name"
             label="Symbol Col."
             @click="lockHover"
             @input="unlockHover"
-          ></v-select>
+          ></q-select>
 
-          <v-spacer></v-spacer>
+          <q-separator></q-separator>
 
-          <v-select
-            :items="metabolomicsTableHeaders"
+          <q-select
+            :options="metabolomicsTableHeaders"
             v-model="metabolomicsValueCol"
+            option-label="label"
+            option-value="name"
             label="Value Col."
             @click="lockHover"
             @input="unlockHover"
-          ></v-select>
-          <v-spacer></v-spacer>
+          ></q-select>
+          <q-separator></q-separator>
           Input Filter:
-          <v-row
+          <div class="row"
             v-for="variable in sliderMetabolomics"
             :key="variable.text"
           >
-            <v-checkbox
+            <q-checkbox
               v-model="sliderVals.metabolomics[variable.text].empties"
               :label="'Empties'"
-            ></v-checkbox>
-            <v-range-slider
+            ></q-checkbox>
+            <q-range
               v-model="sliderVals.metabolomics[variable.text].vals"
               :max="variable.max"
               :min="variable.min"
@@ -194,13 +207,13 @@
               thumb-label
               persistent-hint
             >
-            </v-range-slider>
-          </v-row>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-    </v-expansion-panels>
-    <v-btn v-on:click="dataQuery">Plot</v-btn>
-  </v-list>
+            </q-range>
+          </div>
+        </q-card>
+      </q-expansion-item>
+    </q-list>
+    <q-btn v-on:click="dataQuery">Plot</q-btn>
+  </q-list>
 </template>
 
 <script lang="ts">
@@ -393,7 +406,7 @@ export default {
 
   watch: {
     transcriptomicsSheetVal: function () { this.fetchTranscriptomicsTable(this.transcriptomicsFile) },
-    proteomicsSheetVal: function () { this.fetchProteomicsTable(this.proteomicsFile) },
+    proteomicsSheetVal: function () {console.log('FETCH'); this.fetchProteomicsTable(this.proteomicsFile) },
     metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.metabolomicsFile) }
   },
 
@@ -464,6 +477,7 @@ export default {
         'setProteomicsData',
         []
       )
+      console.log('FETCH PROT')
       this.sliderVals.proteomics = {}
       if (fileInput !== null) {
         this.$store.dispatch('setOverlay', true)
@@ -665,7 +679,6 @@ export default {
         })
     },
     lockHover () {
-      console.log("TEST")
       this.$store.dispatch('setSideBarExpand', false)
     },
     unlockHover () {

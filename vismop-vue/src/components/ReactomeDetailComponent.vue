@@ -1,7 +1,7 @@
 <template>
   <div>
-    <v-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
-      <v-col>
+    <q-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
+      <div class = "col">
       <v-overflow-btn
                     :items="pathwayLayouting.pathwayList"
                     editable
@@ -13,24 +13,24 @@
                     v-model="pathwaySelection"
       ></v-overflow-btn>
       <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
-      <v-card-actions>
-        <v-btn
+      <q-card-actions>
+        <q-btn
           class="mx-2 expandButton"
           fab
           dark
           small
           @click="expandComponent"
-        ><v-icon>mdi-arrow-expand</v-icon></v-btn>
-          <v-btn
+        ><q-icon>mdi-arrow-expand</q-icon></q-btn>
+          <q-btn
           class="mx-2 minimizeButton"
           fab
           dark
           small
           @click="minimizeComponent"
-        ><v-icon>mdi-window-minimize</v-icon></v-btn>
-      </v-card-actions>
-      </v-col>
-    </v-card>
+        ><q-icon>mdi-window-minimize</q-icon></q-btn>
+      </q-card-actions>
+      </div>
+    </q-card>
   </div>
 </template>
 

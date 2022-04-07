@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import vuetify from '@vuetify/vite-plugin'
+import { quasar, transformAssetUrls } from '@quasar/vite-plugin'
 import  vue  from '@vitejs/plugin-vue'
 import path from 'path'
 
@@ -9,17 +9,13 @@ export default defineConfig({
     sourcemap: true
   },
   plugins: [
-    vue(/*{
+    vue({
       template: {
-        compilerOptions: {
-          compatConfig: {
-            MODE: 3,
-          }
-        }
+        transformAssetUrls
       }
-    }*/),
-    vuetify({
-      autoImport: true,
+    }),
+    quasar({
+      sassVariables: 'src/css/quasar-variables.sass'
     })
   ],
   resolve: {

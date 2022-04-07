@@ -90,6 +90,7 @@ export default {
       commit('SET_TRANSCRIPTOMICSKEGGIDDICT', _.invert(val))
     },
     setProteomicsTableHeaders ({ commit }, val) {
+      console.log('PROT ACTION', val)
       commit('SET_PROTEOMICSTABLEHEADER', val)
     },
     setProteomicsTableData ({ commit }, val) {

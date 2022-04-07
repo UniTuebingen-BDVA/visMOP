@@ -1,32 +1,32 @@
 
 <template>
   <div>
-    <v-card>
-      <v-row justify="space-between" align="center">
-        <v-col cols="4">
-          <v-card-title>
+    <q-card>
+      <div class="row" justify="space-between" align="center">
+        <div class="col-4">
+          <div>
             InteractionGraph
-          </v-card-title>
-        </v-col>
-        <v-col cols="3">
-          <v-btn v-on:click="queryEgoGraphs">Plot</v-btn>
-        </v-col>
-        <v-col cols="5">
-          <v-slider
+          </div>
+        </div>
+        <div class="col-3">
+          <q-btn v-on:click="queryEgoGraphs">Plot</q-btn>
+        </div>
+        <div class="col-5">
+          <q-range
             thumb-label
             v-model="stringSlider"
             min=400
             max=1000
             hide-details=""
-          > </v-slider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12" class="mb-2">
+          > </q-range>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 mb-2">
           <div :id="contextID" class="webglContainer"></div>
-        </v-col>
-      </v-row>
-    </v-card>
+        </div>
+      </div>
+    </q-card>
   </div>
 </template>
 

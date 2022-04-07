@@ -1,137 +1,49 @@
 <template>
-  <v-app>
-    <v-navigation-drawer
-      app
-      v-model="drawer"
-      :expand-on-hover="sideBarExpand"
-      :rail="sideBarExpand"
-      color="primary"
-      dense
-      width="512"
-      id="ddd"
-      hide-overlay
-      temporary
-      permanent
-      absolute
-    >
-      <v-list-item class="px-2">
-        <v-btn
-          elevation="2"
-          fab
-          small
-          @click="sideBarExpand = !sideBarExpand"
-        >
-          <v-app-bar-nav-icon></v-app-bar-nav-icon>
-        </v-btn>
+  <q-layout view="hHh lpR fFf">
 
-        <div class="d-flex align-center">
-          <v-img
-            class="mr-2"
-            contain
-            :src="svgIcon"
-            width="40"
-          />
-          <span class="mr-2">visMOP</span>
-        </div>
-      </v-list-item>
-      <v-list dense>
-        <v-list-item>
-            <SideBar></SideBar>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-    <v-app-bar app color="primary" dark>
-      <div class="d-flex align-center pl-12">
-        <v-img
-          class="mr-2"
-          contain
-          :src="svgIcon"
-          width="40"
-        />
-        <span class="mr-2">VisMOP</span>
-      </div>
-      <v-spacer></v-spacer>
-      <v-dialog
-      v-model="infoDialog"
-      width="500"
-      >
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn
-              v-bind="attrs"
-              v-on="on"
-              color="primary"
-              
-          >
-            About
-          </v-btn>
-        </template>
+    <q-header reveal elevated class="bg-primary text-white">
+      <q-toolbar>
+        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
 
-        <v-card>
-          <v-card-title>
-            Interaction Network
-            <v-spacer></v-spacer>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-icon
-                  @click="infoDialog = false"
-              >
-                mdi-close-box
-              </v-icon>
-            </v-card-actions>
+        <q-toolbar-title>
+          <q-avatar>
+            <q-img
+                class="mr-2"
+                contain
+                :src="svgIcon"
+                width="40"
+            />
+          </q-avatar>
+          Title
+        </q-toolbar-title>
+      </q-toolbar>
+    </q-header>
 
-          </v-card-title>
+    <q-drawer v-model="leftDrawerOpen" side="left" overlay bordered>
+      <SideBar></SideBar>
+    </q-drawer>
 
-          <v-card-text>
-            DISCLAIMER: Your data gets cached on this server! DO NOT USE for unanonymized data!!!
-            For research use only. See <a href="https://www.kegg.jp/kegg/legal.html" target="_blank">KEGG</a> for more info.<br>
-            Using Data from<br>
-            KEGG: <a href="https://www.kegg.jp/" target="_blank">KEGG</a> <br>
-            Uniprot: <a href="https://www.uniprot.org/" target="_blank">UniProt</a><br>
-            STRING: <a href="https://string-db.org/" target="_blank">STRING</a>
-          </v-card-text>
+    <q-page-container>
+      <MainPage></MainPage>
+    </q-page-container>
 
-        </v-card>
-      </v-dialog>
-    </v-app-bar>
-
-    <v-main class="pl-12">
-      <MainPage />
-    </v-main>
-  </v-app>
+  </q-layout>
 </template>
-<script lang="ts">
-import MainPage from './components/MainPage.vue'
-import SideBar from './components/Sidebar.vue'
+
+<script>
+import { ref } from 'vue'
 import svgIcon from './assets/vmod_icon.svg'
+
 export default {
-  name: 'App',
-
-  components: {
-    MainPage,
-    SideBar
-  },
-  data: () => ({
-    drawer: true,
-    navbarKey: true,
-    infoDialog: false,
-    svgIcon: svgIcon,
-  }),
-  methods: {
-
-  },
-  computed: {
-    sideBarExpand: {
-      get (): boolean {
-        console.log(this.drawer)
-        return this.$store.state.sideBarExpand
-      },
-      set (val: boolean) {
-        this.$store.dispatch('setSideBarExpand', val)
+  setup () {
+    const leftDrawerOpen = ref(false)
+    return {
+      leftDrawerOpen,
+      svgIcon,
+      toggleLeftDrawer () {
+        leftDrawerOpen.value = !leftDrawerOpen.value
       }
     }
   }
 }
 </script>
-<style>
-@import "./css/networkGraph.css";
-</style>

@@ -1,178 +1,144 @@
 <template>
-  <v-container fluid>
-    <v-row>
+  <div>
+    <div class="row">
       <!-- Misc. Tabs -->
-      <v-col cols="5" class="d-flex flex-column mb-2">
-        <v-card>
-          <v-tabs
+      <div class="col-5 q-pa-md">
+        <div class="q-gutter-y-md" style="max-width: 600px">
+        <q-card>
+          <q-tabs
             v-model="selectedTabMisc"
-            background-color="blue lighten-2"
-            slider-color="indigo darken-4"
-            dark
-            center-active
-            next-icon="mdi-arrow-right-bold-box-outline"
-            prev-icon="mdi-arrow-left-bold-box-outline"
-            show-arrows
+            dense
+            class="label-grey"
+            active-color="primary"
+            indicator-color="primary"
+            align="justify"
+            narrow-indicator
           >
-            <v-tab href="#dataTable">Data Table</v-tab>
-            <v-tab href="#selectedNodes">Selected Entities</v-tab>
-            <v-tab href="#ppiGraph"> Protein-Protein Interaction </v-tab>
-            <v-tab href="#pathwayCompare"> Pathway Compare </v-tab>
-            <v-window v-model="selectedTabMisc">
-              <v-window-item value="dataTable">
-                <v-row>
-                  <v-col cols="12" class="inputTable">
-                    <keep-alive>
-                      <div>
-                        <v-card class="mb-5">
-                          <v-card-title>
-                            Data
-                            <v-spacer></v-spacer>
-                            <v-text-field
-                              class="pt-0"
-                              v-model="tableSearch"
-                              append-icon="mdi-magnify"
-                              label="Search"
-                              single-line
-                              hide-details
-                            ></v-text-field>
-                          </v-card-title>
+            <q-tab name="dataTable" label="Data Table"></q-tab>
+            <q-tab name="selectedNodes" label="Selected Entities"></q-tab>
+            <q-tab name="ppiGraph" label="Protein-Protein Interaction"></q-tab>
+            <q-tab name="pathwayCompare" label="Pathway Compare"></q-tab>
+          </q-tabs>
+            <q-tab-panels v-model="selectedTabMisc">
+              <q-tab-panel name="dataTable">
+                <q-card>
+                  <div class="label-h6" id="#lookup">
+                    Data
+                  </div>
+                      <q-separator></q-separator>
+                      <q-input
+                        class="pt-0"
+                        v-model="tableSearch"
+                        append-icon="mdi-magnify"
+                        label="Search"
+                        single-line
+                        hide-details
+                      ></q-input>
+                    
 
-                          <v-tabs
-                            v-model="selectedTabTable"
-                            background-color="blue lighten-2"
-                            slider-color="indigo darken-4"
-                            dark
-                            center-active
-                            next-icon="mdi-arrow-right-bold-box-outline"
-                            prev-icon="mdi-arrow-left-bold-box-outline"
-                            show-arrows
-                          >
-                            <v-tab href="#transcriptomics">Transcriptomics</v-tab>
-                            <v-tab href="#proteome">Proteomics</v-tab>
-                            <v-tab href="#metabol">Metabolomics</v-tab>
-                          </v-tabs>
+                    <q-tabs
+                      v-model="selectedTabTable"
+                      dense
+                      class="label-grey"
+                      active-color="primary"
+                      indicator-color="primary"
+                      align="justify"
+                      narrow-indicator
+                    >
+                      <q-tab name="transcriptomics" label="Transcriptomics"></q-tab>
+                      <q-tab name="proteome" label="Proteomics"></q-tab>
+                      <q-tab name="metabol" label="Metabolomics"></q-tab>
+                    </q-tabs>
 
-                          <v-window v-model="selectedTabTable">
-                            <v-window-item value="transcriptomics">
-                              <v-data-table
-                                dense
-                                v-model="selectedTranscriptomics"
-                                show-select
-                                fixed-header
-                                multi-sort
-                                :headers="transcriptomicsTableHeaders"
-                                :item-class="itemRowColor"
-                                :items="transcriptomicsTableData"
-                                :items-per-page="10"
-                                :search="tableSearch"
-                                class="elevation-1 scrollableTable"
-                                id="transcriptomics"
-                                @click:row="transcriptomicsSelection"
-                              ></v-data-table>
-                            </v-window-item>
+                    <q-tab-panels v-model="selectedTabTable">
+                      <q-tab-panel name="transcriptomics">
+                        <q-table
+                          v-model="selectedTranscriptomics"
+                          :columns="transcriptomicsTableHeaders"
+                          :rows="transcriptomicsTableData"
+                          row-key="name"
+                          :filter="tableSearch"
+                          class="elevation-1 scrollableTable"
+                          id="transcriptomics"
+                          @click:row="transcriptomicsSelection"
+                        ></q-table>
+                      </q-tab-panel>
 
-                            <v-window-item value="proteome">
-                              <v-data-table
-                                dense
-                                v-model="selectedProteomics"
-                                show-select
-                                fixed-header
-                                multi-sort
-                                :headers="proteomicsTableHeaders"
-                                :item-class="itemRowColor"
-                                :items="proteomicsTableData"
-                                :items-per-page="10"
-                                :search="tableSearch"
-                                class="elevation-1 scrollableTable"
-                                id="proteomicsTable"
-                                @click:row="proteomicsSelection"
-                              ></v-data-table>
-                            </v-window-item>
+                      <q-tab-panel name="proteome">
+                        <q-table
+                          v-model="selectedProteomics"
+                          :columns="proteomicsTableHeaders"
+                          :rows="proteomicsTableData"
+                          row-key="name"
+                          :filter="tableSearch"
+                          class="elevation-1 scrollableTable"
+                          id="proteomicsTable"
+                          @click:row="proteomicsSelection"
+                        ></q-table>
+                      </q-tab-panel>
 
-                            <v-window-item value="metabol" >
-                              <v-data-table
-                                dense
-                                v-model="selectedMetabolomics"
-                                show-select
-                                fixed-header
-                                multi-sort
-                                :headers="metabolomicsTableHeaders"
-                                :item-class="itemRowColor"
-                                :items="metabolomicsTableData"
-                                :items-per-page="10"
-                                :search="tableSearch"
-                                class="elevation-1 scrollableTable"
-                                id="metabolomicsTable"
-                                @click:row="metabolomicsSelection"
-                              ></v-data-table>
-                            </v-window-item>
-                          </v-window>
-                        </v-card>
-                      </div>
-                    </keep-alive>
-                  </v-col>
-                </v-row>
-              </v-window-item>
-              <v-window-item value="selectedNodes">
-                <v-row>
-                  <v-col cols="12">
-                    <keep-alive>
-                       <interaction-graph-table> </interaction-graph-table>
-                    </keep-alive>
-                  </v-col>
-                </v-row>
-              </v-window-item>
-              <v-window-item value="ppiGraph">
-                <v-row>
-                  <v-col cols="12">
-                    <keep-alive>
-                       <interaction-graph
-                        contextID="interactionGraph"
-                        > </interaction-graph>
-                    </keep-alive>
-                  </v-col>
-                </v-row>
-              </v-window-item>
-               <v-window-item value="pathwayCompare">
-                <v-row>
-                  <v-col cols="12">
-                    <keep-alive>
+                      <q-tab-panel name="metabol" >
+                        <q-table
+                          dense
+                          v-model="selectedMetabolomics"
+                          show-select
+                          fixed-header
+                          multi-sort
+                          :headers="metabolomicsTableHeaders"
+                          :item-class="itemRowColor"
+                          :items="metabolomicsTableData"
+                          :items-per-page="10"
+                          :search="tableSearch"
+                          class="elevation-1 scrollableTable"
+                          id="metabolomicsTable"
+                          @click:row="metabolomicsSelection"
+                        ></q-table>
+                      </q-tab-panel>
+                    </q-tab-panels>
+                </q-card>
+              </q-tab-panel>
+              <q-tab-panel name="selectedNodes">
+                <interaction-graph-table> </interaction-graph-table>
+              </q-tab-panel>
+              <q-tab-panel name="ppiGraph">
+                <interaction-graph
+                conlabelID="interactionGraph"
+                > </interaction-graph>
+              </q-tab-panel>
+               <q-tab-panel name="pathwayCompare">
                       <pathway-compare>
                       </pathway-compare>
-                    </keep-alive>
-                  </v-col>
-                </v-row>
-              </v-window-item>
-            </v-window>
-          </v-tabs>
-        </v-card>
-      </v-col>
+              </q-tab-panel>
+            </q-tab-panels>
+          
+        </q-card>
+        </div>
+      </div>
       <!-- Network -->
-      <v-col cols="7" class="d-flex flex-column mb-2">
-        <v-card>
-          <v-tabs
+      <div class="col-7 d-flex flex-column mb-2">
+        <q-card>
+          <q-tabs
             v-model="selectedTabNetwork"
             background-color="blue lighten-2"
             slider-color="indigo darken-4"
             dark
             center-active
             next-icon="mdi-arrow-right-bold-box-outline"
-            prev-icon="mdi-arrow-left-bold-box-outline"
+            preq-icon="mdi-arrow-left-bold-box-outline"
             show-arrows
           >
-            <v-tab href="#overviewNetwork">Overview</v-tab>
-            <v-tab href="#detailNetwork">Detail</v-tab>
-          </v-tabs>
+            <q-tab name="overviewNetwork">Overview</q-tab>
+            <q-tab name="detailNetwork">Detail</q-tab>
+          </q-tabs>
 
-          <v-window v-model="selectedTabNetwork">
-            <v-window-item value="overviewNetwork">
-              <v-row>
-                <v-col cols="12">
+          <q-tab-panels v-model="selectedTabNetwork">
+            <q-tab-panel name="overviewNetwork">
+              <div class="row">
+                <div class="col-12">
                     <div v-if="targetDatabase === 'kegg'">
                       <keep-alive>
                           <kegg-overview-component
-                          contextID="overviewContext"
+                          conlabelID="overviewConlabel"
                           :transcriptomicsSelection="transcriptomicsSelectionData"
                           :proteomicsSelection="proteomicsSelectionData"
                           :metabolomicsSelection="metabolomicsSelectionData"
@@ -184,7 +150,7 @@
                     <div v-if="targetDatabase === 'reactome'">
                       <keep-alive>
                         <reactome-overview-component
-                          contextID="overviewContext"
+                          conlabelID="overviewConlabel"
                           :transcriptomicsSelection="transcriptomicsSelectionData"
                           :proteomicsSelection="proteomicsSelectionData"
                           :metabolomicsSelection="metabolomicsSelectionData"
@@ -194,12 +160,12 @@
                       </keep-alive>
                     </div>
 
-                </v-col>
-                </v-row>
+                </div>
+                </div>
                 <div v-if="targetDatabase === 'kegg'">
                   <keep-alive>
                     <kegg-detail-component
-                      contextID="detailContext"
+                      conlabelID="detailConlabel"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
@@ -211,7 +177,7 @@
                 <div v-if="targetDatabase === 'reactome'">
                   <keep-alive>
                     <reactome-detail-component
-                      contextID="reactomeDetail"
+                      conlabelID="reactomeDetail"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
@@ -220,21 +186,16 @@
                     </reactome-detail-component>
                   </keep-alive>
                 </div>
-            </v-window-item>
+            </q-tab-panel>
 
-            <v-window-item value="detailNetwork">
+            <q-tab-panel name="detailNetwork">
               <p> placeholder </p>
-            </v-window-item>
-          </v-window>
-        </v-card>
-      </v-col>
-    </v-row>
-    <div class="text-center">
-      <v-overlay :value="overlay">
-        <v-progress-circular indeterminate size="64"></v-progress-circular>
-      </v-overlay>
+            </q-tab-panel>
+          </q-tab-panels>
+        </q-card>
+      </div>
     </div>
-  </v-container>
+  </div>
 </template>
 <script lang="ts">
 import { mapState } from 'vuex'
@@ -284,22 +245,23 @@ export default {
   }),
 
   computed: {
-    ...mapState({
-      targetDatabase: (state: any) => state.targetDatabase,
-      transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
-      transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
-      proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
-      proteomicsTableData: (state: any) => state.proteomicsTableData,
-      metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders,
-      metabolomicsTableData: (state: any) => state.metabolomicsTableData,
-      fcs: (state: any) => state.fcs,
-      transcriptomicsSymbolDict: (state: any) => state.transcriptomicsSymbolDict,
-      proteomicsSymbolDict: (state: any) => state.proteomicsSymbolDict,
-      usedSymbolCols: (state: any) => state.usedSymbolCols,
-      overlay: (state: any) => state.overlay,
-      pathwayLayouting: (state: any) => state.pathwayLayouting,
-      pathwayDropdown: (state: any) => state.pathwayDropdown
-    }),
+    ...mapState([
+      'targetDatabase',
+      'transcriptomicsTableHeaders',
+      'transcriptomicsTableData',
+      'proteomicsTableHeaders',
+      'proteomicsTableData',
+      'metabolomicsTableHeaders',
+      'metabolomicsTableData',
+      'fcs',
+      'transcriptomicsSymbolDict',
+      'proteomicsSymbolDict',
+      'usedSymbolCols',
+      'overlay',
+      'pathwayLayouting',
+      'pathwayDropdown'
+      ]
+    ),
  
     activeOverview: function () {
       return this.selectedTabNetwork === 'overviewNetwork'
@@ -324,9 +286,9 @@ export default {
         if (pathwaysContaining) transcriptomicsAvailable += 1
       })
       console.log('table headers', this.transcriptomicsTableHeaders)
-      this.transcriptomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
-        if (entry.value === 'available') {
-          entry.text = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`
+      this.transcriptomicsTableHeaders.forEach((entry: {label: string, name: string}) => {
+        if (entry.name === 'available') {
+          entry.label = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`
         }
       })
       this.$store.dispatch('setTranscriptomicsTableHeaders', this.transcriptomicsTableHeaders)
@@ -345,13 +307,15 @@ export default {
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
         if (pathwaysContaining) proteomiocsAvailable += 1
       })
-      this.proteomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
-        if (entry.value === 'available') {
-          entry.text = `available (${proteomiocsAvailable} of ${proteomicsTotal})`
+      this.proteomicsTableHeaders.forEach((entry: {label: string, name: string}) => {
+        if (entry.name === 'available') {
+          entry.label = `available (${proteomiocsAvailable} of ${proteomicsTotal})`
         }
       })
       this.$store.dispatch('setProteomicsTableHeaders', this.proteomicsTableHeaders)
       this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
+
+      console.log(this.proteomicsTableHeaders)
 
       let metabolomicsAvailable = 0
       let metabolomicsTotal = 0
@@ -363,9 +327,9 @@ export default {
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
         if (pathwaysContaining) metabolomicsAvailable += 1
       })
-      this.metabolomicsTableHeaders.forEach((entry: {text: string, value: string}) => {
-        if (entry.value === 'available') {
-          entry.text = `available (${metabolomicsAvailable} of ${metabolomicsTotal})`
+      this.metabolomicsTableHeaders.forEach((entry: {label: string, name: string}) => {
+        if (entry.name === 'available') {
+          entry.label = `available (${metabolomicsAvailable} of ${metabolomicsTotal})`
         }
       })
       this.$store.dispatch('setMetabolomicsTableHeaders', this.metabolomicsTableHeaders)

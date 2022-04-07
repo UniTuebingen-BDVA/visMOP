@@ -1,18 +1,18 @@
 <template>
   <div>
-    <v-card>
-      <v-row justify="space-between">
-        <v-card-title>
+    <q-card>
+      <div class="row" justify="space-between">
+        <div>
           Network Graph
-          <v-spacer></v-spacer>
-        </v-card-title>
-      </v-row>
-      <v-row>
-        <v-col cols="12" class="mb-2">
+          <q-separator></q-separator>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 mb-2">
           <div :id="contextID" class="webglContainer"></div>
-        </v-col>
-      </v-row>
-    </v-card>
+        </div>
+      </div>
+    </q-card>
   </div>
 </template>
 

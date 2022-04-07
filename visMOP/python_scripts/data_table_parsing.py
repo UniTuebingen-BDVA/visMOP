@@ -30,9 +30,10 @@ def generate_vue_table_header(df):
     for entry in header:
         if entry != "id":
             vue_header = {}
-            vue_header['text'] = entry
-            vue_header['value'] = entry
-            vue_header['align'] = 'd-none' if (entry == 'inSelected') else 'start'
+            vue_header['label'] = entry
+            vue_header['name'] = entry
+            vue_header['field'] = entry
+            vue_header['align'] = 'none' if (entry == 'inSelected') else 'left'
             vue_headers.append(vue_header)
     return vue_headers
 
@@ -44,4 +45,5 @@ def generate_vue_table_entries(df):
         vue_entries: vues data table style headers
     """
     vue_entries = df.aggregate(lambda row: row.to_dict(), axis = 1)
+    print(vue_entries)
     return list(vue_entries.values)

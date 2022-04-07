@@ -1,11 +1,11 @@
 <template>
         <div>
-          <v-card>
-            <v-card-title>
-              <v-row align="center">
-                 <v-col cols="5">Selected Nodes</v-col>
-              </v-row>
-            </v-card-title>
+          <q-card>
+            <div>
+              <div class="row" align="center">
+                 <div class="col-5">Selected Nodes</div>
+              </div>
+            </div>
             <v-slide-group
                 v-model="model"
                 show-arrows=""
@@ -15,34 +15,34 @@
                     :key="pathway"
                     v-slot="{ active }"
                     >
-                    <v-card
+                    <q-card
                         :color="active ? 'primary' : 'grey lighten-4'"
                         class="ma-1"
                         height="95%"
                         width="220"
                         >
-                        <v-row>
-                          <v-card-actions>
-                              <v-btn
+                        <div class="row">
+                          <q-card-actions>
+                              <q-btn
                                   fab
                                   class="mx-2 expandButton"
                                   dark
                                   small
                                   @click="removeCard(pathway)"
-                              ><v-icon>mdi-close</v-icon></v-btn>
-                          </v-card-actions>
-                          <v-card-title >
+                              ><q-icon>mdi-close</q-icon></q-btn>
+                          </q-card-actions>
+                          <div >
                               {{ pathwayLayouting.pathwayList.find(elem => elem.value === pathway).value }}
-                          </v-card-title>
-                        </v-row>
-                        <v-card-subtitle class="positionCardTitle">
+                          </div>
+                        </div>
+                        <q-card-subtitle class="positionCardTitle">
                             {{ pathwayLayouting.pathwayList.find(elem => elem.value === pathway).title }}
-                        </v-card-subtitle>
+                        </q-card-subtitle>
                         <div class="centeredGlyphs">
                           <div :id="'glyph'+pathway"> </div>
                         </div>
                         {{ appendGlyph(pathway) }}
-                        <v-card-text>
+                        <q-card-text>
                           <table>
                           <tr> <td>Transcriptomics:</td> <td> {{ glyphData[pathway]["transcriptomics"]["nodeState"]["regulated"] }} of {{ glyphData[pathway]["transcriptomics"]["nodeState"]["total"] }}</td> </tr>
                           <tr> <td>Avg. FC:</td> <td>{{ glyphData[pathway]["transcriptomics"]["meanFoldchange"].toFixed(3) }}</td> </tr>
@@ -53,11 +53,11 @@
                           <tr> <td>Metabolomics:</td> <td> {{ glyphData[pathway]["metabolomics"]["nodeState"]["regulated"] }} of {{ glyphData[pathway]["metabolomics"]["nodeState"]["total"] }}</td> </tr>
                           <tr> <td>Avg. FC:</td> <td>{{ glyphData[pathway]["metabolomics"]["meanFoldchange"].toFixed(3) }}</td> </tr>
                           </table>
-                        </v-card-text>
-                    </v-card>
+                        </q-card-text>
+                    </q-card>
                 </v-slide-item>
             </v-slide-group>
-          </v-card>
+          </q-card>
         </div>
 </template>
 
