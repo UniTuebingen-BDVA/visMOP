@@ -4,6 +4,7 @@
       app
       v-model="drawer"
       :expand-on-hover="sideBarExpand"
+      :rail="sideBarExpand"
       color="primary"
       dense
       width="512"
@@ -18,20 +19,18 @@
           elevation="2"
           fab
           small
-          @click.stop="sideBarExpand = !sideBarExpand"
+          @click="sideBarExpand = !sideBarExpand"
         >
           <v-app-bar-nav-icon></v-app-bar-nav-icon>
         </v-btn>
 
         <div class="d-flex align-center">
-          <!--
           <v-img
             class="mr-2"
             contain
             :src="svgIcon"
             width="40"
           />
-          -->
           <span class="mr-2">visMOP</span>
         </div>
       </v-list-item>
@@ -43,14 +42,12 @@
     </v-navigation-drawer>
     <v-app-bar app color="primary" dark>
       <div class="d-flex align-center pl-12">
-        <!--
         <v-img
           class="mr-2"
           contain
           :src="svgIcon"
           width="40"
         />
-        -->
         <span class="mr-2">VisMOP</span>
       </div>
       <v-spacer></v-spacer>
@@ -117,7 +114,7 @@ export default {
     drawer: true,
     navbarKey: true,
     infoDialog: false,
-    svgIcon: svgIcon
+    svgIcon: svgIcon,
   }),
   methods: {
 

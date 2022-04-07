@@ -32,8 +32,9 @@
         <v-expansion-panel-title>
           Transcriptomics Data
         </v-expansion-panel-title>
+        <v-expansion-panel-text>
           <v-file-input
-            v-on:change="fetchTranscriptomicsTable"
+            v-on:update:modelValue="fetchTranscriptomicsTable"
             v-model="transcriptomicsFile"
             chips
             label=".xlsx File Input"
@@ -83,11 +84,13 @@
             >
             </v-range-slider>
           </v-row>
+        </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-title> Proteomics Data </v-expansion-panel-title>
+         <v-expansion-panel-text>
           <v-file-input
-            v-on:change="fetchProteomicsTable"
+            v-on:update:modelValue="fetchProteomicsTable"
             v-model="proteomicsFile"
             chips
             label=".xlsx File Input"
@@ -137,11 +140,13 @@
             >
             </v-range-slider>
           </v-row>
+        </v-expansion-panel-text>
       </v-expansion-panel>
       <v-expansion-panel>
         <v-expansion-panel-title> Metabolomics Data </v-expansion-panel-title>
+         <v-expansion-panel-text>
           <v-file-input
-            v-on:change="fetchMetabolomicsTable"
+            v-on:update:modelValue="fetchMetabolomicsTable"
             v-model="metabolomicsFile"
             chips
             label=".xlsx File Input"
@@ -191,6 +196,7 @@
             >
             </v-range-slider>
           </v-row>
+        </v-expansion-panel-text>
       </v-expansion-panel>
     </v-expansion-panels>
     <v-btn v-on:click="dataQuery">Plot</v-btn>
@@ -659,6 +665,7 @@ export default {
         })
     },
     lockHover () {
+      console.log("TEST")
       this.$store.dispatch('setSideBarExpand', false)
     },
     unlockHover () {

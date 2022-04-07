@@ -7,19 +7,19 @@
           <v-tabs
             v-model="selectedTabMisc"
             background-color="blue lighten-2"
+            slider-color="indigo darken-4"
             dark
             center-active
             next-icon="mdi-arrow-right-bold-box-outline"
             prev-icon="mdi-arrow-left-bold-box-outline"
             show-arrows
           >
-            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
             <v-tab href="#dataTable">Data Table</v-tab>
             <v-tab href="#selectedNodes">Selected Entities</v-tab>
             <v-tab href="#ppiGraph"> Protein-Protein Interaction </v-tab>
             <v-tab href="#pathwayCompare"> Pathway Compare </v-tab>
-            <v-tabs-items :value="selectedTabMisc">
-              <v-tab-item value="dataTable">
+            <v-window v-model="selectedTabMisc">
+              <v-window-item value="dataTable">
                 <v-row>
                   <v-col cols="12" class="inputTable">
                     <keep-alive>
@@ -41,20 +41,20 @@
                           <v-tabs
                             v-model="selectedTabTable"
                             background-color="blue lighten-2"
+                            slider-color="indigo darken-4"
                             dark
                             center-active
                             next-icon="mdi-arrow-right-bold-box-outline"
                             prev-icon="mdi-arrow-left-bold-box-outline"
                             show-arrows
                           >
-                            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
                             <v-tab href="#transcriptomics">Transcriptomics</v-tab>
                             <v-tab href="#proteome">Proteomics</v-tab>
                             <v-tab href="#metabol">Metabolomics</v-tab>
                           </v-tabs>
 
-                          <v-tabs-items :value="selectedTabTable">
-                            <v-tab-item value="transcriptomics">
+                          <v-window v-model="selectedTabTable">
+                            <v-window-item value="transcriptomics">
                               <v-data-table
                                 dense
                                 v-model="selectedTranscriptomics"
@@ -70,9 +70,9 @@
                                 id="transcriptomics"
                                 @click:row="transcriptomicsSelection"
                               ></v-data-table>
-                            </v-tab-item>
+                            </v-window-item>
 
-                            <v-tab-item value="proteome">
+                            <v-window-item value="proteome">
                               <v-data-table
                                 dense
                                 v-model="selectedProteomics"
@@ -88,9 +88,9 @@
                                 id="proteomicsTable"
                                 @click:row="proteomicsSelection"
                               ></v-data-table>
-                            </v-tab-item>
+                            </v-window-item>
 
-                            <v-tab-item value="metabol" >
+                            <v-window-item value="metabol" >
                               <v-data-table
                                 dense
                                 v-model="selectedMetabolomics"
@@ -106,15 +106,15 @@
                                 id="metabolomicsTable"
                                 @click:row="metabolomicsSelection"
                               ></v-data-table>
-                            </v-tab-item>
-                          </v-tabs-items>
+                            </v-window-item>
+                          </v-window>
                         </v-card>
                       </div>
                     </keep-alive>
                   </v-col>
                 </v-row>
-              </v-tab-item>
-              <v-tab-item value="selectedNodes">
+              </v-window-item>
+              <v-window-item value="selectedNodes">
                 <v-row>
                   <v-col cols="12">
                     <keep-alive>
@@ -122,8 +122,8 @@
                     </keep-alive>
                   </v-col>
                 </v-row>
-              </v-tab-item>
-              <v-tab-item value="ppiGraph">
+              </v-window-item>
+              <v-window-item value="ppiGraph">
                 <v-row>
                   <v-col cols="12">
                     <keep-alive>
@@ -133,8 +133,8 @@
                     </keep-alive>
                   </v-col>
                 </v-row>
-              </v-tab-item>
-               <v-tab-item value="pathwayCompare">
+              </v-window-item>
+               <v-window-item value="pathwayCompare">
                 <v-row>
                   <v-col cols="12">
                     <keep-alive>
@@ -143,8 +143,8 @@
                     </keep-alive>
                   </v-col>
                 </v-row>
-              </v-tab-item>
-            </v-tabs-items>
+              </v-window-item>
+            </v-window>
           </v-tabs>
         </v-card>
       </v-col>
@@ -154,19 +154,19 @@
           <v-tabs
             v-model="selectedTabNetwork"
             background-color="blue lighten-2"
+            slider-color="indigo darken-4"
             dark
             center-active
             next-icon="mdi-arrow-right-bold-box-outline"
             prev-icon="mdi-arrow-left-bold-box-outline"
             show-arrows
           >
-            <v-tabs-slider color="indigo darken-4"></v-tabs-slider>
             <v-tab href="#overviewNetwork">Overview</v-tab>
             <v-tab href="#detailNetwork">Detail</v-tab>
           </v-tabs>
 
-          <v-tabs-items :value="selectedTabNetwork">
-            <v-tab-item value="overviewNetwork">
+          <v-window v-model="selectedTabNetwork">
+            <v-window-item value="overviewNetwork">
               <v-row>
                 <v-col cols="12">
                     <div v-if="targetDatabase === 'kegg'">
@@ -220,12 +220,12 @@
                     </reactome-detail-component>
                   </keep-alive>
                 </div>
-            </v-tab-item>
+            </v-window-item>
 
-            <v-tab-item value="detailNetwork">
+            <v-window-item value="detailNetwork">
               <p> placeholder </p>
-            </v-tab-item>
-          </v-tabs-items>
+            </v-window-item>
+          </v-window>
         </v-card>
       </v-col>
     </v-row>

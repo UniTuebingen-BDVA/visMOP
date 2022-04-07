@@ -9,15 +9,15 @@ export default defineConfig({
     sourcemap: true
   },
   plugins: [
-    vue({
+    vue(/*{
       template: {
         compilerOptions: {
           compatConfig: {
-            MODE: 2,
+            MODE: 3,
           }
         }
       }
-    }),
+    }*/),
     vuetify({
       autoImport: true,
     })
@@ -25,7 +25,7 @@ export default defineConfig({
   resolve: {
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue', '.glsl'],
     alias: {
-      vue: '@vue/compat',
+      //vue: '@vue/compat',
       "@": path.resolve(__dirname, "./src"),
       
     },

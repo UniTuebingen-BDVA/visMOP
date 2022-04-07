@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "vite preview",
-    "build": "vite build",
+    "build": "vite build --emptyOutDir",
+    "build-watch": "vite build --mode development --watch --emptyOutDir",
     "buildtsc": "vue-tsc --noEmit && vite build --emptyOutDir",
     "dev": "vite",
     "preview": "vite preview",
