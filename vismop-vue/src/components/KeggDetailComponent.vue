@@ -54,7 +54,7 @@ interface Data{
   minimizeButton: boolean
 }
 
-export default new vue({
+export default {
   // name of the component
   name: 'KeggDetailComponent',
 
@@ -202,5 +202,5 @@ export default new vue({
     }
 
   }
-})
+}
 </script>

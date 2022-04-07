@@ -203,10 +203,6 @@
 
 <script lang="ts">
 import { mapState } from 'vuex'
-import { defineComponent } from 'vue'
-import { Function } from 'lodash'
-import vue from 'vue'
-
 
 interface Data{
   overlay: boolean,
@@ -234,7 +230,7 @@ interface Data{
   sheetRules(value: string): boolean | string
 }
 
-export default new vue({
+export default {
   name: 'SideBar',
   components: {},
 
@@ -684,5 +680,5 @@ export default new vue({
       this.$store.dispatch('setTargetDatabase', this.targetDatabase)
     }
   }
-})
+}
 </script>

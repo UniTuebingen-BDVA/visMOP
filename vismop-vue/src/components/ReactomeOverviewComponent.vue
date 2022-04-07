@@ -38,7 +38,7 @@ interface Data{
   metabolomicsUnion: string[]
 }
 
-export default new vue({
+export default {
   // name of the component
   name: 'ReactomeOverviewComponent',
 
@@ -191,5 +191,5 @@ export default new vue({
       this.networkGraph = new OverviewGraph(this.contextID, networkData)
     }
   }
-})
+}
 </script>

@@ -42,7 +42,7 @@ interface Data {
   interactionGraph: Sigma | undefined;
 }
 
-export default new vue({
+export default {
   // name of the component
   name: 'InteractionGraph',
 
@@ -74,5 +74,5 @@ export default new vue({
       this.$store.dispatch('queryEgoGraps', this.stringSlider)
     }
   }
-})
+}
 </script>

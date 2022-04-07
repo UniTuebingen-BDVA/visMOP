@@ -263,7 +263,7 @@ interface Data{
   selectedMetabolomics: { [key: string]: string }[]
 }
 
-export default new vue({
+export default {
   components: { KeggDetailComponent, ReactomeDetailComponent, KeggOverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, ReactomeOverviewComponent },
   // name of the component
   name: 'MainPage',
@@ -452,5 +452,5 @@ export default new vue({
       return (item.available !== 'No') ? ((item.inSelected === 'Yes') ? 'rowstyle-inPathway' : 'rowstyle-available') : 'rowstyle-notAvailable'
     }
   }
-})
+}
 </script>

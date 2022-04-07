@@ -58,7 +58,7 @@ interface Data {
   selectedNodesHeader: {value: string; text: string}[]
 }
 
-export default new vue({
+export default {
   // name of the component
   name: 'InteractionGraphTable',
 
@@ -90,5 +90,5 @@ export default new vue({
       this.$store.dispatch('removeClickedNode', val)
     }
   }
-})
+}
 </script>

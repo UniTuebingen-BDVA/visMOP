@@ -59,7 +59,7 @@ interface Data{
 
 }
 
-export default new vue({
+export default {
   // name of the component
   name: 'ReactomeDetailComponent',
 
@@ -221,5 +221,5 @@ export default new vue({
       // TODO get correct totals from graph json via recursion
     }
   }
-})
+}
 </script>

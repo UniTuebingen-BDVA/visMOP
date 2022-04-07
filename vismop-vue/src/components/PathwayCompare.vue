@@ -73,7 +73,7 @@ interface Data {
   model: null;
 }
 
-export default new vue({
+export default {
   // name of the component
   name: 'PathwayCompare',
 
@@ -105,5 +105,5 @@ export default new vue({
       })
     }
   }
-})
+}
 </script>

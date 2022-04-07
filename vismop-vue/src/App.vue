@@ -65,9 +65,10 @@
       >
         <template v-slot:activator="{ on, attrs }">
           <v-btn
-              color="primary"
               v-bind="attrs"
               v-on="on"
+              color="primary"
+              
           >
             About
           </v-btn>
@@ -112,7 +113,7 @@ import SideBar from './components/Sidebar.vue'
 import svgIcon from './assets/vmod_icon.svg'
 import { defineComponent } from 'vue'
 import vue from 'vue'
-export default new vue({
+export default {
   name: 'App',
 
   components: {
@@ -139,7 +140,7 @@ export default new vue({
       }
     }
   }
-})
+}
 </script>
 <style>
 @import "./css/networkGraph.css";
