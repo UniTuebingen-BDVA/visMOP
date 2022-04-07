@@ -28,7 +28,6 @@
             class="shrink mr-2"
             contain
             :src="svgIcon"
-            transition="scale-transition"
             width="40"
           />
 
@@ -52,7 +51,6 @@
           class="shrink mr-2"
           contain
           :src="svgIcon"
-          transition="scale-transition"
           width="40"
         />
 
