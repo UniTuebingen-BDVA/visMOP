@@ -300,15 +300,12 @@ export default {
       pathwayLayouting: (state: any) => state.pathwayLayouting,
       pathwayDropdown: (state: any) => state.pathwayDropdown
     }),
-    activeOverview: {
-      get: function () {
-        return this.selectedTabNetwork === 'overviewNetwork'
-      }
+ 
+    activeOverview: function () {
+      return this.selectedTabNetwork === 'overviewNetwork'
     },
-    activeDetail: {
-      get: function () {
-        return this.selectedTabNetwork === 'detailNetwork'
-      }
+    activeDetail: function () {
+      return this.selectedTabNetwork === 'detailNetwork'
     }
   },
   watch: {

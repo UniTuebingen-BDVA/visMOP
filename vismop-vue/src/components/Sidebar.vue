@@ -4,6 +4,8 @@
       :items="targetDatabases"
       label="Target Database"
       v-model="targetDatabase"
+      item-text="text"
+      item-value="value"
       v-on:change="setTargetDatabase"
       @click="lockHover"
       @input="unlockHover"
@@ -27,10 +29,9 @@
     </v-chip-group>
     <v-expansion-panels>
       <v-expansion-panel>
-        <v-expansion-panel-header>
+        <v-expansion-panel-title>
           Transcriptomics Data
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
+        </v-expansion-panel-title>
           <v-file-input
             v-on:change="fetchTranscriptomicsTable"
             v-model="transcriptomicsFile"
@@ -82,11 +83,9 @@
             >
             </v-range-slider>
           </v-row>
-        </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
-        <v-expansion-panel-header> Proteomics Data </v-expansion-panel-header>
-        <v-expansion-panel-content>
+        <v-expansion-panel-title> Proteomics Data </v-expansion-panel-title>
           <v-file-input
             v-on:change="fetchProteomicsTable"
             v-model="proteomicsFile"
@@ -138,11 +137,9 @@
             >
             </v-range-slider>
           </v-row>
-        </v-expansion-panel-content>
       </v-expansion-panel>
       <v-expansion-panel>
-        <v-expansion-panel-header> Metabolomics Data </v-expansion-panel-header>
-        <v-expansion-panel-content>
+        <v-expansion-panel-title> Metabolomics Data </v-expansion-panel-title>
           <v-file-input
             v-on:change="fetchMetabolomicsTable"
             v-model="metabolomicsFile"
@@ -194,7 +191,6 @@
             >
             </v-range-slider>
           </v-row>
-        </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
     <v-btn v-on:click="dataQuery">Plot</v-btn>
@@ -270,26 +266,23 @@ export default {
     ]
   }),
   computed: {
-    ...mapState({
-      transcriptomicsTableHeaders: (state: any) => state.transcriptomicsTableHeaders,
-      proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
-      metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders,
-      transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
-      proteomicsTableData: (state: any) => state.proteomicsTableData,
-      metabolomicsTableData: (state: any) => state.metabolomicsTableData,
-      overlay: (state: any) => state.overlay
-    }),
-    chosenOmics: {
-      get: function () {
+    ...mapState([
+      'transcriptomicsTableHeaders',
+      'proteomicsTableHeaders',
+      'metabolomicsTableHeaders',
+      'transcriptomicsTableData',
+      'proteomicsTableData',
+      'metabolomicsTableData',
+      'overlay',
+    ]),
+    chosenOmics(): string[] {
         const chosen = []
         if (this.recievedTranscriptomicsData) chosen.push('Transcriptomics')
         if (this.recievedProteomicsData) chosen.push('Proteomics')
         if (this.recievedMetabolomicsData) chosen.push('Metabolomics')
         return chosen
-      }
     },
-    sliderTranscriptomics: {
-      get: function () {
+    sliderTranscriptomics () {
         const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
         const typedArrayData = this.transcriptomicsTableData as [{[key: string]: number}]
         const typedArrayHeader = this.transcriptomicsTableHeaders as [{[key: string]: string}]
@@ -321,79 +314,74 @@ export default {
           }
         })
         return outObj
-      }
     },
-    sliderProteomics: {
-      get: function () {
-        const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
-        const typedArrayData = this.proteomicsTableData as [{[key: string]: number}]
-        const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
+    sliderProteomics() {
+      const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+      const typedArrayData = this.proteomicsTableData as [{[key: string]: number}]
+      const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
 
-        typedArrayHeader.forEach(element => {
-          if (element.value !== 'available') {
-            const valArr = typedArrayData.map(elem => elem[element.value])
-            const numArr: number[] = []
-            let amtNum = 0
-            let amtNonNum = 0
-            let empties = 0
-            valArr.forEach((val) => {
-              if (typeof val === 'number') {
-                amtNum += 1
-                numArr.push(val)
-              } else if (val === 'None') {
-                empties += 1
-              } else amtNonNum += 1
-            })
-            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-              console.log(element.value, numArr)
-              const min = Math.floor(Math.min(...numArr))
-              const max = Math.ceil(Math.max(...numArr))
-              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-              if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
-                this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
-              }
-              console.log(element.value, this.sliderVals)
+      typedArrayHeader.forEach(element => {
+        if (element.value !== 'available') {
+          const valArr = typedArrayData.map(elem => elem[element.value])
+          const numArr: number[] = []
+          let amtNum = 0
+          let amtNonNum = 0
+          let empties = 0
+          valArr.forEach((val) => {
+            if (typeof val === 'number') {
+              amtNum += 1
+              numArr.push(val)
+            } else if (val === 'None') {
+              empties += 1
+            } else amtNonNum += 1
+          })
+          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+            console.log(element.value, numArr)
+            const min = Math.floor(Math.min(...numArr))
+            const max = Math.ceil(Math.max(...numArr))
+            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+            if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
+              this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
             }
+            console.log(element.value, this.sliderVals)
           }
-        })
-        return outObj
-      }
+        }
+      })
+      return outObj
     },
-    sliderMetabolomics: {
-      get: function () {
-        const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
-        const typedArrayData = this.metabolomicsTableData as [{[key: string]: number}]
-        const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
+    sliderMetabolomics() {
+      const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+      const typedArrayData = this.metabolomicsTableData as [{[key: string]: number}]
+      const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
 
-        typedArrayHeader.forEach(element => {
-          if (element.value !== 'available') {
-            const valArr = typedArrayData.map(elem => elem[element.value])
-            const numArr: number[] = []
-            let amtNum = 0
-            let amtNonNum = 0
-            let empties = 0
-            valArr.forEach((val) => {
-              if (typeof val === 'number') {
-                amtNum += 1
-                numArr.push(val)
-              } else if (val === 'None') {
-                empties += 1
-              } else amtNonNum += 1
-            })
-            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-              console.log(element.value, numArr)
-              const min = Math.floor(Math.min(...numArr))
-              const max = Math.ceil(Math.max(...numArr))
-              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-              if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
-                this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
-              }
-              console.log(element.value, this.sliderVals)
+      typedArrayHeader.forEach(element => {
+        if (element.value !== 'available') {
+          const valArr = typedArrayData.map(elem => elem[element.value])
+          const numArr: number[] = []
+          let amtNum = 0
+          let amtNonNum = 0
+          let empties = 0
+          valArr.forEach((val) => {
+            if (typeof val === 'number') {
+              amtNum += 1
+              numArr.push(val)
+            } else if (val === 'None') {
+              empties += 1
+            } else amtNonNum += 1
+          })
+          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+            console.log(element.value, numArr)
+            const min = Math.floor(Math.min(...numArr))
+            const max = Math.ceil(Math.max(...numArr))
+            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
+            if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
+              this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
             }
+            console.log(element.value, this.sliderVals)
           }
-        })
-        return outObj
-      }
+        }
+      })
+      return outObj
     }
   },
 
@@ -422,7 +410,7 @@ export default {
         'setTranscriptomicsData',
         []
       )
-      Vue.set(this.sliderVals, 'transcriptomics', {})
+      this.sliderVals.transcriptomics = {}
       if (fileInput !== null) {
         this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
@@ -470,7 +458,7 @@ export default {
         'setProteomicsData',
         []
       )
-      Vue.set(this.sliderVals, 'proteomics', {})
+      this.sliderVals.proteomics = {}
       if (fileInput !== null) {
         this.$store.dispatch('setOverlay', true)
         const formData = new FormData()
@@ -520,7 +508,7 @@ export default {
         'setMetabolomicsData',
         []
       )
-      Vue.set(this.sliderVals, 'metabolomics', {})
+      this.sliderVals.metabolomics = {}
       if (fileInput !== null) {
         this.$store.dispatch('setOverlay', true)
         const formData = new FormData()

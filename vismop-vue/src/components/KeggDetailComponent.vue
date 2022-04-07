@@ -41,6 +41,8 @@ import { generateGraphData } from '../core/detailGraphPreparation'
 import { defineComponent } from 'vue'
 import Sigma from 'sigma'
 import vue from 'vue'
+import { String } from 'lodash'
+import { PropType } from 'vue'
 
 
 interface Data{
@@ -131,7 +133,7 @@ export default {
   mounted () {
     this.mutationObserver = new MutationObserver(this.refreshGraph)
     const config = { attributes: true }
-    const tar = document.getElementById(this.contextID)
+    const tar =  document.getElementById(this.contextID ? this.contextID : '')
     if (tar) this.mutationObserver.observe(tar, config)
     if (this.graphData) {
       this.drawNetwork()
@@ -139,9 +141,9 @@ export default {
   },
   props: {
     contextID: String,
-    transcriptomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
-    proteomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
-    metabolomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    transcriptomicsSelection: Array as PropType<{[key: string]: string}[]>,
+    proteomicsSelection: Array as PropType<{[key: string]: string}[]>,
+    metabolomicsSelection: Array as PropType<{[key: string]: string}[]>,
     isActive: Boolean
   },
   methods: {
@@ -152,7 +154,7 @@ export default {
       console.log('base dat', networkData)
       const key = this.pathwayDropdown ? this.pathwayDropdown : Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
       const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
-      this.networkGraph = new DetailNetwork(networkData, this.contextID, key, nodeList)
+      this.networkGraph = new DetailNetwork(networkData, this.contextID ? this.contextID : '', key, nodeList)
     },
     focusNodeTranscriptomics (row: {[key: string]: string}) {
       const symbol = row[this.usedSymbolCols.transcriptomics]

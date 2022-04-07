@@ -24,36 +24,33 @@
         </v-btn>
 
         <div class="d-flex align-center">
+          <!--
           <v-img
-            class="shrink mr-2"
+            class="mr-2"
             contain
             :src="svgIcon"
             width="40"
           />
-
+          -->
           <span class="mr-2">visMOP</span>
         </div>
       </v-list-item>
       <v-list dense>
         <v-list-item>
-          <v-list-item-icon>
-            <p></p>
-          </v-list-item-icon>
-          <v-list-item-content>
             <SideBar></SideBar>
-          </v-list-item-content>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-app-bar app color="primary" dark>
       <div class="d-flex align-center pl-12">
+        <!--
         <v-img
-          class="shrink mr-2"
+          class="mr-2"
           contain
           :src="svgIcon"
           width="40"
         />
-
+        -->
         <span class="mr-2">VisMOP</span>
       </div>
       <v-spacer></v-spacer>
@@ -109,8 +106,6 @@
 import MainPage from './components/MainPage.vue'
 import SideBar from './components/Sidebar.vue'
 import svgIcon from './assets/vmod_icon.svg'
-import { defineComponent } from 'vue'
-import vue from 'vue'
 export default {
   name: 'App',
 
@@ -129,11 +124,11 @@ export default {
   },
   computed: {
     sideBarExpand: {
-      get (this): boolean {
+      get (): boolean {
         console.log(this.drawer)
         return this.$store.state.sideBarExpand
       },
-      set (this, val: boolean) {
+      set (val: boolean) {
         this.$store.dispatch('setSideBarExpand', val)
       }
     }

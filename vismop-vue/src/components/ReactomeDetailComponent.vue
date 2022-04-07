@@ -42,6 +42,7 @@ import { glyphData } from '../core/overviewGlyph'
 import { getEntryAmounts } from '../core/reactomeUtils'
 import { defineComponent } from 'vue'
 import vue from 'vue'
+import { PropType } from 'vue'
 
 
 interface Data{
@@ -111,14 +112,14 @@ export default {
     // allows to run function when tar changes
     this.mutationObserver = new MutationObserver(this.refreshSize)
     const config = { attributes: true }
-    const tar = document.getElementById(this.contextID)
+    const tar = document.getElementById(this.contextID ? this.contextID : '')
     if (tar) this.mutationObserver.observe(tar, config)
   },
   props: {
     contextID: String,
-    transcriptomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
-    proteomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
-    metabolomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    transcriptomicsSelection: Array as PropType<{[key: string]: string}[]>,
+    proteomicsSelection: Array as PropType<{[key: string]: string}[]>,
+    metabolomicsSelection: Array as PropType<{[key: string]: string}[]>,
     isActive: Boolean
   },
   methods: {

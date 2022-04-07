@@ -24,6 +24,7 @@ import { generateGlyphData, generateGlyphDataReactome, generateGlyphs } from '..
 import { defineComponent } from 'vue'
 import vue from 'vue'
 import Sigma from 'sigma'
+import { PropType } from 'vue'
 
 interface Data{
   tableSearch: string
@@ -68,22 +69,18 @@ export default {
       transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
       proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict
     }),
-    combinedIntersection: {
-      get: function (): string[] {
-        const combinedElements = []
-        if (this.transcriptomicsIntersection.length > 0) combinedElements.push(this.transcriptomicsIntersection)
-        if (this.proteomicsIntersection.length > 0) combinedElements.push(this.proteomicsIntersection)
-        if (this.metabolomicsIntersection.length > 0) combinedElements.push(this.metabolomicsIntersection)
-        let intersection = combinedElements.length > 0 ? combinedElements.reduce((a, b) => a.filter((c) => b.includes(c))) : []
+    combinedIntersection: function (): string[] {
+      const combinedElements = []
+      if (this.transcriptomicsIntersection.length > 0) combinedElements.push(this.transcriptomicsIntersection)
+      if (this.proteomicsIntersection.length > 0) combinedElements.push(this.proteomicsIntersection)
+      if (this.metabolomicsIntersection.length > 0) combinedElements.push(this.metabolomicsIntersection)
+      let intersection = combinedElements.length > 0 ? combinedElements.reduce((a, b) => a.filter((c) => b.includes(c))) : []
 
-        intersection = [...new Set([...intersection])]
-        return intersection
-      }
+      intersection = [...new Set([...intersection])]
+      return intersection
     },
-    combinedUnion: {
-      get: function (): string[] {
-        return [...new Set([...this.transcriptomicsUnion, ...this.proteomicsUnion, ...this.metabolomicsUnion])]
-      }
+    combinedUnion: function (): string[] {
+      return [...new Set([...this.transcriptomicsUnion, ...this.proteomicsUnion, ...this.metabolomicsUnion])]
     }
   },
   watch: {
@@ -95,7 +92,7 @@ export default {
     },
     transcriptomicsSelection: function () {
       const foundPathways: string[][] = []
-      this.transcriptomicsSelection.forEach((element: { [key: string]: string}) => {
+      this.transcriptomicsSelection?.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.transcriptomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
@@ -109,7 +106,7 @@ export default {
     },
     proteomicsSelection: function () {
       const foundPathways: string[][] = []
-      this.proteomicsSelection.forEach((element: { [key: string]: string}) => {
+      this.proteomicsSelection?.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.proteomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining); console.log('foundPathways', pathwaysContaining)
@@ -123,7 +120,7 @@ export default {
     },
     metabolomicsSelection: function () {
       const foundPathways: string[][] = []
-      this.metabolomicsSelection.forEach((element: { [key: string]: string}) => {
+      this.metabolomicsSelection?.forEach((element: { [key: string]: string}) => {
         const symbol = element[this.usedSymbolCols.metabolomics]
         const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
@@ -170,9 +167,9 @@ export default {
   },
   props: {
     contextID: String,
-    transcriptomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
-    proteomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
-    metabolomicsSelection: Array as Vue.PropType<{[key: string]: string}[]>,
+    transcriptomicsSelection: Array as PropType<{[key: string]: string}[]>,
+    proteomicsSelection: Array as PropType<{[key: string]: string}[]>,
+    metabolomicsSelection: Array as PropType<{[key: string]: string}[]>,
     isActive: Boolean
   },
   methods: {
@@ -188,7 +185,7 @@ export default {
       console.log('GLYPHs', this.$store.state.glyphs)
       const networkData = generateGraphData(this.overviewData, glyphsURL, this.pathwayLayouting.rootIds)
       console.log('base dat', networkData)
-      this.networkGraph = new OverviewGraph(this.contextID, networkData)
+      this.networkGraph = new OverviewGraph(this.contextID ? this.contextID : '', networkData)
     }
   }
 }
