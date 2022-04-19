@@ -178,7 +178,7 @@ export default {
       // const fcExtents = this.fcQuantiles
       const glyphData = generateGlyphDataReactome()
       mainStore.setGlyphData(glyphData)
-      // console.log('GLYPH DATA', glyphData)
+      console.log('GLYPH DATA', glyphData)
       const generatedGlyphs = generateGlyphs(glyphData)
       mainStore.setGlyphs(generatedGlyphs)
       const glyphsURL = generatedGlyphs.url

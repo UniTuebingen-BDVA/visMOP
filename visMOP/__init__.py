@@ -155,13 +155,13 @@ def uniprot_access(colname, filter_obj):
     print('protcols', colname)
     prot_table = pd.read_json(cache.get('prot_table_global'), orient="columns")
 
-    id_col = colname["field"]
+    id_col = colname
     prot_table = prot_table.drop_duplicates(subset=id_col).set_index(id_col)
     for k,v in filter_obj.items():
         is_empty = (v['empties'] & (prot_table[k] == 'None'))
         is_numeric = (pd.to_numeric(prot_table[k],errors='coerce').notnull())
         df_numeric = prot_table.loc[is_numeric]
-        df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals']['min']) & (df_numeric[k] <= v['vals']['min'])]
+        df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals']['min']) & (df_numeric[k] <= v['vals']['max'])]
         df_is_empty = prot_table.loc[is_empty]
     
         prot_table = prot_table.loc[prot_table.index.isin(df_is_in_range.index) | prot_table.index.isin(df_is_empty.index) ]
@@ -468,7 +468,7 @@ def reactome_parsing():
         metabolomics_query_data_tuples = []
 
         metabolomics_df_global = pd.read_json(cache.get('metabolomics_df_global'),orient='columns')
-        id_col = metabolomics["symbol"]["field"]
+        id_col = metabolomics["symbol"]
         metabolomics_df = metabolomics_df_global.drop_duplicates(subset=id_col).set_index(id_col)
         for k,v in slider_vals["metabolomics"].items():
             is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
@@ -503,7 +503,7 @@ def reactome_parsing():
     if transcriptomics["recieved"]:
         transcriptomics_query_data_tuples = []
         transcriptomics_df_global = pd.read_json(cache.get('transcriptomics_df_global'),orient='columns')
-        id_col = transcriptomics["symbol"]["field"]
+        id_col = transcriptomics["symbol"]
         #TODO Duplicates are dropped how to handle these duplicates?!
         transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=id_col).set_index(id_col)
         for k,v in slider_vals["transcriptomics"].items():

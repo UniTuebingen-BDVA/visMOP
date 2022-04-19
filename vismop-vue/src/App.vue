@@ -14,7 +14,7 @@
                 width="40"
             />
           </q-avatar>
-          Title
+          VisMOP
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -47,3 +47,6 @@ export default {
   }
 }
 </script>
+<style>
+@import "./css/networkGraph.css";
+</style>

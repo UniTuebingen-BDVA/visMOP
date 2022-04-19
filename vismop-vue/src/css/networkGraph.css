@@ -1,4 +1,4 @@
-/*
+
 .webglContainer {
   height: 75vh;
   min-height: 75vh;
@@ -115,7 +115,7 @@
 }
 
 
-//Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
+/*Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe*/
 
 .range-wrap {
   position: relative;
@@ -191,4 +191,3 @@
 .nodeG{
   fill: white
 }
-*/

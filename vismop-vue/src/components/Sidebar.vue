@@ -211,18 +211,18 @@ interface Data{
   overlay: boolean,
   transcriptomicsFile: File | null,
   transcriptomicsSheetVal: string,
-  transcriptomicsSymbolCol: string,
-  transcriptomicsValueCol: string,
+  transcriptomicsSymbolCol: {field: string, label: string, name: string, align: string},
+  transcriptomicsValueCol: {field: string, label: string, name: string, align: string},
   recievedTranscriptomicsData: boolean,
   proteomicsFile: File | null,
   proteomicsSheetVal: string,
-  proteomicsSymbolCol: string,
-  proteomicsValueCol: string,
+  proteomicsSymbolCol: {field: string, label: string, name: string, align: string},
+  proteomicsValueCol: {field: string, label: string, name: string, align: string},
   recievedProteomicsData: boolean,
   metabolomicsFile: File | null,
   metabolomicsSheetVal: string,
-  metabolomicsSymbolCol: string,
-  metabolomicsValueCol: string,
+  metabolomicsSymbolCol: {field: string, label: string, name: string, align: string},
+  metabolomicsValueCol: {field: string, label: string, name: string, align: string},
   recievedMetabolomicsData: boolean,
   targetOrganisms: { text: string, value: string}[],
   targetOrganism: string,
@@ -240,18 +240,18 @@ export default {
   data: () => ({
     transcriptomicsFile: null,
     transcriptomicsSheetVal: '0',
-    transcriptomicsSymbolCol: '',
-    transcriptomicsValueCol: '',
+    transcriptomicsSymbolCol: {field: '', label: '', name: '', align: ''},
+    transcriptomicsValueCol: {field: '', label: '', name: '', align: ''},
     recievedTranscriptomicsData: false,
     proteomicsFile: null,
     proteomicsSheetVal: '0',
-    proteomicsSymbolCol: '',
-    proteomicsValueCol: '',
+    proteomicsSymbolCol: {field: '', label: '', name: '', align: ''},
+    proteomicsValueCol: {field: '', label: '', name: '', align: ''},
     recievedProteomicsData: false,
     metabolomicsFile: null,
     metabolomicsSheetVal: '0',
-    metabolomicsSymbolCol: '',
-    metabolomicsValueCol: '',
+    metabolomicsSymbolCol: {field: '', label: '', name: '', align: ''},
+    metabolomicsValueCol: {field: '', label: '', name: '', align: ''},
     recievedMetabolomicsData: false,
     targetOrganisms: [
       { text: 'Mouse', value: 'mmu' },
@@ -514,18 +514,18 @@ export default {
         targetOrganism: this.targetOrganism,
         transcriptomics: {
           recieved: this.recievedTranscriptomicsData,
-          symbol: this.transcriptomicsSymbolCol,
-          value: this.transcriptomicsValueCol
+          symbol: this.transcriptomicsSymbolCol.field,
+          value: this.transcriptomicsValueCol.field
         },
         proteomics: {
           recieved: this.recievedProteomicsData,
-          symbol: this.proteomicsSymbolCol,
-          value: this.proteomicsValueCol
+          symbol: this.proteomicsSymbolCol.field,
+          value: this.proteomicsValueCol.field
         },
         metabolomics: {
           recieved: this.recievedMetabolomicsData,
-          symbol: this.metabolomicsSymbolCol,
-          value: this.metabolomicsValueCol
+          symbol: this.metabolomicsSymbolCol.field,
+          value: this.metabolomicsValueCol.field
         },
         sliderVals: this.sliderVals
       }
@@ -554,6 +554,7 @@ export default {
         }
       }).then((response) => response.json())
         .then((dataContent) => {
+          console.log('PATHWAYLAYOUTING', dataContent)
           mainStore.setOverviewData(dataContent.overviewData)
           mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting)
         }).then(() => mainStore.setOverlay(false))

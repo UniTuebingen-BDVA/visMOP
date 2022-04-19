@@ -138,7 +138,7 @@
                     <div v-if="targetDatabase === 'kegg'">
                       <keep-alive>
                           <kegg-overview-component
-                          conlabelID="overviewConlabel"
+                          contextID="overviewContext"
                           :transcriptomicsSelection="transcriptomicsSelectionData"
                           :proteomicsSelection="proteomicsSelectionData"
                           :metabolomicsSelection="metabolomicsSelectionData"
@@ -150,7 +150,7 @@
                     <div v-if="targetDatabase === 'reactome'">
                       <keep-alive>
                         <reactome-overview-component
-                          conlabelID="overviewConlabel"
+                          contextID="overviewContext"
                           :transcriptomicsSelection="transcriptomicsSelectionData"
                           :proteomicsSelection="proteomicsSelectionData"
                           :metabolomicsSelection="metabolomicsSelectionData"
@@ -417,3 +417,4 @@ export default {
   }
 }
 </script>
+
