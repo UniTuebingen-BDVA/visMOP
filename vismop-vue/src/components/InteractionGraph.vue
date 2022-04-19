@@ -33,9 +33,8 @@
 <script lang="ts">
 import { mapState } from 'vuex'
 import { generateInteractionGraph } from '../core/interactionGraph'
-import { defineComponent } from 'vue'
-import vue from 'vue'
 import Sigma from 'sigma'
+import { useMainStore } from '@/stores'
 
 interface Data {
   stringSlider: number;
@@ -71,7 +70,8 @@ export default {
   props: ['contextID'],
   methods: {
     queryEgoGraphs () {
-      this.$store.dispatch('queryEgoGraps', this.stringSlider)
+      const mainStore = useMainStore()
+      mainStore.queryEgoGraps(this.stringSlider)
     }
   }
 }

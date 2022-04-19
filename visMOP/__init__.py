@@ -72,13 +72,11 @@ def transcriptomics_table_recieve():
     #create and parse data table and prepare json
     data_table = create_df(transfer_dat, sheet_no)
     cache.set('transcriptomics_df_global', data_table.copy(deep=True).to_json(orient="columns"))
-    table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
     out_data =  {}
     out_data["entry_IDs"] = entry_IDs
     out_data["header"] = generate_vue_table_header(data_table)
     out_data["entries"] = generate_vue_table_entries(data_table)
-    out_data["data"] = table_json
 
     json_data = json.dumps(out_data)
 
@@ -99,13 +97,11 @@ def prot_table_recieve():
     # parse data table and prepare json
     prot_data = create_df(transfer_dat, sheet_no)
     cache.set('prot_table_global', prot_data.copy(deep=True).to_json(orient="columns"))
-    prot_table_json = prot_data.to_json(orient="columns")
     entry_IDs = list(prot_data.iloc[:, 0])
     out_data = {}
     out_data["entry_IDs"] = entry_IDs
     out_data["header"] = generate_vue_table_header(prot_data)
     out_data["entries"] = generate_vue_table_entries(prot_data)
-    out_data["data"] = prot_table_json
 
     return json.dumps(out_data)
 
@@ -123,13 +119,11 @@ def metabolomics_table_recieve():
     # parse and create dataframe and prepare json
     data_table = create_df(transfer_dat, sheet_no)
     cache.set('metabolomics_df_global', data_table.copy(deep=True).to_json(orient="columns"))
-    table_json = data_table.to_json(orient="columns")
     entry_IDs = list(data_table.iloc[:,0])
     out_data =  {}
     out_data["entry_IDs"] = entry_IDs
     out_data["header"] = generate_vue_table_header(data_table)
     out_data["entries"] = generate_vue_table_entries(data_table)
-    out_data["data"] = table_json
     
     json_data = json.dumps(out_data)
 

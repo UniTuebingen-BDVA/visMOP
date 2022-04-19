@@ -33,15 +33,12 @@
 </template>
 
 <script lang="ts">
-import { mapState } from 'vuex'
+import { mapState } from 'pinia'
 import ReactomeDetailView from '../core/reactomeDetailView'
 import { graphJSON, layoutJSON, foldChangesByType, foldChangesByID } from '../core/reactomeTypes'
-import { glyphData } from '../core/overviewGlyph'
 import { getEntryAmounts } from '../core/reactomeUtils'
-import { defineComponent } from 'vue'
-import vue from 'vue'
 import { PropType } from 'vue'
-import { Function } from 'lodash'
+import { useMainStore } from '@/stores'
 
 
 interface Data{
@@ -80,7 +77,7 @@ export default {
   }),
 
   computed: {
-    ...mapState({
+    ...mapState(useMainStore,{
       sideBarExpand: (state:any) => state.sideBarExpand,
       overlay: (state:any) => state.overlay,
       pathwayDropdown: (state: any) => state.pathwayDropdown,
@@ -99,8 +96,9 @@ export default {
       )
     },
     pathwaySelection: function () {
+      const mainStore = useMainStore()
       this.getJsonFiles(this.pathwaySelection)
-      this.$store.dispatch('focusPathwayViaDropdown', this.pathwaySelection)
+      mainStore.focusPathwayViaDropdown(this.pathwaySelection)
     },
     pathwayDropdown: function () {
       this.pathwaySelection = this.pathwayDropdown
@@ -129,6 +127,7 @@ export default {
       })
     },
     getJsonFiles (reactomeID: string) {
+      const mainStore = useMainStore()
       fetch(`/get_reactome_json_files/${reactomeID}`, {
         method: 'GET',
         headers: {
@@ -140,7 +139,7 @@ export default {
           this.currentGraphJson = dataContent.graphJson as graphJSON
           this.currentInsetPathwaysTotals = dataContent.insetPathwayTotals as {[key: number]: {proteomics: number, metabolomics: number, transcriptomics: number}}
           this.drawDetailView()
-        }).then(() => this.$store.dispatch('setOverlay', false))
+        }).then(() => mainStore.setOverlay(false))
     },
     /**
      * Fill the fc objects for the selected type with the supplied pathway Data

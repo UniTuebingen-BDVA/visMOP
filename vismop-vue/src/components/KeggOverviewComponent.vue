@@ -17,14 +17,12 @@
 </template>
 
 <script lang="ts">
-import { mapState } from 'vuex'
+import { mapState } from 'pinia'
 import OverviewGraph from '../core/overviewNetwork'
 import { generateGraphData } from '../core/keggOverviewGraphPreparation'
 import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
-import {defineComponent} from 'vue'
-import vue from 'vue'
-import Sigma from 'sigma'
 import { PropType } from 'vue'
+import { useMainStore } from '@/stores'
 
 interface Data{
   tableSearch: string
@@ -58,7 +56,7 @@ export default {
   }),
 
   computed: {
-    ...mapState({
+    ...mapState(useMainStore, {
       overviewData: (state:any) => state.overviewData,
       fcs: (state:any) => state.fcs,
       overlay: (state:any) => state.overlay,
@@ -177,14 +175,15 @@ export default {
   methods: {
     drawNetwork () {
       if (this.networkGraph) { this.networkGraph.killGraph() }
+      const mainStore = useMainStore()
       const fcExtents = this.fcQuantiles
       const glyphData = generateGlyphData(fcExtents)
-      this.$store.dispatch('setGlyphData', glyphData)
+      mainStore.setGlyphData(glyphData)
       console.log('GLYPH DATA', glyphData)
       const generatedGlyphs = generateGlyphs(glyphData)
-      this.$store.dispatch('setGlyphs', generatedGlyphs)
+      mainStore.setGlyphs(generatedGlyphs)
       const glyphsURL = generatedGlyphs.url
-      console.log('GLYPHs', this.$store.state.glyphs)
+      console.log('GLYPHs', mainStore.glyphs)
       const networkData = generateGraphData(this.overviewData, fcExtents, glyphsURL)
       console.log('base dat', networkData)
       this.networkGraph = new OverviewGraph(this.contextID ? this.contextID : '', networkData)

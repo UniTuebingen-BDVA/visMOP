@@ -62,10 +62,9 @@
 </template>
 
 <script lang="ts">
-import { mapState } from 'vuex'
-import { defineComponent } from 'vue'
+import { mapState } from 'pinia'
 import * as d3 from 'd3'
-import vue from 'vue'
+import { useMainStore } from '@/stores'
 
 
 interface Data {
@@ -84,7 +83,7 @@ export default {
   }),
 
   computed: {
-    ...mapState({
+    ...mapState(useMainStore,{
       pathwayCompare: (state: any) => state.pathwayCompare,
       overlay: (state: any) => state.overlay,
       glyphData: (state: any) => state.glyphData,
@@ -96,8 +95,9 @@ export default {
   // mounted () {},
   methods: {
     removeCard (val: string) {
+      const mainStore = useMainStore()
       console.log('remove Card', val)
-      this.$store.dispatch('removePathwayCompare', val)
+      mainStore.removePathwayCompare(val)
     },
     appendGlyph (pathway: string) {
       this.$nextTick(() => {

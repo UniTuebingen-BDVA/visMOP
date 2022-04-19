@@ -198,16 +198,15 @@
   </div>
 </template>
 <script lang="ts">
-import { mapState } from 'vuex'
+import { mapState } from 'pinia'
 import KeggDetailComponent from './KeggDetailComponent.vue'
 import ReactomeDetailComponent from './ReactomeDetailComponent.vue'
 import KeggOverviewComponent from './KeggOverviewComponent.vue'
 import InteractionGraph from './InteractionGraph.vue'
-import { defineComponent } from 'vue'
 import InteractionGraphTable from './InteractionGraphTable.vue'
 import PathwayCompare from './PathwayCompare.vue'
 import ReactomeOverviewComponent from './ReactomeOverviewComponent.vue'
-import vue from 'vue'
+import { useMainStore } from '@/stores'
 
 
 interface Data{
@@ -245,7 +244,7 @@ export default {
   }),
 
   computed: {
-    ...mapState([
+    ...mapState(useMainStore,[
       'targetDatabase',
       'transcriptomicsTableHeaders',
       'transcriptomicsTableData',
@@ -272,6 +271,7 @@ export default {
   },
   watch: {
     pathwayLayouting: function () {
+      const mainStore = useMainStore()
       let transcriptomicsAvailable = 0
       let transcriptomicsTotal = 0
 
@@ -291,8 +291,8 @@ export default {
           entry.label = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`
         }
       })
-      this.$store.dispatch('setTranscriptomicsTableHeaders', this.transcriptomicsTableHeaders)
-      this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
+      mainStore.setTranscriptomicsTableHeaders(this.transcriptomicsTableHeaders)
+      mainStore.setTranscriptomicsTableData(this.transcriptomicsTableData)
 
       let proteomiocsAvailable = 0
       let proteomicsTotal = 0
@@ -312,8 +312,8 @@ export default {
           entry.label = `available (${proteomiocsAvailable} of ${proteomicsTotal})`
         }
       })
-      this.$store.dispatch('setProteomicsTableHeaders', this.proteomicsTableHeaders)
-      this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
+      mainStore.setProteomicsTableHeaders(this.proteomicsTableHeaders)
+      mainStore.setProteomicsTableData(this.proteomicsTableData)
 
       console.log(this.proteomicsTableHeaders)
 
@@ -332,8 +332,8 @@ export default {
           entry.label = `available (${metabolomicsAvailable} of ${metabolomicsTotal})`
         }
       })
-      this.$store.dispatch('setMetabolomicsTableHeaders', this.metabolomicsTableHeaders)
-      this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
+      mainStore.setMetabolomicsTableHeaders(this.metabolomicsTableHeaders)
+      mainStore.setMetabolomicsTableData(this.metabolomicsTableData)
     },
     selectedTranscriptomics: function () {
       this.transcriptomicsSelectionData = (this.selectedTranscriptomics)
@@ -345,6 +345,7 @@ export default {
       this.metabolomicsSelectionData = (this.selectedMetabolomics)
     },
     pathwayDropdown: function () {
+      const mainStore = useMainStore()
       this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
         let symbol = row[this.usedSymbolCols.transcriptomics]
         const available = !(row.available === 'No')
@@ -360,7 +361,7 @@ export default {
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
       })
-      this.$store.dispatch('setTranscriptomicsTableData', this.transcriptomicsTableData)
+      mainStore.setTranscriptomicsTableData(this.transcriptomicsTableData)
 
       this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
         let symbol = row[this.usedSymbolCols.proteomics]
@@ -377,7 +378,7 @@ export default {
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
       })
-      this.$store.dispatch('setProteomicsTableData', this.proteomicsTableData)
+      mainStore.setProteomicsTableData(this.proteomicsTableData)
 
       this.metabolomicsTableData.forEach((row: {[key: string]: string | number }) => {
         const symbol = row[this.usedSymbolCols.metabolomics]
@@ -393,7 +394,7 @@ export default {
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
       })
-      this.$store.dispatch('setMetabolomicsTableData', this.metabolomicsTableData)
+      mainStore.setMetabolomicsTableData(this.metabolomicsTableData)
     }
   },
 
@@ -404,7 +405,8 @@ export default {
       // this.transcriptomicsSelectionData = val
     },
     proteomicsSelection (val: { [key: string]: string }) {
-      this.$store.dispatch('addClickedNodeFromTable', val)
+      const mainStore = useMainStore()
+      mainStore.addClickedNodeFromTable(val)
     },
     metabolomicsSelection (val: { [key: string]: string }) {
       // this.metabolomicsSelectionData = val

@@ -8,7 +8,7 @@ import {
   baseNodeAttr,
   baseEdgeAttr
 } from '@/core/graphTypes'
-import store from '@/store'
+import { useMainStore } from '@/stores'
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -21,6 +21,7 @@ export function generateGraphData (
   fcsExtent: number[],
   glyphs: {[key: string]: string}
 ): graphData {
+  const mainStore = useMainStore()
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
     attributes: { name: 'BaseNetwork' },
@@ -38,7 +39,7 @@ export function generateGraphData (
         const initPosX = entry.initialPosX
         const initPosY = entry.initialPosY
         const color = '#FFFFFF'
-        const trueName = store.state.pathwayLayouting.pathwayList.find(elem => elem.value === currentNames[0].replace('path:', ''))?.text
+        const trueName = mainStore.pathwayLayouting.pathwayList.find(elem => elem.value === currentNames[0].replace('path:', ''))?.text
         const currentNode = {
           key: keggID,
           // label: "",

@@ -51,8 +51,6 @@
             option-label="label"
             option-value="name"
             label="Genesymbol Col."
-            @click="lockHover"
-            @input="unlockHover"
           ></q-select>
 
           <q-separator></q-separator>
@@ -63,8 +61,6 @@
             option-label="label"
             option-value="name"
             label="Value Col."
-            @click="lockHover"
-            @input="unlockHover"
           ></q-select>
           <q-separator></q-separator>
           Input Filter:
@@ -111,8 +107,6 @@
             label="Symbol Col."
             option-label="label"
             option-value="name"
-            @click="lockHover"
-            @input="unlockHover"
           ></q-select>
 
           <q-separator></q-separator>
@@ -123,8 +117,6 @@
             option-label="label"
             option-value="name"
             label="Value Col."
-            @click="lockHover"
-            @input="unlockHover"
           ></q-select>
           <q-separator></q-separator>
           Input Filter:
@@ -172,8 +164,6 @@
             option-label="label"
             option-value="name"
             label="Symbol Col."
-            @click="lockHover"
-            @input="unlockHover"
           ></q-select>
 
           <q-separator></q-separator>
@@ -184,8 +174,6 @@
             option-label="label"
             option-value="name"
             label="Value Col."
-            @click="lockHover"
-            @input="unlockHover"
           ></q-select>
           <q-separator></q-separator>
           Input Filter:
@@ -216,7 +204,8 @@
 </template>
 
 <script lang="ts">
-import { mapState } from 'vuex'
+import { mapState } from 'pinia'
+import { useMainStore } from '@/stores'
 
 interface Data{
   overlay: boolean,
@@ -284,7 +273,7 @@ export default {
     ]
   }),
   computed: {
-    ...mapState([
+    ...mapState( useMainStore,[
       'transcriptomicsTableHeaders',
       'proteomicsTableHeaders',
       'metabolomicsTableHeaders',
@@ -303,7 +292,7 @@ export default {
     sliderTranscriptomics () {
         const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
         const typedArrayData = this.transcriptomicsTableData as [{[key: string]: number}]
-        const typedArrayHeader = this.transcriptomicsTableHeaders as [{[key: string]: string}]
+        const typedArrayHeader = this.transcriptomicsTableHeaders
         typedArrayHeader.forEach(element => {
           if (element.field !== 'available') {
             const valArr = typedArrayData.map(elem => elem[element.field])
@@ -336,7 +325,7 @@ export default {
     sliderProteomics() {
       const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
       const typedArrayData = this.proteomicsTableData as [{[key: string]: number}]
-      const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
+      const typedArrayHeader = this.proteomicsTableHeaders
       console.log('proteomics sliders', typedArrayHeader)
       typedArrayHeader.forEach(element => {
         if (element.field !== 'available') {
@@ -370,7 +359,7 @@ export default {
     sliderMetabolomics() {
       const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
       const typedArrayData = this.metabolomicsTableData as [{[key: string]: number}]
-      const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
+      const typedArrayHeader = this.metabolomicsTableHeaders
 
       typedArrayHeader.forEach(element => {
         if (element.field !== 'available') {
@@ -416,21 +405,12 @@ export default {
 
   methods: {
     fetchTranscriptomicsTable (fileInput: File | null) {
-      this.$store.dispatch(
-        'setTranscriptomicsTableHeaders',
-        []
-      )
-      this.$store.dispatch(
-        'setTranscriptomicsTableData',
-        []
-      )
-      this.$store.dispatch(
-        'setTranscriptomicsData',
-        []
-      )
+      const mainStore = useMainStore()
+      mainStore.setTranscriptomicsTableHeaders([])
+      mainStore.setTranscriptomicsTableData([])
       this.sliderVals.transcriptomics = {}
       if (fileInput !== null) {
-        this.$store.dispatch('setOverlay', true)
+        mainStore.setOverlay(true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.transcriptomicsSheetVal)
@@ -441,21 +421,11 @@ export default {
         })
           .then((response) => response.json())
           .then((responseContent) => {
-            this.$store.dispatch(
-              'setTranscriptomicsTableHeaders',
-              responseContent.header
-            )
-            this.$store.dispatch(
-              'setTranscriptomicsTableData',
-              responseContent.entries
-            )
-            this.$store.dispatch(
-              'setTranscriptomicsData',
-              JSON.parse(responseContent.data)
-            )
+            mainStore.setTranscriptomicsTableHeaders(responseContent.header)
+            mainStore.setTranscriptomicsTableData(responseContent.entries)
             this.recievedTranscriptomicsData = true
           })
-          .then(() => (this.$store.dispatch('setOverlay', false)))
+          .then(() => (mainStore.setOverlay(false)))
       } else {
         // more errorhandling?
         this.recievedTranscriptomicsData = false
@@ -464,22 +434,14 @@ export default {
     },
 
     fetchProteomicsTable (fileInput: File | null) {
-      this.$store.dispatch(
-        'setProteomicsTableHeaders',
-        []
-      )
-      this.$store.dispatch(
-        'setProteomicsTableData',
-        []
-      )
-      this.$store.dispatch(
-        'setProteomicsData',
-        []
-      )
+      const mainStore = useMainStore()
+
+      mainStore.setProteomicsTableHeaders([])
+      mainStore.setProteomicsTableData([])
       console.log('FETCH PROT')
       this.sliderVals.proteomics = {}
       if (fileInput !== null) {
-        this.$store.dispatch('setOverlay', true)
+        mainStore.setOverlay(true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.proteomicsSheetVal)
@@ -493,21 +455,11 @@ export default {
           .then((response) => response.json())
 
           .then((responseContent) => {
-            this.$store.dispatch(
-              'setProteomicsTableHeaders',
-              responseContent.header
-            )
-            this.$store.dispatch(
-              'setProteomicsTableData',
-              responseContent.entries
-            )
-            this.$store.dispatch(
-              'setProteomicsData',
-              responseContent.data
-            )
+            mainStore.setProteomicsTableHeaders(responseContent.header)
+            mainStore.setProteomicsTableData(responseContent.entries)
             this.recievedProteomicsData = true
           })
-          .then(() => (this.$store.dispatch('setOverlay', false)))
+          .then(() => (mainStore.setOverlay(false)))
       } else {
         // more errorhandling?
         this.recievedProteomicsData = false
@@ -515,21 +467,13 @@ export default {
       }
     },
     fetchMetabolomicsTable (fileInput: File | null) {
-      this.$store.dispatch(
-        'setMetabolomicsTableHeaders',
-        []
-      )
-      this.$store.dispatch(
-        'setMetabolomicsTableData',
-        []
-      )
-      this.$store.dispatch(
-        'setMetabolomicsData',
-        []
-      )
+      const mainStore = useMainStore()
+
+      mainStore.setMetabolomicsTableHeaders([])
+      mainStore.setMetabolomicsTableData([])
       this.sliderVals.metabolomics = {}
       if (fileInput !== null) {
-        this.$store.dispatch('setOverlay', true)
+        mainStore.setOverlay(true)
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.metabolomicsSheetVal)
@@ -542,21 +486,11 @@ export default {
           .then((response) => response.json())
 
           .then((responseContent) => {
-            this.$store.dispatch(
-              'setMetabolomicsTableHeaders',
-              responseContent.header
-            )
-            this.$store.dispatch(
-              'setMetabolomicsTableData',
-              responseContent.entries
-            )
-            this.$store.dispatch(
-              'setMetabolomicsData',
-              responseContent.data
-            )
+            mainStore.setMetabolomicsTableHeaders(responseContent.header)
+            mainStore.setMetabolomicsTableData(responseContent.entries)
             this.recievedMetabolomicsData = true
           })
-          .then(() => (this.$store.dispatch('setOverlay', false)))
+          .then(() => (mainStore.setOverlay(false)))
       } else {
         // more errorhandling?
         this.recievedMetabolomicsData = false
@@ -573,7 +507,9 @@ export default {
     },
 
     queryReactome () {
-      this.$store.dispatch('setOverlay', true)
+      const mainStore = useMainStore()
+
+      mainStore.setOverlay(true)
       const payload = {
         targetOrganism: this.targetOrganism,
         transcriptomics: {
@@ -602,14 +538,15 @@ export default {
       }).then((response) => response.json())
         .then((dataContent) => {
           if (dataContent === 1) return 1
-          this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
-          this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
-          this.$store.dispatch('setFCSReactome', dataContent.fcs)
+          mainStore.setOmicsRecieved(dataContent.omicsRecieved)
+          mainStore.setUsedSymbolCols(dataContent.used_symbol_cols)
+          mainStore.setFCSReactome(dataContent.fcs)
         })
         .then(() => this.getReactomeData())
     },
 
     getReactomeData () {
+      const mainStore = useMainStore()
       fetch('/reactome_overview', {
         method: 'GET',
         headers: {
@@ -617,13 +554,15 @@ export default {
         }
       }).then((response) => response.json())
         .then((dataContent) => {
-          this.$store.dispatch('setOverviewData', dataContent.overviewData)
-          this.$store.dispatch('setPathwayLayoutingReactome', dataContent.pathwayLayouting)
-        }).then(() => this.$store.dispatch('setOverlay', false))
+          mainStore.setOverviewData(dataContent.overviewData)
+          mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting)
+        }).then(() => mainStore.setOverlay(false))
     },
     generateKGMLs () {
+      const mainStore = useMainStore()
+
       console.log('sliderTest', this.sliderVals)
-      this.$store.dispatch('setOverlay', true)
+      mainStore.setOverlay(true)
       const payload = {
         targetOrganism: this.targetOrganism,
         transcriptomics: {
@@ -653,38 +592,24 @@ export default {
         .then((response) => response.json())
         .then((dataContent) => {
           if (dataContent === 1) return 1
-          this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
-          this.$store.dispatch('setPathayAmountDict', dataContent.pathways_amount_dict)
-          this.$store.dispatch('setOverviewData', dataContent.overview_data)
-          this.$store.dispatch('setGraphData', dataContent.main_data)
-          this.$store.dispatch('setFCS', dataContent.fcs)
-          this.$store.dispatch(
-            'setTranscriptomicsSymbolDict',
-            dataContent.transcriptomics_symbol_dict
-          )
-          this.$store.dispatch(
-            'setProteomicsSymbolDict',
-            dataContent.proteomics_symbol_dict
-          )
-          this.$store.dispatch('setUsedSymbolCols', dataContent.used_symbol_cols)
-          this.$store.dispatch(
-            'setPathwayLayoutingKegg',
-            dataContent.pathwayLayouting
-          )
+          mainStore.setOmicsRecieved(dataContent.omicsRecieved)
+          mainStore.setPathayAmountDict(dataContent.pathways_amount_dict)
+          mainStore.setOverviewData(dataContent.overview_data)
+          mainStore.setGraphData(dataContent.main_data)
+          mainStore.setFCS(dataContent.fcs)
+          mainStore.setTranscriptomicsSymbolDict(dataContent.transcriptomics_symbol_dict)
+          mainStore.setProteomicsSymbolDict(dataContent.proteomics_symbol_dict)
+          mainStore.setUsedSymbolCols(dataContent.used_symbol_cols)
+          mainStore.setPathwayLayoutingKegg(dataContent.pathwayLayouting)
         })
         .then((val) => {
           if (val) alert('Empty Data Selection! Adjust data source and/or filter settings')
-          this.$store.dispatch('setOverlay', false)
+          mainStore.setOverlay(false)
         })
     },
-    lockHover () {
-      this.$store.dispatch('setSideBarExpand', false)
-    },
-    unlockHover () {
-      this.$store.dispatch('setSideBarExpand', true)
-    },
     setTargetDatabase (inputVal: {text: string, value: string}) {
-      this.$store.dispatch('setTargetDatabase', inputVal.value)
+      const mainStore = useMainStore()
+      mainStore.setTargetDatabase(inputVal.value)
     }
   }
 }

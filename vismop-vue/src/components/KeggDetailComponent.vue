@@ -3,7 +3,7 @@
     <q-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
       <div class="col">
         <q-select
-        :options="pathwayLayouting.pathwayList"
+        :options="pathwayListOptions"
         label="Focus Pathway"
         v-model="pathwaySelection"
         option-label="text"
@@ -33,14 +33,11 @@
 </template>
 
 <script lang="ts">
-import { mapState } from 'vuex'
+import { mapState } from 'pinia'
 import DetailNetwork from '../core/keggDetailView'
 import { generateGraphData } from '../core/detailGraphPreparation'
-import { defineComponent } from 'vue'
-import Sigma from 'sigma'
-import vue from 'vue'
-import { String } from 'lodash'
 import { PropType } from 'vue'
+import { useMainStore } from '@/stores'
 
 
 interface Data{
@@ -72,19 +69,20 @@ export default {
   }),
 
   computed: {
-    ...mapState({
-      sideBarExpand: (state:any) => state.sideBarExpand,
-      graphData: (state:any) => state.graphData,
-      fcs: (state:any) => state.fcs,
-      fcQuantiles: (state:any) => state.fcQuantiles,
-      transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
-      proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict,
-      usedSymbolCols: (state:any) => state.usedSymbolCols,
-      overlay: (state:any) => state.overlay,
+    ...mapState(useMainStore,{
+      sideBarExpand: state => state.sideBarExpand,
+      graphData: state => state.graphData,
+      fcs: state => state.fcs,
+      fcQuantiles: state => state.fcQuantiles,
+      transcriptomicsSymbolDict: state => state.transcriptomicsSymbolDict,
+      proteomicsSymbolDict: state => state.proteomicsSymbolDict,
+      usedSymbolCols: state => state.usedSymbolCols,
+      overlay: state => state.overlay,
       pathwayLayouting: (state: any) => state.pathwayLayouting,
       pathwayDropdown: (state: any) => state.pathwayDropdown
 
-    })
+    }),
+    pathwayListOptions () {return this.pathwayLayouting.pathwayList}
   },
   watch: {
     graphData: function () {
@@ -111,8 +109,9 @@ export default {
       }
     },
     pathwaySelection: function () {
+      const mainStore = useMainStore()
       this.selectPathway(this.pathwaySelection)
-      this.$store.dispatch('focusPathwayViaDropdown', this.pathwaySelection)
+      mainStore.focusPathwayViaDropdown(this.pathwaySelection)
     },
     transcriptomicsSelection: function () {
       // this.focusNodeTranscriptomics(this.transcriptomicsSelection)
@@ -148,7 +147,7 @@ export default {
     filterFunction (val: string, update: (n: () => void) => void) {
       update(() => {
         const tarValue = val.toLowerCase()
-        this.pathwayLayouting.pathwayList = this.pathwayLayouting.pathwayList.filter((v: string) => v.toLowerCase().indexOf(tarValue) > -1)
+        this.pathwayListOptions = this.pathwayListOptions.filter((v: string) => v.toLowerCase().indexOf(tarValue) > -1)
       })
     },
     drawNetwork () {

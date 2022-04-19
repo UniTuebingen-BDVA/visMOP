@@ -103,6 +103,7 @@
 import MainPage from './components/MainPage.vue'
 import SideBar from './components/Sidebar.vue'
 import svgIcon from './assets/vmod_icon.svg'
+import { useMainStore } from './stores'
 export default {
   name: 'App',
 
@@ -120,15 +121,6 @@ export default {
 
   },
   computed: {
-    sideBarExpand: {
-      get (): boolean {
-        console.log(this.drawer)
-        return this.$store.state.sideBarExpand
-      },
-      set (val: boolean) {
-        this.$store.dispatch('setSideBarExpand', val)
-      }
-    }
   }
 }
 </script>

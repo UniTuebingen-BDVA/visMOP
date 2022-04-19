@@ -24,6 +24,7 @@
     "graphology-operators": "^1.5.1",
     "graphology-shortest-path": "^2.0.0",
     "lodash": "^4.17.21",
+    "pinia": "^2.0.13",
     "quasar": "^2.6.5",
     "roboto-fontface": "*",
     "sigma": "^2.3.0",

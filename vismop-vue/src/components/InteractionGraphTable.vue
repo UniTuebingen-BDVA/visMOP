@@ -48,9 +48,10 @@
 </template>
 
 <script lang="ts">
-import { mapState } from 'vuex'
+import { mapState } from 'pinia'
 import { defineComponent } from 'vue'
 import vue from 'vue'
+import { useMainStore } from '@/stores'
 
 
 interface Data {
@@ -76,7 +77,7 @@ export default {
   }),
 
   computed: {
-    ...mapState({
+    ...mapState(useMainStore,{
       clickedNodes: (state: any) => state.clickedNodes,
       overlay: (state: any) => state.overlay,
       fcScales: (state: any) => state.fcScales
@@ -87,7 +88,8 @@ export default {
   // mounted () {},
   methods: {
     deleteRow (val: string) {
-      this.$store.dispatch('removeClickedNode', val)
+      const mainStore = useMainStore()
+      mainStore.removeClickedNode(val)
     }
   }
 }

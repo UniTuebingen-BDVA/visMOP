@@ -8,7 +8,7 @@ import {
   baseNodeAttr,
   baseEdgeAttr
 } from '@/core/graphTypes'
-import store from '@/store'
+import store from '@/stores'
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology

@@ -1,4 +1,4 @@
-import store from '@/store'
+import { useMainStore } from '@/stores'
 import * as d3 from 'd3'
 import { stratify } from 'd3'
 import { PieArcDatum } from 'd3-shape'
@@ -26,11 +26,12 @@ export interface glyphData {
 
 export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {}
+  const mainStore = useMainStore()
   // contains pathway lists
-  const pathwayLayouting = store.state.pathwayLayouting
-  const fcs = store.state.fcs
-  const omicsRecieved = store.state.omicsRecieved
-  const pathwayAmounts = store.state.pathayAmountDict
+  const pathwayLayouting = mainStore.pathwayLayouting
+  const fcs = mainStore.fcs
+  const omicsRecieved = mainStore.omicsRecieved
+  const pathwayAmounts = mainStore.pathayAmountDict
   for (const pathway of pathwayLayouting.pathwayList) {
     const transcriptomicsData = { available: omicsRecieved.transcriptomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
     const proteomicsData = { available: omicsRecieved.proteomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
@@ -45,11 +46,11 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
           if (!(usedIDs.includes(currentEntry))) {
             const fcsCurrent = fcs[currentEntry]
             if (typeof fcsCurrent.transcriptomics === 'number') {
-              transcriptomicsData.foldChanges.push({ name: store.state.transcriptomicsKeggIDDict[currentEntry], value: fcsCurrent.transcriptomics, queryID: '' })
+              transcriptomicsData.foldChanges.push({ name: mainStore.transcriptomicsKeggIDDict[currentEntry], value: fcsCurrent.transcriptomics, queryID: '' })
               transcriptomicsData.nodeState.regulated += 1
             }
             if (typeof fcsCurrent.proteomics === 'number') {
-              proteomicsData.foldChanges.push({ name: store.state.proteomicsKeggIDDict[currentEntry], value: fcsCurrent.proteomics, queryID: '' })
+              proteomicsData.foldChanges.push({ name: mainStore.proteomicsKeggIDDict[currentEntry], value: fcsCurrent.proteomics, queryID: '' })
               proteomicsData.nodeState.regulated += 1
             }
             if (typeof fcsCurrent.metabolomics === 'number') {
@@ -78,11 +79,13 @@ export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphD
 
 export function generateGlyphDataReactome (): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {}
+  const mainStore = useMainStore()
+
   // contains pathway lists
-  const pathwayLayouting = store.state.pathwayLayouting
-  const fcs = store.state.fcs
-  const omicsRecieved = store.state.omicsRecieved
-  const overviewData = store.state.overviewData as {pathwayName: string, pathwayId: string, entries: {
+  const pathwayLayouting = mainStore.pathwayLayouting
+  const fcs = mainStore.fcs
+  const omicsRecieved = mainStore.omicsRecieved
+  const overviewData = mainStore.overviewData as {pathwayName: string, pathwayId: string, entries: {
     transcriptomics: {measured: {[key: string]: measureData}, total: number},
     proteomics: {measured: {[key: string]: measureData}, total: number},
     metabolomics: {measured: {[key: string]: measureData}, total: number}
@@ -127,9 +130,9 @@ export function generateGlyphDataReactome (): { [key: string]: glyphData } {
   return outGlyphData
 }
 
-export function generateGlyphs (inputData: { [key: string]: glyphData }): { url: { [key: string]: string }, svg: { [key: string]: unknown }} {
+export function generateGlyphs (inputData: { [key: string]: glyphData }): { url: { [key: string]: string }, svg: { [key: string]: SVGElement }} {
   const outObjURL: { [key: string]: string } = {}
-  const outObjSVG: { [key: string]: unknown } = {}
+  const outObjSVG: { [key: string]: SVGElement } = {}
   let idx = 0
   for (const key in inputData) {
     const glyphData = inputData[key]
@@ -152,6 +155,8 @@ export function generateGlyphs (inputData: { [key: string]: glyphData }): { url:
 }
 
 export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean, glyphIdx: number, pathwayCompare = true): SVGElement {
+  const mainStore = useMainStore()
+
   let availableOmics = 0
   if (glyphDat.transcriptomics.available) availableOmics += 1
   if (glyphDat.proteomics.available) availableOmics += 1
@@ -168,9 +173,9 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
   const firstLayer = outermostRadius - layerWidth
   const secondLayer = firstLayer - layerWidth
   const innermostRadius = secondLayer - layerWidth
-  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
-  const colorScaleProteomics = store.state.fcScales.proteomics
-  const colorScaleMetabolomics = store.state.fcScales.metabolomics
+  const colorScaleTranscriptomics = mainStore.fcScales.transcriptomics
+  const colorScaleProteomics = mainStore.fcScales.proteomics
+  const colorScaleMetabolomics = mainStore.fcScales.metabolomics
   let highlightSection = 0
 
   const outerArcDat: {
@@ -361,7 +366,7 @@ export function generateGlyphVariation (glyphDat: glyphData, drawLabels: boolean
     .attr('strokewidth', -2)
   if (!pathwayCompare) {
     arcSeg.on('click', (event, d) => {
-      store.dispatch('addClickedNode', { queryID: d.queryID, name: d.name })
+      mainStore.addClickedNode({ queryID: d.queryID, name: d.name })
       event.stopPropagation()
     })
   }
@@ -461,9 +466,9 @@ function generateGlyph (glyphDat: glyphData): SVGElement {
   const firstLayer = outermostRadius - layerWidth
   const secondLayer = firstLayer - layerWidth
   const innermostRadius = secondLayer - layerWidth
-  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
-  const colorScaleProteomics = store.state.fcScales.proteomics
-  const colorScaleMetabolomics = store.state.fcScales.metabolomics
+  const colorScaleTranscriptomics = mainStore.fcScales.transcriptomics
+  const colorScaleProteomics = mainStore.fcScales.proteomics
+  const colorScaleMetabolomics = mainStore.fcScales.metabolomics
 
   // prepare transcriptomics
   let colorsTranscriptomics: string[] = []
