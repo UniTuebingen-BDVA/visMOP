@@ -1,3 +1,5 @@
+import * as d3 from 'd3'
+
 export default {
     addClickedNode ({ dispatch, state }, val: {queryID: string, name: string}) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved

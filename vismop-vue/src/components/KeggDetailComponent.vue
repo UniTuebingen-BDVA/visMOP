@@ -2,16 +2,14 @@
   <div>
     <q-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
       <div class="col">
-      <v-overflow-btn
-                    :items="pathwayLayouting.pathwayList"
-                    editable
-                    clearable
-                    label="Focus Pathway"
-                    hide-details
-                    overflow
-                    dense
-                    v-model="pathwaySelection"
-      ></v-overflow-btn>
+        <q-select
+        :options="pathwayLayouting.pathwayList"
+        label="Focus Pathway"
+        v-model="pathwaySelection"
+        option-label="text"
+        option-value="value"
+        @filter="filterFunction"
+        ></q-select>
       <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
       <q-card-actions>
         <q-btn
@@ -147,6 +145,12 @@ export default {
     isActive: Boolean
   },
   methods: {
+    filterFunction (val: string, update: (n: () => void) => void) {
+      update(() => {
+        const tarValue = val.toLowerCase()
+        this.pathwayLayouting.pathwayList = this.pathwayLayouting.pathwayList.filter((v: string) => v.toLowerCase().indexOf(tarValue) > -1)
+      })
+    },
     drawNetwork () {
       if (this.networkGraph) { this.networkGraph.killGraph() }
       const fcExtents = this.fcQuantiles

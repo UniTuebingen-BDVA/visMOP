@@ -158,17 +158,20 @@ def interaction_graph():
 
 def uniprot_access(colname, filter_obj):
     # create dict from protein dataframe
+    print('protcols', colname)
     prot_table = pd.read_json(cache.get('prot_table_global'), orient="columns")
-    prot_table = prot_table.drop_duplicates(subset=colname).set_index(colname)
+
+    id_col = colname["field"]
+    prot_table = prot_table.drop_duplicates(subset=id_col).set_index(id_col)
     for k,v in filter_obj.items():
         is_empty = (v['empties'] & (prot_table[k] == 'None'))
         is_numeric = (pd.to_numeric(prot_table[k],errors='coerce').notnull())
         df_numeric = prot_table.loc[is_numeric]
-        df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+        df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals']['min']) & (df_numeric[k] <= v['vals']['min'])]
         df_is_empty = prot_table.loc[is_empty]
     
         prot_table = prot_table.loc[prot_table.index.isin(df_is_in_range.index) | prot_table.index.isin(df_is_empty.index) ]
-    protein_dict = make_protein_dict(prot_table,colname)
+    protein_dict = make_protein_dict(prot_table,id_col)
     # query uniprot for the IDs in the table and add their info to the dictionary
     get_uniprot_entry(protein_dict,data_path)
     add_uniprot_info(protein_dict)
@@ -239,7 +242,7 @@ def kegg_parsing():
             is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
             is_numeric = (pd.to_numeric(metabolomics_df[k],errors='coerce').notnull())
             df_numeric = metabolomics_df.loc[is_numeric]
-            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals']['min']) & (df_numeric[k] <= v['vals']['max'])]
             df_is_empty = metabolomics_df.loc[is_empty]
         
             metabolomics_df = metabolomics_df.loc[metabolomics_df.index.isin(df_is_in_range.index) | metabolomics_df.index.isin(df_is_empty.index) ]
@@ -262,7 +265,7 @@ def kegg_parsing():
             is_empty = (v['empties'] & (transcriptomics_df[k] == 'None'))
             is_numeric = (pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull())
             df_numeric = transcriptomics_df.loc[is_numeric]
-            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals']['min']) & (df_numeric[k] <= v['vals']['max'])]
             df_is_empty = transcriptomics_df.loc[is_empty]
         
             transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]
@@ -471,12 +474,13 @@ def reactome_parsing():
         metabolomics_query_data_tuples = []
 
         metabolomics_df_global = pd.read_json(cache.get('metabolomics_df_global'),orient='columns')
-        metabolomics_df = metabolomics_df_global.drop_duplicates(subset=metabolomics["symbol"]).set_index(metabolomics["symbol"])
+        id_col = metabolomics["symbol"]["field"]
+        metabolomics_df = metabolomics_df_global.drop_duplicates(subset=id_col).set_index(id_col)
         for k,v in slider_vals["metabolomics"].items():
             is_empty = (v['empties'] & (metabolomics_df[k] == 'None'))
             is_numeric = (pd.to_numeric(metabolomics_df[k],errors='coerce').notnull())
             df_numeric = metabolomics_df.loc[is_numeric]
-            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals']['min']) & (df_numeric[k] <= v['vals']['max'])]
             df_is_empty = metabolomics_df.loc[is_empty]
         
             metabolomics_df = metabolomics_df.loc[metabolomics_df.index.isin(df_is_in_range.index) | metabolomics_df.index.isin(df_is_empty.index) ]
@@ -505,13 +509,14 @@ def reactome_parsing():
     if transcriptomics["recieved"]:
         transcriptomics_query_data_tuples = []
         transcriptomics_df_global = pd.read_json(cache.get('transcriptomics_df_global'),orient='columns')
+        id_col = transcriptomics["symbol"]["field"]
         #TODO Duplicates are dropped how to handle these duplicates?!
-        transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=transcriptomics["symbol"]).set_index(transcriptomics["symbol"])
+        transcriptomics_df = transcriptomics_df_global.drop_duplicates(subset=id_col).set_index(id_col)
         for k,v in slider_vals["transcriptomics"].items():
             is_empty = (v['empties'] & (transcriptomics_df[k] == 'None'))
             is_numeric = (pd.to_numeric(transcriptomics_df[k],errors='coerce').notnull())
             df_numeric = transcriptomics_df.loc[is_numeric]
-            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals'][0]) & (df_numeric[k] <= v['vals'][1])]
+            df_is_in_range = df_numeric.loc[(df_numeric[k] >= v['vals']['min']) & (df_numeric[k] <= v['vals']['max'])]
             df_is_empty = transcriptomics_df.loc[is_empty]
         
             transcriptomics_df = transcriptomics_df.loc[transcriptomics_df.index.isin(df_is_in_range.index) | transcriptomics_df.index.isin(df_is_empty.index) ]

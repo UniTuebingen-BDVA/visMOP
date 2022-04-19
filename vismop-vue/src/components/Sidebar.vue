@@ -6,7 +6,7 @@
       v-model="targetDatabase"
       option-label="text"
       option-value="value"
-      v-on:change="setTargetDatabase"
+      @update:model-value="setTargetDatabase"
     ></q-select>
     <q-select
       :options="targetOrganisms"
@@ -81,7 +81,6 @@
               :max="variable.max"
               :min="variable.min"
               :step="variable.step"
-              :hint="variable.text"
               thumb-label
               persistent-hint
             >
@@ -241,7 +240,7 @@ interface Data{
   targetDatabases: { text: string, value: string}[],
   targetDatabase: string,
   reactomeLevelSelection: number,
-  sliderVals: { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
+  sliderVals: { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} },
   sheetRules(value: string): boolean | string
 }
 
@@ -276,7 +275,7 @@ export default {
     ],
     targetDatabase: 'reactome',
     reactomeLevelSelection: 1,
-    sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: number[], empties: boolean}}, proteomics: {[key: string]: {vals: number[], empties: boolean}}, metabolomics: {[key: string]: {vals: number[], empties: boolean}} },
+    sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} },
     sheetRules: [
       (value: string) => {
         const pattern = /^([0-9]*)$/
@@ -306,8 +305,8 @@ export default {
         const typedArrayData = this.transcriptomicsTableData as [{[key: string]: number}]
         const typedArrayHeader = this.transcriptomicsTableHeaders as [{[key: string]: string}]
         typedArrayHeader.forEach(element => {
-          if (element.value !== 'available') {
-            const valArr = typedArrayData.map(elem => elem[element.value])
+          if (element.field !== 'available') {
+            const valArr = typedArrayData.map(elem => elem[element.field])
             const numArr: number[] = []
             let amtNum = 0
             let amtNonNum = 0
@@ -321,14 +320,14 @@ export default {
               } else amtNonNum += 1
             })
             if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-              console.log(element.value, numArr)
+              console.log(element.field, numArr)
               const min = Math.floor(Math.min(...numArr))
               const max = Math.ceil(Math.max(...numArr))
-              outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-              if (!Object.keys(this.sliderVals.transcriptomics).includes(element.value)) {
-                this.sliderVals.transcriptomics[element.value] = { vals: [min, max], empties: true }
+              outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+              if (!Object.keys(this.sliderVals.transcriptomics).includes(element.field)) {
+                this.sliderVals.transcriptomics[element.field] = { vals: {min: min, max: max}, empties: true }
               }
-              console.log(element.value, this.sliderVals)
+              console.log(element.field, this.sliderVals)
             }
           }
         })
@@ -338,10 +337,10 @@ export default {
       const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
       const typedArrayData = this.proteomicsTableData as [{[key: string]: number}]
       const typedArrayHeader = this.proteomicsTableHeaders as [{[key: string]: string}]
-
+      console.log('proteomics sliders', typedArrayHeader)
       typedArrayHeader.forEach(element => {
-        if (element.value !== 'available') {
-          const valArr = typedArrayData.map(elem => elem[element.value])
+        if (element.field !== 'available') {
+          const valArr = typedArrayData.map(elem => elem[element.field])
           const numArr: number[] = []
           let amtNum = 0
           let amtNonNum = 0
@@ -355,14 +354,14 @@ export default {
             } else amtNonNum += 1
           })
           if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
+            console.log(element.field, numArr)
             const min = Math.floor(Math.min(...numArr))
             const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.proteomics).includes(element.value)) {
-              this.sliderVals.proteomics[element.value] = { vals: [min, max], empties: true }
+            outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+            if (!Object.keys(this.sliderVals.proteomics).includes(element.field)) {
+              this.sliderVals.proteomics[element.field] = { vals: {min: min, max: max}, empties: true }
             }
-            console.log(element.value, this.sliderVals)
+            console.log(element.field, this.sliderVals)
           }
         }
       })
@@ -374,8 +373,8 @@ export default {
       const typedArrayHeader = this.metabolomicsTableHeaders as [{[key: string]: string}]
 
       typedArrayHeader.forEach(element => {
-        if (element.value !== 'available') {
-          const valArr = typedArrayData.map(elem => elem[element.value])
+        if (element.field !== 'available') {
+          const valArr = typedArrayData.map(elem => elem[element.field])
           const numArr: number[] = []
           let amtNum = 0
           let amtNonNum = 0
@@ -389,14 +388,14 @@ export default {
             } else amtNonNum += 1
           })
           if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.value, numArr)
+            console.log(element.field, numArr)
             const min = Math.floor(Math.min(...numArr))
             const max = Math.ceil(Math.max(...numArr))
-            outObj[element.value] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.value }
-            if (!Object.keys(this.sliderVals.metabolomics).includes(element.value)) {
-              this.sliderVals.metabolomics[element.value] = { vals: [min, max], empties: true }
+            outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+            if (!Object.keys(this.sliderVals.metabolomics).includes(element.field)) {
+              this.sliderVals.metabolomics[element.field] = { vals: {min: min, max: max}, empties: true }
             }
-            console.log(element.value, this.sliderVals)
+            console.log(element.field, this.sliderVals)
           }
         }
       })
@@ -684,8 +683,8 @@ export default {
     unlockHover () {
       this.$store.dispatch('setSideBarExpand', true)
     },
-    setTargetDatabase () {
-      this.$store.dispatch('setTargetDatabase', this.targetDatabase)
+    setTargetDatabase (inputVal: {text: string, value: string}) {
+      this.$store.dispatch('setTargetDatabase', inputVal.value)
     }
   }
 }
