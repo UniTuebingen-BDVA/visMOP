@@ -76,7 +76,6 @@ export default {
       transcriptomicsSymbolDict: state => state.transcriptomicsSymbolDict,
       proteomicsSymbolDict: state => state.proteomicsSymbolDict,
       usedSymbolCols: state => state.usedSymbolCols,
-      overlay: state => state.overlay,
       pathwayLayouting: (state: any) => state.pathwayLayouting,
       pathwayDropdown: (state: any) => state.pathwayDropdown
 

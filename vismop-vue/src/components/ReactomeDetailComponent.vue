@@ -39,6 +39,7 @@ import { graphJSON, layoutJSON, foldChangesByType, foldChangesByID } from '../co
 import { getEntryAmounts } from '../core/reactomeUtils'
 import { PropType } from 'vue'
 import { useMainStore } from '@/stores'
+import { useQuasar } from 'quasar'
 
 
 interface Data{
@@ -79,7 +80,6 @@ export default {
   computed: {
     ...mapState(useMainStore,{
       sideBarExpand: (state:any) => state.sideBarExpand,
-      overlay: (state:any) => state.overlay,
       pathwayDropdown: (state: any) => state.pathwayDropdown,
       pathwayLayouting: (state: any) => state.pathwayLayouting,
       overviewData: (state: any) => state.overviewData
@@ -129,8 +129,10 @@ export default {
       })
     },
     getJsonFiles (reactomeID: string) {
+      const $q = useQuasar()
       console.log(reactomeID)
       const mainStore = useMainStore()
+      $q.loading.show()
       fetch(`/get_reactome_json_files/${reactomeID}`, {
         method: 'GET',
         headers: {
@@ -142,7 +144,7 @@ export default {
           this.currentGraphJson = dataContent.graphJson as graphJSON
           this.currentInsetPathwaysTotals = dataContent.insetPathwayTotals as {[key: number]: {proteomics: number, metabolomics: number, transcriptomics: number}}
           this.drawDetailView()
-        }).then(() => mainStore.setOverlay(false))
+        }).then(() => $q.loading.hide())
     },
     /**
      * Fill the fc objects for the selected type with the supplied pathway Data

@@ -107,8 +107,9 @@ export const useMainStore = defineStore('mainStore', {
       }
     })
   },
-  addClickedNodeFromTable (val: {[key: string]: string}) {
-    let id = val[this.usedSymbolCols.proteomics]
+  addClickedNodeFromTable (row: {[key: string]: string}) {
+    console.log(row)
+    let id = row[this.usedSymbolCols.proteomics]
     if (this.targetDatabase === 'kegg') {
       id = this.proteomicsSymbolDict[id]
     }

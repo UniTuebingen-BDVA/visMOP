@@ -35,7 +35,7 @@ def generate_vue_table_header(df):
             vue_header['field'] = entry
             vue_header['align'] = 'none' if (entry == 'inSelected') else 'left'
             vue_header['sortable'] = True
-            vue_header['classes'] = 'bg-grey-2 ellipsis',
+            vue_header['classes'] = 'ellipsis',
             vue_header['style'] = 'max-width: 200px',
             vue_header['headerClasses'] = 'bg-primary text-white',
             vue_header['headerStyle'] = 'max-width: 200px'

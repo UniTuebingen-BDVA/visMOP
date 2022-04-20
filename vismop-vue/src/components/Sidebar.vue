@@ -1,5 +1,5 @@
 <template>
-  <q-list nav dense>
+  <q-list nav>
     <q-select
       :options="targetDatabases"
       label="Target Database"
@@ -41,7 +41,7 @@
 
           <q-separator></q-separator>
 
-          <q-input :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disabled="overlay"></q-input>
+          <q-input :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
           <q-separator></q-separator>
 
@@ -68,6 +68,9 @@
             v-for="variable in sliderTranscriptomics"
             :key="variable.text"
           >
+            <q-badge color="secondary">
+              {{ variable.text }}
+            </q-badge>
             <q-checkbox
               v-model="sliderVals.transcriptomics[variable.text].empties"
               :label="'Empties'"
@@ -97,7 +100,7 @@
 
           <q-separator></q-separator>
 
-          <q-input :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disabled="overlay"></q-input>
+          <q-input :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
           <q-separator></q-separator>
 
@@ -124,6 +127,9 @@
             v-for="variable in sliderProteomics"
             :key="variable.text"
           >
+            <q-badge color="secondary">
+              {{ variable.text }}
+            </q-badge>
             <q-checkbox
               v-model="sliderVals.proteomics[variable.text].empties"
               :label="'Empties'"
@@ -154,7 +160,7 @@
 
           <q-separator></q-separator>
 
-          <q-input :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disabled="overlay"></q-input>
+          <q-input :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
           <q-separator></q-separator>
 
@@ -181,6 +187,9 @@
             v-for="variable in sliderMetabolomics"
             :key="variable.text"
           >
+            <q-badge color="secondary">
+              {{ variable.text }}
+            </q-badge>
             <q-checkbox
               v-model="sliderVals.metabolomics[variable.text].empties"
               :label="'Empties'"
@@ -206,6 +215,7 @@
 <script lang="ts">
 import { mapState } from 'pinia'
 import { useMainStore } from '@/stores'
+import { useQuasar } from 'quasar'
 
 interface Data{
   overlay: boolean,
@@ -238,6 +248,7 @@ export default {
   components: {},
 
   data: () => ({
+    $q :  useQuasar(),
     transcriptomicsFile: null,
     transcriptomicsSheetVal: '0',
     transcriptomicsSymbolCol: {field: '', label: '', name: '', align: ''},
@@ -280,7 +291,6 @@ export default {
       'transcriptomicsTableData',
       'proteomicsTableData',
       'metabolomicsTableData',
-      'overlay',
     ]),
     chosenOmics(): string[] {
         const chosen = []
@@ -410,7 +420,7 @@ export default {
       mainStore.setTranscriptomicsTableData([])
       this.sliderVals.transcriptomics = {}
       if (fileInput !== null) {
-        mainStore.setOverlay(true)
+        this.$q.loading.show()
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.transcriptomicsSheetVal)
@@ -425,7 +435,7 @@ export default {
             mainStore.setTranscriptomicsTableData(responseContent.entries)
             this.recievedTranscriptomicsData = true
           })
-          .then(() => (mainStore.setOverlay(false)))
+          .then(() => (this.$q.loading.hide()))
       } else {
         // more errorhandling?
         this.recievedTranscriptomicsData = false
@@ -441,7 +451,7 @@ export default {
       console.log('FETCH PROT')
       this.sliderVals.proteomics = {}
       if (fileInput !== null) {
-        mainStore.setOverlay(true)
+        this.$q.loading.show()
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.proteomicsSheetVal)
@@ -459,7 +469,7 @@ export default {
             mainStore.setProteomicsTableData(responseContent.entries)
             this.recievedProteomicsData = true
           })
-          .then(() => (mainStore.setOverlay(false)))
+          .then(() => (this.$q.loading.hide()))
       } else {
         // more errorhandling?
         this.recievedProteomicsData = false
@@ -473,7 +483,7 @@ export default {
       mainStore.setMetabolomicsTableData([])
       this.sliderVals.metabolomics = {}
       if (fileInput !== null) {
-        mainStore.setOverlay(true)
+        this.$q.loading.show()
         const formData = new FormData()
         formData.append('dataTable', fileInput)
         formData.append('sheetNumber', this.metabolomicsSheetVal)
@@ -490,7 +500,7 @@ export default {
             mainStore.setMetabolomicsTableData(responseContent.entries)
             this.recievedMetabolomicsData = true
           })
-          .then(() => (mainStore.setOverlay(false)))
+          .then(() => (this.$q.loading.hide()))
       } else {
         // more errorhandling?
         this.recievedMetabolomicsData = false
@@ -509,7 +519,7 @@ export default {
     queryReactome () {
       const mainStore = useMainStore()
 
-      mainStore.setOverlay(true)
+      this.$q.loading.show()
       const payload = {
         targetOrganism: this.targetOrganism,
         transcriptomics: {
@@ -557,13 +567,13 @@ export default {
           console.log('PATHWAYLAYOUTING', dataContent)
           mainStore.setOverviewData(dataContent.overviewData)
           mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting)
-        }).then(() => mainStore.setOverlay(false))
+        }).then(() => this.$q.loading.hide())
     },
     generateKGMLs () {
       const mainStore = useMainStore()
 
       console.log('sliderTest', this.sliderVals)
-      mainStore.setOverlay(true)
+      this.$q.loading.show()
       const payload = {
         targetOrganism: this.targetOrganism,
         transcriptomics: {
@@ -605,7 +615,7 @@ export default {
         })
         .then((val) => {
           if (val) alert('Empty Data Selection! Adjust data source and/or filter settings')
-          mainStore.setOverlay(false)
+          this.$q.loading.hide()
         })
     },
     setTargetDatabase (inputVal: {text: string, value: string}) {

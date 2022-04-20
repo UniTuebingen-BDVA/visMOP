@@ -172,12 +172,12 @@
 }
 
 .rowstyle-inPathway{
-  background-color: rgb(171, 241, 143);
+  background-color: rgb(171, 241, 143)!important;
 }
 
 .rowstyle-notAvailable{
-  background-color: white;
-  color:rgb(207, 207, 207)
+  background-color: white!important;
+  color:rgb(207, 207, 207)!important;
 }
 
 .nodeText{

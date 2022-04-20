@@ -54,40 +54,79 @@
                       <q-tab-panel name="transcriptomics">
                         <q-table
                           dense
+                          virtual-scroll
+                          style="height: 63vh"
+                          v-model:pagination="pagination"
+                          :rows-per-page-options="[0]"
                           v-model="selectedTranscriptomics"
                           :columns="transcriptomicsTableHeaders"
                           :rows="transcriptomicsTableData"
                           row-key="name"
                           :filter="tableSearch"
                           id="transcriptomics"
-                          @click:row="transcriptomicsSelection"
-                        ></q-table>
+                          @row-dblclick="transcriptomicsSelection"
+                        >
+                          <template v-slot:body-cell="props">
+                            <q-td
+                              :props="props"
+                              :class="itemRowColor(props)"
+                            >
+                              {{props.value}}
+                            </q-td>
+                          </template>
+                        </q-table>
                       </q-tab-panel>
 
                       <q-tab-panel name="proteome">
                         <q-table
                           dense
+                          virtual-scroll
+                          style="height: 63vh"
+                          v-model:pagination="pagination"
+                          :rows-per-page-options="[0]"
                           v-model="selectedProteomics"
                           :columns="proteomicsTableHeaders"
                           :rows="proteomicsTableData"
                           row-key="name"
                           :filter="tableSearch"
                           id="proteomicsTable"
-                          @click:row="proteomicsSelection"
-                        ></q-table>
+                          @row-dblclick="proteomicsSelection"
+                        >
+                          <template v-slot:body-cell="props">
+                            <q-td
+                              :props="props"
+                              :class="itemRowColor(props)"
+                            >
+                              {{props.value}}
+                            </q-td>
+                          </template>
+                        </q-table>
                       </q-tab-panel>
 
                       <q-tab-panel name="metabol" >
                         <q-table
                           dense
+                          virtual-scroll
+                          style="height: 63vh"
+                          v-model:pagination="pagination"
+                          :rows-per-page-options="[0]"
                           v-model="selectedMetabolomics"
                           :columns="metabolomicsTableHeaders"
                           :rows="metabolomicsTableData"
                           row-key="name"
                           :filter="tableSearch"
                           id="metabolomicsTable"
-                          @click:row="metabolomicsSelection"
-                        ></q-table>
+                          @row-dblclick="metabolomicsSelection"
+                        >
+                          <template v-slot:body-cell="props">
+                            <q-td
+                              :props="props"
+                              :class="itemRowColor(props)"
+                            >
+                              {{props.value}}
+                            </q-td>
+                          </template>
+                        </q-table>
                       </q-tab-panel>
                     </q-tab-panels>
                 </q-card>
@@ -216,6 +255,7 @@ interface Data{
   selectedTranscriptomics: { [key: string]: string }[],
   selectedProteomics: { [key: string]: string }[],
   selectedMetabolomics: { [key: string]: string }[]
+  pagination: {rowsPerPage: number}
 }
 
 export default {
@@ -235,7 +275,8 @@ export default {
     pathwaySelection: '',
     selectedTranscriptomics: [],
     selectedProteomics: [],
-    selectedMetabolomics: []
+    selectedMetabolomics: [],
+    pagination: {rowsPerPage: 0}
   }),
 
   computed: {
@@ -251,7 +292,6 @@ export default {
       'transcriptomicsSymbolDict',
       'proteomicsSymbolDict',
       'usedSymbolCols',
-      'overlay',
       'pathwayLayouting',
       'pathwayDropdown'
       ]
@@ -399,15 +439,15 @@ export default {
     transcriptomicsSelection (val: { [key: string]: string }) {
       // this.transcriptomicsSelectionData = val
     },
-    proteomicsSelection (val: { [key: string]: string }) {
+    proteomicsSelection (event: Event, row: { [key: string]: string }, index: number) {
       const mainStore = useMainStore()
-      mainStore.addClickedNodeFromTable(val)
+      mainStore.addClickedNodeFromTable(row)
     },
     metabolomicsSelection (val: { [key: string]: string }) {
       // this.metabolomicsSelectionData = val
     },
-    itemRowColor (item: {[key:string]: string}) {
-      return (item.available !== 'No') ? ((item.inSelected === 'Yes') ? 'rowstyle-inPathway' : 'rowstyle-available') : 'rowstyle-notAvailable'
+    itemRowColor (item: {row: {[key:string]: string}}) {
+      return (item.row.available !== 'No') ? ((item.row.inSelected === 'Yes') ? 'rowstyle-inPathway' : 'rowstyle-available') : 'rowstyle-notAvailable'
     }
   }
 }

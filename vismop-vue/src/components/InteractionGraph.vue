@@ -53,7 +53,6 @@ export default {
 
   computed: {
     ...mapState(useMainStore,{
-      overlay: (state: any) => state.overlay,
       interactionGraphData: (state: any) => state.interactionGraphData
     })
   },

@@ -59,7 +59,6 @@ export default {
     ...mapState( useMainStore, {
       overviewData: (state:any) => state.overviewData,
       fcs: (state:any) => state.fcs,
-      overlay: (state:any) => state.overlay,
       fcQuantiles: (state:any) => state.fcQuantiles,
       pathwayDropdown: (state:any) => state.pathwayDropdown,
       pathwayLayouting: (state: any) => state.pathwayLayouting,
