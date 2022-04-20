@@ -8,24 +8,24 @@
         v-model="pathwaySelection"
         option-label="text"
         option-value="value"
-        @filter="filterFunction"
         ></q-select>
       <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
       <q-card-actions>
-        <q-btn
-          class="mx-2 expandButton"
-          fab
-          dark
-          small
-          @click="expandComponent"
-        ><q-icon>mdi-arrow-expand</q-icon></q-btn>
-          <q-btn
-          class="mx-2 minimizeButton"
-          fab
-          dark
-          small
-          @click="minimizeComponent"
-        ><q-icon>mdi-window-minimize</q-icon></q-btn>
+        <q-fab
+          icon="keyboard_arrow_down"
+          direction="down"
+        >
+          <q-fab-action
+            icon="mdi-arrow-expand"
+            @click="minimizeComponent"
+          ></q-fab-action>
+          <q-fab-action
+            icon="mdi-arrow-collapse"
+            @click="expandComponent"
+          ></q-fab-action>
+
+        </q-fab>
+          
       </q-card-actions>
       </div>
     </q-card>
@@ -46,7 +46,7 @@ interface Data{
   tableSearch: string
   selectedTab: string
   outstandingDraw: boolean
-  pathwaySelection: string
+  pathwaySelection: {title: string, value: string, text: string}
   expandButton: boolean
   minimizeButton: boolean
   currentLayoutJson: layoutJSON
@@ -66,7 +66,7 @@ export default {
     tableSearch: '',
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
-    pathwaySelection: '',
+    pathwaySelection: {title: '', value: '', text: ''},
     expandButton: false,
     minimizeButton: false,
     // currentGraphJson: {},
@@ -96,8 +96,10 @@ export default {
       )
     },
     pathwaySelection: function () {
+      console.log('this.pathwaySelection',this.pathwaySelection)
       const mainStore = useMainStore()
-      this.getJsonFiles(this.pathwaySelection)
+      const tarID = this.pathwaySelection.value
+      this.getJsonFiles(tarID)
       mainStore.focusPathwayViaDropdown(this.pathwaySelection)
     },
     pathwayDropdown: function () {
@@ -127,6 +129,7 @@ export default {
       })
     },
     getJsonFiles (reactomeID: string) {
+      console.log(reactomeID)
       const mainStore = useMainStore()
       fetch(`/get_reactome_json_files/${reactomeID}`, {
         method: 'GET',
@@ -205,7 +208,7 @@ export default {
       this.currentView?.clearView()
       const fcs: foldChangesByType = { proteomics: {}, transcriptomics: {}, metabolomics: {} }
       const fcsReactomeKey: foldChangesByID = {}
-      const pathwayData = this.overviewData.find((elem: { pathwayId: string }) => elem.pathwayId === this.pathwaySelection)
+      const pathwayData = this.overviewData.find((elem: { pathwayId: string }) => elem.pathwayId === this.pathwaySelection.value)
 
       this.prepareFcs(pathwayData, fcs, fcsReactomeKey, 'proteomics')
       this.prepareFcs(pathwayData, fcs, fcsReactomeKey, 'transcriptomics')

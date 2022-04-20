@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts">
-import { mapState } from 'vuex'
+import { mapState } from 'pinia'
 import { generateInteractionGraph } from '../core/interactionGraph'
 import Sigma from 'sigma'
 import { useMainStore } from '@/stores'
@@ -52,7 +52,7 @@ export default {
   }),
 
   computed: {
-    ...mapState({
+    ...mapState(useMainStore,{
       overlay: (state: any) => state.overlay,
       interactionGraphData: (state: any) => state.interactionGraphData
     })

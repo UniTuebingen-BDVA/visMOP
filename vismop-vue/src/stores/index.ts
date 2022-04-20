@@ -1,14 +1,13 @@
 import _ from 'lodash'
 import * as d3 from 'd3'
 import { defineStore } from 'pinia'
-import { createStore as _createStore } from 'vuex'
 import { graphData } from '@/core/graphTypes'
 
 interface State {
   sideBarExpand: boolean
   overviewData: unknown,
   targetDatabase: string,
-  transcriptomicsTableHeaders: {label: string, name:string, field: string}[],
+  transcriptomicsTableHeaders: {label: string, name:string, field: string, align: string, sortable: boolean,  classes: string, style: string, headerClasses: string, headerStyle: string}[],
   transcriptomicsTableData: {[key: string]: string | number }[],
   /**
    * KEY: Symbol -> VAL: KEGGID
@@ -18,7 +17,7 @@ interface State {
    * KEY: KEGGID -> VAL: SYMBOL
    */
   transcriptomicsKeggIDDict: { [key: string]: string },
-  proteomicsTableHeaders: {label: string, name:string, field: string}[],
+  proteomicsTableHeaders: {label: string, name:string, field: string, align: string, sortable: boolean,  classes: string, style: string, headerClasses: string, headerStyle: string}[],
   proteomicsTableData: {[key: string]: string | number }[],
   clickedNodes: { id: string, name: string, fcTranscript: number, fcProt: number, delete: unknown }[],
   /**
@@ -29,7 +28,7 @@ interface State {
    * KEY: KEGGID -> VAL: SYMBOL
    */
   proteomicsKeggIDDict: { [key: string]: string },
-  metabolomicsTableHeaders: {label: string, name:string, field: string}[],
+  metabolomicsTableHeaders: {label: string, name:string, field: string, align: string, sortable: boolean,  classes: string, style: string, headerClasses: string, headerStyle: string}[],
   metabolomicsTableData: {[key: string]: string | number }[],
   usedSymbolCols: {transcriptomics: string, proteomics: string, metabolomics: string},
   overlay: unknown,
@@ -40,7 +39,7 @@ interface State {
   fcScales: {transcriptomics: d3.ScaleDiverging<string, never>, proteomics: d3.ScaleDiverging<string, never>, metabolomics: d3.ScaleDiverging<string, never>}
   interactionGraphData: unknown,
   pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]}, rootIds: string[] },
-  pathwayDropdown: string,
+  pathwayDropdown: {title: string, value: string, text: string},
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
   keggIDGenesymbolDict: {[key: string]: string},
@@ -85,7 +84,7 @@ export const useMainStore = defineStore('mainStore', {
       pathwayNodeDictionaryClean: { },
       rootIds: []
     },
-    pathwayDropdown: '',
+    pathwayDropdown: {title: '', value: '', text: ''},
     omicsRecieved: { transcriptomics: false, proteomics: false, metabolomics: false },
     pathayAmountDict: {},
     keggIDGenesymbolDict: {},
@@ -169,7 +168,7 @@ export const useMainStore = defineStore('mainStore', {
     this.overviewData = val
 
   },
-  setTranscriptomicsTableHeaders (val: { label: string; name: string; field: string }[]) {
+  setTranscriptomicsTableHeaders (val: {label: string, name:string, field: string, align: string, sortable: boolean,  classes: string, style: string, headerClasses: string, headerStyle: string}[]) {
     this.transcriptomicsTableHeaders = val
   },
   setTranscriptomicsTableData (val: { [x: string]: string | number }[]) {
@@ -179,7 +178,7 @@ export const useMainStore = defineStore('mainStore', {
     this.transcriptomicsSymbolDict = val
     this.transcriptomicsKeggIDDict = _.invert(val)
   },
-  setProteomicsTableHeaders (val: { label: string; name: string; field: string }[]) {
+  setProteomicsTableHeaders (val: {label: string, name:string, field: string, align: string, sortable: boolean,  classes: string, style: string, headerClasses: string, headerStyle: string}[]) {
     this.proteomicsTableHeaders = val
 
   },
@@ -191,7 +190,7 @@ export const useMainStore = defineStore('mainStore', {
     this.proteomicsSymbolDict = val
     this.proteomicsKeggIDDict = _.invert(val)
   },
-  setMetabolomicsTableHeaders (val: { label: string; name: string; field: string }[]) {
+  setMetabolomicsTableHeaders (val: {label: string, name:string, field: string, align: string, sortable: boolean,  classes: string, style: string, headerClasses: string, headerStyle: string}[]) {
     this.metabolomicsTableHeaders = val
   },
   setMetabolomicsTableData (val: { [x: string]: string | number }[]) {
@@ -317,9 +316,9 @@ export const useMainStore = defineStore('mainStore', {
   },
   focusPathwayViaOverview (val: string) {
     const valClean = val.replace('path:', '')
-    this.pathwayDropdown = valClean
+    this.pathwayDropdown = {title: valClean, value: valClean, text: valClean}
   },
-  focusPathwayViaDropdown (val: string) {
+  focusPathwayViaDropdown (val: {title: string, value: string, text: string}) {
     this.pathwayDropdown = val
   },
   selectPathwayCompare (val: string[]) {

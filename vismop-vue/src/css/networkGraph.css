@@ -13,7 +13,7 @@
   z-index: 3;
 }
 .detailComponent{
-  position: absolute;
+  position: absolute !important;
   height: 45vh;
   width: 40vh;
   right: 2vh;
@@ -190,4 +190,9 @@
 
 .nodeG{
   fill: white
+}
+
+.ellipsis:hover{
+  overflow: visible;
+  white-space: normal;
 }

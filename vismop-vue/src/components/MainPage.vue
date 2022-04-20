@@ -3,7 +3,7 @@
     <div class="row">
       <!-- Misc. Tabs -->
       <div class="col-5 q-pa-md">
-        <div class="q-gutter-y-md" style="max-width: 600px">
+        <div class="q-gutter-y-md">
         <q-card>
           <q-tabs
             v-model="selectedTabMisc"
@@ -53,12 +53,12 @@
                     <q-tab-panels v-model="selectedTabTable">
                       <q-tab-panel name="transcriptomics">
                         <q-table
+                          dense
                           v-model="selectedTranscriptomics"
                           :columns="transcriptomicsTableHeaders"
                           :rows="transcriptomicsTableData"
                           row-key="name"
                           :filter="tableSearch"
-                          class="elevation-1 scrollableTable"
                           id="transcriptomics"
                           @click:row="transcriptomicsSelection"
                         ></q-table>
@@ -66,12 +66,12 @@
 
                       <q-tab-panel name="proteome">
                         <q-table
+                          dense
                           v-model="selectedProteomics"
                           :columns="proteomicsTableHeaders"
                           :rows="proteomicsTableData"
                           row-key="name"
                           :filter="tableSearch"
-                          class="elevation-1 scrollableTable"
                           id="proteomicsTable"
                           @click:row="proteomicsSelection"
                         ></q-table>
@@ -81,15 +81,10 @@
                         <q-table
                           dense
                           v-model="selectedMetabolomics"
-                          show-select
-                          fixed-header
-                          multi-sort
-                          :headers="metabolomicsTableHeaders"
-                          :item-class="itemRowColor"
-                          :items="metabolomicsTableData"
-                          :items-per-page="10"
-                          :search="tableSearch"
-                          class="elevation-1 scrollableTable"
+                          :columns="metabolomicsTableHeaders"
+                          :rows="metabolomicsTableData"
+                          row-key="name"
+                          :filter="tableSearch"
                           id="metabolomicsTable"
                           @click:row="metabolomicsSelection"
                         ></q-table>
@@ -102,7 +97,7 @@
               </q-tab-panel>
               <q-tab-panel name="ppiGraph">
                 <interaction-graph
-                conlabelID="interactionGraph"
+                contextID="interactionGraph"
                 > </interaction-graph>
               </q-tab-panel>
                <q-tab-panel name="pathwayCompare">
@@ -159,13 +154,12 @@
                         </reactome-overview-component>
                       </keep-alive>
                     </div>
-
                 </div>
-                </div>
+                
                 <div v-if="targetDatabase === 'kegg'">
                   <keep-alive>
                     <kegg-detail-component
-                      conlabelID="detailConlabel"
+                      contextID="detailcontext"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
@@ -177,7 +171,7 @@
                 <div v-if="targetDatabase === 'reactome'">
                   <keep-alive>
                     <reactome-detail-component
-                      conlabelID="reactomeDetail"
+                      contextID="reactomeDetail"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
@@ -186,6 +180,7 @@
                     </reactome-detail-component>
                   </keep-alive>
                 </div>
+            </div>
             </q-tab-panel>
 
             <q-tab-panel name="detailNetwork">
@@ -353,10 +348,10 @@ export default {
           let includedInSelectedPathway = false
           if (this.targetDatabase === 'kegg') {
             symbol = this.transcriptomicsSymbolDict[symbol]
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(symbol) : false
+            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown.value].includes(symbol) : false
           }
           if (this.targetDatabase === 'reactome') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown) : false
+            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown.value) : false
           }
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
@@ -370,10 +365,10 @@ export default {
           let includedInSelectedPathway = false
           if (this.targetDatabase === 'kegg') {
             symbol = this.proteomicsSymbolDict[symbol]
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(symbol) : false
+            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown.value].includes(symbol) : false
           }
           if (this.targetDatabase === 'reactome') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown) : false
+            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown.value) : false
           }
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
@@ -386,10 +381,10 @@ export default {
         if (available) {
           let includedInSelectedPathway = false
           if (this.targetDatabase === 'kegg') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown].includes(symbol) : false
+            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown.value].includes(symbol) : false
           }
           if (this.targetDatabase === 'reactome') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown) : false
+            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown.value) : false
           }
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }

@@ -8,7 +8,6 @@
         v-model="pathwaySelection"
         option-label="text"
         option-value="value"
-        @filter="filterFunction"
         ></q-select>
       <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
       <q-card-actions>
@@ -46,7 +45,7 @@ interface Data{
   selectedTab: string
   outstandingDraw: boolean
   networkGraph: (DetailNetwork | undefined)
-  pathwaySelection: string
+  pathwaySelection: {title: string, value: string, text: string}
   expandButton: boolean
   minimizeButton: boolean
 }
@@ -62,7 +61,7 @@ export default {
     selectedTab: 'transcriptomics',
     outstandingDraw: false,
     networkGraph: undefined,
-    pathwaySelection: '',
+    pathwaySelection: {title: '', value: '', text: ''},
     expandButton: false,
     minimizeButton: false
 
@@ -110,7 +109,7 @@ export default {
     },
     pathwaySelection: function () {
       const mainStore = useMainStore()
-      this.selectPathway(this.pathwaySelection)
+      this.selectPathway(this.pathwaySelection.value)
       mainStore.focusPathwayViaDropdown(this.pathwaySelection)
     },
     transcriptomicsSelection: function () {
