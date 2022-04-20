@@ -19,7 +19,13 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" side="left" overlay bordered>
+    <q-drawer 
+      v-model="leftDrawerOpen"
+      side="left"
+      overlay
+      bordered
+      width=500  
+    >
       <SideBar></SideBar>
     </q-drawer>
 

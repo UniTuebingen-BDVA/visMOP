@@ -4,7 +4,6 @@
       <!-- Misc. Tabs -->
       <div class="col-5 q-pa-md">
         <div class="q-gutter-y-md">
-        <q-card>
           <q-tabs
             v-model="selectedTabMisc"
             dense
@@ -21,115 +20,109 @@
           </q-tabs>
             <q-tab-panels v-model="selectedTabMisc">
               <q-tab-panel name="dataTable">
-                <q-card>
-                  <div class="label-h6" id="#lookup">
-                    Data
-                  </div>
-                      <q-separator></q-separator>
-                      <q-input
-                        class="pt-0"
-                        v-model="tableSearch"
-                        append-icon="mdi-magnify"
-                        label="Search"
-                        single-line
-                        hide-details
-                      ></q-input>
-                    
+                <q-input
+                  class="pt-0"
+                  v-model="tableSearch"
+                  append-icon="mdi-magnify"
+                  label="Search"
+                  single-line
+                  hide-details
+                ></q-input>
+              
 
-                    <q-tabs
-                      v-model="selectedTabTable"
+                <q-tabs
+                  v-model="selectedTabTable"
+                  dense
+                  class="label-grey"
+                  active-color="primary"
+                  indicator-color="primary"
+                  align="justify"
+                  narrow-indicator
+                >
+                  <q-tab name="transcriptomics" label="Transcriptomics"></q-tab>
+                  <q-tab name="proteome" label="Proteomics"></q-tab>
+                  <q-tab name="metabol" label="Metabolomics"></q-tab>
+                </q-tabs>
+
+                <q-tab-panels v-model="selectedTabTable">
+                  <q-tab-panel name="transcriptomics">
+                    <q-table
                       dense
-                      class="label-grey"
-                      active-color="primary"
-                      indicator-color="primary"
-                      align="justify"
-                      narrow-indicator
+                      virtual-scroll
+                      style="height: 63vh"
+                      v-model:pagination="pagination"
+                      :rows-per-page-options="[0]"
+                      v-model="selectedTranscriptomics"
+                      :columns="transcriptomicsTableHeaders"
+                      :rows="transcriptomicsTableData"
+                      row-key="name"
+                      :filter="tableSearch"
+                      id="transcriptomics"
+                      @row-dblclick="transcriptomicsSelection"
                     >
-                      <q-tab name="transcriptomics" label="Transcriptomics"></q-tab>
-                      <q-tab name="proteome" label="Proteomics"></q-tab>
-                      <q-tab name="metabol" label="Metabolomics"></q-tab>
-                    </q-tabs>
-
-                    <q-tab-panels v-model="selectedTabTable">
-                      <q-tab-panel name="transcriptomics">
-                        <q-table
-                          dense
-                          virtual-scroll
-                          style="height: 63vh"
-                          v-model:pagination="pagination"
-                          :rows-per-page-options="[0]"
-                          v-model="selectedTranscriptomics"
-                          :columns="transcriptomicsTableHeaders"
-                          :rows="transcriptomicsTableData"
-                          row-key="name"
-                          :filter="tableSearch"
-                          id="transcriptomics"
-                          @row-dblclick="transcriptomicsSelection"
+                      <template v-slot:body-cell="props">
+                        <q-td
+                          :props="props"
+                          :class="itemRowColor(props)"
                         >
-                          <template v-slot:body-cell="props">
-                            <q-td
-                              :props="props"
-                              :class="itemRowColor(props)"
-                            >
-                              {{props.value}}
-                            </q-td>
-                          </template>
-                        </q-table>
-                      </q-tab-panel>
+                          {{props.value}}
+                        </q-td>
+                      </template>
+                    </q-table>
+                  </q-tab-panel>
 
-                      <q-tab-panel name="proteome">
-                        <q-table
-                          dense
-                          virtual-scroll
-                          style="height: 63vh"
-                          v-model:pagination="pagination"
-                          :rows-per-page-options="[0]"
-                          v-model="selectedProteomics"
-                          :columns="proteomicsTableHeaders"
-                          :rows="proteomicsTableData"
-                          row-key="name"
-                          :filter="tableSearch"
-                          id="proteomicsTable"
-                          @row-dblclick="proteomicsSelection"
+                  <q-tab-panel name="proteome">
+                    <q-table
+                      dense
+                      virtual-scroll
+                      style="height: 63vh"
+                      v-model:pagination="pagination"
+                      :rows-per-page-options="[0]"
+                      v-model="selectedProteomics"
+                      :columns="proteomicsTableHeaders"
+                      :rows="proteomicsTableData"
+                      row-key="name"
+                      :filter="tableSearch"
+                      id="proteomicsTable"
+                      @row-dblclick="proteomicsSelection"
+                    >
+                      <template v-slot:body-cell="props">
+                        <q-td
+                          :props="props"
+                          :class="itemRowColor(props)"
                         >
-                          <template v-slot:body-cell="props">
-                            <q-td
-                              :props="props"
-                              :class="itemRowColor(props)"
-                            >
-                              {{props.value}}
-                            </q-td>
-                          </template>
-                        </q-table>
-                      </q-tab-panel>
+                          {{props.value}}
+                        </q-td>
+                      </template>
+                    </q-table>
+                  </q-tab-panel>
 
-                      <q-tab-panel name="metabol" >
-                        <q-table
-                          dense
-                          virtual-scroll
-                          style="height: 63vh"
-                          v-model:pagination="pagination"
-                          :rows-per-page-options="[0]"
-                          v-model="selectedMetabolomics"
-                          :columns="metabolomicsTableHeaders"
-                          :rows="metabolomicsTableData"
-                          row-key="name"
-                          :filter="tableSearch"
-                          id="metabolomicsTable"
-                          @row-dblclick="metabolomicsSelection"
+                  <q-tab-panel name="metabol" >
+                    <q-table
+                      dense
+                      virtual-scroll
+                      style="height: 63vh"
+                      v-model:pagination="pagination"
+                      :rows-per-page-options="[0]"
+                      v-model="selectedMetabolomics"
+                      :columns="metabolomicsTableHeaders"
+                      :rows="metabolomicsTableData"
+                      row-key="name"
+                      :filter="tableSearch"
+                      id="metabolomicsTable"
+                      @row-dblclick="metabolomicsSelection"
+                    >
+                      <template v-slot:body-cell="props">
+                        <q-td
+                          :props="props"
+                          :class="itemRowColor(props)"
                         >
-                          <template v-slot:body-cell="props">
-                            <q-td
-                              :props="props"
-                              :class="itemRowColor(props)"
-                            >
-                              {{props.value}}
-                            </q-td>
-                          </template>
-                        </q-table>
-                      </q-tab-panel>
-                    </q-tab-panels>
-                </q-card>
+                          {{props.value}}
+                        </q-td>
+                      </template>
+                    </q-table>
+                  </q-tab-panel>
+                </q-tab-panels>
               </q-tab-panel>
               <q-tab-panel name="selectedNodes">
                 <interaction-graph-table> </interaction-graph-table>
@@ -143,89 +136,65 @@
                       <pathway-compare>
                       </pathway-compare>
               </q-tab-panel>
-            </q-tab-panels>
-          
-        </q-card>
+            </q-tab-panels>  
         </div>
       </div>
       <!-- Network -->
-      <div class="col-7 d-flex flex-column mb-2">
+      <div class="col-7 q-pa-md">
         <q-card>
-          <q-tabs
-            v-model="selectedTabNetwork"
-            background-color="blue lighten-2"
-            slider-color="indigo darken-4"
-            dark
-            center-active
-            next-icon="mdi-arrow-right-bold-box-outline"
-            preq-icon="mdi-arrow-left-bold-box-outline"
-            show-arrows
-          >
-            <q-tab name="overviewNetwork">Overview</q-tab>
-            <q-tab name="detailNetwork">Detail</q-tab>
-          </q-tabs>
-
-          <q-tab-panels v-model="selectedTabNetwork">
-            <q-tab-panel name="overviewNetwork">
-              <div class="row">
-                <div class="col-12">
-                    <div v-if="targetDatabase === 'kegg'">
-                      <keep-alive>
-                          <kegg-overview-component
-                          contextID="overviewContext"
-                          :transcriptomicsSelection="transcriptomicsSelectionData"
-                          :proteomicsSelection="proteomicsSelectionData"
-                          :metabolomicsSelection="metabolomicsSelectionData"
-                          :isActive="activeOverview"
-                        >
-                        </kegg-overview-component>
-                      </keep-alive>
-                    </div>
-                    <div v-if="targetDatabase === 'reactome'">
-                      <keep-alive>
-                        <reactome-overview-component
-                          contextID="overviewContext"
-                          :transcriptomicsSelection="transcriptomicsSelectionData"
-                          :proteomicsSelection="proteomicsSelectionData"
-                          :metabolomicsSelection="metabolomicsSelectionData"
-                          :isActive="activeOverview"
-                        >
-                        </reactome-overview-component>
-                      </keep-alive>
-                    </div>
-                </div>
-                
+          <div class="row">
+            <div class="col-12">
                 <div v-if="targetDatabase === 'kegg'">
                   <keep-alive>
-                    <kegg-detail-component
-                      contextID="detailcontext"
+                      <kegg-overview-component
+                      contextID="overviewContext"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
                       :isActive="activeOverview"
                     >
-                    </kegg-detail-component>
+                    </kegg-overview-component>
                   </keep-alive>
                 </div>
                 <div v-if="targetDatabase === 'reactome'">
                   <keep-alive>
-                    <reactome-detail-component
-                      contextID="reactomeDetail"
+                    <reactome-overview-component
+                      contextID="overviewContext"
                       :transcriptomicsSelection="transcriptomicsSelectionData"
                       :proteomicsSelection="proteomicsSelectionData"
                       :metabolomicsSelection="metabolomicsSelectionData"
                       :isActive="activeOverview"
                     >
-                    </reactome-detail-component>
+                    </reactome-overview-component>
                   </keep-alive>
                 </div>
             </div>
-            </q-tab-panel>
-
-            <q-tab-panel name="detailNetwork">
-              <p> placeholder </p>
-            </q-tab-panel>
-          </q-tab-panels>
+            
+            <div v-if="targetDatabase === 'kegg'">
+              <keep-alive>
+                <kegg-detail-component
+                  contextID="detailcontext"
+                  :transcriptomicsSelection="transcriptomicsSelectionData"
+                  :proteomicsSelection="proteomicsSelectionData"
+                  :metabolomicsSelection="metabolomicsSelectionData"
+                  :isActive="activeOverview"
+                >
+                </kegg-detail-component>
+              </keep-alive>
+            </div>
+            <div v-if="targetDatabase === 'reactome'">
+              <keep-alive>
+                <reactome-detail-component
+                  contextID="reactomeDetail"
+                  :transcriptomicsSelection="transcriptomicsSelectionData"
+                  :proteomicsSelection="proteomicsSelectionData"
+                  :metabolomicsSelection="metabolomicsSelectionData"
+                  :isActive="activeOverview"
+                >
+                </reactome-detail-component>
+              </keep-alive>
+            </div>
+        </div>
         </q-card>
       </div>
     </div>

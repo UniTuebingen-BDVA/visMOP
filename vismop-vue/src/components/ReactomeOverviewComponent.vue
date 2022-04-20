@@ -1,12 +1,6 @@
 <template>
   <div>
     <q-card>
-      <div class="row" justify="space-between">
-        <div>
-          Network Graph Reactome
-          <q-separator></q-separator>
-        </div>
-      </div>
       <div class="row">
         <div class="col-12 mb-2">
           <div :id="contextID" class="webglContainer"></div>

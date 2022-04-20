@@ -1,7 +1,7 @@
 
 .webglContainer {
-  height: 75vh;
-  min-height: 75vh;
+  height: 90vh;
+  min-height: 90;
   display: block;
   z-index: 2;
 }
@@ -192,7 +192,7 @@
   fill: white
 }
 
-.ellipsis:hover{
+td.ellipsis:hover{
   overflow: visible;
   white-space: normal;
 }

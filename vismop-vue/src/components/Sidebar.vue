@@ -1,5 +1,5 @@
 <template>
-  <q-list nav>
+  <q-list nav class='q-pa-sm'>
     <q-select
       :options="targetDatabases"
       label="Target Database"

@@ -222,7 +222,7 @@ export default class overviewGraph {
 
   public refreshCurrentPathway () {
     const mainStore = useMainStore()
-    this.currentPathway = mainStore.pathwayDropdown
+    this.currentPathway = mainStore.pathwayDropdown.value
     this.renderer.refresh()
   }
 

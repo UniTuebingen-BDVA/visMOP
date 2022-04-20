@@ -31,7 +31,6 @@ interface State {
   metabolomicsTableHeaders: {label: string, name:string, field: string, align: string, sortable: boolean,  classes: string, style: string, headerClasses: string, headerStyle: string}[],
   metabolomicsTableData: {[key: string]: string | number }[],
   usedSymbolCols: {transcriptomics: string, proteomics: string, metabolomics: string},
-  overlay: unknown,
   graphData: graphData,
   fcs: { [key: string]: { transcriptomics: (number), proteomics: (number), metabolomics: (number)} },
   fcsReactome: { transcriptomics: {[key: string]:number}, proteomics: {[key: string]:number}, metabolomics: {[key: string]:number}},
@@ -65,7 +64,6 @@ export const useMainStore = defineStore('mainStore', {
     metabolomicsTableHeaders: [],
     metabolomicsTableData: [],
     usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
-    overlay: false,
     graphData: {
       attributes: { name: '' },
       nodes: [],
@@ -130,7 +128,7 @@ export const useMainStore = defineStore('mainStore', {
       tableEntry = { id: val.queryID, name: `${symbolTrans}/${symbolProt}`, fcTranscript:  this.fcs[val.queryID].transcriptomics, fcProt: this.fcs[val.queryID].proteomics, delete: val }
     }
     if (this.targetDatabase === 'reactome') {
-      console.log('test', this.fcs)
+      console.log('test', this.fcsReactome)
       tableEntry = { id: val.queryID, name: `${val.name}`, fcTranscript: -1, fcProt: this.fcsReactome.proteomics[val.queryID], delete: val }
     }
     this.clickedNodes.push(tableEntry)
@@ -199,9 +197,6 @@ export const useMainStore = defineStore('mainStore', {
   },
   setUsedSymbolCols (val:  {transcriptomics: string; proteomics: string; metabolomics: string;}) {
     this.usedSymbolCols = val
-  },
-  setOverlay (val: unknown) {
-    this.overlay = val
   },
   setGraphData (val: graphData) {
     this.graphData = val
@@ -325,7 +320,7 @@ export const useMainStore = defineStore('mainStore', {
   selectPathwayCompare (val: string[]) {
     val.forEach(element => {
       const valClean = element.replace('path:', '')
-      if (!this.pathwayCompare.includes(valClean)) this.pathwayCompare.push(valClean)
+      if (!this.pathwayCompare.includes(valClean)) this.pathwayCompare.unshift(valClean)
     })
   },
   removePathwayCompare (val: string) {

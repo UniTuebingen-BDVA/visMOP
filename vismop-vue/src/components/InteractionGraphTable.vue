@@ -20,27 +20,25 @@
 
             <q-table
               dense
-              :headers="selectedNodesHeader"
-              :items="clickedNodes"
-              :items-per-page="5"
-              :search="tableSearch"
-              class="elevation-1 scrollableTable"
+              :columns="selectedNodesHeader"
+              :rows="clickedNodes"
+              :filter="tableSearch"
               id="selectedNodes"
             >
-              <template v-slot:[`item.fcTranscript`]="{ item }">
-                <q-chip :color="fcScales.transcriptomics(item.fcTranscript)" dark>
-                  {{ parseFloat(item.fcTranscript).toFixed(3) }}
+              <!-- TODO NOT WORKING YET -->
+              <template v-slot:body-cell-fcTranscript="row">
+                <q-chip :color="fcScales.transcriptomics(row.fcTranscript)" dark>
+                  {{ parseFloat(row.fcTranscript).toFixed(3) }}
                 </q-chip>
               </template>
-              <template v-slot:[`item.fcProt`]="{ item }">
-                <q-chip :color="fcScales.proteomics(item.fcProt)" dark>
-                  {{ parseFloat(item.fcProt).toFixed(3) }}
+              <template v-slot:body-cell-fcProt="row">
+                <q-chip :color="fcScales.proteomics(row.fcProt)" dark>
+                  {{ parseFloat(row.fcProt).toFixed(3) }}
                 </q-chip>
               </template>
-              <template v-slot:[`item.delete`]="{ item }">
-                <q-icon dark left color="red" @click="deleteRow(item.id)">
-                  mdi-close
-                </q-icon>
+              <template v-slot:body-cell-delete="row">
+                <q-btn dark left color="red" icon="mdi-close" @click="deleteRow(row.id)">
+                </q-btn>
               </template>
             </q-table>
           </q-card>
@@ -49,14 +47,12 @@
 
 <script lang="ts">
 import { mapState } from 'pinia'
-import { defineComponent } from 'vue'
-import vue from 'vue'
 import { useMainStore } from '@/stores'
 
 
 interface Data {
   tableSearch: string;
-  selectedNodesHeader: {value: string; text: string}[]
+  selectedNodesHeader: {name: string; label: string, align: string, field: string}[]
 }
 
 export default {
@@ -67,11 +63,11 @@ export default {
   data: (): Data => ({
     tableSearch: '',
     selectedNodesHeader: [
-      { value: 'id', text: 'ID' },
-      { value: 'name', text: 'Name' },
-      { value: 'fcTranscript', text: 'FC Trans.' },
-      { value: 'fcProt', text: 'FC Prot' },
-      { value: 'delete', text: '' }
+      { name: 'id', label: 'ID', align: 'left', field: 'id' },
+      { name: 'name', label: 'Name', align: 'left', field: 'name'},
+      { name: 'fcTranscript', label: 'FC Trans.', align: 'left', field: 'fcTranscript'},
+      { name: 'fcProt', label: 'FC Prot', align: 'left', field: 'fcProt'},
+      { name: 'delete', label: '', align: 'left', field: 'delete' }
     ]
 
   }),
@@ -79,7 +75,6 @@ export default {
   computed: {
     ...mapState(useMainStore,{
       clickedNodes: (state: any) => state.clickedNodes,
-      overlay: (state: any) => state.overlay,
       fcScales: (state: any) => state.fcScales
 
     })
