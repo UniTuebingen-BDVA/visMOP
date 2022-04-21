@@ -12,18 +12,18 @@
           <q-btn v-on:click="queryEgoGraphs">Plot</q-btn>
         </div>
         <div class="col-5">
-          <q-range
+          <q-slider
             thumb-label
             v-model="stringSlider"
-            min=400
-            max=1000
-            hide-details=""
-          > </q-range>
+            :min="400"
+            :max="1000"
+            :step="1"
+          > </q-slider>
         </div>
       </div>
       <div class="row">
         <div class="col-12 mb-2">
-          <div :id="contextID" class="webglContainer"></div>
+          <div :id="contextID" class="webglContainerInteraction"></div>
         </div>
       </div>
     </q-card>

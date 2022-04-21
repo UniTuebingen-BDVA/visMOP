@@ -44,7 +44,7 @@ try:
     script_dir = data_path
     dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
     # comment out stringgraph for debugging purposes
-    stringGraph = ''#StringGraph(dest_dir)
+    stringGraph = StringGraph(dest_dir)
 except:
     print("Stringraph Error")
 

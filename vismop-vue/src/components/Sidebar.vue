@@ -27,184 +27,203 @@
       </q-chip>
     </q-chip-group>
     -->
-    <q-list>
+    <q-list padding bordered class="rounded-borders">
       <q-expansion-item
         label = "Transcriptomics Data"
+        header-class="bg-primary"
+        group="omicsSelect"
       >
         <q-card>
-          <q-file
-            v-on:update:modelValue="fetchTranscriptomicsTable"
-            v-model="transcriptomicsFile"
-            chips
-            label=".xlsx File Input"
-          ></q-file>
+          <q-card-section>
+            <q-file
+              v-on:update:modelValue="fetchTranscriptomicsTable"
+              v-model="transcriptomicsFile"
+              chips
+              label=".xlsx File Input"
+            ></q-file>
 
-          <q-separator></q-separator>
+            <q-separator></q-separator>
 
-          <q-input :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disable="$q.loading.isActive"></q-input>
+            <q-input :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
-          <q-separator></q-separator>
+            <q-separator></q-separator>
 
-          <q-select
-            :options="transcriptomicsTableHeaders"
-            v-model="transcriptomicsSymbolCol"
-            option-label="label"
-            option-value="name"
-            label="Genesymbol Col."
-          ></q-select>
+            <q-select
+              :options="transcriptomicsTableHeaders"
+              v-model="transcriptomicsSymbolCol"
+              option-label="label"
+              option-value="name"
+              label="Genesymbol Col."
+            ></q-select>
 
-          <q-separator></q-separator>
+            <q-separator></q-separator>
 
-          <q-select
-            :options="transcriptomicsTableHeaders"
-            v-model="transcriptomicsValueCol"
-            option-label="label"
-            option-value="name"
-            label="Value Col."
-          ></q-select>
-          <q-separator></q-separator>
-          Input Filter:
-          <div class="row"
-            v-for="variable in sliderTranscriptomics"
-            :key="variable.text"
-          >
-            <q-badge color="secondary">
-              {{ variable.text }}
-            </q-badge>
-            <q-checkbox
-              v-model="sliderVals.transcriptomics[variable.text].empties"
-              :label="'Empties'"
-            ></q-checkbox>
-            <q-range
-              v-model="sliderVals.transcriptomics[variable.text].vals"
-              :max="variable.max"
-              :min="variable.min"
-              :step="variable.step"
-              thumb-label
-              persistent-hint
+            <q-select
+              :options="transcriptomicsTableHeaders"
+              v-model="transcriptomicsValueCol"
+              option-label="label"
+              option-value="name"
+              label="Value Col."
+            ></q-select>
+            <q-separator></q-separator>
+            Input Filter:
+            <div class="row"
+              v-for="variable in sliderTranscriptomics"
+              :key="variable.text"
             >
-            </q-range>
-          </div>
+              <q-badge color="secondary">
+                {{ variable.text }}
+              </q-badge>
+              <q-checkbox
+                v-model="sliderVals.transcriptomics[variable.text].empties"
+                :label="'Empties'"
+              ></q-checkbox>
+              <q-range
+                v-model="sliderVals.transcriptomics[variable.text].vals"
+                :max="variable.max"
+                :min="variable.min"
+                :step="variable.step"
+                thumb-label
+                persistent-hint
+              >
+              </q-range>
+            </div>
+          </q-card-section>
         </q-card>
       </q-expansion-item>
+
+      <q-separator />
+
       <q-expansion-item
         label="Proteomics Data"
+        group="omicsSelect"
+
       >
-         <q-card>
-          <q-file
-            v-on:update:modelValue="fetchProteomicsTable"
-            v-model="proteomicsFile"
-            chips
-            label=".xlsx File Input"
-          ></q-file>
+        <q-card>
+          <q-card-section>
 
-          <q-separator></q-separator>
+            <q-file
+              v-on:update:modelValue="fetchProteomicsTable"
+              v-model="proteomicsFile"
+              chips
+              label=".xlsx File Input"
+            ></q-file>
 
-          <q-input :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disable="$q.loading.isActive"></q-input>
+            <q-separator></q-separator>
 
-          <q-separator></q-separator>
+            <q-input :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
-          <q-select
-            :options="proteomicsTableHeaders"
-            v-model="proteomicsSymbolCol"
-            label="Symbol Col."
-            option-label="label"
-            option-value="name"
-          ></q-select>
+            <q-separator></q-separator>
 
-          <q-separator></q-separator>
+            <q-select
+              :options="proteomicsTableHeaders"
+              v-model="proteomicsSymbolCol"
+              label="Symbol Col."
+              option-label="label"
+              option-value="name"
+            ></q-select>
 
-          <q-select
-            :options="proteomicsTableHeaders"
-            v-model="proteomicsValueCol"
-            option-label="label"
-            option-value="name"
-            label="Value Col."
-          ></q-select>
-          <q-separator></q-separator>
-          Input Filter:
-           <div class="row"
-            v-for="variable in sliderProteomics"
-            :key="variable.text"
-          >
-            <q-badge color="secondary">
-              {{ variable.text }}
-            </q-badge>
-            <q-checkbox
-              v-model="sliderVals.proteomics[variable.text].empties"
-              :label="'Empties'"
-            ></q-checkbox>
-            <q-range
-              v-model="sliderVals.proteomics[variable.text].vals"
-              :max="variable.max"
-              :min="variable.min"
-              :step="variable.step"
-              :hint="variable.text"
-              thumb-label
-              persistent-hint
+            <q-separator></q-separator>
+
+            <q-select
+              :options="proteomicsTableHeaders"
+              v-model="proteomicsValueCol"
+              option-label="label"
+              option-value="name"
+              label="Value Col."
+            ></q-select>
+            <q-separator></q-separator>
+            Input Filter:
+            <div class="row"
+              v-for="variable in sliderProteomics"
+              :key="variable.text"
             >
-            </q-range>
-          </div>
+              <q-badge color="secondary">
+                {{ variable.text }}
+              </q-badge>
+              <q-checkbox
+                v-model="sliderVals.proteomics[variable.text].empties"
+                :label="'Empties'"
+              ></q-checkbox>
+              <q-range
+                v-model="sliderVals.proteomics[variable.text].vals"
+                :max="variable.max"
+                :min="variable.min"
+                :step="variable.step"
+                :hint="variable.text"
+                thumb-label
+                persistent-hint
+              >
+              </q-range>
+            </div>
+          </q-card-section>
         </q-card>
       </q-expansion-item>
+
+      <q-separator />
+
       <q-expansion-item
         label="Metabolomics Data"
+        group="omicsSelect"
+
       >
-         <q-card>
-          <q-file
-            v-on:update:modelValue="fetchMetabolomicsTable"
-            v-model="metabolomicsFile"
-            chips
-            label=".xlsx File Input"
-          ></q-file>
+        <q-card>
+          <q-card-section>
+            <q-file
+              v-on:update:modelValue="fetchMetabolomicsTable"
+              v-model="metabolomicsFile"
+              chips
+              label=".xlsx File Input"
+            ></q-file>
 
-          <q-separator></q-separator>
+            <q-separator></q-separator>
 
-          <q-input :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disable="$q.loading.isActive"></q-input>
+            <q-input :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
-          <q-separator></q-separator>
+            <q-separator></q-separator>
 
-          <q-select
-            :options="metabolomicsTableHeaders"
-            v-model="metabolomicsSymbolCol"
-            option-label="label"
-            option-value="name"
-            label="Symbol Col."
-          ></q-select>
+            <q-select
+              :options="metabolomicsTableHeaders"
+              v-model="metabolomicsSymbolCol"
+              option-label="label"
+              option-value="name"
+              label="Symbol Col."
+            ></q-select>
 
-          <q-separator></q-separator>
+            <q-separator></q-separator>
 
-          <q-select
-            :options="metabolomicsTableHeaders"
-            v-model="metabolomicsValueCol"
-            option-label="label"
-            option-value="name"
-            label="Value Col."
-          ></q-select>
-          <q-separator></q-separator>
-          Input Filter:
-          <div class="row"
-            v-for="variable in sliderMetabolomics"
-            :key="variable.text"
-          >
-            <q-badge color="secondary">
-              {{ variable.text }}
-            </q-badge>
-            <q-checkbox
-              v-model="sliderVals.metabolomics[variable.text].empties"
-              :label="'Empties'"
-            ></q-checkbox>
-            <q-range
-              v-model="sliderVals.metabolomics[variable.text].vals"
-              :max="variable.max"
-              :min="variable.min"
-              :step="variable.step"
-              :hint="variable.text"
-              thumb-label
-              persistent-hint
+            <q-select
+              :options="metabolomicsTableHeaders"
+              v-model="metabolomicsValueCol"
+              option-label="label"
+              option-value="name"
+              label="Value Col."
+            ></q-select>
+            <q-separator></q-separator>
+            Input Filter:
+            <div class="row"
+              v-for="variable in sliderMetabolomics"
+              :key="variable.text"
             >
-            </q-range>
-          </div>
+              <q-badge color="secondary">
+                {{ variable.text }}
+              </q-badge>
+              <q-checkbox
+                v-model="sliderVals.metabolomics[variable.text].empties"
+                :label="'Empties'"
+              ></q-checkbox>
+              <q-range
+                v-model="sliderVals.metabolomics[variable.text].vals"
+                :max="variable.max"
+                :min="variable.min"
+                :step="variable.step"
+                :hint="variable.text"
+                thumb-label
+                persistent-hint
+              >
+              </q-range>
+            </div>
+          </q-card-section>
         </q-card>
       </q-expansion-item>
     </q-list>

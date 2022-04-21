@@ -24,7 +24,7 @@
       side="left"
       overlay
       bordered
-      width=500  
+      :width="500"  
     >
       <SideBar></SideBar>
     </q-drawer>

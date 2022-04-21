@@ -26,19 +26,25 @@
               id="selectedNodes"
             >
               <!-- TODO NOT WORKING YET -->
-              <template v-slot:body-cell-fcTranscript="row">
-                <q-chip :color="fcScales.transcriptomics(row.fcTranscript)" dark>
-                  {{ parseFloat(row.fcTranscript).toFixed(3) }}
-                </q-chip>
+              <template v-slot:body-cell-fcTranscript='props'>
+                <q-td :props="props">
+                  <q-badge :style='`background-color:${fcScales.transcriptomics(props.value)}`' dark>
+                    {{ parseFloat(props.value).toFixed(3) }}
+                  </q-badge>
+                </q-td>
               </template>
-              <template v-slot:body-cell-fcProt="row">
-                <q-chip :color="fcScales.proteomics(row.fcProt)" dark>
-                  {{ parseFloat(row.fcProt).toFixed(3) }}
-                </q-chip>
+              <template v-slot:body-cell-fcProt='props'>
+                <q-td :props="props">
+                  <q-badge :style='`background-color:${fcScales.proteomics(props.value)}`' dark>
+                    {{ parseFloat(props.value).toFixed(3) }}
+                  </q-badge>
+                </q-td>
               </template>
-              <template v-slot:body-cell-delete="row">
-                <q-btn dark left color="red" icon="mdi-close" @click="deleteRow(row.id)">
-                </q-btn>
+              <template v-slot:body-cell-delete="props">
+                <q-td :props="props">
+                  <q-btn dark left color="red" icon="mdi-close" @click="deleteRow(props.row.id)">
+                  </q-btn>
+                </q-td>
               </template>
             </q-table>
           </q-card>
@@ -83,6 +89,7 @@ export default {
   // mounted () {},
   methods: {
     deleteRow (val: string) {
+      console.log('deleteRow', val)
       const mainStore = useMainStore()
       mainStore.removeClickedNode(val)
     }

@@ -154,7 +154,7 @@ export const useMainStore = defineStore('mainStore', {
     const indexNode = this.clickedNodes.map(row => { return row.id }).indexOf(val)
     console.log('removedNode', indexNode)
     if (indexNode > -1) {
-      this.clickedNodes = this.clickedNodes.splice(indexNode, 1)
+      this.clickedNodes.splice(indexNode, 1)
     }
   },
   setTargetDatabase (val: string) {

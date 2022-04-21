@@ -1,10 +1,18 @@
 
 .webglContainer {
   height: 90vh;
-  min-height: 90;
+  min-height: 90vh;
   display: block;
   z-index: 2;
 }
+
+.webglContainerInteraction {
+  height: 79vh;
+  min-height: 79vh;
+  display: block;
+  z-index: 2;
+}
+
 .webglContainerDetail {
   height: 38vh;
   width: 38vh;
