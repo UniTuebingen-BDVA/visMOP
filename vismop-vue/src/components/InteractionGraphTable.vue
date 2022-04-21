@@ -51,48 +51,26 @@
         </div>
 </template>
 
-<script lang="ts">
-import { mapState } from 'pinia'
-import { useMainStore } from '@/stores'
-
-
-interface Data {
-  tableSearch: string;
-  selectedNodesHeader: {name: string; label: string, align: string, field: string}[]
-}
-
-export default {
-  // name of the component
-  name: 'InteractionGraphTable',
+<script setup lang="ts">
+  import { useMainStore } from '@/stores'
+  import { computed, Ref, ref } from 'vue';
 
   // data section of the Vue component. Access via this.<varName> .
-  data: (): Data => ({
-    tableSearch: '',
-    selectedNodesHeader: [
+  const mainStore = useMainStore()
+
+  const tableSearch = ref('')
+  const selectedNodesHeader: Ref<{name: string, label: string, align: ('left' | 'right' | 'center'), field: string}[]>= ref([
       { name: 'id', label: 'ID', align: 'left', field: 'id' },
       { name: 'name', label: 'Name', align: 'left', field: 'name'},
       { name: 'fcTranscript', label: 'FC Trans.', align: 'left', field: 'fcTranscript'},
       { name: 'fcProt', label: 'FC Prot', align: 'left', field: 'fcProt'},
       { name: 'delete', label: '', align: 'left', field: 'delete' }
-    ]
+    ] as {name: string, label: string, align: ('left' | 'right' | 'center'), field: string}[])
+ 
+  const clickedNodes = computed(() => mainStore.clickedNodes)
+  const fcScales =  computed(() => mainStore.fcScales)
 
-  }),
-
-  computed: {
-    ...mapState(useMainStore,{
-      clickedNodes: (state: any) => state.clickedNodes,
-      fcScales: (state: any) => state.fcScales
-
-    })
-  },
-  // watch: {},
-  // mounted () {},
-  methods: {
-    deleteRow (val: string) {
-      console.log('deleteRow', val)
-      const mainStore = useMainStore()
+  const deleteRow  = (val: string) => {
       mainStore.removeClickedNode(val)
     }
-  }
-}
 </script>

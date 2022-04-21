@@ -23,55 +23,40 @@
       </div>
       <div class="row">
         <div class="col-12 mb-2">
-          <div :id="contextID" class="webglContainerInteraction"></div>
+          <div :id="props.contextID" class="webglContainerInteraction"></div>
         </div>
       </div>
     </q-card>
   </div>
 </template>
 
-<script lang="ts">
-import { mapState } from 'pinia'
-import { generateInteractionGraph } from '../core/interactionGraph'
-import Sigma from 'sigma'
-import { useMainStore } from '@/stores'
+<script setup lang="ts">
+  import { generateInteractionGraph } from '../core/interactionGraph'
+  import Sigma from 'sigma'
+  import { useMainStore } from '@/stores'
+  import { computed, ref, watch } from 'vue'
+  import type { Ref } from 'vue'
 
-interface Data {
-  stringSlider: number;
-  interactionGraph: Sigma | undefined;
-}
+  const props = defineProps(['contextID'])
 
-export default {
-  // name of the component
-  name: 'InteractionGraph',
+  const mainStore = useMainStore()
 
   // data section of the Vue component. Access via this.<varName> .
-  data: (): Data => ({
-    stringSlider: 900,
-    interactionGraph: undefined
-  }),
+  const stringSlider = ref(900)
+  const interactionGraph: Ref<Sigma | undefined> = ref(undefined)
 
-  computed: {
-    ...mapState(useMainStore,{
-      interactionGraphData: (state: any) => state.interactionGraphData
-    })
-  },
-  watch: {
-    interactionGraphData: function () {
-      if (this.interactionGraph) {
-        this.interactionGraph.kill()
+  // get from store
+  const interactionGraphData = computed(() => mainStore.interactionGraphData) 
+
+  // watch
+  watch(interactionGraphData, () => {
+      if (interactionGraph.value) {
+       interactionGraph.value.kill()
       }
-      this.interactionGraph = generateInteractionGraph(this.contextID, this.interactionGraphData)
-    }
-  },
-
-  // mounted () {},
-  props: ['contextID'],
-  methods: {
-    queryEgoGraphs () {
-      const mainStore = useMainStore()
-      mainStore.queryEgoGraps(this.stringSlider)
-    }
-  }
-}
+      interactionGraph.value = generateInteractionGraph(props.contextID, mainStore.interactionGraphData)
+    })
+  // methods
+  const queryEgoGraphs = () => {
+      mainStore.queryEgoGraps(stringSlider.value)
+    } 
 </script>

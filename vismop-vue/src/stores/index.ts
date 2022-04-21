@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import * as d3 from 'd3'
 import { defineStore } from 'pinia'
-import { graphData } from '@/core/graphTypes'
+import { graphData, networkxNodeLink } from '@/core/graphTypes'
 
 interface State {
   sideBarExpand: boolean
@@ -36,8 +36,8 @@ interface State {
   fcsReactome: { transcriptomics: {[key: string]:number}, proteomics: {[key: string]:number}, metabolomics: {[key: string]:number}},
   fcQuantiles: {transcriptomics: number[], proteomics: number[], metabolomics: number[]},
   fcScales: {transcriptomics: d3.ScaleDiverging<string, never>, proteomics: d3.ScaleDiverging<string, never>, metabolomics: d3.ScaleDiverging<string, never>}
-  interactionGraphData: unknown,
-  pathwayLayouting: { pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]}, rootIds: string[] },
+  interactionGraphData: networkxNodeLink,
+  pathwayLayouting: { pathwayList: [{ text: string, value: string, title: string }], pathwayNodeDictionary: { [key: string]: string[] }, nodePathwayDictionary: { [key: string]: string[]}, pathwayNodeDictionaryClean: { [key: string]: string[]}, rootIds: string[] },
   pathwayDropdown: {title: string, value: string, text: string},
   omicsRecieved: {proteomics: boolean, transcriptomics: boolean, metabolomics: boolean}
   pathayAmountDict: {[key: string]: {genes: number, maplinks: number, compounds: number}},
@@ -76,7 +76,7 @@ export const useMainStore = defineStore('mainStore', {
     fcScales: { transcriptomics: d3.scaleDiverging(), proteomics: d3.scaleDiverging(), metabolomics: d3.scaleDiverging() },
     interactionGraphData: null,
     pathwayLayouting: {
-      pathwayList: [{ text: 'empty', value: 'empty' }],
+      pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
       pathwayNodeDictionary: { },
       nodePathwayDictionary: { },
       pathwayNodeDictionaryClean: { },
@@ -281,7 +281,7 @@ export const useMainStore = defineStore('mainStore', {
     this.fcQuantiles = { transcriptomics: quantTranscriptomics, proteomics: quantProteomics, metabolomics: quantMetabolomics }
     this.fcScales = { transcriptomics: colorScaleTranscriptomics, proteomics: colorScaleProteomics, metabolomics: colorScaleMetabolomics }
   },
-  setPathwayLayoutingKegg (val: {pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[]} }) {
+  setPathwayLayoutingKegg (val: {pathwayList: [{ text: string, value: string, title: string }], pathwayNodeDictionary: { [key: string]: string[]} }) {
     const nodePathwayDict: {[key: string]: string[]} = {}
     const pathwayNodeDictClean: {[key: string]: string[]} = {}
     Object.keys(val.pathwayNodeDictionary).forEach(pathwayID => {
@@ -306,7 +306,7 @@ export const useMainStore = defineStore('mainStore', {
     })
     this.pathwayLayouting = { ...val, nodePathwayDictionary: nodePathwayDict, pathwayNodeDictionaryClean: pathwayNodeDictClean, rootIds: [] }
   },
-  setPathwayLayoutingReactome (val: {pathwayList: [{ text: string, value: string }], pathwayNodeDictionary: { [key: string]: string[]} }) {
+  setPathwayLayoutingReactome (val: {pathwayList: [{ text: string, value: string, title: string }], pathwayNodeDictionary: { [key: string]: string[]} }) {
     console.log('TESTEST', val.pathwayNodeDictionary)
     this.pathwayLayouting = { ...val, nodePathwayDictionary: val.pathwayNodeDictionary, pathwayNodeDictionaryClean: val.pathwayNodeDictionary, rootIds: [] }
   },

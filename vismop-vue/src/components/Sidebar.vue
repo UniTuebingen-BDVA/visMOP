@@ -27,10 +27,11 @@
       </q-chip>
     </q-chip-group>
     -->
-    <q-list padding bordered class="rounded-borders">
+    <q-list bordered class="rounded-borders">
       <q-expansion-item
         label = "Transcriptomics Data"
-        header-class="bg-primary"
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
         group="omicsSelect"
       >
         <q-card>
@@ -97,7 +98,8 @@
       <q-expansion-item
         label="Proteomics Data"
         group="omicsSelect"
-
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
       >
         <q-card>
           <q-card-section>
@@ -165,7 +167,8 @@
       <q-expansion-item
         label="Metabolomics Data"
         group="omicsSelect"
-
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
       >
         <q-card>
           <q-card-section>

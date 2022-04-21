@@ -51,48 +51,24 @@
         </div>
 </template>
 
-<script lang="ts">
-import { mapState } from 'pinia'
-import * as d3 from 'd3'
-import { useMainStore } from '@/stores'
+<script setup lang="ts">
+  import * as d3 from 'd3'
+  import { useMainStore } from '@/stores'
+  import { computed, nextTick } from 'vue'
 
+  const mainStore = useMainStore()
 
-interface Data {
-  tableSearch: string;
-  model: null;
-}
-
-export default {
-  // name of the component
-  name: 'PathwayCompare',
-
-  // data section of the Vue component. Access via this.<varName> .
-  data: (): Data => ({
-    tableSearch: '',
-    model: null
-  }),
-
-  computed: {
-    ...mapState(useMainStore,{
-      pathwayCompare: (state: any) => state.pathwayCompare,
-      glyphData: (state: any) => state.glyphData,
-      pathwayLayouting: (state: any) => state.pathwayLayouting,
-      glyphs: (state: any) => state.glyphs
-    })
-  },
-  // watch: {},
-  // mounted () {},
-  methods: {
-    removeCard (val: string) {
-      const mainStore = useMainStore()
-      console.log('remove Card', val)
+  const pathwayCompare = computed(() => mainStore.pathwayCompare)
+  const glyphData = computed(() => mainStore.glyphData)
+  const pathwayLayouting = computed(() => mainStore.pathwayLayouting)
+  const glyphs = computed(() =>mainStore.glyphs)
+   
+  const removeCard = (val: string) => {
       mainStore.removePathwayCompare(val)
-    },
-    appendGlyph (pathway: string) {
-      this.$nextTick(() => {
-        d3.select(`#glyph${pathway}`).append(() => this.glyphs.svg[pathway])
+    }
+  const appendGlyph = (pathway: string) => {
+      nextTick(() => {
+        d3.select(`#glyph${pathway}`).append(() => glyphs.value.svg[pathway])
       })
     }
-  }
-}
 </script>
