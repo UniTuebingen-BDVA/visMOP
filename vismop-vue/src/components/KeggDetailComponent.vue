@@ -3,28 +3,33 @@
     <q-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
       <div class="col">
         <q-select
-        :options="pathwayListOptions"
+        filled
+        :options="pathwayDropdownOptions"
         label="Focus Pathway"
         v-model="pathwaySelection"
+        use-input
+        input-debounce="0"
         option-label="text"
         option-value="value"
+        @filter="filterFunction"
         ></q-select>
       <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
       <q-card-actions>
-        <q-btn
-          class="mx-2 expandButton"
-          fab
-          dark
-          small
-          @click="expandComponent"
-        ><q-icon>mdi-arrow-expand</q-icon></q-btn>
-          <q-btn
-          class="mx-2 minimizeButton"
-          fab
-          dark
-          small
-          @click="minimizeComponent"
-        ><q-icon>mdi-window-minimize</q-icon></q-btn>
+        <q-fab
+          icon="keyboard_arrow_down"
+          direction="down"
+        >
+          <q-fab-action
+            icon="mdi-arrow-expand"
+            @click="expandComponent"
+          ></q-fab-action>
+          <q-fab-action
+            icon="mdi-arrow-collapse"
+            @click="minimizeComponent"
+          ></q-fab-action>
+
+        </q-fab>
+          
       </q-card-actions>
       </div>
     </q-card>
@@ -48,6 +53,8 @@ interface Data{
   pathwaySelection: {title: string, value: string, text: string}
   expandButton: boolean
   minimizeButton: boolean
+  pathwayDropdownOptions: {title: string, value: string, text: string}[]
+
 }
 
 export default {
@@ -63,8 +70,8 @@ export default {
     networkGraph: undefined,
     pathwaySelection: {title: '', value: '', text: ''},
     expandButton: false,
-    minimizeButton: false
-
+    minimizeButton: false,
+    pathwayDropdownOptions : []
   }),
 
   computed: {
@@ -80,7 +87,6 @@ export default {
       pathwayDropdown: (state: any) => state.pathwayDropdown
 
     }),
-    pathwayListOptions () {return this.pathwayLayouting.pathwayList}
   },
   watch: {
     graphData: function () {
@@ -130,7 +136,7 @@ export default {
     const config = { attributes: true }
     const tar =  document.getElementById(this.contextID ? this.contextID : '')
     if (tar) this.mutationObserver.observe(tar, config)
-    if (this.graphData) {
+    if (this.graphData.nodes.length > 0) {
       this.drawNetwork()
     }
   },
@@ -145,7 +151,7 @@ export default {
     filterFunction (val: string, update: (n: () => void) => void) {
       update(() => {
         const tarValue = val.toLowerCase()
-        this.pathwayListOptions = this.pathwayListOptions.filter((v: string) => v.toLowerCase().indexOf(tarValue) > -1)
+        this.pathwayDropdownOptions = this.pathwayLayouting.pathwayList.filter((v: {text: string, value: string, title: string}) => v.text.toLowerCase().indexOf(tarValue) > -1)
       })
     },
     drawNetwork () {
@@ -153,7 +159,8 @@ export default {
       const fcExtents = this.fcQuantiles
       const networkData = generateGraphData(this.graphData, fcExtents)
       console.log('base dat', networkData)
-      const key = this.pathwayDropdown ? this.pathwayDropdown : Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
+      const key = this.pathwayDropdown.value ? this.pathwayDropdown.value : Object.keys(this.pathwayLayouting.pathwayNodeDictionary)[0]
+      console.log("CURRENT BUG",this.pathwayDropdown, this.pathwayLayouting.pathwayNodeDictionary, key)
       const nodeList = this.pathwayLayouting.pathwayNodeDictionary[key]
       this.networkGraph = new DetailNetwork(networkData, this.contextID ? this.contextID : '', key, nodeList)
     },
@@ -194,10 +201,12 @@ export default {
     },
     expandComponent () {
       this.expandButton = !this.expandButton
+      this.minimizeButton = false
       this.networkGraph?.refresh()
     },
     minimizeComponent () {
       this.minimizeButton = !this.minimizeButton
+      this.expandButton = false
       this.networkGraph?.refresh()
     },
     refreshGraph () {

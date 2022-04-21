@@ -3,11 +3,15 @@
     <q-card v-bind:class="[minimizeButton ? 'detailComponentSmaller' : '', expandButton ? 'detailComponentLarger' : '','detailComponent']">
       <div class = "col">
         <q-select
-        :options="pathwayLayouting.pathwayList"
+        filled
+        :options="pathwayDropdownOptions"
         label="Focus Pathway"
         v-model="pathwaySelection"
+        use-input
+        input-debounce="0"
         option-label="text"
         option-value="value"
+        @filter="filterFunction"
         ></q-select>
       <div :id="contextID" v-bind:class="[minimizeButton ? 'webglContainerDetailSmaller' : '',expandButton ? 'webglContainerDetailLarger' : '','webglContainerDetail']"></div>
       <q-card-actions>
@@ -17,11 +21,11 @@
         >
           <q-fab-action
             icon="mdi-arrow-expand"
-            @click="minimizeComponent"
+            @click="expandComponent"
           ></q-fab-action>
           <q-fab-action
             icon="mdi-arrow-collapse"
-            @click="expandComponent"
+            @click="minimizeComponent"
           ></q-fab-action>
 
         </q-fab>
@@ -53,7 +57,9 @@ interface Data{
   currentLayoutJson: layoutJSON
   currentGraphJson: graphJSON
   currentInsetPathwaysTotals: {[key: number]: {proteomics: number, metabolomics: number, transcriptomics: number}},
-  currentView: (ReactomeDetailView | undefined)
+  currentView: (ReactomeDetailView | undefined),
+  $q: unknown
+  pathwayDropdownOptions: {title: string, value: string, text: string}[]
 
 }
 
@@ -63,6 +69,7 @@ export default {
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
+    $q : useQuasar(),
     mutationObserver: undefined,
     tableSearch: '',
     selectedTab: 'transcriptomics',
@@ -74,7 +81,8 @@ export default {
     currentLayoutJson: {} as layoutJSON,
     currentGraphJson: {} as graphJSON,
     currentInsetPathwaysTotals: {} as {[key: number]: {proteomics: number, metabolomics: number, transcriptomics: number}},
-    currentView: undefined
+    currentView: undefined,
+    pathwayDropdownOptions : []
   }),
 
   computed: {
@@ -94,6 +102,9 @@ export default {
         this.isActive,
         this.outstandingDraw
       )
+    },
+    pathwayLayouting: function() {
+      this.pathwayDropdownOptions = this.pathwayLayouting.pathwayList
     },
     pathwaySelection: function () {
       console.log('this.pathwaySelection',this.pathwaySelection)
@@ -125,14 +136,12 @@ export default {
     filterFunction (val: string, update: (n: () => void) => void) {
       update(() => {
         const tarValue = val.toLowerCase()
-        this.pathwayLayouting.pathwayList = this.pathwayLayouting.pathwayList.filter((v: string) => v.toLowerCase().indexOf(tarValue) > -1)
+        this.pathwayDropdownOptions = this.pathwayLayouting.pathwayList.filter((v: {text: string, value: string, title: string}) => v.text.toLowerCase().indexOf(tarValue) > -1)
       })
     },
     getJsonFiles (reactomeID: string) {
-      const $q = useQuasar()
+      this.$q.loading.show()
       console.log(reactomeID)
-      const mainStore = useMainStore()
-      $q.loading.show()
       fetch(`/get_reactome_json_files/${reactomeID}`, {
         method: 'GET',
         headers: {
@@ -144,7 +153,7 @@ export default {
           this.currentGraphJson = dataContent.graphJson as graphJSON
           this.currentInsetPathwaysTotals = dataContent.insetPathwayTotals as {[key: number]: {proteomics: number, metabolomics: number, transcriptomics: number}}
           this.drawDetailView()
-        }).then(() => $q.loading.hide())
+        }).then(() => this.$q.loading.hide())
     },
     /**
      * Fill the fc objects for the selected type with the supplied pathway Data
@@ -220,9 +229,11 @@ export default {
     },
     expandComponent () {
       this.expandButton = !this.expandButton
+      this.minimizeButton = false
     },
     minimizeComponent () {
       this.minimizeButton = !this.minimizeButton
+      this.expandButton = false
     },
     refreshSize () {
       this.currentView?.refreshSize()

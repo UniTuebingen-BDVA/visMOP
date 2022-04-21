@@ -1,13 +1,24 @@
 <template>
-  <div>
-    <q-card>
-      <div class="row">
-        <div class="col-12 mb-2">
-          <div :id="contextID" class="webglContainer"></div>
+    <div>
+      <q-card v-bind:class="expandOverview ? 'overviewFullscreen' :  ''">
+        <div class="col-12 q-pa-md">
+            <q-fab
+              icon="keyboard_arrow_down"
+              direction="down"
+            >
+              <q-fab-action
+                icon="keyboard_arrow_left"
+                @click="expandComponent"
+              ></q-fab-action>
+              <q-fab-action
+                icon="keyboard_arrow_right"
+                @click="minimizeComponent"
+              ></q-fab-action>
+            </q-fab>
+          <div :id="contextID" v-bind:class="[expandOverview ? '' :  '','webglContainer']"></div>                    
         </div>
-      </div>
-    </q-card>
-  </div>
+      </q-card>
+    </div>
 </template>
 
 <script lang="ts">
@@ -19,8 +30,7 @@ import { PropType } from 'vue'
 import { useMainStore } from '@/stores'
 
 interface Data{
-  tableSearch: string
-  selectedTab: string
+  expandOverview: boolean,
   outstandingDraw: boolean
   networkGraph: (OverviewGraph | undefined)
   transcriptomicsIntersection: string[]
@@ -37,8 +47,7 @@ export default {
 
   // data section of the Vue component. Access via this.<varName> .
   data: (): Data => ({
-    tableSearch: '',
-    selectedTab: 'transcriptomics',
+    expandOverview: false,
     outstandingDraw: false,
     networkGraph: undefined,
     transcriptomicsIntersection: [],
@@ -164,6 +173,14 @@ export default {
     isActive: Boolean
   },
   methods: {
+
+    expandComponent () {
+      this.expandOverview = true
+    },
+    minimizeComponent () {
+      this.expandOverview = false
+    },
+
     drawNetwork () {
       const mainStore = useMainStore()
 

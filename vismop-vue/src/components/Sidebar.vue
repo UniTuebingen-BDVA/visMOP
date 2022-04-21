@@ -71,7 +71,7 @@
               v-for="variable in sliderTranscriptomics"
               :key="variable.text"
             >
-              <q-badge color="secondary">
+              <q-badge color="primary">
                 {{ variable.text }}
               </q-badge>
               <q-checkbox
@@ -138,7 +138,7 @@
               v-for="variable in sliderProteomics"
               :key="variable.text"
             >
-              <q-badge color="secondary">
+              <q-badge color="primary">
                 {{ variable.text }}
               </q-badge>
               <q-checkbox
@@ -205,7 +205,7 @@
               v-for="variable in sliderMetabolomics"
               :key="variable.text"
             >
-              <q-badge color="secondary">
+              <q-badge color="primary">
                 {{ variable.text }}
               </q-badge>
               <q-checkbox
@@ -237,7 +237,6 @@ import { useMainStore } from '@/stores'
 import { useQuasar } from 'quasar'
 
 interface Data{
-  overlay: boolean,
   transcriptomicsFile: File | null,
   transcriptomicsSheetVal: string,
   transcriptomicsSymbolCol: {field: string, label: string, name: string, align: string},
@@ -256,17 +255,18 @@ interface Data{
   targetOrganisms: { text: string, value: string}[],
   targetOrganism: string,
   targetDatabases: { text: string, value: string}[],
-  targetDatabase: string,
+  targetDatabase: { text: string, value: string },
   reactomeLevelSelection: number,
   sliderVals: { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} },
-  sheetRules(value: string): boolean | string
+  sheetRules: ((value: string) => true | 'Enter a number')[]
+  $q: unknown
 }
 
 export default {
   name: 'SideBar',
   components: {},
 
-  data: () => ({
+  data: (): Data => ({
     $q :  useQuasar(),
     transcriptomicsFile: null,
     transcriptomicsSheetVal: '0',
@@ -292,7 +292,7 @@ export default {
       { text: 'Reactome', value: 'reactome' },
       { text: 'KEGG', value: 'kegg' }
     ],
-    targetDatabase: 'reactome',
+    targetDatabase: { text: 'Reactome', value: 'reactome' },
     reactomeLevelSelection: 1,
     sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} },
     sheetRules: [
@@ -528,9 +528,9 @@ export default {
     },
 
     dataQuery () {
-      if (this.targetDatabase === 'kegg') {
+      if (this.targetDatabase.value === 'kegg') {
         this.generateKGMLs()
-      } else if (this.targetDatabase === 'reactome') {
+      } else if (this.targetDatabase.value === 'reactome') {
         this.queryReactome()
       }
     },
@@ -597,18 +597,18 @@ export default {
         targetOrganism: this.targetOrganism,
         transcriptomics: {
           recieved: this.recievedTranscriptomicsData,
-          symbol: this.transcriptomicsSymbolCol,
-          value: this.transcriptomicsValueCol
+          symbol: this.transcriptomicsSymbolCol.field,
+          value: this.transcriptomicsValueCol.field
         },
         proteomics: {
           recieved: this.recievedProteomicsData,
-          symbol: this.proteomicsSymbolCol,
-          value: this.proteomicsValueCol
+          symbol: this.proteomicsSymbolCol.field,
+          value: this.proteomicsValueCol.field
         },
         metabolomics: {
           recieved: this.recievedMetabolomicsData,
-          symbol: this.metabolomicsSymbolCol,
-          value: this.metabolomicsValueCol
+          symbol: this.metabolomicsSymbolCol.field,
+          value: this.metabolomicsValueCol.field
         },
         sliderVals: this.sliderVals
       }
