@@ -21,12 +21,12 @@
     </div>
 </template>
 
-<script lang="ts">
-import { mapState } from 'pinia'
+<script setup lang="ts">
 import OverviewGraph from '../core/overviewNetwork'
 import { generateGraphData } from '../core/reactomeOverviewGraphPreparation'
 import { generateGlyphDataReactome, generateGlyphs } from '../core/overviewGlyph'
-import { PropType } from 'vue'
+import { computed, onMounted, PropType, Ref, ref, watch } from 'vue'
+import { reactomeEntry } from '@/core/reactomeTypes'
 import { useMainStore } from '@/stores'
 
 interface Data{
@@ -40,152 +40,130 @@ interface Data{
   metabolomicsIntersection: string[]
   metabolomicsUnion: string[]
 }
+  const props = defineProps(
+    {
+      contextID: String,
+      transcriptomicsSelection: Array as PropType<{[key: string]: string}[]>,
+      proteomicsSelection: Array as PropType<{[key: string]: string}[]>,
+      metabolomicsSelection: Array as PropType<{[key: string]: string}[]>,
+      isActive: Boolean
+    })
 
-export default {
-  // name of the component
-  name: 'ReactomeOverviewComponent',
+  const mainStore = useMainStore()
 
-  // data section of the Vue component. Access via this.<varName> .
-  data: (): Data => ({
-    expandOverview: false,
-    outstandingDraw: false,
-    networkGraph: undefined,
-    transcriptomicsIntersection: [],
-    transcriptomicsUnion: [],
-    proteomicsIntersection: [],
-    proteomicsUnion: [],
-    metabolomicsIntersection: [],
-    metabolomicsUnion: []
-  }),
+  const expandOverview  = ref(false)
+  const outstandingDraw  = ref(false)
+  const networkGraph: Ref<OverviewGraph | undefined> = ref(undefined)
+  const transcriptomicsIntersection: Ref<string[]> = ref([])
+  const transcriptomicsUnion: Ref<string[]>  = ref([])
+  const proteomicsIntersection: Ref<string[]>  = ref([])
+  const proteomicsUnion: Ref<string[]>  = ref([])
+  const metabolomicsIntersection: Ref<string[]>  = ref([])
+  const metabolomicsUnion: Ref<string[]>  = ref([])
 
-  computed: {
-    ...mapState( useMainStore, {
-      overviewData: (state:any) => state.overviewData,
-      fcs: (state:any) => state.fcs,
-      fcQuantiles: (state:any) => state.fcQuantiles,
-      pathwayDropdown: (state:any) => state.pathwayDropdown,
-      pathwayLayouting: (state: any) => state.pathwayLayouting,
-      usedSymbolCols: (state: any) => state.usedSymbolCols,
-      transcriptomicsSymbolDict: (state:any) => state.transcriptomicsSymbolDict,
-      proteomicsSymbolDict: (state:any) => state.proteomicsSymbolDict
-    }),
-    combinedIntersection: function (): string[] {
+  const overviewData = computed(() => mainStore.overviewData as reactomeEntry[])
+  const pathwayDropdown = computed(() => mainStore.pathwayDropdown)
+  const pathwayLayouting = computed(() => mainStore.pathwayLayouting)
+  const usedSymbolCols = computed(() => mainStore.usedSymbolCols)
+
+   
+  const combinedIntersection = computed(():string[] => {
       const combinedElements = []
-      if (this.transcriptomicsIntersection.length > 0) combinedElements.push(this.transcriptomicsIntersection)
-      if (this.proteomicsIntersection.length > 0) combinedElements.push(this.proteomicsIntersection)
-      if (this.metabolomicsIntersection.length > 0) combinedElements.push(this.metabolomicsIntersection)
+      if (transcriptomicsIntersection.value.length > 0) combinedElements.push(transcriptomicsIntersection.value)
+      if (proteomicsIntersection.value.length > 0) combinedElements.push(proteomicsIntersection.value)
+      if (metabolomicsIntersection.value.length > 0) combinedElements.push(metabolomicsIntersection.value)
       let intersection = combinedElements.length > 0 ? combinedElements.reduce((a, b) => a.filter((c) => b.includes(c))) : []
 
       intersection = [...new Set([...intersection])]
       return intersection
-    },
-    combinedUnion: function (): string[] {
-      return [...new Set([...this.transcriptomicsUnion, ...this.proteomicsUnion, ...this.metabolomicsUnion])]
-    }
-  },
-  watch: {
-    combinedIntersection: function () {
-      this.networkGraph?.setPathwaysContainingIntersecion(this.combinedIntersection)
-    },
-    combinedUnion: function () {
-      this.networkGraph?.setPathwaysContainingUnion(this.combinedUnion)
-    },
-    transcriptomicsSelection: function () {
+    })
+  const combinedUnion = computed((): string[] => {
+      return [...new Set([...transcriptomicsUnion.value, ...proteomicsUnion.value, ...metabolomicsUnion.value])]
+  })
+  watch(combinedIntersection, () => {
+      networkGraph.value?.setPathwaysContainingIntersecion(combinedIntersection.value)
+    })
+  watch(combinedUnion, () => {
+      networkGraph.value?.setPathwaysContainingUnion(combinedUnion.value)
+    })
+  watch(() => props.transcriptomicsSelection, () => {
       const foundPathways: string[][] = []
-      this.transcriptomicsSelection?.forEach((element: { [key: string]: string}) => {
-        const symbol = element[this.usedSymbolCols.transcriptomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
+      props.transcriptomicsSelection?.forEach((element: { [key: string]: string}) => {
+        const symbol = element[usedSymbolCols.value.transcriptomics]
+        const pathwaysContaining = pathwayLayouting.value.nodePathwayDictionary[symbol] // [0] ??????? TODO BUG CHECK???
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
       const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
-      this.transcriptomicsIntersection = intersection
-      this.transcriptomicsUnion = union
-      // this.networkGraph?.setPathwaysContainingSelection(intersection)
-    },
-    proteomicsSelection: function () {
+      transcriptomicsIntersection.value = intersection
+      transcriptomicsUnion.value = union
+      // networkGraph?.setPathwaysContainingSelection(intersection)
+    })
+  watch(() => props.proteomicsSelection, () => {
       const foundPathways: string[][] = []
-      this.proteomicsSelection?.forEach((element: { [key: string]: string}) => {
-        const symbol = element[this.usedSymbolCols.proteomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+      props.proteomicsSelection?.forEach((element: { [key: string]: string}) => {
+        const symbol = element[usedSymbolCols.value.proteomics]
+        const pathwaysContaining = pathwayLayouting.value.nodePathwayDictionary[symbol]
         if (pathwaysContaining) foundPathways.push(pathwaysContaining); console.log('foundPathways', pathwaysContaining)
       })
       console.log('foundPathways', foundPathways)
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
       const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
-      this.proteomicsIntersection = intersection
-      this.proteomicsUnion = union
-      // this.networkGraph?.setPathwaysContainingSelection(intersection)
-    },
-    metabolomicsSelection: function () {
+      proteomicsIntersection.value = intersection
+      proteomicsUnion.value = union
+      // networkGraph?.setPathwaysContainingSelection(intersection)
+    })
+    watch(() => props.metabolomicsSelection, () => {
       const foundPathways: string[][] = []
-      this.metabolomicsSelection?.forEach((element: { [key: string]: string}) => {
-        const symbol = element[this.usedSymbolCols.metabolomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol][0]
+      props.metabolomicsSelection?.forEach((element: { [key: string]: string}) => {
+        const symbol = element[usedSymbolCols.value.metabolomics]
+        const pathwaysContaining = pathwayLayouting.value.nodePathwayDictionary[symbol] //[0] ???? bugcheck
         if (pathwaysContaining) foundPathways.push(pathwaysContaining)
       })
       const intersection = foundPathways.length > 0 ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c))) : []
       const union = foundPathways.length > 0 ? foundPathways.reduce((a, b) => [...new Set([...a, ...b])]) : []
-      this.metabolomicsIntersection = intersection
-      this.metabolomicsUnion = union
-      // this.networkGraph?.setPathwaysContainingSelection(intersection)
-    },
-    pathwayDropdown: function () {
-      this.networkGraph?.refreshCurrentPathway()
-    },
-    overviewData: function () {
-      if (this.isActive) {
-        console.log(this.contextID)
-        this.drawNetwork()
+      metabolomicsIntersection.value = intersection
+      metabolomicsUnion.value = union
+      // networkGraph?.setPathwaysContainingSelection(intersection)
+    })
+    watch(pathwayDropdown, () => {
+      networkGraph.value?.refreshCurrentPathway()
+    })
+    watch(overviewData,() => {
+      if (props.isActive) {
+        console.log(props.contextID)
+        drawNetwork()
       } else {
-        console.log(this.contextID, 'outstanding draw')
-        this.outstandingDraw = true
+        console.log(props.contextID, 'outstanding draw')
+        outstandingDraw.value = true
       }
-    },
-    isActive: function () {
-      console.log(
-        this.contextID,
-        'isActive: ',
-        this.isActive,
-        this.outstandingDraw
-      )
-      if (this.outstandingDraw) {
+    })
+    watch(() => props.isActive, () => {
+      if (outstandingDraw) {
         setTimeout(() => {
-          this.drawNetwork()
+          drawNetwork()
         }, 1000)
-        this.outstandingDraw = false
+        outstandingDraw.value = false
       }
+    })
+
+  onMounted(() => {
+    console.log('OVDATA', overviewData)
+    if (overviewData.value) {
+      drawNetwork()
     }
-  },
+  })
+  const expandComponent = (() => {
+      expandOverview.value = true
+    })
+  const minimizeComponent = (() => {
+      expandOverview.value = false
+    })
+  const drawNetwork = (() => {
 
-  mounted () {
-    console.log('OVDATA', this.overviewData)
-    if (this.overviewData) {
-      this.drawNetwork()
-    }
-  },
-  props: {
-    contextID: String,
-    transcriptomicsSelection: Array as PropType<{[key: string]: string}[]>,
-    proteomicsSelection: Array as PropType<{[key: string]: string}[]>,
-    metabolomicsSelection: Array as PropType<{[key: string]: string}[]>,
-    isActive: Boolean
-  },
-  methods: {
-
-    expandComponent () {
-      this.expandOverview = true
-    },
-    minimizeComponent () {
-      this.expandOverview = false
-    },
-
-    drawNetwork () {
-      const mainStore = useMainStore()
-
-      if (this.networkGraph) { this.networkGraph.killGraph() }
-      // const fcExtents = this.fcQuantiles
+      networkGraph.value?.killGraph()
+      // const fcExtents = fcQuantiles
       const glyphData = generateGlyphDataReactome()
       mainStore.setGlyphData(glyphData)
       console.log('GLYPH DATA', glyphData)
@@ -193,10 +171,8 @@ export default {
       mainStore.setGlyphs(generatedGlyphs)
       const glyphsURL = generatedGlyphs.url
       console.log('GLYPHs', mainStore.glyphs)
-      const networkData = generateGraphData(this.overviewData, glyphsURL, this.pathwayLayouting.rootIds)
+      const networkData = generateGraphData((overviewData.value), glyphsURL, pathwayLayouting.value.rootIds)
       console.log('base dat', networkData)
-      this.networkGraph = new OverviewGraph(this.contextID ? this.contextID : '', networkData)
-    }
-  }
-}
+      networkGraph.value = new OverviewGraph(props.contextID ? props.contextID : '', networkData)
+  })
 </script>

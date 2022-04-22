@@ -4,6 +4,31 @@
 Basic Types
 */
 
+interface form {
+  name: string
+  toplevelId: number[]
+}
+
+interface measure {
+  queryId: string
+  value: number
+  name: string
+  forms: {[key:string]: form }
+}
+interface omicsEntry{
+  measured: {[key: string]: measure}
+  total: number
+}
+interface reactomeEntry{
+  entries: {proteomics: omicsEntry, transcriptomics: omicsEntry, metabolomics: omicsEntry}
+  pathwayId: string
+  rootId: string
+  pathwayName: string
+  maplinks: {[key: string]: {'own_id': number, 'toplevel_id': number}}
+  subtreeIds: string[]
+  
+}
+
 interface graphNode {
   schemaClass: string
   dbId: number

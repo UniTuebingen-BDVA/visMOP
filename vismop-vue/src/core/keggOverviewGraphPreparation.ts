@@ -18,7 +18,6 @@ import { useMainStore } from '@/stores'
  */
 export function generateGraphData (
   nodeList: { [key: string]: entry },
-  fcsExtent: number[],
   glyphs: {[key: string]: string}
 ): graphData {
   const mainStore = useMainStore()

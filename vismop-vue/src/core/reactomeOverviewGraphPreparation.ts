@@ -8,6 +8,7 @@ import {
   baseNodeAttr,
   baseEdgeAttr
 } from '@/core/graphTypes'
+import { reactomeEntry } from './reactomeTypes'
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -15,7 +16,7 @@ import {
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: {pathwayId: string, rootId: string, pathwayName: string, maplinks: {[key: string]: {'own_id': number, 'toplevel_id': number}}, subtreeIds: string[]} },
+  nodeList: reactomeEntry[],
   glyphs: {[key: string]: string},
   rootIds: string[]
 ): graphData {

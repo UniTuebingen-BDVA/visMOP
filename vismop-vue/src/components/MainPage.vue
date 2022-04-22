@@ -200,225 +200,186 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { mapState } from 'pinia'
-import KeggDetailComponent from './KeggDetailComponent.vue'
-import ReactomeDetailComponent from './ReactomeDetailComponent.vue'
-import KeggOverviewComponent from './KeggOverviewComponent.vue'
-import InteractionGraph from './InteractionGraph.vue'
-import InteractionGraphTable from './InteractionGraphTable.vue'
-import PathwayCompare from './PathwayCompare.vue'
-import ReactomeOverviewComponent from './ReactomeOverviewComponent.vue'
-import { useMainStore } from '@/stores'
+<script setup lang="ts">
+  import { mapState } from 'pinia'
+  import KeggDetailComponent from './KeggDetailComponent.vue'
+  import ReactomeDetailComponent from './ReactomeDetailComponent.vue'
+  import KeggOverviewComponent from './KeggOverviewComponent.vue'
+  import InteractionGraph from './InteractionGraph.vue'
+  import InteractionGraphTable from './InteractionGraphTable.vue'
+  import PathwayCompare from './PathwayCompare.vue'
+  import ReactomeOverviewComponent from './ReactomeOverviewComponent.vue'
+  import { useMainStore } from '@/stores'
+  import { computed, Ref, ref, watch } from 'vue'
+import { QTable, QTableProps } from 'quasar'
+import { ColType } from '@/core/generalTypes'
+
+  const mainStore = useMainStore()
+
+  const tableSearch = ref('')
+  const selectedTabTable = ref('transcriptomics')
+  const selectedTabNetwork = ref('overviewNetwork')
+  const selectedTabMisc = ref('dataTable')
+  const transcriptomicsSelectionData: Ref<{ [key: string]: string }[]> =  ref([])
+  const proteomicsSelectionData: Ref<{ [key: string]: string }[]> =  ref([])
+  const metabolomicsSelectionData: Ref<{ [key: string]: string }[]> =  ref([])
+  const selectedTranscriptomics: Ref<{ [key: string]: string }[]> =  ref([])
+  const selectedProteomics: Ref<{ [key: string]: string }[]> =  ref([])
+  const selectedMetabolomics: Ref<{ [key: string]: string }[]> =  ref([])
+  const pagination = ref({rowsPerPage: 0})
+  
+  const targetDatabase = computed(() => mainStore.targetDatabase )
+  const transcriptomicsTableHeaders = computed(() => mainStore.transcriptomicsTableHeaders )
+  const transcriptomicsTableData = computed(() => mainStore.transcriptomicsTableData )
+  const proteomicsTableHeaders = computed(() => mainStore.proteomicsTableHeaders )
+  const proteomicsTableData = computed(() => mainStore.proteomicsTableData )
+  const metabolomicsTableHeaders = computed(() => mainStore.metabolomicsTableHeaders )
+  const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData )
+  const transcriptomicsSymbolDict = computed(() => mainStore.transcriptomicsSymbolDict )
+  const proteomicsSymbolDict = computed(() => mainStore.proteomicsSymbolDict )
+  const usedSymbolCols = computed(() => mainStore.usedSymbolCols )
+  const pathwayLayouting = computed(() => mainStore.pathwayLayouting )
+  const pathwayDropdown = computed(() => mainStore.pathwayDropdown )
 
 
-interface Data{
-  tableSearch: string
-  selectedTabTable: string
-  selectedTabNetwork: string
-  selectedTabMisc: string
-  transcriptomicsSelectionData: { [key: string]: string }[],
-  proteomicsSelectionData: { [key: string]: string }[],
-  metabolomicsSelectionData: { [key: string]: string }[],
-  pathwaySelection: string,
-  selectedTranscriptomics: { [key: string]: string }[],
-  selectedProteomics: { [key: string]: string }[],
-  selectedMetabolomics: { [key: string]: string }[]
-  pagination: {rowsPerPage: number}
-}
-
-export default {
-  components: { KeggDetailComponent, ReactomeDetailComponent, KeggOverviewComponent, InteractionGraph, InteractionGraphTable, PathwayCompare, ReactomeOverviewComponent },
-  // name of the component
-  name: 'MainPage',
-
-  // data section of the Vue component. Access via this.<varName> .
-  data: (): Data => ({
-    tableSearch: '',
-    selectedTabTable: 'transcriptomics',
-    selectedTabNetwork: 'overviewNetwork',
-    selectedTabMisc: 'dataTable',
-    transcriptomicsSelectionData: [{}],
-    proteomicsSelectionData: [{}],
-    metabolomicsSelectionData: [{}],
-    pathwaySelection: '',
-    selectedTranscriptomics: [],
-    selectedProteomics: [],
-    selectedMetabolomics: [],
-    pagination: {rowsPerPage: 0}
-  }),
-
-  computed: {
-    ...mapState(useMainStore,[
-      'targetDatabase',
-      'transcriptomicsTableHeaders',
-      'transcriptomicsTableData',
-      'proteomicsTableHeaders',
-      'proteomicsTableData',
-      'metabolomicsTableHeaders',
-      'metabolomicsTableData',
-      'fcs',
-      'transcriptomicsSymbolDict',
-      'proteomicsSymbolDict',
-      'usedSymbolCols',
-      'pathwayLayouting',
-      'pathwayDropdown'
-      ]
-    ),
- 
-    activeOverview: function () {
-      return this.selectedTabNetwork === 'overviewNetwork'
-    },
-    activeDetail: function () {
-      return this.selectedTabNetwork === 'detailNetwork'
-    }
-  },
-  watch: {
-    pathwayLayouting: function () {
+  const activeOverview = computed(() => selectedTabNetwork.value === 'overviewNetwork' )
+  
+  watch(pathwayLayouting, () => {
       const mainStore = useMainStore()
       let transcriptomicsAvailable = 0
       let transcriptomicsTotal = 0
 
-      this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
+      transcriptomicsTableData.value.forEach((row: {[key: string]: string | number }) => {
         transcriptomicsTotal += 1
-        let symbol = row[this.usedSymbolCols.transcriptomics]
-        if (this.targetDatabase === 'kegg') {
-          symbol = this.transcriptomicsSymbolDict[symbol]
+        let symbol = row[usedSymbolCols.value.transcriptomics]
+        if (targetDatabase.value === 'kegg') {
+          symbol = transcriptomicsSymbolDict.value[symbol]
         }
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        const pathwaysContaining = pathwayLayouting.value.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
         if (pathwaysContaining) transcriptomicsAvailable += 1
       })
-      console.log('table headers', this.transcriptomicsTableHeaders)
-      this.transcriptomicsTableHeaders.forEach((entry: {label: string, name: string}) => {
-        if (entry.name === 'available') {
+      console.log('table headers', transcriptomicsTableHeaders)
+      transcriptomicsTableHeaders.value.forEach((entry: ColType) => {
+        if (entry?.name === 'available') {
           entry.label = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`
         }
       })
-      mainStore.setTranscriptomicsTableHeaders(this.transcriptomicsTableHeaders)
-      mainStore.setTranscriptomicsTableData(this.transcriptomicsTableData)
+      mainStore.setTranscriptomicsTableHeaders(transcriptomicsTableHeaders.value)
+      mainStore.setTranscriptomicsTableData(transcriptomicsTableData.value)
 
       let proteomiocsAvailable = 0
       let proteomicsTotal = 0
 
-      this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
+      proteomicsTableData.value.forEach((row: {[key: string]: string | number }) => {
         proteomicsTotal += 1
-        let symbol = row[this.usedSymbolCols.proteomics]
-        if (this.targetDatabase === 'kegg') {
-          symbol = this.proteomicsSymbolDict[symbol]
+        let symbol = row[usedSymbolCols.value.proteomics]
+        if (targetDatabase.value === 'kegg') {
+          symbol = proteomicsSymbolDict.value[symbol]
         }
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        const pathwaysContaining = pathwayLayouting.value.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
         if (pathwaysContaining) proteomiocsAvailable += 1
       })
-      this.proteomicsTableHeaders.forEach((entry: {label: string, name: string}) => {
+      proteomicsTableHeaders.value.forEach((entry: {label: string, name: string}) => {
         if (entry.name === 'available') {
           entry.label = `available (${proteomiocsAvailable} of ${proteomicsTotal})`
         }
       })
-      mainStore.setProteomicsTableHeaders(this.proteomicsTableHeaders)
-      mainStore.setProteomicsTableData(this.proteomicsTableData)
-
-      console.log(this.proteomicsTableHeaders)
+      mainStore.setProteomicsTableHeaders(proteomicsTableHeaders.value)
+      mainStore.setProteomicsTableData(proteomicsTableData.value)
 
       let metabolomicsAvailable = 0
       let metabolomicsTotal = 0
 
-      this.metabolomicsTableData.forEach((row: {[key: string]: string | number }) => {
+      metabolomicsTableData.value.forEach((row: {[key: string]: string | number }) => {
         metabolomicsTotal += 1
-        const symbol = row[this.usedSymbolCols.metabolomics]
-        const pathwaysContaining = this.pathwayLayouting.nodePathwayDictionary[symbol]
+        const symbol = row[usedSymbolCols.value.metabolomics]
+        const pathwaysContaining = pathwayLayouting.value.nodePathwayDictionary[symbol]
         row.available = (pathwaysContaining) ? pathwaysContaining.length : 'No'
         if (pathwaysContaining) metabolomicsAvailable += 1
       })
-      this.metabolomicsTableHeaders.forEach((entry: {label: string, name: string}) => {
+      metabolomicsTableHeaders.value.forEach((entry: {label: string, name: string}) => {
         if (entry.name === 'available') {
           entry.label = `available (${metabolomicsAvailable} of ${metabolomicsTotal})`
         }
       })
-      mainStore.setMetabolomicsTableHeaders(this.metabolomicsTableHeaders)
-      mainStore.setMetabolomicsTableData(this.metabolomicsTableData)
-    },
-    selectedTranscriptomics: function () {
-      this.transcriptomicsSelectionData = (this.selectedTranscriptomics)
-    },
-    selectedProteomics: function () {
-      this.proteomicsSelectionData = (this.selectedProteomics)
-    },
-    selectedMetabolomics: function () {
-      this.metabolomicsSelectionData = (this.selectedMetabolomics)
-    },
-    pathwayDropdown: function () {
+      mainStore.setMetabolomicsTableHeaders(metabolomicsTableHeaders.value)
+      mainStore.setMetabolomicsTableData(metabolomicsTableData.value)
+    })
+    watch(selectedTranscriptomics, () => {
+      transcriptomicsSelectionData.value = selectedTranscriptomics.value
+    })
+    watch(selectedProteomics, () => {
+      proteomicsSelectionData.value = selectedProteomics.value
+    })
+    watch(selectedMetabolomics, () => {
+      metabolomicsSelectionData.value = selectedMetabolomics.value
+    })
+    watch(pathwayDropdown, () => {
       const mainStore = useMainStore()
-      this.transcriptomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        let symbol = row[this.usedSymbolCols.transcriptomics]
+      transcriptomicsTableData.value.forEach((row: {[key: string]: string | number }) => {
+        let symbol = row[usedSymbolCols.value.transcriptomics]
         const available = !(row.available === 'No')
         if (available) {
           let includedInSelectedPathway = false
-          if (this.targetDatabase === 'kegg') {
-            symbol = this.transcriptomicsSymbolDict[symbol]
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown.value].includes(symbol) : false
+          if (targetDatabase.value === 'kegg') {
+            symbol = transcriptomicsSymbolDict.value[symbol]
+            includedInSelectedPathway = pathwayDropdown.value ? pathwayLayouting.value.pathwayNodeDictionaryClean[pathwayDropdown.value.value].includes(symbol) : false
           }
-          if (this.targetDatabase === 'reactome') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown.value) : false
+          if (targetDatabase.value === 'reactome') {
+            includedInSelectedPathway = pathwayDropdown.value ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(pathwayDropdown.value.value) : false
           }
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
       })
-      mainStore.setTranscriptomicsTableData(this.transcriptomicsTableData)
+      mainStore.setTranscriptomicsTableData(transcriptomicsTableData.value)
 
-      this.proteomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        let symbol = row[this.usedSymbolCols.proteomics]
+      proteomicsTableData.value.forEach((row: {[key: string]: string | number }) => {
+        let symbol = row[usedSymbolCols.value.proteomics]
         const available = !(row.available === 'No')
         if (available) {
           let includedInSelectedPathway = false
-          if (this.targetDatabase === 'kegg') {
-            symbol = this.proteomicsSymbolDict[symbol]
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown.value].includes(symbol) : false
+          if (targetDatabase.value === 'kegg') {
+            symbol = proteomicsSymbolDict.value[symbol]
+            includedInSelectedPathway = pathwayDropdown.value ? pathwayLayouting.value.pathwayNodeDictionaryClean[pathwayDropdown.value.value].includes(symbol) : false
           }
-          if (this.targetDatabase === 'reactome') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown.value) : false
+          if (targetDatabase.value === 'reactome') {
+            includedInSelectedPathway = pathwayDropdown.value ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(pathwayDropdown.value.value) : false
           }
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
       })
-      mainStore.setProteomicsTableData(this.proteomicsTableData)
+      mainStore.setProteomicsTableData(proteomicsTableData.value)
 
-      this.metabolomicsTableData.forEach((row: {[key: string]: string | number }) => {
-        const symbol = row[this.usedSymbolCols.metabolomics]
+      metabolomicsTableData.value.forEach((row: {[key: string]: string | number }) => {
+        const symbol = row[usedSymbolCols.value.metabolomics]
         const available = !(row.available === 'No')
         if (available) {
           let includedInSelectedPathway = false
-          if (this.targetDatabase === 'kegg') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionaryClean[this.pathwayDropdown.value].includes(symbol) : false
+          if (targetDatabase.value === 'kegg') {
+            includedInSelectedPathway = pathwayDropdown.value ? pathwayLayouting.value.pathwayNodeDictionaryClean[pathwayDropdown.value.value].includes(symbol) : false
           }
-          if (this.targetDatabase === 'reactome') {
-            includedInSelectedPathway = this.pathwayDropdown ? this.pathwayLayouting.pathwayNodeDictionary[symbol].includes(this.pathwayDropdown.value) : false
+          if (targetDatabase.value === 'reactome') {
+            includedInSelectedPathway = pathwayDropdown.value ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(pathwayDropdown.value.value) : false
           }
           row.inSelected = (includedInSelectedPathway) ? 'Yes' : 'No'
         }
       })
-      mainStore.setMetabolomicsTableData(this.metabolomicsTableData)
-    }
-  },
+      mainStore.setMetabolomicsTableData(metabolomicsTableData.value)
+    })
 
-  // mounted () {},
-
-  methods: {
-    transcriptomicsSelection (val: { [key: string]: string }) {
+    const transcriptomicsSelection = ((event: Event, row: { [key: string]: string }, index: number) => {
       // this.transcriptomicsSelectionData = val
-    },
-    proteomicsSelection (event: Event, row: { [key: string]: string }, index: number) {
-      const mainStore = useMainStore()
+    })
+    const proteomicsSelection =  ((event: Event, row: { [key: string]: string }, index: number) => {
       mainStore.addClickedNodeFromTable(row)
-    },
-    metabolomicsSelection (val: { [key: string]: string }) {
+    })
+    const metabolomicsSelection = ((event: Event, row: { [key: string]: string }, index: number) => {
       // this.metabolomicsSelectionData = val
-    },
-    itemRowColor (item: {row: {[key:string]: string}}) {
+    })
+    const itemRowColor = ((item: {row: {[key:string]: string}}) => {
       return (item.row.available !== 'No') ? ((item.row.inSelected === 'Yes') ? 'rowstyle-inPathway' : 'rowstyle-available') : 'rowstyle-notAvailable'
-    }
-  }
-}
+    })
 </script>
 

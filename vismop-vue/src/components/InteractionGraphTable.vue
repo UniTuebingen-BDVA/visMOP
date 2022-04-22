@@ -52,20 +52,21 @@
 </template>
 
 <script setup lang="ts">
-  import { useMainStore } from '@/stores'
+  import { ColType } from '@/core/generalTypes';
+import { useMainStore } from '@/stores'
   import { computed, Ref, ref } from 'vue';
 
   // data section of the Vue component. Access via this.<varName> .
   const mainStore = useMainStore()
 
   const tableSearch = ref('')
-  const selectedNodesHeader: Ref<{name: string, label: string, align: ('left' | 'right' | 'center'), field: string}[]>= ref([
+  const selectedNodesHeader: Ref<ColType[]>= ref([
       { name: 'id', label: 'ID', align: 'left', field: 'id' },
       { name: 'name', label: 'Name', align: 'left', field: 'name'},
       { name: 'fcTranscript', label: 'FC Trans.', align: 'left', field: 'fcTranscript'},
       { name: 'fcProt', label: 'FC Prot', align: 'left', field: 'fcProt'},
       { name: 'delete', label: '', align: 'left', field: 'delete' }
-    ] as {name: string, label: string, align: ('left' | 'right' | 'center'), field: string}[])
+    ] as ColType[])
  
   const clickedNodes = computed(() => mainStore.clickedNodes)
   const fcScales =  computed(() => mainStore.fcScales)

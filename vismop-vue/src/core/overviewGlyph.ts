@@ -3,6 +3,7 @@ import * as d3 from 'd3'
 import { stratify } from 'd3'
 import { PieArcDatum } from 'd3-shape'
 import * as _ from 'lodash'
+import { reactomeEntry } from './reactomeTypes'
 
 interface measureData {
   name: string
@@ -24,7 +25,7 @@ export interface glyphData {
   transcriptomics: omicsData
 }
 
-export function generateGlyphData (fcsExtent: number[]): { [key: string]: glyphData } {
+export function generateGlyphData (): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {}
   const mainStore = useMainStore()
   // contains pathway lists
@@ -85,13 +86,7 @@ export function generateGlyphDataReactome (): { [key: string]: glyphData } {
   const pathwayLayouting = mainStore.pathwayLayouting
   const fcs = mainStore.fcs
   const omicsRecieved = mainStore.omicsRecieved
-  const overviewData = mainStore.overviewData as {pathwayName: string, pathwayId: string, entries: {
-    transcriptomics: {measured: {[key: string]: measureData}, total: number},
-    proteomics: {measured: {[key: string]: measureData}, total: number},
-    metabolomics: {measured: {[key: string]: measureData}, total: number}
-    }
-  }[]
-
+  const overviewData = mainStore.overviewData as reactomeEntry[]
   for (const pathway of overviewData) {
     const transcriptomicsData = { available: omicsRecieved.transcriptomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
     const proteomicsData = { available: omicsRecieved.proteomics, foldChanges: [], meanFoldchange: 0, nodeState: { total: 0, regulated: 0 } } as omicsData
@@ -100,21 +95,21 @@ export function generateGlyphDataReactome (): { [key: string]: glyphData } {
     transcriptomicsData.nodeState.total = pathway.entries.transcriptomics.total
     for (const measureKey in pathway.entries.transcriptomics.measured) {
       const entry = pathway.entries.transcriptomics.measured[measureKey]
-      transcriptomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryID })
+      transcriptomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryId })
       transcriptomicsData.nodeState.regulated += 1
     }
 
     proteomicsData.nodeState.total = pathway.entries.proteomics.total
     for (const measureKey in pathway.entries.proteomics.measured) {
       const entry = pathway.entries.proteomics.measured[measureKey]
-      proteomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryID })
+      proteomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryId })
       proteomicsData.nodeState.regulated += 1
     }
 
     metabolomicsData.nodeState.total = pathway.entries.metabolomics.total
     for (const measureKey in pathway.entries.metabolomics.measured) {
       const entry = pathway.entries.metabolomics.measured[measureKey]
-      metabolomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryID })
+      metabolomicsData.foldChanges.push({ name: entry.name, value: entry.value, queryID: entry.queryId })
       metabolomicsData.nodeState.regulated += 1
     }
 
