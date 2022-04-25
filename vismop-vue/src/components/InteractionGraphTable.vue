@@ -53,7 +53,7 @@
 
 <script setup lang="ts">
   import { ColType } from '@/core/generalTypes';
-import { useMainStore } from '@/stores'
+  import { useMainStore } from '@/stores'
   import { computed, Ref, ref } from 'vue';
 
   // data section of the Vue component. Access via this.<varName> .

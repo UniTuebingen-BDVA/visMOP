@@ -33,6 +33,7 @@
         header-class="bg-primary text-white"
         expand-icon-class="text-white"
         group="omicsSelect"
+        icon="svguse:/icons/RNA.svg#rna|0 0 9 9"
       >
         <q-card>
           <q-card-section>
@@ -100,6 +101,7 @@
         group="omicsSelect"
         header-class="bg-primary text-white"
         expand-icon-class="text-white"
+        icon="svguse:/icons/Prots.svg#prots|0 0 9 9"
       >
         <q-card>
           <q-card-section>
@@ -163,12 +165,13 @@
       </q-expansion-item>
 
       <q-separator />
-
       <q-expansion-item
         label="Metabolomics Data"
         group="omicsSelect"
         header-class="bg-primary text-white"
         expand-icon-class="text-white"
+        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
+
       >
         <q-card>
           <q-card-section>
@@ -234,134 +237,140 @@
   </q-list>
 </template>
 
-<script lang="ts">
-import { mapState } from 'pinia'
-import { useMainStore } from '@/stores'
-import { useQuasar } from 'quasar'
-
-interface Data{
-  transcriptomicsFile: File | null,
-  transcriptomicsSheetVal: string,
-  transcriptomicsSymbolCol: {field: string, label: string, name: string, align: string},
-  transcriptomicsValueCol: {field: string, label: string, name: string, align: string},
-  recievedTranscriptomicsData: boolean,
-  proteomicsFile: File | null,
-  proteomicsSheetVal: string,
-  proteomicsSymbolCol: {field: string, label: string, name: string, align: string},
-  proteomicsValueCol: {field: string, label: string, name: string, align: string},
-  recievedProteomicsData: boolean,
-  metabolomicsFile: File | null,
-  metabolomicsSheetVal: string,
-  metabolomicsSymbolCol: {field: string, label: string, name: string, align: string},
-  metabolomicsValueCol: {field: string, label: string, name: string, align: string},
-  recievedMetabolomicsData: boolean,
-  targetOrganisms: { text: string, value: string}[],
-  targetOrganism: string,
-  targetDatabases: { text: string, value: string}[],
-  targetDatabase: { text: string, value: string },
-  reactomeLevelSelection: number,
-  sliderVals: { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} },
-  sheetRules: ((value: string) => true | 'Enter a number')[]
-  $q: unknown
-}
-
-export default {
-  name: 'SideBar',
-  components: {},
-
-  data: (): Data => ({
-    $q :  useQuasar(),
-    transcriptomicsFile: null,
-    transcriptomicsSheetVal: '0',
-    transcriptomicsSymbolCol: {field: '', label: '', name: '', align: ''},
-    transcriptomicsValueCol: {field: '', label: '', name: '', align: ''},
-    recievedTranscriptomicsData: false,
-    proteomicsFile: null,
-    proteomicsSheetVal: '0',
-    proteomicsSymbolCol: {field: '', label: '', name: '', align: ''},
-    proteomicsValueCol: {field: '', label: '', name: '', align: ''},
-    recievedProteomicsData: false,
-    metabolomicsFile: null,
-    metabolomicsSheetVal: '0',
-    metabolomicsSymbolCol: {field: '', label: '', name: '', align: ''},
-    metabolomicsValueCol: {field: '', label: '', name: '', align: ''},
-    recievedMetabolomicsData: false,
-    targetOrganisms: [
+<script setup lang="ts">
+  import { ColType } from '@/core/generalTypes'
+  import { useMainStore } from '@/stores'
+  import { useQuasar } from 'quasar'
+  import { ref, Ref, computed, watch, onMounted } from 'vue'
+  import prot from '@/assets/icons/Prots.svg?raw'
+  import trans from '@/assets/icons/RNA.svg?raw'
+  import metabolomics from '@/assets/icons/Metabolites.svg?raw'
+  const mainStore = useMainStore()
+  
+  const $q = useQuasar()
+  const transcriptomicsFile: Ref<File | null> = ref(null)
+  const transcriptomicsSheetVal = ref('0')
+  const transcriptomicsSymbolCol: Ref<ColType> = ref({name:'', label:'', field:'', align: undefined})
+  const transcriptomicsValueCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const recievedTranscriptomicsData = ref(false)
+  const proteomicsFile: Ref<File | null> = ref(null)
+  const proteomicsSheetVal = ref('0')
+  const proteomicsSymbolCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const proteomicsValueCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const recievedProteomicsData = ref(false)
+  const metabolomicsFile: Ref<File | null> = ref(null)
+  const metabolomicsSheetVal = ref('0')
+  const metabolomicsSymbolCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const metabolomicsValueCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const recievedMetabolomicsData = ref(false)
+  const targetOrganisms = ref([
       { text: 'Mouse', value: 'mmu' },
       { text: 'Human', value: 'hsa' }
-    ],
-    targetOrganism: 'mmu',
-    targetDatabases: [
+    ])
+  const targetOrganism = ref('mmu')
+  const targetDatabases = ref([
       { text: 'Reactome', value: 'reactome' },
       { text: 'KEGG', value: 'kegg' }
-    ],
-    targetDatabase: { text: 'Reactome', value: 'reactome' },
-    reactomeLevelSelection: 1,
-    sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} },
-    sheetRules: [
+    ])
+  const targetDatabase = ref({ text: 'Reactome', value: 'reactome' })
+  const reactomeLevelSelection = ref(1)
+  const sliderVals = ref({ transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} })
+  const sheetRules = ref([
       (value: string) => {
         const pattern = /^([0-9]*)$/
         return pattern.test(value) || 'Enter a number'
       }
-    ]
-  }),
-  computed: {
-    ...mapState( useMainStore,[
-      'transcriptomicsTableHeaders',
-      'proteomicsTableHeaders',
-      'metabolomicsTableHeaders',
-      'transcriptomicsTableData',
-      'proteomicsTableData',
-      'metabolomicsTableData',
-    ]),
-    chosenOmics(): string[] {
-        const chosen = []
-        if (this.recievedTranscriptomicsData) chosen.push('Transcriptomics')
-        if (this.recievedProteomicsData) chosen.push('Proteomics')
-        if (this.recievedMetabolomicsData) chosen.push('Metabolomics')
-        return chosen
-    },
-    sliderTranscriptomics () {
-        const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
-        const typedArrayData = this.transcriptomicsTableData as [{[key: string]: number}]
-        const typedArrayHeader = this.transcriptomicsTableHeaders
-        typedArrayHeader.forEach(element => {
-          if (element.field !== 'available') {
-            const valArr = typedArrayData.map(elem => elem[element.field])
-            const numArr: number[] = []
-            let amtNum = 0
-            let amtNonNum = 0
-            let empties = 0
-            valArr.forEach((val) => {
-              if (typeof val === 'number') {
-                amtNum += 1
-                numArr.push(val)
-              } else if (val === 'None') {
-                empties += 1
-              } else amtNonNum += 1
-            })
-            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-              console.log(element.field, numArr)
-              const min = Math.floor(Math.min(...numArr))
-              const max = Math.ceil(Math.max(...numArr))
-              outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
-              if (!Object.keys(this.sliderVals.transcriptomics).includes(element.field)) {
-                this.sliderVals.transcriptomics[element.field] = { vals: {min: min, max: max}, empties: true }
-              }
-              console.log(element.field, this.sliderVals)
-            }
-          }
+    ])
+  
+  const transcriptomicsTableHeaders = computed(() => mainStore.transcriptomicsTableHeaders)
+  const proteomicsTableHeaders = computed(() => mainStore.proteomicsTableHeaders)
+  const metabolomicsTableHeaders = computed(() => mainStore.metabolomicsTableHeaders)
+  const transcriptomicsTableData = computed(() => mainStore.transcriptomicsTableData)
+  const proteomicsTableData = computed(() => mainStore.proteomicsTableData)
+  const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData)
+
+  const chosenOmics = computed((): string[] => {
+      const chosen = []
+      if (recievedTranscriptomicsData) chosen.push('Transcriptomics')
+      if (recievedProteomicsData) chosen.push('Proteomics')
+      if (recievedMetabolomicsData) chosen.push('Metabolomics')
+      return chosen
+    })
+  const sliderTranscriptomics = computed(() => {
+    const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+    const typedArrayData = transcriptomicsTableData.value
+    const typedArrayHeader = transcriptomicsTableHeaders.value
+    typedArrayHeader.forEach(element => {
+      if ((element.field !== 'available') && (typeof element.field === 'string')) {
+        const valArr = typedArrayData.map(elem => (typeof element.field === 'string') ? elem[element.field]: '')
+        const numArr: number[] = []
+        let amtNum = 0
+        let amtNonNum = 0
+        let empties = 0
+        valArr.forEach((val) => {
+          if (typeof val === 'number') {
+            amtNum += 1
+            numArr.push(val)
+          } else if (val === 'None') {
+            empties += 1
+          } else amtNonNum += 1
         })
-        return outObj
-    },
-    sliderProteomics() {
-      const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
-      const typedArrayData = this.proteomicsTableData as [{[key: string]: number}]
-      const typedArrayHeader = this.proteomicsTableHeaders
-      console.log('proteomics sliders', typedArrayHeader)
-      typedArrayHeader.forEach(element => {
-        if (element.field !== 'available') {
-          const valArr = typedArrayData.map(elem => elem[element.field])
+        if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+          console.log(element.field, numArr)
+          const min = Math.floor(Math.min(...numArr))
+          const max = Math.ceil(Math.max(...numArr))
+          outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+          if (!Object.keys(sliderVals.value.transcriptomics).includes(element.field)) {
+            sliderVals.value.transcriptomics[element.field] = { vals: {min: min, max: max}, empties: true }
+          }
+        }
+      }
+    })
+    return outObj
+  })
+
+  const sliderProteomics = computed(() => {
+    const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+    const typedArrayData = proteomicsTableData.value
+    const typedArrayHeader = proteomicsTableHeaders.value
+    console.log('proteomics sliders', typedArrayHeader)
+    typedArrayHeader.forEach(element => {
+      if ((element.field !== 'available') && (typeof element.field === 'string')) {
+        const valArr = typedArrayData.map(elem => (typeof element.field === 'string') ? elem[element.field]: '')
+        const numArr: number[] = []
+        let amtNum = 0
+        let amtNonNum = 0
+        let empties = 0
+        valArr.forEach((val) => {
+          if (typeof val === 'number') {
+            amtNum += 1
+            numArr.push(val)
+          } else if (val === 'None') {
+            empties += 1
+          } else amtNonNum += 1
+        })
+        if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+          console.log(element.field, numArr)
+          const min = Math.floor(Math.min(...numArr))
+          const max = Math.ceil(Math.max(...numArr))
+          outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+          if (!Object.keys(sliderVals.value.proteomics).includes(element.field)) {
+            sliderVals.value.proteomics[element.field] = { vals: {min: min, max: max}, empties: true }
+          }
+        }
+      }
+    })
+    return outObj
+  })
+
+  const sliderMetabolomics = computed(() => {
+    const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+    const typedArrayData = metabolomicsTableData.value
+    const typedArrayHeader = metabolomicsTableHeaders.value
+
+    typedArrayHeader.forEach(element => {
+      if ((element.field !== 'available') && (typeof element.field === 'string')) {
+          const valArr = typedArrayData.map(elem => (typeof element.field === 'string') ?  elem[element.field] : '')
           const numArr: number[] = []
           let amtNum = 0
           let amtNonNum = 0
@@ -379,73 +388,28 @@ export default {
             const min = Math.floor(Math.min(...numArr))
             const max = Math.ceil(Math.max(...numArr))
             outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
-            if (!Object.keys(this.sliderVals.proteomics).includes(element.field)) {
-              this.sliderVals.proteomics[element.field] = { vals: {min: min, max: max}, empties: true }
+            if (!Object.keys(sliderVals.value.metabolomics).includes(element.field)) {
+              sliderVals.value.metabolomics[element.field] = { vals: {min: min, max: max}, empties: true }
             }
-            console.log(element.field, this.sliderVals)
           }
         }
       })
       return outObj
-    },
-    sliderMetabolomics() {
-      const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
-      const typedArrayData = this.metabolomicsTableData as [{[key: string]: number}]
-      const typedArrayHeader = this.metabolomicsTableHeaders
+    })
 
-      typedArrayHeader.forEach(element => {
-        if (element.field !== 'available') {
-          const valArr = typedArrayData.map(elem => elem[element.field])
-          const numArr: number[] = []
-          let amtNum = 0
-          let amtNonNum = 0
-          let empties = 0
-          valArr.forEach((val) => {
-            if (typeof val === 'number') {
-              amtNum += 1
-              numArr.push(val)
-            } else if (val === 'None') {
-              empties += 1
-            } else amtNonNum += 1
-          })
-          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-            console.log(element.field, numArr)
-            const min = Math.floor(Math.min(...numArr))
-            const max = Math.ceil(Math.max(...numArr))
-            outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
-            if (!Object.keys(this.sliderVals.metabolomics).includes(element.field)) {
-              this.sliderVals.metabolomics[element.field] = { vals: {min: min, max: max}, empties: true }
-            }
-            console.log(element.field, this.sliderVals)
-          }
-        }
-      })
-      return outObj
-    }
-  },
+  watch(transcriptomicsSheetVal, () => { fetchTranscriptomicsTable(transcriptomicsFile.value) })
+  watch(proteomicsSheetVal, () => { fetchProteomicsTable(proteomicsFile.value) })
+  watch(metabolomicsSheetVal, () => { fetchMetabolomicsTable(metabolomicsFile.value) })
 
-  watch: {
-    transcriptomicsSheetVal: function () { this.fetchTranscriptomicsTable(this.transcriptomicsFile) },
-    proteomicsSheetVal: function () {console.log('FETCH'); this.fetchProteomicsTable(this.proteomicsFile) },
-    metabolomicsSheetVal: function () { this.fetchMetabolomicsTable(this.metabolomicsFile) }
-  },
-
-  // functions to call on mount (after DOM etc. is built)
-  mounted () {
-    // this.$vuetify.theme.themes.light.primary = '#2196F3';
-  },
-
-  methods: {
-    fetchTranscriptomicsTable (fileInput: File | null) {
-      const mainStore = useMainStore()
+  const fetchTranscriptomicsTable  = (fileInput: File | null) => {
       mainStore.setTranscriptomicsTableHeaders([])
       mainStore.setTranscriptomicsTableData([])
-      this.sliderVals.transcriptomics = {}
+      sliderVals.value.transcriptomics = {}
       if (fileInput !== null) {
-        this.$q.loading.show()
+        $q.loading.show()
         const formData = new FormData()
         formData.append('dataTable', fileInput)
-        formData.append('sheetNumber', this.transcriptomicsSheetVal)
+        formData.append('sheetNumber', transcriptomicsSheetVal.value)
         fetch('/transcriptomics_table', {
           method: 'POST',
           headers: {},
@@ -455,60 +419,60 @@ export default {
           .then((responseContent) => {
             mainStore.setTranscriptomicsTableHeaders(responseContent.header)
             mainStore.setTranscriptomicsTableData(responseContent.entries)
-            this.recievedTranscriptomicsData = true
+            recievedTranscriptomicsData.value = true
           })
-          .then(() => (this.$q.loading.hide()))
+          .then(() => ($q.loading.hide()))
       } else {
         // more errorhandling?
-        this.recievedTranscriptomicsData = false
+        recievedTranscriptomicsData.value = false
         console.log('Transcriptomics file Cleared')
       }
-    },
+    }
 
-    fetchProteomicsTable (fileInput: File | null) {
-      const mainStore = useMainStore()
+  const fetchProteomicsTable = (fileInput: File | null) => {
+    const mainStore = useMainStore()
 
-      mainStore.setProteomicsTableHeaders([])
-      mainStore.setProteomicsTableData([])
-      console.log('FETCH PROT')
-      this.sliderVals.proteomics = {}
-      if (fileInput !== null) {
-        this.$q.loading.show()
-        const formData = new FormData()
-        formData.append('dataTable', fileInput)
-        formData.append('sheetNumber', this.proteomicsSheetVal)
+    mainStore.setProteomicsTableHeaders([])
+    mainStore.setProteomicsTableData([])
+    console.log('FETCH PROT')
+    sliderVals.value.proteomics = {}
+    if (fileInput !== null) {
+      $q.loading.show()
+      const formData = new FormData()
+      formData.append('dataTable', fileInput)
+      formData.append('sheetNumber', proteomicsSheetVal.value)
 
-        fetch('/proteomics_table', {
-          method: 'POST',
-          headers: {},
-          body: formData
+      fetch('/proteomics_table', {
+        method: 'POST',
+        headers: {},
+        body: formData
 
+      })
+        .then((response) => response.json())
+
+        .then((responseContent) => {
+          mainStore.setProteomicsTableHeaders(responseContent.header)
+          mainStore.setProteomicsTableData(responseContent.entries)
+          recievedProteomicsData.value = true
         })
-          .then((response) => response.json())
-
-          .then((responseContent) => {
-            mainStore.setProteomicsTableHeaders(responseContent.header)
-            mainStore.setProteomicsTableData(responseContent.entries)
-            this.recievedProteomicsData = true
-          })
-          .then(() => (this.$q.loading.hide()))
-      } else {
-        // more errorhandling?
-        this.recievedProteomicsData = false
-        console.log('Protfile Cleared')
-      }
-    },
-    fetchMetabolomicsTable (fileInput: File | null) {
+        .then(() => ($q.loading.hide()))
+    } else {
+      // more errorhandling?
+      recievedProteomicsData.value = false
+      console.log('Protfile Cleared')
+    }
+  }
+  const fetchMetabolomicsTable = (fileInput: File | null) => {
       const mainStore = useMainStore()
 
       mainStore.setMetabolomicsTableHeaders([])
       mainStore.setMetabolomicsTableData([])
-      this.sliderVals.metabolomics = {}
+      sliderVals.value.metabolomics = {}
       if (fileInput !== null) {
-        this.$q.loading.show()
+        $q.loading.show()
         const formData = new FormData()
         formData.append('dataTable', fileInput)
-        formData.append('sheetNumber', this.metabolomicsSheetVal)
+        formData.append('sheetNumber', metabolomicsSheetVal.value)
 
         fetch('/metabolomics_table', {
           method: 'POST',
@@ -520,46 +484,46 @@ export default {
           .then((responseContent) => {
             mainStore.setMetabolomicsTableHeaders(responseContent.header)
             mainStore.setMetabolomicsTableData(responseContent.entries)
-            this.recievedMetabolomicsData = true
+            recievedMetabolomicsData.value = true
           })
-          .then(() => (this.$q.loading.hide()))
+          .then(() => ($q.loading.hide()))
       } else {
         // more errorhandling?
-        this.recievedMetabolomicsData = false
+        recievedMetabolomicsData.value = false
         console.log('Metabol. file Cleared')
       }
-    },
+    }
 
-    dataQuery () {
-      if (this.targetDatabase.value === 'kegg') {
-        this.generateKGMLs()
-      } else if (this.targetDatabase.value === 'reactome') {
-        this.queryReactome()
+  const dataQuery = () => {
+      if (targetDatabase.value.value === 'kegg') {
+        generateKGMLs()
+      } else if (targetDatabase.value.value === 'reactome') {
+        queryReactome()
       }
-    },
+    }
 
-    queryReactome () {
+  const queryReactome = () => {
       const mainStore = useMainStore()
 
-      this.$q.loading.show()
+      $q.loading.show()
       const payload = {
-        targetOrganism: this.targetOrganism,
+        targetOrganism: targetOrganism.value,
         transcriptomics: {
-          recieved: this.recievedTranscriptomicsData,
-          symbol: this.transcriptomicsSymbolCol.field,
-          value: this.transcriptomicsValueCol.field
+          recieved: recievedTranscriptomicsData.value,
+          symbol: transcriptomicsSymbolCol.value.field,
+          value: transcriptomicsValueCol.value.field
         },
         proteomics: {
-          recieved: this.recievedProteomicsData,
-          symbol: this.proteomicsSymbolCol.field,
-          value: this.proteomicsValueCol.field
+          recieved: recievedProteomicsData.value,
+          symbol: proteomicsSymbolCol.value.field,
+          value: proteomicsValueCol.value.field
         },
         metabolomics: {
-          recieved: this.recievedMetabolomicsData,
-          symbol: this.metabolomicsSymbolCol.field,
-          value: this.metabolomicsValueCol.field
+          recieved: recievedMetabolomicsData.value,
+          symbol: metabolomicsSymbolCol.value.field,
+          value: metabolomicsValueCol.value.field
         },
-        sliderVals: this.sliderVals
+        sliderVals: sliderVals.value
       }
       fetch('/reactome_parsing', {
         method: 'POST',
@@ -574,11 +538,10 @@ export default {
           mainStore.setUsedSymbolCols(dataContent.used_symbol_cols)
           mainStore.setFCSReactome(dataContent.fcs)
         })
-        .then(() => this.getReactomeData())
-    },
+        .then(() => getReactomeData())
+    }
 
-    getReactomeData () {
-      const mainStore = useMainStore()
+  const getReactomeData = () => {
       fetch('/reactome_overview', {
         method: 'GET',
         headers: {
@@ -589,31 +552,29 @@ export default {
           console.log('PATHWAYLAYOUTING', dataContent)
           mainStore.setOverviewData(dataContent.overviewData)
           mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting)
-        }).then(() => this.$q.loading.hide())
-    },
-    generateKGMLs () {
-      const mainStore = useMainStore()
-
-      console.log('sliderTest', this.sliderVals)
-      this.$q.loading.show()
+        }).then(() => $q.loading.hide())
+    }
+  const generateKGMLs = () => {
+      console.log('sliderTest', sliderVals.value)
+      $q.loading.show()
       const payload = {
-        targetOrganism: this.targetOrganism,
+        targetOrganism: targetOrganism.value,
         transcriptomics: {
-          recieved: this.recievedTranscriptomicsData,
-          symbol: this.transcriptomicsSymbolCol.field,
-          value: this.transcriptomicsValueCol.field
+          recieved: recievedTranscriptomicsData.value,
+          symbol: transcriptomicsSymbolCol.value.field,
+          value: transcriptomicsValueCol.value.field
         },
         proteomics: {
-          recieved: this.recievedProteomicsData,
-          symbol: this.proteomicsSymbolCol.field,
-          value: this.proteomicsValueCol.field
+          recieved: recievedProteomicsData.value,
+          symbol: proteomicsSymbolCol.value.field,
+          value: proteomicsValueCol.value.field
         },
         metabolomics: {
-          recieved: this.recievedMetabolomicsData,
-          symbol: this.metabolomicsSymbolCol.field,
-          value: this.metabolomicsValueCol.field
+          recieved: recievedMetabolomicsData.value,
+          symbol: metabolomicsSymbolCol.value.field,
+          value: metabolomicsValueCol.value.field
         },
-        sliderVals: this.sliderVals
+        sliderVals: sliderVals.value
       }
       fetch('/kegg_parsing', {
         method: 'POST',
@@ -637,13 +598,10 @@ export default {
         })
         .then((val) => {
           if (val) alert('Empty Data Selection! Adjust data source and/or filter settings')
-          this.$q.loading.hide()
+          $q.loading.hide()
         })
-    },
-    setTargetDatabase (inputVal: {text: string, value: string}) {
-      const mainStore = useMainStore()
+    }
+  const setTargetDatabase = (inputVal: {text: string, value: string}) => {
       mainStore.setTargetDatabase(inputVal.value)
     }
-  }
-}
 </script>

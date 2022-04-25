@@ -36,7 +36,7 @@
   </q-layout>
 </template>
 
-<script>
+<script lang="ts">
 import { ref } from 'vue'
 import svgIcon from './assets/vmod_icon.svg'
 

@@ -19,7 +19,6 @@ import numbers
 import secrets
 from flask_caching import Cache
 app = Flask(__name__, static_folder = "../dist/assets", template_folder="../dist")
-
 # DATA PATHS: (1) Local, (2) tuevis
 data_path = pathlib.Path().resolve()
 #data_path = pathlib.Path("/var/www/vismop")
@@ -33,8 +32,9 @@ app.config.from_mapping(
     # !!!!!!
 
     CACHE_TYPE='FileSystemCache',
-    CACHE_DIR=data_path/'session_cache',
-    CACHE_DEFAULT_TIMEOUT= 43200
+    CACHE_DIR=data_path / 'session_cache',
+    CACHE_DEFAULT_TIMEOUT= 43200,
+    ICON_FOLDER = data_path / 'dist/icons'
 )
 cache = Cache(app)
 
@@ -44,20 +44,27 @@ try:
     script_dir = data_path
     dest_dir = os.path.join(script_dir, '10090.protein.links.v11.5.txt.gz')  # '10090.protein.links.v11.0.txt'
     # comment out stringgraph for debugging purposes
-    stringGraph = StringGraph(dest_dir)
+    stringGraph = ''#StringGraph(dest_dir)
 except:
     print("Stringraph Error")
 
 """
 Default app routes for index and favicon
 """
+
+@app.route('/icons/<path:filename>', methods=['GET'])
+def icons(filename):
+    print(filename, app.root_path)
+    return send_from_directory(app.config['ICON_FOLDER'], filename)
+
 @app.route('/')
 def index():
     return render_template("index.html")
 
-@app.route('/favicon.ico')
+@app.route('/favicon.ico', methods=['GET'])
 def fav():
-    return send_from_directory(os.path.join(app.root_path,'static'), 'favicon.ico')
+    print(app.config['ICON_FOLDER'])
+    return send_from_directory(app.config['ICON_FOLDER'], 'favicon.ico')
 
 """
 transcriptomics table recieve
