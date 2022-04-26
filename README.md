@@ -69,7 +69,7 @@ and repeat for the other (UniProt, ChEBI) files.
 # Dev Notes:
 Export envs with either:
 ```
-conda env export > environment.yml
+conda env export | grep -v "^prefix: "  > environment.yml
 ```
 
 or for pip:

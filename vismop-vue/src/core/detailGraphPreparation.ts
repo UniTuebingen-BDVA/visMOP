@@ -9,7 +9,7 @@ import {
   detailNodeAttr,
   fadeEdgeAttr
 } from '@/core/graphTypes'
-import store from '@/store'
+import { useMainStore } from '@/stores'
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -20,6 +20,7 @@ export function generateGraphData (
   nodeList: { [key: string]: entry },
   fcsExtent: {transcriptomics: number[], proteomics: number[], metabolomics: number[]}
 ): graphData {
+  const mainStore = useMainStore()
   const keggIDGenesymbolDict : { [key: string]: string } = {}
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
@@ -30,9 +31,9 @@ export function generateGraphData (
   } as graphData
   const addedEdges: string[] = []
   console.log('fcsExtent', fcsExtent)
-  const colorScaleTranscriptomics = store.state.fcScales.transcriptomics
-  const colorScaleProteomics = store.state.fcScales.proteomics
-  const colorScaleMetabolomics = store.state.fcScales.metabolomics
+  const colorScaleTranscriptomics = mainStore.fcScales.transcriptomics
+  const colorScaleProteomics = mainStore.fcScales.proteomics
+  const colorScaleMetabolomics = mainStore.fcScales.metabolomics
 
   // console.log("NodeList", nodeList)
   for (const entryKey in nodeList) {
@@ -105,7 +106,7 @@ export function generateGraphData (
       }
     }
   }
-  store.dispatch('setKeggIDGeneSymbolDict', keggIDGenesymbolDict)
+  mainStore.setKeggIDGeneSymbolDict(keggIDGenesymbolDict)
   return graph
 }
 function generateLabel (name: string, entry: entry): string {

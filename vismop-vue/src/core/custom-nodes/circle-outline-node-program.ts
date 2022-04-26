@@ -6,8 +6,8 @@ import {
 } from 'sigma/rendering/webgl/programs/common/node'
 import { SplitNodeDisplayData } from './types'
 import { floatColor } from 'sigma/utils'
-import vertexShaderSource from './circle-outline-vertex-shader.glsl'
-import fragmentShaderSource from './circle-outline-fragment-shader.glsl'
+import vertexShaderSource from './circle-outline-vertex-shader.glsl?raw'
+import fragmentShaderSource from './circle-outline-fragment-shader.glsl?raw'
 import { RenderParams } from 'sigma/rendering/webgl/programs/common/program'
 
 const POINTS = 1

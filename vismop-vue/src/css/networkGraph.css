@@ -1,22 +1,42 @@
+
 .webglContainer {
-  height: 75vh;
+  height: 83vh;
+  min-height: 83vh;
   display: block;
   z-index: 2;
 }
+
+.overviewFullscreen{
+  z-index: 3;
+  position: fixed !important;
+  top: 7vh;
+  right: 1vh;
+  bottom: 1vh;
+  left: 1vh;
+  max-width: 100vw;
+}
+
+.webglContainerInteraction {
+  height: 79vh;
+  min-height: 79vh;
+  display: block;
+  z-index: 2;
+}
+
 .webglContainerDetail {
   height: 38vh;
   width: 38vh;
   display: block;
   position: absolute;
-  z-index: 3;
+  z-index: 4;
 }
 .detailComponent{
-  position: absolute;
+  position: absolute !important;
   height: 45vh;
   width: 40vh;
   right: 2vh;
   top: 2vh;
-  z-index: 3;
+  z-index: 4;
 }
 .detailComponentLarger{
   height: 75vh !important;
@@ -37,15 +57,11 @@
 }
 .expandButton{
   z-index:4;
-  /*position: absolute;
   bottom: 2vh;
-  left: 2vh;*/
+  left: 2vh;
 }
 .minimizeButton{
   z-index:4;
-  /*position: absolute;
-  top: 8vh;
-  right: 2vh;*/
 }
 .webglContainerSmall {
   height: 20vh;
@@ -86,7 +102,6 @@
 }
 
 .prot {
-  /*border: 1px solid #ccc;*/
   display: block;
   padding: 10px;
   box-sizing: border-box;
@@ -117,9 +132,9 @@
   background-color: darkgrey;
 }
 
-/*
-Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
-*/
+
+/*Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe*/
+
 .range-wrap {
   position: relative;
   margin: 0 auto 3rem;
@@ -164,7 +179,7 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
   height: 15%;
 }
 
-.scrollableTable .v-data-table__wrapper{
+.scrollableTable .q-table__wrapper{
   scrollbar-width: thin;
   overflow-y: scroll;
   max-height: 60vh;
@@ -175,16 +190,15 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 }
 
 .rowstyle-inPathway{
-  background-color: rgb(171, 241, 143);
+  background-color: rgb(171, 241, 143)!important;
 }
 
 .rowstyle-notAvailable{
-  background-color: white;
-  color:rgb(207, 207, 207)
+  background-color: white!important;
+  color:rgb(207, 207, 207)!important;
 }
 
 .nodeText{
-  /*mix-blend-mode: difference;*/
   stroke: white;
   stroke-width: 4;
   fill: black;
@@ -194,4 +208,9 @@ Range slider adapted from: https://codepen.io/chriscoyier/pen/eYNQyPe
 
 .nodeG{
   fill: white
+}
+
+td.ellipsis:hover{
+  overflow: visible;
+  white-space: normal;
 }

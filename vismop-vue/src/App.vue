@@ -1,143 +1,57 @@
 <template>
-  <v-app>
-    <v-navigation-drawer
-      app
-      v-model="drawer"
-      :expand-on-hover="sideBarExpand"
-      color="primary"
-      dense
-      width="512"
-      id="ddd"
-      hide-overlay
-      temporary
-      permanent
-      absolute
+  <q-layout view="hHh lpR fFf">
+
+    <q-header reveal elevated class="bg-primary text-white">
+      <q-toolbar>
+        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
+
+        <q-toolbar-title>
+          <q-avatar>
+            <q-img
+                class="mr-2"
+                contain
+                :src="svgIcon"
+                width="40"
+            />
+          </q-avatar>
+          VisMOP
+        </q-toolbar-title>
+      </q-toolbar>
+    </q-header>
+
+    <q-drawer 
+      v-model="leftDrawerOpen"
+      side="left"
+      overlay
+      bordered
+      :width="500"  
     >
-      <v-list-item class="px-2">
-        <v-btn
-          elevation="2"
-          fab
-          small
-          @click.stop="sideBarExpand = !sideBarExpand"
-        >
-          <v-app-bar-nav-icon></v-app-bar-nav-icon>
-        </v-btn>
+      <SideBar></SideBar>
+    </q-drawer>
 
-        <div class="d-flex align-center">
-          <v-img
-            class="shrink mr-2"
-            contain
-            :src="require('./assets/vmod_icon.svg')"
-            transition="scale-transition"
-            width="40"
-          />
+    <q-page-container>
+      <MainPage></MainPage>
+    </q-page-container>
 
-          <span class="mr-2">visMOP</span>
-        </div>
-      </v-list-item>
-      <v-list dense>
-        <v-list-item>
-          <v-list-item-icon>
-            <p></p>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <SideBar></SideBar>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-    <v-app-bar app color="primary" dark>
-      <div class="d-flex align-center pl-12">
-        <v-img
-          class="shrink mr-2"
-          contain
-          :src="require('./assets/vmod_icon.svg')"
-          transition="scale-transition"
-          width="40"
-        />
-
-        <span class="mr-2">VisMOP</span>
-      </div>
-      <v-spacer></v-spacer>
-      <v-dialog
-      v-model="infoDialog"
-      width="500"
-      >
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn
-              color="primary"
-              v-bind="attrs"
-              v-on="on"
-          >
-            About
-          </v-btn>
-        </template>
-
-        <v-card>
-          <v-card-title>
-            Interaction Network
-            <v-spacer></v-spacer>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-icon
-                  @click="infoDialog = false"
-              >
-                mdi-close-box
-              </v-icon>
-            </v-card-actions>
-
-          </v-card-title>
-
-          <v-card-text>
-            DISCLAIMER: Your data gets cached on this server! DO NOT USE for unanonymized data!!!
-            For research use only. See <a href="https://www.kegg.jp/kegg/legal.html" target="_blank">KEGG</a> for more info.<br>
-            Using Data from<br>
-            KEGG: <a href="https://www.kegg.jp/" target="_blank">KEGG</a> <br>
-            Uniprot: <a href="https://www.uniprot.org/" target="_blank">UniProt</a><br>
-            STRING: <a href="https://string-db.org/" target="_blank">STRING</a>
-          </v-card-text>
-
-        </v-card>
-      </v-dialog>
-    </v-app-bar>
-
-    <v-main class="pl-12">
-      <MainPage />
-    </v-main>
-  </v-app>
+  </q-layout>
 </template>
+
 <script lang="ts">
+import { ref } from 'vue'
+import svgIcon from './assets/vmod_icon.svg'
 
-import Vue from 'vue'
-import MainPage from './components/MainPage.vue'
-import SideBar from './components/Sidebar.vue'
-export default Vue.extend({
-  name: 'App',
-
-  components: {
-    MainPage,
-    SideBar
-  },
-  data: () => ({
-    drawer: true,
-    navbarKey: true,
-    infoDialog: false
-  }),
-  methods: {
-
-  },
-  computed: {
-    sideBarExpand: {
-      get (this): boolean {
-        console.log(this.drawer)
-        return this.$store.state.sideBarExpand
-      },
-      set (this, val: boolean) {
-        this.$store.dispatch('setSideBarExpand', val)
+export default {
+  setup () {
+    const leftDrawerOpen = ref(false)
+    return {
+      leftDrawerOpen,
+      svgIcon,
+      toggleLeftDrawer () {
+        leftDrawerOpen.value = !leftDrawerOpen.value
       }
     }
   }
-})
+}
 </script>
 <style>
 @import "./css/networkGraph.css";

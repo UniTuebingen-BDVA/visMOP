@@ -1,0 +1,293 @@
+{
+  "dbId" : 9868351,
+  "stId" : "R-MMU-68884",
+  "speciesName" : "Mus musculus",
+  "nodes" : [ {
+    "dbId" : 9768535,
+    "stId" : "R-MMU-156721",
+    "displayName" : "Kif20a [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144113 ],
+    "identifier" : "P97329",
+    "geneNames" : [ "Kif20a" ]
+  }, {
+    "dbId" : 9867613,
+    "stId" : "R-MMU-69242",
+    "displayName" : "S Phase",
+    "schemaClass" : "Pathway",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144124 ]
+  }, {
+    "dbId" : 912387,
+    "stId" : "R-MMU-912387",
+    "displayName" : "Structural maintenance of chromosomes protein 3 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q9CW03",
+    "geneNames" : [ "Smc3", "Bam", "Bmh", "Cspg6", "Mmip1", "Smc3l1", "Smcd" ],
+    "parents" : [ 9820451 ]
+  }, {
+    "dbId" : 9768538,
+    "stId" : "R-MMU-156685",
+    "displayName" : "phospho-Kif20a [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144114 ],
+    "identifier" : "P97329",
+    "geneNames" : [ "Kif20a" ]
+  }, {
+    "dbId" : 1638792,
+    "stId" : "R-ALL-1638792",
+    "displayName" : "Sister Centromere [chromosome]",
+    "schemaClass" : "OtherEntity",
+    "parents" : [ 9820523, 2537690 ]
+  }, {
+    "dbId" : 912411,
+    "stId" : "R-MMU-912411",
+    "displayName" : "Structural maintenance of chromosomes protein 1A [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q9CU62",
+    "geneNames" : [ "Smc1a", "Sb1.8", "Smc1", "Smc1l1", "Smcb" ],
+    "parents" : [ 9820451 ]
+  }, {
+    "dbId" : 912346,
+    "stId" : "R-MMU-912346",
+    "displayName" : "Cohesin subunit SA-2 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "O35638",
+    "geneNames" : [ "Stag2", "Sa2", "Sap2" ],
+    "parents" : [ 9820451 ]
+  }, {
+    "dbId" : 912410,
+    "stId" : "R-MMU-912410",
+    "displayName" : "Cohesin subunit SA-1 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q9D3E6",
+    "geneNames" : [ "Stag1", "Sa1" ],
+    "parents" : [ 9820451 ]
+  }, {
+    "dbId" : 1638790,
+    "stId" : "R-ALL-1638790",
+    "displayName" : "Sister Chromosomal Arm [chromosome]",
+    "schemaClass" : "OtherEntity",
+    "parents" : [ 9820525, 2537690 ]
+  }, {
+    "dbId" : 9768502,
+    "stId" : "R-MMU-156695",
+    "displayName" : "phospho-Kif23 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144120 ],
+    "identifier" : "E9Q5G3",
+    "geneNames" : [ "Kif23" ]
+  }, {
+    "dbId" : 9768498,
+    "stId" : "R-MMU-156709",
+    "displayName" : "Kif23 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144119 ],
+    "identifier" : "E9Q5G3",
+    "geneNames" : [ "Kif23" ]
+  }, {
+    "dbId" : 9768505,
+    "stId" : "R-MMU-3002800",
+    "displayName" : "phospho-Plk1 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144116 ],
+    "identifier" : "Q07832",
+    "geneNames" : [ "Plk1" ]
+  }, {
+    "dbId" : 29358,
+    "stId" : "R-ALL-29358",
+    "displayName" : "ATP [nucleoplasm]",
+    "schemaClass" : "SimpleEntity",
+    "diagramIds" : [ 144112, 144118 ],
+    "identifier" : "30616"
+  }, {
+    "dbId" : 113582,
+    "stId" : "R-ALL-113582",
+    "displayName" : "ADP [nucleoplasm]",
+    "schemaClass" : "SimpleEntity",
+    "diagramIds" : [ 144115, 144121 ],
+    "identifier" : "456216"
+  }, {
+    "dbId" : 9820453,
+    "stId" : "R-MMU-2468043",
+    "displayName" : "Pds5a [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q6A026",
+    "geneNames" : [ "Pds5a" ],
+    "parents" : [ 9820457 ]
+  }, {
+    "dbId" : 9820455,
+    "stId" : "R-MMU-2468051",
+    "displayName" : "Pds5b [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q4VA53",
+    "geneNames" : [ "Pds5b" ],
+    "parents" : [ 9820457 ]
+  }, {
+    "dbId" : 9820519,
+    "stId" : "R-MMU-2506879",
+    "displayName" : "Nipbl [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q6KCD5",
+    "geneNames" : [ "Nipbl" ],
+    "parents" : [ 9820521 ]
+  }, {
+    "dbId" : 9820449,
+    "stId" : "R-MMU-163042",
+    "displayName" : "Rad21 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q61550",
+    "geneNames" : [ "Rad21", "Hr21", "Scc1" ],
+    "parents" : [ 9820451 ]
+  }, {
+    "dbId" : 9820451,
+    "stId" : "R-MMU-1641505",
+    "displayName" : "Cohesin Complex [nucleoplasm]",
+    "schemaClass" : "Complex",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144105 ],
+    "parents" : [ 9820461 ],
+    "children" : [ 912387, 912410, 912346, 912411, 9820449 ]
+  }, {
+    "dbId" : 9820515,
+    "stId" : "R-MMU-1629801",
+    "displayName" : "Mau2 [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "identifier" : "Q9D2X5",
+    "geneNames" : [ "Mau2" ],
+    "parents" : [ 9820521 ]
+  }, {
+    "dbId" : 9820461,
+    "stId" : "R-MMU-2468042",
+    "displayName" : "Cohesin:PDS5:WAPAL [nucleoplasm]",
+    "schemaClass" : "Complex",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144106 ],
+    "parents" : [ 9820523, 9820525 ],
+    "children" : [ 9820459, 9820457, 9820451 ]
+  }, {
+    "dbId" : 9820525,
+    "stId" : "R-MMU-2470928",
+    "displayName" : "Cohesin:PDS5:WAPAL:NIPBL:MAU2:Chromosomal Arm [nucleoplasm]",
+    "schemaClass" : "Complex",
+    "speciesId" : 48892,
+    "parents" : [ 9820527 ],
+    "children" : [ 1638790, 9820521, 9820461 ]
+  }, {
+    "dbId" : 9820527,
+    "stId" : "R-MMU-2537688",
+    "displayName" : "Cohesin:PDS5:WAPAL:NIPBL:MAU2:Chromatin [nucleoplasm]",
+    "schemaClass" : "DefinedSet",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144110 ],
+    "children" : [ 9820523, 9820525 ]
+  }, {
+    "dbId" : 9820457,
+    "stId" : "R-MMU-2468044",
+    "displayName" : "PDS5 [nucleoplasm]",
+    "schemaClass" : "DefinedSet",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144104 ],
+    "parents" : [ 9820461 ],
+    "children" : [ 9820455, 9820453 ]
+  }, {
+    "dbId" : 9820521,
+    "stId" : "R-MMU-2470930",
+    "displayName" : "NIPBL:MAU2 [nucleoplasm]",
+    "schemaClass" : "Complex",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144109 ],
+    "parents" : [ 9820523, 9820525 ],
+    "children" : [ 9820515, 9820519 ]
+  }, {
+    "dbId" : 2537690,
+    "stId" : "R-ALL-2537690",
+    "displayName" : "Chromatin [chromosome]",
+    "schemaClass" : "DefinedSet",
+    "diagramIds" : [ 144108 ],
+    "children" : [ 1638790, 1638792 ]
+  }, {
+    "dbId" : 9820459,
+    "stId" : "R-MMU-2466355",
+    "displayName" : "Wapl [nucleoplasm]",
+    "schemaClass" : "EntityWithAccessionedSequence",
+    "speciesId" : 48892,
+    "diagramIds" : [ 144103 ],
+    "identifier" : "Q65Z40",
+    "geneNames" : [ "Wapl" ],
+    "parents" : [ 9820461 ]
+  }, {
+    "dbId" : 9820523,
+    "stId" : "R-MMU-2470943",
+    "displayName" : "Cohesin:PDS5:WAPAL:NIPBL:MAU2:Centromere [nucleoplasm]",
+    "schemaClass" : "Complex",
+    "speciesId" : 48892,
+    "parents" : [ 9820527 ],
+    "children" : [ 9820521, 9820461, 1638792 ]
+  } ],
+  "edges" : [ {
+    "dbId" : 9820486,
+    "stId" : "R-MMU-2468040",
+    "displayName" : "Cohesin binds PDS5 and WAPAL",
+    "schemaClass" : "Reaction",
+    "following" : [ 9820529 ],
+    "inputs" : [ 9820459, 9820457, 9820451 ],
+    "outputs" : [ 9820461 ],
+    "efs" : [ ],
+    "diagramIds" : [ 144102 ],
+    "entityFunctionalStatus" : [ ]
+  }, {
+    "dbId" : 9820529,
+    "stId" : "R-MMU-2470935",
+    "displayName" : "Cohesin binding to decondensed chromatin is facilitated by NIPBL:MAU2",
+    "schemaClass" : "Reaction",
+    "preceding" : [ 9820486 ],
+    "inputs" : [ 2537690, 9820521, 9820461 ],
+    "outputs" : [ 9820527 ],
+    "efs" : [ ],
+    "diagramIds" : [ 144107 ],
+    "entityFunctionalStatus" : [ ]
+  }, {
+    "dbId" : 9768508,
+    "stId" : "R-MMU-156673",
+    "displayName" : "Regulation of KIF23 (MKLP1) by phosphorylation",
+    "schemaClass" : "Reaction",
+    "inputs" : [ 29358, 9768498 ],
+    "outputs" : [ 113582, 9768502 ],
+    "catalysts" : [ 9768505 ],
+    "efs" : [ ],
+    "diagramIds" : [ 144117 ],
+    "entityFunctionalStatus" : [ ]
+  }, {
+    "dbId" : 9768540,
+    "stId" : "R-MMU-156723",
+    "displayName" : "Regulation of KIF20A (MKL2) by phosphorylation",
+    "schemaClass" : "Reaction",
+    "inputs" : [ 29358, 9768535 ],
+    "outputs" : [ 113582, 9768538 ],
+    "catalysts" : [ 9768505 ],
+    "efs" : [ ],
+    "diagramIds" : [ 144111 ],
+    "entityFunctionalStatus" : [ ]
+  } ],
+  "subpathways" : [ {
+    "dbId" : 9870125,
+    "stId" : "R-MMU-2470946",
+    "displayName" : "Cohesin Loading onto Chromatin",
+    "events" : [ 9820486, 9820529 ]
+  } ]
+}

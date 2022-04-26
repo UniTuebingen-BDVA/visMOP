@@ -1,4 +1,4 @@
-import store from '@/store'
+import { useMainStore } from '@/stores'
 import * as d3 from 'd3'
 import { foldChangesByID, foldChangesByType, layoutJSON, reactomeEdge, shape, connector, segment, reactomeNode, graphJSON } from '../core/reactomeTypes'
 import { glyphData, generateGlyphVariation } from '../core/overviewGlyph'
@@ -52,9 +52,9 @@ export default class ReactomeDetailView {
   private layoutData: layoutJSON
   private graphData: graphJSON
   private containerID: string
-  private colorScaleTranscriptomics = store.state.fcScales.transcriptomics
-  private colorScaleProteomics = store.state.fcScales.proteomics
-  private colorScaleMetabolomics = store.state.fcScales.metabolomics
+  private colorScaleTranscriptomics = useMainStore().fcScales.transcriptomics
+  private colorScaleProteomics = useMainStore().fcScales.proteomics
+  private colorScaleMetabolomics = useMainStore().fcScales.metabolomics
   private foldChanges: foldChangesByType
   private foldChangeReactome: foldChangesByID
   /**
@@ -427,9 +427,10 @@ export default class ReactomeDetailView {
       .attr('fill', 'none')
 
     enterG.on('click', (event, d) => {
+      const mainStore = useMainStore()
       // maybe save uniprot id when drawing?
       const uniprotID = self.graphData.nodes[d.reactomeId].identifier
-      store.dispatch('addClickedNode', { queryID: uniprotID, name: d.displayName })
+      mainStore.addClickedNode({ queryID: uniprotID, name: d.displayName })
     })
 
     enterG
