@@ -267,7 +267,7 @@
       { text: 'Mouse', value: 'mmu' },
       { text: 'Human', value: 'hsa' }
     ])
-  const targetOrganism = ref('mmu')
+  const targetOrganism = ref({ text: 'Mouse', value: 'mmu' })
   const targetDatabases = ref([
       { text: 'Reactome', value: 'reactome' },
       { text: 'KEGG', value: 'kegg' }
