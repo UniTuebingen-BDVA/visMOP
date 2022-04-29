@@ -1,4 +1,4 @@
-import { Attributes } from 'graphology-types'
+import { Attributes } from "graphology-types";
 /**
  * Defines a set of edge attributes
  */
@@ -42,7 +42,6 @@ export interface baseNodeAttr extends Attributes {
 }
 
 export interface detailNodeAttr extends baseNodeAttr {
-
   origPos: { [key: string]: number[] };
 
   secondaryColor: string;
@@ -69,12 +68,12 @@ export interface graphData {
   attributes: { name: string };
   nodes: node[];
   edges: edge[];
-  options: unkown
+  options: unkown;
 }
-export interface networkxNodeLink{
-  graph: {identities: number[]};
-  nodes: [{ [key: string]: string}];
-  links: [{ [key: string]: string}];
+export interface networkxNodeLink {
+  graph: { identities: number[] };
+  nodes: [{ [key: string]: string }];
+  links: [{ [key: string]: string }];
 }
 /**
  * Defines a kegg relation
