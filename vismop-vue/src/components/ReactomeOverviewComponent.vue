@@ -22,12 +22,12 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from "../core/overviewNetwork";
-import { generateGraphData } from "../core/reactomeOverviewGraphPreparation";
+import OverviewGraph from '../core/overviewNetwork';
+import { generateGraphData } from '../core/reactomeOverviewGraphPreparation';
 import {
   generateGlyphDataReactome,
   generateGlyphs,
-} from "../core/overviewGlyph";
+} from '../core/overviewGlyph';
 import {
   computed,
   onMounted,
@@ -36,9 +36,9 @@ import {
   ref,
   watch,
   defineProps,
-} from "vue";
-import { reactomeEntry } from "@/core/reactomeTypes";
-import { useMainStore } from "@/stores";
+} from 'vue';
+import { reactomeEntry } from '@/core/reactomeTypes';
+import { useMainStore } from '@/stores';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -122,7 +122,7 @@ watch(
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );
-    console.log("foundPathways", foundPathways);
+    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -145,9 +145,9 @@ watch(
       const pathwaysContaining =
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       if (pathwaysContaining) foundPathways.push(pathwaysContaining);
-      console.log("foundPathways", pathwaysContaining);
+      console.log('foundPathways', pathwaysContaining);
     });
-    console.log("foundPathways", foundPathways);
+    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -194,7 +194,7 @@ watch(overviewData, () => {
     console.log(props.contextID);
     drawNetwork();
   } else {
-    console.log(props.contextID, "outstanding draw");
+    console.log(props.contextID, 'outstanding draw');
     outstandingDraw.value = true;
   }
 });
@@ -211,7 +211,7 @@ watch(
 );
 
 onMounted(() => {
-  console.log("OVDATA", overviewData);
+  console.log('OVDATA', overviewData);
   if (overviewData.value) {
     drawNetwork();
   }
@@ -227,19 +227,19 @@ const drawNetwork = () => {
   // const fcExtents = fcQuantiles
   const glyphData = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphData);
-  console.log("GLYPH DATA", glyphData);
+  console.log('GLYPH DATA', glyphData);
   const generatedGlyphs = generateGlyphs(glyphData);
   mainStore.setGlyphs(generatedGlyphs);
   const glyphsURL = generatedGlyphs.url;
-  console.log("GLYPHs", mainStore.glyphs);
+  console.log('GLYPHs', mainStore.glyphs);
   const networkData = generateGraphData(
     overviewData.value,
     glyphsURL,
     pathwayLayouting.value.rootIds
   );
-  console.log("base dat", networkData);
+  console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(
-    props.contextID ? props.contextID : "",
+    props.contextID ? props.contextID : '',
     networkData
   );
 };

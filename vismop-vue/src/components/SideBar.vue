@@ -6,7 +6,7 @@
       label="Target Database"
       option-label="text"
       option-value="value"
-      @update:model-value="setTargetDatabase"
+      @update:modelValue="setTargetDatabase"
     ></q-select>
     <q-select
       v-model="targetOrganism"
@@ -257,68 +257,68 @@
 </template>
 
 <script setup lang="ts">
-import { ColType } from "@/core/generalTypes";
-import { useMainStore } from "@/stores";
-import { useQuasar } from "quasar";
-import { ref, Ref, computed, watch } from "vue";
+import { ColType } from '@/core/generalTypes';
+import { useMainStore } from '@/stores';
+import { useQuasar } from 'quasar';
+import { ref, Ref, computed, watch } from 'vue';
 const mainStore = useMainStore();
 
 const $q = useQuasar();
 const transcriptomicsFile: Ref<File | null> = ref(null);
-const transcriptomicsSheetVal = ref("0");
+const transcriptomicsSheetVal = ref('0');
 const transcriptomicsSymbolCol: Ref<ColType> = ref({
-  name: "",
-  label: "",
-  field: "",
+  name: '',
+  label: '',
+  field: '',
   align: undefined,
 });
 const transcriptomicsValueCol: Ref<ColType> = ref({
-  field: "",
-  label: "",
-  name: "",
+  field: '',
+  label: '',
+  name: '',
   align: undefined,
 });
 const recievedTranscriptomicsData = ref(false);
 const proteomicsFile: Ref<File | null> = ref(null);
-const proteomicsSheetVal = ref("0");
+const proteomicsSheetVal = ref('0');
 const proteomicsSymbolCol: Ref<ColType> = ref({
-  field: "",
-  label: "",
-  name: "",
+  field: '',
+  label: '',
+  name: '',
   align: undefined,
 });
 const proteomicsValueCol: Ref<ColType> = ref({
-  field: "",
-  label: "",
-  name: "",
+  field: '',
+  label: '',
+  name: '',
   align: undefined,
 });
 const recievedProteomicsData = ref(false);
 const metabolomicsFile: Ref<File | null> = ref(null);
-const metabolomicsSheetVal = ref("0");
+const metabolomicsSheetVal = ref('0');
 const metabolomicsSymbolCol: Ref<ColType> = ref({
-  field: "",
-  label: "",
-  name: "",
+  field: '',
+  label: '',
+  name: '',
   align: undefined,
 });
 const metabolomicsValueCol: Ref<ColType> = ref({
-  field: "",
-  label: "",
-  name: "",
+  field: '',
+  label: '',
+  name: '',
   align: undefined,
 });
 const recievedMetabolomicsData = ref(false);
 const targetOrganisms = ref([
-  { text: "Mouse", value: "mmu" },
-  { text: "Human", value: "hsa" },
+  { text: 'Mouse', value: 'mmu' },
+  { text: 'Human', value: 'hsa' },
 ]);
-const targetOrganism = ref({ text: "Mouse", value: "mmu" });
+const targetOrganism = ref({ text: 'Mouse', value: 'mmu' });
 const targetDatabases = ref([
-  { text: "Reactome", value: "reactome" },
-  { text: "KEGG", value: "kegg" },
+  { text: 'Reactome', value: 'reactome' },
+  { text: 'KEGG', value: 'kegg' },
 ]);
-const targetDatabase = ref({ text: "Reactome", value: "reactome" });
+const targetDatabase = ref({ text: 'Reactome', value: 'reactome' });
 const sliderVals = ref({
   transcriptomics: {},
   proteomics: {},
@@ -337,7 +337,7 @@ const sliderVals = ref({
 const sheetRules = ref([
   (value: string) => {
     const pattern = /^([0-9]*)$/;
-    return pattern.test(value) || "Enter a number";
+    return pattern.test(value) || 'Enter a number';
   },
 ]);
 
@@ -356,9 +356,9 @@ const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
 
 const chosenOmics = computed((): string[] => {
   const chosen = [];
-  if (recievedTranscriptomicsData.value) chosen.push("Transcriptomics");
-  if (recievedProteomicsData.value) chosen.push("Proteomics");
-  if (recievedMetabolomicsData.value) chosen.push("Metabolomics");
+  if (recievedTranscriptomicsData.value) chosen.push('Transcriptomics');
+  if (recievedProteomicsData.value) chosen.push('Proteomics');
+  if (recievedMetabolomicsData.value) chosen.push('Metabolomics');
   return chosen;
 });
 const sliderTranscriptomics = computed(() => {
@@ -368,20 +368,20 @@ const sliderTranscriptomics = computed(() => {
   const typedArrayData = transcriptomicsTableData.value;
   const typedArrayHeader = transcriptomicsTableHeaders.value;
   typedArrayHeader.forEach((element) => {
-    if (element.field !== "available" && typeof element.field === "string") {
+    if (element.field !== 'available' && typeof element.field === 'string') {
       const valArr = typedArrayData.map((elem) =>
-        typeof element.field === "string" ? elem[element.field] : ""
+        typeof element.field === 'string' ? elem[element.field] : ''
       );
       const numArr: number[] = [];
       let amtNum = 0;
       let amtNonNum = 0;
-      let empties = 0;
+      let _empties = 0;
       valArr.forEach((val) => {
-        if (typeof val === "number") {
+        if (typeof val === 'number') {
           amtNum += 1;
           numArr.push(val);
-        } else if (val === "None") {
-          empties += 1;
+        } else if (val === 'None') {
+          _empties += 1;
         } else amtNonNum += 1;
       });
       if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
@@ -414,22 +414,22 @@ const sliderProteomics = computed(() => {
   } = {};
   const typedArrayData = proteomicsTableData.value;
   const typedArrayHeader = proteomicsTableHeaders.value;
-  console.log("proteomics sliders", typedArrayHeader);
+  console.log('proteomics sliders', typedArrayHeader);
   typedArrayHeader.forEach((element) => {
-    if (element.field !== "available" && typeof element.field === "string") {
+    if (element.field !== 'available' && typeof element.field === 'string') {
       const valArr = typedArrayData.map((elem) =>
-        typeof element.field === "string" ? elem[element.field] : ""
+        typeof element.field === 'string' ? elem[element.field] : ''
       );
       const numArr: number[] = [];
       let amtNum = 0;
       let amtNonNum = 0;
-      let empties = 0;
+      let _empties = 0;
       valArr.forEach((val) => {
-        if (typeof val === "number") {
+        if (typeof val === 'number') {
           amtNum += 1;
           numArr.push(val);
-        } else if (val === "None") {
-          empties += 1;
+        } else if (val === 'None') {
+          _empties += 1;
         } else amtNonNum += 1;
       });
       if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
@@ -462,20 +462,20 @@ const sliderMetabolomics = computed(() => {
   const typedArrayHeader = metabolomicsTableHeaders.value;
 
   typedArrayHeader.forEach((element) => {
-    if (element.field !== "available" && typeof element.field === "string") {
+    if (element.field !== 'available' && typeof element.field === 'string') {
       const valArr = typedArrayData.map((elem) =>
-        typeof element.field === "string" ? elem[element.field] : ""
+        typeof element.field === 'string' ? elem[element.field] : ''
       );
       const numArr: number[] = [];
       let amtNum = 0;
       let amtNonNum = 0;
-      let empties = 0;
+      let _empties = 0;
       valArr.forEach((val) => {
-        if (typeof val === "number") {
+        if (typeof val === 'number') {
           amtNum += 1;
           numArr.push(val);
-        } else if (val === "None") {
-          empties += 1;
+        } else if (val === 'None') {
+          _empties += 1;
         } else amtNonNum += 1;
       });
       if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
@@ -519,10 +519,10 @@ const fetchTranscriptomicsTable = (fileInput: File | null) => {
   if (fileInput !== null) {
     $q.loading.show();
     const formData = new FormData();
-    formData.append("dataTable", fileInput);
-    formData.append("sheetNumber", transcriptomicsSheetVal.value);
-    fetch("/transcriptomics_table", {
-      method: "POST",
+    formData.append('dataTable', fileInput);
+    formData.append('sheetNumber', transcriptomicsSheetVal.value);
+    fetch('/transcriptomics_table', {
+      method: 'POST',
       headers: {},
       body: formData,
     })
@@ -536,7 +536,7 @@ const fetchTranscriptomicsTable = (fileInput: File | null) => {
   } else {
     // more errorhandling?
     recievedTranscriptomicsData.value = false;
-    console.log("Transcriptomics file Cleared");
+    console.log('Transcriptomics file Cleared');
   }
 };
 
@@ -545,16 +545,16 @@ const fetchProteomicsTable = (fileInput: File | null) => {
 
   mainStore.setProteomicsTableHeaders([]);
   mainStore.setProteomicsTableData([]);
-  console.log("FETCH PROT");
+  console.log('FETCH PROT');
   sliderVals.value.proteomics = {};
   if (fileInput !== null) {
     $q.loading.show();
     const formData = new FormData();
-    formData.append("dataTable", fileInput);
-    formData.append("sheetNumber", proteomicsSheetVal.value);
+    formData.append('dataTable', fileInput);
+    formData.append('sheetNumber', proteomicsSheetVal.value);
 
-    fetch("/proteomics_table", {
-      method: "POST",
+    fetch('/proteomics_table', {
+      method: 'POST',
       headers: {},
       body: formData,
     })
@@ -569,7 +569,7 @@ const fetchProteomicsTable = (fileInput: File | null) => {
   } else {
     // more errorhandling?
     recievedProteomicsData.value = false;
-    console.log("Protfile Cleared");
+    console.log('Protfile Cleared');
   }
 };
 const fetchMetabolomicsTable = (fileInput: File | null) => {
@@ -581,11 +581,11 @@ const fetchMetabolomicsTable = (fileInput: File | null) => {
   if (fileInput !== null) {
     $q.loading.show();
     const formData = new FormData();
-    formData.append("dataTable", fileInput);
-    formData.append("sheetNumber", metabolomicsSheetVal.value);
+    formData.append('dataTable', fileInput);
+    formData.append('sheetNumber', metabolomicsSheetVal.value);
 
-    fetch("/metabolomics_table", {
-      method: "POST",
+    fetch('/metabolomics_table', {
+      method: 'POST',
       headers: {},
       body: formData,
     })
@@ -600,14 +600,14 @@ const fetchMetabolomicsTable = (fileInput: File | null) => {
   } else {
     // more errorhandling?
     recievedMetabolomicsData.value = false;
-    console.log("Metabol. file Cleared");
+    console.log('Metabol. file Cleared');
   }
 };
 
 const dataQuery = () => {
-  if (targetDatabase.value.value === "kegg") {
+  if (targetDatabase.value.value === 'kegg') {
     generateKGMLs();
-  } else if (targetDatabase.value.value === "reactome") {
+  } else if (targetDatabase.value.value === 'reactome') {
     queryReactome();
   }
 };
@@ -635,10 +635,10 @@ const queryReactome = () => {
     },
     sliderVals: sliderVals.value,
   };
-  fetch("/reactome_parsing", {
-    method: "POST",
+  fetch('/reactome_parsing', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
   })
@@ -653,22 +653,22 @@ const queryReactome = () => {
 };
 
 const getReactomeData = () => {
-  fetch("/reactome_overview", {
-    method: "GET",
+  fetch('/reactome_overview', {
+    method: 'GET',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   })
     .then((response) => response.json())
     .then((dataContent) => {
-      console.log("PATHWAYLAYOUTING", dataContent);
+      console.log('PATHWAYLAYOUTING', dataContent);
       mainStore.setOverviewData(dataContent.overviewData);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
     })
     .then(() => $q.loading.hide());
 };
 const generateKGMLs = () => {
-  console.log("sliderTest", sliderVals.value);
+  console.log('sliderTest', sliderVals.value);
   $q.loading.show();
   const payload = {
     targetOrganism: targetOrganism.value,
@@ -689,10 +689,10 @@ const generateKGMLs = () => {
     },
     sliderVals: sliderVals.value,
   };
-  fetch("/kegg_parsing", {
-    method: "POST",
+  fetch('/kegg_parsing', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
   })
@@ -714,7 +714,7 @@ const generateKGMLs = () => {
     .then((val) => {
       if (val)
         alert(
-          "Empty Data Selection! Adjust data source and/or filter settings"
+          'Empty Data Selection! Adjust data source and/or filter settings'
         );
       $q.loading.hide();
     });

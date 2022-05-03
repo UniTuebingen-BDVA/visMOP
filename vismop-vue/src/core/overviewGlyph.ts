@@ -1,9 +1,9 @@
-import { useMainStore } from "@/stores";
-import * as d3 from "d3";
-import { PieArcDatum } from "d3-shape";
-import * as _ from "lodash";
-import { glyphData, omicsData } from "./generalTypes";
-import { reactomeEntry } from "./reactomeTypes";
+import { useMainStore } from '@/stores';
+import * as d3 from 'd3';
+import { PieArcDatum } from 'd3-shape';
+import * as _ from 'lodash';
+import { glyphData, omicsData } from './generalTypes';
+import { reactomeEntry } from './reactomeTypes';
 
 export function generateGlyphData(): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {};
@@ -34,43 +34,43 @@ export function generateGlyphData(): { [key: string]: glyphData } {
     } as omicsData;
     const currentAmounts = pathwayAmounts[pathway.value];
     const nodeIDs = pathwayLayouting.pathwayNodeDictionary[pathway.value].map(
-      (elem) => elem.split(";")
+      (elem) => elem.split(';')
     );
     const usedIDs: string[] = [];
     nodeIDs.forEach((element) => {
       element.forEach((entry) => {
-        const currentEntry = entry.replace("cpd:", "").replace("gl:", "");
+        const currentEntry = entry.replace('cpd:', '').replace('gl:', '');
         try {
           if (!usedIDs.includes(currentEntry)) {
             const fcsCurrent = fcs[currentEntry];
-            if (typeof fcsCurrent.transcriptomics === "number") {
+            if (typeof fcsCurrent.transcriptomics === 'number') {
               transcriptomicsData.foldChanges.push({
                 name: mainStore.transcriptomicsKeggIDDict[currentEntry],
                 value: fcsCurrent.transcriptomics,
-                queryID: "",
+                queryID: '',
               });
               transcriptomicsData.nodeState.regulated += 1;
             }
-            if (typeof fcsCurrent.proteomics === "number") {
+            if (typeof fcsCurrent.proteomics === 'number') {
               proteomicsData.foldChanges.push({
                 name: mainStore.proteomicsKeggIDDict[currentEntry],
                 value: fcsCurrent.proteomics,
-                queryID: "",
+                queryID: '',
               });
               proteomicsData.nodeState.regulated += 1;
             }
-            if (typeof fcsCurrent.metabolomics === "number") {
+            if (typeof fcsCurrent.metabolomics === 'number') {
               metabolomicsData.foldChanges.push({
                 name: currentEntry,
                 value: fcsCurrent.metabolomics,
-                queryID: "",
+                queryID: '',
               });
               metabolomicsData.nodeState.regulated += 1;
             }
             usedIDs.push(currentEntry);
           }
         } catch (error) {
-          console.log("Glyph Data: ", error);
+          console.log('Glyph Data: ', error);
         }
       });
     });
@@ -200,7 +200,7 @@ export function generateGlyphs(inputData: { [key: string]: glyphData }): {
     ) as SVGElement;
     const glyphSVGstring = serializer.serializeToString(glyphSVG);
     const svgBlob = new Blob([glyphSVGstring], {
-      type: "image/svg+xml;charset=utf-8",
+      type: 'image/svg+xml;charset=utf-8',
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
 
@@ -315,9 +315,9 @@ export function generateGlyphVariation(
         circlePadding + thirdCircleElement * transcriptomicsRegulatedQuotient,
       endAngle: circlePadding + thirdCircleElement,
       padAngle: 0,
-      hoverData: "",
+      hoverData: '',
     });
-    innerColors.push("gray", "#c2c2c2");
+    innerColors.push('gray', '#c2c2c2');
     addedElements += 1;
     labelRegTexts.push(
       `${glyphDat.transcriptomics.nodeState.regulated} of ${glyphDat.transcriptomics.nodeState.total}`
@@ -332,8 +332,8 @@ export function generateGlyphVariation(
           endAngle: circlePadding,
           padAngle: 0,
         });
-        labelTextOffset.push("3.5%");
-        labelTexts.push("+ ← Transcriptomics ← -");
+        labelTextOffset.push('3.5%');
+        labelTexts.push('+ ← Transcriptomics ← -');
       } else {
         labelArcData.push({
           data: 1,
@@ -343,8 +343,8 @@ export function generateGlyphVariation(
           endAngle: circlePadding + thirdCircleElement,
           padAngle: 0,
         });
-        labelTextOffset.push("0");
-        labelTexts.push("- → Transcriptomics → +");
+        labelTextOffset.push('0');
+        labelTexts.push('- → Transcriptomics → +');
       }
     }
   }
@@ -390,7 +390,7 @@ export function generateGlyphVariation(
       endAngle:
         startAngleVal + thirdCircleElement * proteomicsRegulatedQuotient,
       padAngle: 0,
-      hoverData: "",
+      hoverData: '',
     });
     innerArcDat.push({
       data: 2,
@@ -400,9 +400,9 @@ export function generateGlyphVariation(
         startAngleVal + thirdCircleElement * proteomicsRegulatedQuotient,
       endAngle: startAngleVal + thirdCircleElement,
       padAngle: 0,
-      hoverData: "",
+      hoverData: '',
     });
-    innerColors.push("gray", "#c2c2c2");
+    innerColors.push('gray', '#c2c2c2');
     labelRegTexts.push(
       `${glyphDat.proteomics.nodeState.regulated} of ${glyphDat.proteomics.nodeState.total}`
     );
@@ -417,8 +417,8 @@ export function generateGlyphVariation(
           endAngle: startAngleVal,
           padAngle: 0,
         });
-        labelTextOffset.push("3.5%");
-        labelTexts.push("+ ← Proteomics ← -");
+        labelTextOffset.push('3.5%');
+        labelTexts.push('+ ← Proteomics ← -');
       } else {
         labelArcData.push({
           data: 1,
@@ -428,8 +428,8 @@ export function generateGlyphVariation(
           endAngle: startAngleVal + thirdCircleElement,
           padAngle: 0,
         });
-        labelTextOffset.push("0");
-        labelTexts.push("- → Proteomics → +");
+        labelTextOffset.push('0');
+        labelTexts.push('- → Proteomics → +');
       }
     }
   }
@@ -485,9 +485,9 @@ export function generateGlyphVariation(
         startAngleVal + thirdCircleElement * metabolomicsRegulatedQuotient,
       endAngle: startAngleVal + thirdCircleElement,
       padAngle: 0,
-      hoverData: "",
+      hoverData: '',
     });
-    innerColors.push("gray", "#c2c2c2");
+    innerColors.push('gray', '#c2c2c2');
     labelRegTexts.push(
       `${glyphDat.metabolomics.nodeState.regulated} of ${glyphDat.metabolomics.nodeState.total}`
     );
@@ -503,8 +503,8 @@ export function generateGlyphVariation(
           endAngle: startAngleVal,
           padAngle: 0,
         });
-        labelTextOffset.push("3.5%");
-        labelTexts.push("+ ← Metabolomics ← -");
+        labelTextOffset.push('3.5%');
+        labelTexts.push('+ ← Metabolomics ← -');
       } else {
         labelArcData.push({
           data: 1,
@@ -514,77 +514,77 @@ export function generateGlyphVariation(
           endAngle: startAngleVal + thirdCircleElement,
           padAngle: 0,
         });
-        labelTextOffset.push("0");
-        labelTexts.push("- → Metabolomics → +");
+        labelTextOffset.push('0');
+        labelTexts.push('- → Metabolomics → +');
       }
     }
   }
 
   let svg;
-  let g: d3.Selection<any, any, any, any>;
+  let g;
 
   if (drawLabels) {
     svg = d3
-      .create("svg")
-      .attr("viewBox", pathwayCompare ? `0 0 ${width} ${height}` : "0 0 35 35")
-      .attr("width", pathwayCompare ? "100%" : "200px")
-      .attr("height", pathwayCompare ? "100%" : "200px");
+      .create('svg')
+      .attr('viewBox', pathwayCompare ? `0 0 ${width} ${height}` : '0 0 35 35')
+      .attr('width', pathwayCompare ? '100%' : '200px')
+      .attr('height', pathwayCompare ? '100%' : '200px');
     g = svg
-      .append("g")
-      .attr("class", "glyph")
-      .attr("id", `glyph${glyphIdx}`)
-      .attr("transform", `translate(${width / 2},${height / 2})`);
+      .append('g')
+      .attr('class', 'glyph')
+      .attr('id', `glyph${glyphIdx}`)
+      .attr('transform', `translate(${width / 2},${height / 2})`);
     // DOMMouseScroll seems to work in FF
-    g.on("mouseenter", (_event, _dat) => {
+    g.on('mouseenter', (_event, _dat) => {
       const amtElems = d3
         .select(`#glyph${glyphIdx}`)
-        .selectAll(".foldArc")
+        .selectAll('.foldArc')
         .size();
       highlightSection = 0 % amtElems;
       d3.select(`#glyph${glyphIdx}`)
-        .selectAll(".foldArc")
+        .selectAll('.foldArc')
         .data(outerArcDat)
-        .attr("fill-opacity", (d, i) => {
+        .attr('fill-opacity', (d, i) => {
           if (i === highlightSection) {
             d3.select(`#glyph${glyphIdx}`)
-              .select("#tspan1")
-              .text(d.name.split(" ")[0]); // more of a temp fix
+              .select('#tspan1')
+              .text(d.name.split(' ')[0]); // more of a temp fix
             d3.select(`#glyph${glyphIdx}`)
-              .select("#tspan2")
+              .select('#tspan2')
               .text(d.fc.toFixed(3));
             return 1.0;
           } else return 0.2;
         });
     });
-    g.on("mouseleave", (_event, _dat) => {
+    g.on('mouseleave', (_event, _dat) => {
       highlightSection = 0;
       d3.select(`#glyph${glyphIdx}`)
-        .selectAll(".foldArc")
-        .attr("fill-opacity", (_d, _i) => {
-          d3.select(`#glyph${glyphIdx}`).select("#tspan1").text("Total:");
-          d3.select(`#glyph${glyphIdx}`).select("#tspan2").text(totalNodes);
+        .selectAll('.foldArc')
+        .attr('fill-opacity', (_d, _i) => {
+          d3.select(`#glyph${glyphIdx}`).select('#tspan1').text('Total:');
+          d3.select(`#glyph${glyphIdx}`).select('#tspan2').text(totalNodes);
           return 1.0;
         });
     });
-    g.on("wheel.zoom", (event, _dat) => {
+    g.on('wheel.zoom', (event, _dat) => {
       const amtElems = d3
         .select(`#glyph${glyphIdx}`)
-        .selectAll(".foldArc")
+        .selectAll('.foldArc')
         .size();
       highlightSection =
         (((highlightSection + (event.wheelDelta > 0 ? 1 : -1)) % amtElems) +
           amtElems) %
         amtElems;
       d3.select(`#glyph${glyphIdx}`)
-        .selectAll(".foldArc")
+        .selectAll('.foldArc')
         .data(outerArcDat)
-        .attr("fill-opacity", (d, i) => {
+        .attr('fill-opacity', (d, i) => {
           if (i === highlightSection) {
             d3.select(`#glyph${glyphIdx}`)
-              .select("#tspan1")
-              .text(d.name.split(" ")[0]); // more of a temp fix
+              .select('#tspan1')
+              .text(d.name.split(' ')[0]); // more of a temp fix
             d3.select(`#glyph${glyphIdx}`)
-              .select("#tspan2")
+              .select('#tspan2')
               .text(d.fc.toFixed(3));
             return 1.0;
           } else return 0.2;
@@ -592,11 +592,11 @@ export function generateGlyphVariation(
       event.stopPropagation();
     });
   } else {
-    svg = d3.create("svg").attr("width", width).attr("height", height);
+    svg = d3.create('svg').attr('width', width).attr('height', height);
 
     g = svg
-      .append("g")
-      .attr("transform", `translate(${width / 2},${height / 2})`);
+      .append('g')
+      .attr('transform', `translate(${width / 2},${height / 2})`);
   }
   const arcOuter = d3
     .arc<PieArcDatum<number>>()
@@ -609,29 +609,29 @@ export function generateGlyphVariation(
 
   // segment order: transcriptomics = outer, proteomics = middle, metabolomics = inner
   const arcSeg = g
-    .selectAll("g")
+    .selectAll('g')
     .data(outerArcDat)
     .enter()
-    .append("path")
-    .attr("d", arcOuter)
-    .attr("fill", (_d, i) => outerColors[i])
-    .attr("class", "foldArc")
-    .attr("strokewidth", -2);
+    .append('path')
+    .attr('d', arcOuter)
+    .attr('fill', (_d, i) => outerColors[i])
+    .attr('class', 'foldArc')
+    .attr('strokewidth', -2);
   if (!pathwayCompare) {
-    arcSeg.on("click", (event, d) => {
+    arcSeg.on('click', (event, d) => {
       mainStore.addClickedNode({ queryID: d.queryID, name: d.name });
       event.stopPropagation();
     });
   }
 
-  arcSeg.append("title").text((d) => d.name + "\n" + d.fc.toFixed(3));
-  const graySegments = g
-    .selectAll("g")
+  arcSeg.append('title').text((d) => d.name + '\n' + d.fc.toFixed(3));
+  const _graySegments = g
+    .selectAll('g')
     .data(innerArcDat)
     .enter()
-    .append("path")
-    .attr("d", arcMiddle)
-    .attr("fill", (_d, i) => innerColors[i]);
+    .append('path')
+    .attr('d', arcMiddle)
+    .attr('fill', (_d, i) => innerColors[i]);
   // graySegments
   // .on('mouseover', (d, i) => console.log('HOVERTEST', i))
   // .append('title')
@@ -647,25 +647,25 @@ export function generateGlyphVariation(
       .innerRadius((firstLayer + secondLayer) * 0.5)
       .outerRadius((firstLayer + secondLayer) * 0.5);
 
-    g.selectAll("labels")
+    g.selectAll('labels')
       .data(labelArcData)
       .enter()
-      .append("path")
-      .attr("id", (_d, i) => `labelArcReg${i}`)
-      .attr("d", labelArcRegulated)
-      .style("fill", "none");
+      .append('path')
+      .attr('id', (_d, i) => `labelArcReg${i}`)
+      .attr('d', labelArcRegulated)
+      .style('fill', 'none');
 
-    g.selectAll("labels")
+    g.selectAll('labels')
       .data(labelArcData)
       .enter()
-      .append("text")
+      .append('text')
       // .attr('dy', (d, i) => labelTextOffset[i])
-      .append("textPath")
+      .append('textPath')
       .text((_d, i) => labelRegTexts[i])
-      .attr("startOffset", "25%")
-      .style("text-anchor", "middle")
-      .attr("class", "glyphText")
-      .attr("href", (_d, i) => `#labelArcReg${i}`);
+      .attr('startOffset', '25%')
+      .style('text-anchor', 'middle')
+      .attr('class', 'glyphText')
+      .attr('href', (_d, i) => `#labelArcReg${i}`);
     /*
       .data(innerArcDat)
       .enter()
@@ -676,39 +676,39 @@ export function generateGlyphVariation(
       .text((d) => d.hoverData)
       */
 
-    g.selectAll("labels")
+    g.selectAll('labels')
       .data(labelArcData)
       .enter()
-      .append("path")
-      .attr("id", (_d, i) => `labelArc${i}`)
-      .attr("d", labelArcOmics)
-      .style("fill", "none");
+      .append('path')
+      .attr('id', (_d, i) => `labelArc${i}`)
+      .attr('d', labelArcOmics)
+      .style('fill', 'none');
 
-    g.selectAll("labels")
+    g.selectAll('labels')
       .data(labelArcData)
       .enter()
-      .append("text")
+      .append('text')
       // .attr('dy', (d, i) => labelTextOffset[i])
-      .append("textPath")
+      .append('textPath')
       .text((_d, i) => labelTexts[i])
-      .attr("startOffset", "25%")
-      .attr("class", "glyphText")
-      .attr("href", (_d, i) => `#labelArc${i}`);
+      .attr('startOffset', '25%')
+      .attr('class', 'glyphText')
+      .attr('href', (_d, i) => `#labelArc${i}`);
     // .attr('transform', (d) => `translate(${labelArc.centroid(d)})`)
-    const text = g.append("text").attr("class", "glyphText centeredText");
+    const text = g.append('text').attr('class', 'glyphText centeredText');
 
     text
-      .append("tspan")
-      .attr("id", "tspan1")
-      .attr("x", 0)
-      .attr("dy", "-0.5em")
-      .text("Total:");
+      .append('tspan')
+      .attr('id', 'tspan1')
+      .attr('x', 0)
+      .attr('dy', '-0.5em')
+      .text('Total:');
 
     text
-      .append("tspan")
-      .attr("id", "tspan2")
-      .attr("x", 0)
-      .attr("dy", "1em")
+      .append('tspan')
+      .attr('id', 'tspan2')
+      .attr('x', 0)
+      .attr('dy', '1em')
       .text(totalNodes);
   }
   return svg.node() as SVGElement;

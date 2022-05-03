@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import * as _ from 'lodash';
 import {
   node,
   edge,
@@ -7,8 +7,8 @@ import {
   relation,
   baseNodeAttr,
   baseEdgeAttr,
-} from "@/core/graphTypes";
-import { useMainStore } from "@/stores";
+} from '@/core/graphTypes';
+import { useMainStore } from '@/stores';
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -21,9 +21,8 @@ export function generateGraphData(
   glyphs: { [key: string]: string }
 ): graphData {
   const mainStore = useMainStore();
-  const fadeGray = "rgba(30,30,30,0.2)";
   const graph = {
-    attributes: { name: "BaseNetwork" },
+    attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
     options: [],
@@ -37,17 +36,17 @@ export function generateGraphData(
       if (currentNames) {
         const initPosX = entry.initialPosX;
         const initPosY = entry.initialPosY;
-        const color = "#FFFFFF";
+        const color = '#FFFFFF';
         const trueName = mainStore.pathwayLayouting.pathwayList.find(
-          (elem) => elem.value === currentNames[0].replace("path:", "")
+          (elem) => elem.value === currentNames[0].replace('path:', '')
         )?.text;
         const currentNode = {
           key: keggID,
           // label: "",
           attributes: {
             entryType: _.escape(entry.entryType),
-            type: "image",
-            image: glyphs[entryKey.replace("path:", "")],
+            type: 'image',
+            image: glyphs[entryKey.replace('path:', '')],
             name: _.escape(currentNames[0]),
             color: color,
             label: `Name: ${_.escape(trueName)}`,
@@ -91,16 +90,14 @@ export function generateGraphData(
  * @returns {edge}, edge object
  */
 function generateForceGraphEdge(relation: relation): edge {
-  const fadeGray = "rgba(30,30,30,0.2)";
-
   const edgeColors: { [key: string]: string } = {
-    maplink: "#999999",
-    maplinkOnceRemoved: "#FF0000",
+    maplink: '#999999',
+    maplinkOnceRemoved: '#FF0000',
   };
 
   const edgeType = relation.edgeType;
 
-  if (edgeType === "relation") {
+  if (edgeType === 'relation') {
     const entry1 = relation.source;
     const entry2 = relation.target;
     const relationType = relation.relationType;
@@ -110,7 +107,7 @@ function generateForceGraphEdge(relation: relation): edge {
       target: entry2,
       undirected: true,
       attributes: {
-        type: "",
+        type: '',
         zIndex: 0,
         color: edgeColors[relationType],
       } as baseEdgeAttr,
@@ -126,7 +123,7 @@ function generateForceGraphEdge(relation: relation): edge {
       target: entry2,
       undirected: true,
       attributes: {
-        type: "",
+        type: '',
         zIndex: 0,
         color: edgeColors[relationType],
       } as baseEdgeAttr,

@@ -1,4 +1,4 @@
-import { NodeDisplayData, EdgeDisplayData } from "sigma/types";
+import { NodeDisplayData, EdgeDisplayData } from 'sigma/types';
 
 export interface OutlineNodeDisplayData extends NodeDisplayData {
   outlineColor: string;

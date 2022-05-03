@@ -22,9 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from "../core/overviewNetwork";
-import { generateGraphData } from "../core/keggOverviewGraphPreparation";
-import { generateGlyphData, generateGlyphs } from "../core/overviewGlyph";
+import OverviewGraph from '../core/overviewNetwork';
+import { generateGraphData } from '../core/keggOverviewGraphPreparation';
+import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph';
 import {
   computed,
   onMounted,
@@ -33,9 +33,9 @@ import {
   ref,
   watch,
   defineProps,
-} from "vue";
-import { useMainStore } from "@/stores";
-import { entry } from "@/core/graphTypes";
+} from 'vue';
+import { useMainStore } from '@/stores';
+import { entry } from '@/core/graphTypes';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -126,7 +126,7 @@ watch(
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );
-    console.log("foundPathways", foundPathways);
+    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -151,7 +151,7 @@ watch(
         pathwayLayouting.value.nodePathwayDictionary[keggID];
       if (pathwaysContaining) foundPathways.push(pathwaysContaining);
     });
-    console.log("foundPathways", foundPathways);
+    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -198,7 +198,7 @@ watch(overviewData, () => {
     console.log(props.contextID);
     drawNetwork();
   } else {
-    console.log(props.contextID, "outstanding draw");
+    console.log(props.contextID, 'outstanding draw');
     outstandingDraw.value = true;
   }
 });
@@ -215,7 +215,7 @@ watch(
 );
 
 onMounted(() => {
-  console.log("OVDATA", overviewData);
+  console.log('OVDATA', overviewData);
   if (overviewData.value) {
     drawNetwork();
   }
@@ -230,19 +230,19 @@ const drawNetwork = () => {
   networkGraph.value?.killGraph();
   const glyphData = generateGlyphData();
   mainStore.setGlyphData(glyphData);
-  console.log("GLYPH DATA", glyphData);
+  console.log('GLYPH DATA', glyphData);
   const generatedGlyphs = generateGlyphs(glyphData);
   mainStore.setGlyphs(generatedGlyphs);
   const glyphsURL = generatedGlyphs.url;
-  console.log("GLYPHs", mainStore.glyphs);
-  console.log("OVERVIEW DATA", overviewData.value);
+  console.log('GLYPHs', mainStore.glyphs);
+  console.log('OVERVIEW DATA', overviewData.value);
   const networkData = generateGraphData(
     overviewData.value as { [key: string]: entry },
     glyphsURL
   );
-  console.log("base dat", networkData);
+  console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(
-    props.contextID ? props.contextID : "",
+    props.contextID ? props.contextID : '',
     networkData
   );
 };

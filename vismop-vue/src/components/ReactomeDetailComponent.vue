@@ -45,15 +45,15 @@
 </template>
 
 <script setup lang="ts">
-import ReactomeDetailView from "../core/reactomeDetailView";
+import ReactomeDetailView from '../core/reactomeDetailView';
 import {
   graphJSON,
   layoutJSON,
   foldChangesByType,
   foldChangesByID,
   reactomeEntry,
-} from "../core/reactomeTypes";
-import { getEntryAmounts } from "../core/reactomeUtils";
+} from '../core/reactomeTypes';
+import { getEntryAmounts } from '../core/reactomeUtils';
 import {
   computed,
   onMounted,
@@ -62,9 +62,9 @@ import {
   Ref,
   watch,
   defineProps,
-} from "vue";
-import { useMainStore } from "@/stores";
-import { useQuasar } from "quasar";
+} from 'vue';
+import { useMainStore } from '@/stores';
+import { useQuasar } from 'quasar';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -90,7 +90,7 @@ const mainStore = useMainStore();
 
 const $q = useQuasar();
 const mutationObserver: Ref<MutationObserver | undefined> = ref(undefined);
-const pathwaySelection = ref({ title: "", value: "", text: "" });
+const pathwaySelection = ref({ title: '', value: '', text: '' });
 const expandButton = ref(false);
 const minimizeButton = ref(false);
 // const currentGraphJson = ref({})
@@ -130,7 +130,7 @@ onMounted(() => {
   // allows to run function when tar changes
   mutationObserver.value = new MutationObserver(refreshSize);
   const config = { attributes: true };
-  const tar = document.getElementById(props.contextID ? props.contextID : "");
+  const tar = document.getElementById(props.contextID ? props.contextID : '');
   if (tar) mutationObserver.value.observe(tar, config);
 });
 
@@ -150,9 +150,9 @@ const getJsonFiles = (reactomeID: string) => {
   $q.loading.show();
   console.log(reactomeID);
   fetch(`/get_reactome_json_files/${reactomeID}`, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   })
     .then((response) => response.json())
@@ -179,10 +179,10 @@ const getJsonFiles = (reactomeID: string) => {
  * @param {'proteomics' | 'metabolomics' | 'transcriptomics'} type
  */
 const prepareFcs = (
-  pathwayData: any,
+  pathwayData: reactomeEntry,
   fcs: foldChangesByType,
   fcsReactomeKey: foldChangesByID,
-  type: "proteomics" | "metabolomics" | "transcriptomics"
+  type: 'proteomics' | 'metabolomics' | 'transcriptomics'
 ) => {
   // Regular node parsing
   for (const entry of pathwayData.ownMeasuredEntryIDs[type]) {
@@ -213,7 +213,7 @@ const prepareFcs = (
             fcsReactomeKey[id][type].nodeState.regulated += 1;
           } else {
             fcsReactomeKey[id] = {
-              pathwayID: "" + id,
+              pathwayID: '' + id,
               proteomics: {
                 available: false,
                 foldChanges: [],
@@ -246,7 +246,7 @@ const prepareFcs = (
               meanFoldchange: val,
               nodeState: {
                 total:
-                  type === "proteomics" || type === "transcriptomics"
+                  type === 'proteomics' || type === 'transcriptomics'
                     ? totalAmount.totalProteins
                     : totalAmount.totalMolecules,
                 regulated: 1,
@@ -294,7 +294,7 @@ const prepareFcs = (
             fcsReactomeKey[entry][type].nodeState.regulated += 1;
           } else {
             fcsReactomeKey[entry] = {
-              pathwayID: "" + entry,
+              pathwayID: '' + entry,
               proteomics: {
                 available: false,
                 foldChanges: [],
@@ -331,7 +331,7 @@ const prepareFcs = (
         }
       }
     } catch (error) {
-      console.log("INSET", error, pathwayData.insetPathwayEntryIDs);
+      console.log('INSET', error, pathwayData.insetPathwayEntryIDs);
     }
   }
 };
@@ -343,20 +343,21 @@ const drawDetailView = () => {
     metabolomics: {},
   };
   const fcsReactomeKey: foldChangesByID = {};
-  console.log("OVERVIEW DATA", overviewData.value);
+  console.log('OVERVIEW DATA', overviewData.value);
   const pathwayData = overviewData.value.find(
     (elem: { pathwayId: string }) =>
       elem.pathwayId === pathwaySelection.value.value
   );
-
-  prepareFcs(pathwayData, fcs, fcsReactomeKey, "proteomics");
-  prepareFcs(pathwayData, fcs, fcsReactomeKey, "transcriptomics");
-  prepareFcs(pathwayData, fcs, fcsReactomeKey, "metabolomics");
+  if (pathwayData) {
+    prepareFcs(pathwayData, fcs, fcsReactomeKey, 'proteomics');
+    prepareFcs(pathwayData, fcs, fcsReactomeKey, 'transcriptomics');
+    prepareFcs(pathwayData, fcs, fcsReactomeKey, 'metabolomics');
+  }
 
   currentView.value = new ReactomeDetailView(
     currentLayoutJson.value,
     currentGraphJson.value,
-    "#" + props.contextID,
+    '#' + props.contextID,
     fcs,
     fcsReactomeKey
   );

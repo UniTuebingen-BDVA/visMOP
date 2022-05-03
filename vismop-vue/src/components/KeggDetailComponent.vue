@@ -45,8 +45,8 @@
 </template>
 
 <script setup lang="ts">
-import DetailNetwork from "../core/keggDetailView";
-import { generateGraphData } from "../core/detailGraphPreparation";
+import DetailNetwork from '../core/keggDetailView';
+import { generateGraphData } from '../core/detailGraphPreparation';
 import {
   computed,
   onMounted,
@@ -55,8 +55,8 @@ import {
   Ref,
   watch,
   defineProps,
-} from "vue";
-import { useMainStore } from "@/stores";
+} from 'vue';
+import { useMainStore } from '@/stores';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -87,7 +87,7 @@ const outstandingDraw = ref(false);
 const pathwayDropdownOptions: Ref<
   { title: string; value: string; text: string }[]
 > = ref([]);
-const pathwaySelection = ref({ title: "", value: "", text: "" });
+const pathwaySelection = ref({ title: '', value: '', text: '' });
 const networkGraph: Ref<DetailNetwork | undefined> = ref(undefined);
 
 const graphData = computed(() => mainStore.graphData);
@@ -126,7 +126,7 @@ watch(pathwayDropdown, () => {
 onMounted(() => {
   mutationObserver.value = new MutationObserver(refreshGraph);
   const config = { attributes: true };
-  const tar = document.getElementById(props.contextID ? props.contextID : "");
+  const tar = document.getElementById(props.contextID ? props.contextID : '');
   if (tar) mutationObserver.value.observe(tar, config);
   if (graphData.value.nodes.length > 0) {
     drawNetwork();
@@ -152,7 +152,7 @@ const drawNetwork = () => {
     ? pathwayDropdown.value.value
     : Object.keys(pathwayLayouting.value.pathwayNodeDictionary)[0];
   console.log(
-    "CURRENT BUG",
+    'CURRENT BUG',
     pathwayDropdown.value,
     pathwayLayouting.value.pathwayNodeDictionary,
     key
@@ -160,18 +160,18 @@ const drawNetwork = () => {
   const nodeList = pathwayLayouting.value.pathwayNodeDictionary[key];
   networkGraph.value = new DetailNetwork(
     networkData,
-    props.contextID ? props.contextID : "",
+    props.contextID ? props.contextID : '',
     key,
     nodeList
   );
 };
 const selectPathway = (key: string) => {
-  console.log("KEY", key);
+  console.log('KEY', key);
   if (key !== undefined && key !== null) {
     const nodeList = pathwayLayouting.value.pathwayNodeDictionary[key];
     networkGraph.value?.selectNewPathway(key, nodeList);
   } else {
-    console.log("TEST");
+    console.log('TEST');
     // relaxLayout(this.networkGraph as Sigma)
   }
 };

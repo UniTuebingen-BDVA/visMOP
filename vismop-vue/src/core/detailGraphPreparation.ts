@@ -1,5 +1,4 @@
-import * as _ from "lodash";
-import * as d3 from "d3";
+import * as _ from 'lodash';
 import {
   node,
   edge,
@@ -8,8 +7,8 @@ import {
   relation,
   detailNodeAttr,
   fadeEdgeAttr,
-} from "@/core/graphTypes";
-import { useMainStore } from "@/stores";
+} from '@/core/graphTypes';
+import { useMainStore } from '@/stores';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -26,15 +25,15 @@ export function generateGraphData(
 ): graphData {
   const mainStore = useMainStore();
   const keggIDGenesymbolDict: { [key: string]: string } = {};
-  const fadeGray = "rgba(30,30,30,0.2)";
+  const fadeGray = 'rgba(30,30,30,0.2)';
   const graph = {
-    attributes: { name: "BaseNetwork" },
+    attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
     options: [],
   } as graphData;
   const addedEdges: string[] = [];
-  console.log("fcsExtent", fcsExtent);
+  console.log('fcsExtent', fcsExtent);
   const colorScaleTranscriptomics = mainStore.fcScales.transcriptomics;
   const colorScaleProteomics = mainStore.fcScales.proteomics;
   const colorScaleMetabolomics = mainStore.fcScales.metabolomics;
@@ -56,29 +55,29 @@ export function generateGraphData(
         const initPosX = Math.random() * 2 - 1;
         const initPosY = Math.random() * 2 - 1;
         const color =
-          entry.entryType === "gene"
-            ? typeof entry.trascriptomicsValue === "string"
-              ? "#808080"
+          entry.entryType === 'gene'
+            ? typeof entry.trascriptomicsValue === 'string'
+              ? '#808080'
               : colorScaleTranscriptomics(entry.trascriptomicsValue)
-            : typeof entry.metabolomicsValue === "string"
-            ? "#808080"
+            : typeof entry.metabolomicsValue === 'string'
+            ? '#808080'
             : colorScaleMetabolomics(entry.metabolomicsValue);
         const secondaryColor =
-          entry.entryType === "gene"
-            ? typeof entry.proteomicsValue === "string"
-              ? "#808080"
+          entry.entryType === 'gene'
+            ? typeof entry.proteomicsValue === 'string'
+              ? '#808080'
               : colorScaleProteomics(entry.proteomicsValue)
-            : "#808080";
+            : '#808080';
         const currentNode = {
           key: keggID,
           // label: "",
           attributes: {
             entryType: _.escape(entry.entryType),
-            type: entry.entryType === "gene" ? "splitSquares" : "outlineCircle",
+            type: entry.entryType === 'gene' ? 'splitSquares' : 'outlineCircle',
             name: _.escape(currentNames[0]),
             color: color,
             secondaryColor: secondaryColor,
-            outlineColor: "rgba(30,30,30,1.0)",
+            outlineColor: 'rgba(30,30,30,1.0)',
             nonFadeColor: color,
             nonFadeColorSecondary: secondaryColor,
             fadeColor: fadeGray,
@@ -115,16 +114,16 @@ export function generateGraphData(
 }
 function generateLabel(name: string, entry: entry): string {
   const stringContainer: string[] = [`Name: ${name}`];
-  if (entry.trascriptomicsValue !== "NA") {
+  if (entry.trascriptomicsValue !== 'NA') {
     stringContainer.push(`Trans:\t${entry.trascriptomicsValue}`);
   }
-  if (entry.proteomicsValue !== "NA") {
+  if (entry.proteomicsValue !== 'NA') {
     stringContainer.push(`Prot:\t${entry.proteomicsValue}`);
   }
-  if (entry.metabolomicsValue !== "NA") {
+  if (entry.metabolomicsValue !== 'NA') {
     stringContainer.push(`Meta:\t${entry.metabolomicsValue}`);
   }
-  return stringContainer.join("\n");
+  return stringContainer.join('\n');
 }
 
 /**
@@ -133,22 +132,22 @@ function generateLabel(name: string, entry: entry): string {
  * @returns {edge}, edge object
  */
 function generateForceGraphEdge(relation: relation): edge {
-  const fadeGray = "rgba(30,30,30,0.2)";
+  const fadeGray = 'rgba(30,30,30,0.2)';
 
   const edgeColors: { [key: string]: string } = {
-    ECrel: "#BE0032",
-    PPrel: "#A1CAF1",
-    GErel: "#008856",
-    PCrel: "#875692",
-    maplink: "#F3C300",
-    maplinkOnceRemoved: "#FF0000",
-    reaction: "#222222",
-    pathCon: "#222222",
+    ECrel: '#BE0032',
+    PPrel: '#A1CAF1',
+    GErel: '#008856',
+    PCrel: '#875692',
+    maplink: '#F3C300',
+    maplinkOnceRemoved: '#FF0000',
+    reaction: '#222222',
+    pathCon: '#222222',
   };
 
   const edgeType = relation.edgeType;
 
-  if (edgeType === "relation") {
+  if (edgeType === 'relation') {
     const entry1 = relation.source;
     const entry2 = relation.target;
     const relationType = relation.relationType;
@@ -158,7 +157,7 @@ function generateForceGraphEdge(relation: relation): edge {
       target: entry2,
       attributes: {
         zIndex: 0,
-        type: "fadeColor",
+        type: 'fadeColor',
         sourceColor: edgeColors[relationType],
         targetColor: edgeColors[relationType],
         nonFadeColor: edgeColors[relationType],
@@ -176,7 +175,7 @@ function generateForceGraphEdge(relation: relation): edge {
       target: entry2,
       attributes: {
         zIndex: 0,
-        type: "fadeColor",
+        type: 'fadeColor',
         sourceColor: edgeColors.reaction,
         targetColor: edgeColors.reaction,
         nonFadeColor: edgeColors.reaction,

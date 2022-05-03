@@ -1,18 +1,18 @@
-import { UndirectedGraph } from "graphology";
-import forceAtlas2 from "graphology-layout-forceatlas2";
-import noverlap from "graphology-layout-noverlap";
-import Sigma from "sigma";
-import { graphData } from "@/core/graphTypes";
-import getNodeProgramImage from "sigma/rendering/webgl/programs/node.image";
-import DashedEdgeProgram from "@/core/custom-nodes/dashed-edge-program";
-import { Attributes } from "graphology-types";
-import drawHover from "@/core/customHoverRenderer";
-import { useMainStore } from "@/stores";
-import { DEFAULT_SETTINGS } from "sigma/settings";
-import { bidirectional, edgePathFromNodePath } from "graphology-shortest-path";
+import { UndirectedGraph } from 'graphology';
+import forceAtlas2 from 'graphology-layout-forceatlas2';
+import noverlap from 'graphology-layout-noverlap';
+import Sigma from 'sigma';
+import { graphData } from '@/core/graphTypes';
+import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
+import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
+import { Attributes } from 'graphology-types';
+import drawHover from '@/core/customHoverRenderer';
+import { useMainStore } from '@/stores';
+import { DEFAULT_SETTINGS } from 'sigma/settings';
+import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 
 export default class overviewGraph {
-  private currentPathway = "";
+  private currentPathway = '';
   private pathwaysContainingIntersection: string[] = [];
   private pathwaysContainingUnion: string[] = [];
   private renderer;
@@ -48,58 +48,58 @@ export default class overviewGraph {
     // from events SIGMA2 example, initialze sets for highlight on hover:
     let highlighedNodesHover = new Set();
     let highlighedEdgesHover = new Set();
-    let highlightedCenterHover = "";
+    let highlightedCenterHover = '';
 
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: string, data: Attributes) => {
       const nodeSize =
         highlighedNodesHover.has(node) ||
-        this.currentPathway === node.replace("path:", "")
+        this.currentPathway === node.replace('path:', '')
           ? 15
           : 10;
       if (shortestPathNodes?.length > 0) {
         if (shortestPathClick.includes(node)) {
-          return { ...data, color: "rgba(255,0,255,1.0)", zIndex: 1, size: 15 };
+          return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 };
         }
         if (shortestPathNodes.includes(node)) {
           return {
             ...data,
-            color: "rgba(255,180,255,1.0)",
+            color: 'rgba(255,180,255,1.0)',
             zIndex: 1,
             size: 10,
           };
         } else {
-          return { ...data, color: "rgba(255,255,255,1.0)", size: 5 };
+          return { ...data, color: 'rgba(255,255,255,1.0)', size: 5 };
         }
       }
       if (shortestPathClick.includes(node)) {
-        return { ...data, color: "rgba(255,0,255,1.0)", zIndex: 1, size: 15 };
+        return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 };
       }
       if (
-        this.currentPathway === node.replace("path:", "") ||
+        this.currentPathway === node.replace('path:', '') ||
         highlightedCenterHover === node
       ) {
         return {
           ...data,
-          color: "rgba(255,0,0,1.0)",
+          color: 'rgba(255,0,0,1.0)',
           zIndex: 1,
           size: nodeSize,
         };
       }
       if (
-        this.pathwaysContainingIntersection.includes(node.replace("path:", ""))
+        this.pathwaysContainingIntersection.includes(node.replace('path:', ''))
       ) {
         return {
           ...data,
-          color: "rgba(0,255,0,1.0)",
+          color: 'rgba(0,255,0,1.0)',
           zIndex: 1,
           size: nodeSize,
         };
       }
-      if (this.pathwaysContainingUnion.includes(node.replace("path:", ""))) {
+      if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
         return {
           ...data,
-          color: "rgba(0,0,255,1.0)",
+          color: 'rgba(0,0,255,1.0)',
           zIndex: 1,
           size: nodeSize,
         };
@@ -107,7 +107,7 @@ export default class overviewGraph {
       if (highlighedNodesHover.has(node)) {
         return {
           ...data,
-          color: "rgba(255,200,200,1.0)",
+          color: 'rgba(255,200,200,1.0)',
           zIndex: 1,
           size: nodeSize,
         };
@@ -115,7 +115,7 @@ export default class overviewGraph {
       if (highlighedNodesClick.has(node)) {
         return {
           ...data,
-          color: "rgba(255,200,200,1.0)",
+          color: 'rgba(255,200,200,1.0)',
           zIndex: 1,
           size: nodeSize,
         };
@@ -129,7 +129,7 @@ export default class overviewGraph {
         if (shortestPathEdges?.includes(edge)) {
           return {
             ...data,
-            color: "rgba(255,180,255,1.0)",
+            color: 'rgba(255,180,255,1.0)',
             zIndex: 1,
             size: 4,
           };
@@ -138,10 +138,10 @@ export default class overviewGraph {
         }
       }
       if (highlighedEdgesHover.has(edge)) {
-        return { ...data, color: "rgba(255,0,0,1.0)", size: 4, zIndex: 1 };
+        return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 };
       }
       if (highlighedEdgesClick.has(edge)) {
-        return { ...data, color: "rgba(255,0,0,1.0)", size: 1, zIndex: 1 };
+        return { ...data, color: 'rgba(255,0,0,1.0)', size: 1, zIndex: 1 };
       }
 
       return data;
@@ -165,8 +165,8 @@ export default class overviewGraph {
       },
       hoverRenderer: drawHover,
     });
-    console.log("Node Programs:");
-    console.log(renderer.getSetting("nodeProgramClasses"));
+    console.log('Node Programs:');
+    console.log(renderer.getSetting('nodeProgramClasses'));
 
     // To directly assign the positions to the nodes:
     const start = Date.now();
@@ -178,7 +178,7 @@ export default class overviewGraph {
     // layout.start();
 
     // TODO: from events example:
-    renderer.on("enterNode", ({ node }) => {
+    renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
       highlighedNodesHover = new Set(graph.neighbors(node));
       highlighedNodesHover.add(node);
@@ -189,19 +189,19 @@ export default class overviewGraph {
       renderer.refresh();
     });
 
-    renderer.on("leaveNode", ({ node }) => {
-      console.log("Leaving:", node);
+    renderer.on('leaveNode', ({ node }) => {
+      console.log('Leaving:', node);
 
       highlighedNodesHover.clear();
       highlighedEdgesHover.clear();
-      highlightedCenterHover = "";
+      highlightedCenterHover = '';
 
       renderer.refresh();
     });
 
-    renderer.on("clickNode", ({ node, event }) => {
-      console.log("clicking Node: ", node);
-      console.log("clicking event", event);
+    renderer.on('clickNode', ({ node, event }) => {
+      console.log('clicking Node: ', node);
+      console.log('clicking event', event);
       if (event.original.ctrlKey) {
         mainStore.selectPathwayCompare([node]);
       } else if (event.original.altKey) {
@@ -218,7 +218,7 @@ export default class overviewGraph {
               graph,
               shortestPathNodes as string[]
             );
-            console.log("shortest Path edges", shortestPathEdges);
+            console.log('shortest Path edges', shortestPathEdges);
             mainStore.selectPathwayCompare(shortestPathNodes);
           } else {
             shortestPathClick = [];
@@ -245,7 +245,7 @@ export default class overviewGraph {
    * @param {string} nodeKey
    */
   panToNode(renderer: Sigma, nodeKey: string): void {
-    console.log("pantestNode", {
+    console.log('pantestNode', {
       ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
       ratio: 0.3,
     });
@@ -264,9 +264,9 @@ export default class overviewGraph {
     renderer: Sigma,
     target: { x: number; y: number; ratio: number }
   ) {
-    console.log("pantest", target);
+    console.log('pantest', target);
     renderer.getCamera().animate(target, {
-      easing: "linear",
+      easing: 'linear',
       duration: 1000,
     });
   }

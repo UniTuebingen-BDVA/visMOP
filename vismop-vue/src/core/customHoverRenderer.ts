@@ -10,12 +10,12 @@
  * state.
  * @module
  */
-import { Settings } from "sigma/settings";
-import { NodeDisplayData, PartialButFor } from "sigma/types";
+import { Settings } from 'sigma/settings';
+import { NodeDisplayData, PartialButFor } from 'sigma/types';
 
 function drawLabel(
   context: CanvasRenderingContext2D,
-  data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
+  data: PartialButFor<NodeDisplayData, 'x' | 'y' | 'size' | 'label' | 'color'>,
   settings: Settings
 ): void {
   if (!data.label) {
@@ -24,8 +24,8 @@ function drawLabel(
   const size = settings.labelSize;
   const font = settings.labelFont;
   const weight = settings.labelWeight;
-  const labelText = data.label.split("\n");
-  context.fillStyle = "#000";
+  const labelText = data.label.split('\n');
+  context.fillStyle = '#000';
   context.font = `${weight} ${size}px ${font}`;
   labelText.forEach((row, i) => {
     context.fillText(
@@ -43,7 +43,7 @@ function drawLabel(
  */
 export default function drawHover(
   context: CanvasRenderingContext2D,
-  data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
+  data: PartialButFor<NodeDisplayData, 'x' | 'y' | 'size' | 'label' | 'color'>,
   settings: Settings
 ): void {
   const size = settings.labelSize;
@@ -53,17 +53,17 @@ export default function drawHover(
   context.font = `${weight} ${size}px ${font}`;
 
   // Then we draw the label background
-  context.fillStyle = "#FFF";
+  context.fillStyle = '#FFF';
   context.shadowOffsetX = 0;
   context.shadowOffsetY = 0;
   context.shadowBlur = 8;
-  context.shadowColor = "#000";
+  context.shadowColor = '#000';
 
   const MARGIN = 2;
 
-  if (typeof data.label === "string") {
+  if (typeof data.label === 'string') {
     let textWidth = 0;
-    const splitText = data.label.split("\n");
+    const splitText = data.label.split('\n');
     splitText.forEach((row) => {
       const currTextWidth = context.measureText(row).width;
       if (currTextWidth > textWidth) {

@@ -1,4 +1,4 @@
-import { QTableProps } from "quasar";
+import { QTableProps } from 'quasar';
 
 type typeExtractor<TarObj> = TarObj extends (infer U)[]
   ? U extends object
@@ -7,7 +7,7 @@ type typeExtractor<TarObj> = TarObj extends (infer U)[]
   : never;
 
 // eslint-disable-next-line no-unused-vars
-type ColType = typeExtractor<QTableProps["columns"]>;
+type ColType = typeExtractor<QTableProps['columns']>;
 
 interface measureData {
   name: string;

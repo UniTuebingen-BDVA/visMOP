@@ -1,4 +1,4 @@
-import { Attributes } from "graphology-types";
+import { Attributes } from 'graphology-types';
 /**
  * Defines a set of edge attributes
  */

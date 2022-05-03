@@ -1,9 +1,9 @@
-import _ from "lodash";
-import * as d3 from "d3";
-import { defineStore } from "pinia";
-import { entry, graphData, networkxNodeLink } from "@/core/graphTypes";
-import { ColType, glyphData } from "@/core/generalTypes";
-import { reactomeEntry } from "@/core/reactomeTypes";
+import _ from 'lodash';
+import * as d3 from 'd3';
+import { defineStore } from 'pinia';
+import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
+import { ColType, glyphData } from '@/core/generalTypes';
+import { reactomeEntry } from '@/core/reactomeTypes';
 
 interface State {
   sideBarExpand: boolean;
@@ -94,11 +94,11 @@ interface State {
   };
 }
 
-export const useMainStore = defineStore("mainStore", {
+export const useMainStore = defineStore('mainStore', {
   state: (): State => ({
     sideBarExpand: true,
     overviewData: null,
-    targetDatabase: "reactome",
+    targetDatabase: 'reactome',
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
     transcriptomicsSymbolDict: {},
@@ -110,9 +110,9 @@ export const useMainStore = defineStore("mainStore", {
     proteomicsKeggIDDict: {},
     metabolomicsTableHeaders: [],
     metabolomicsTableData: [],
-    usedSymbolCols: { transcriptomics: "", proteomics: "", metabolomics: "" },
+    usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
     graphData: {
-      attributes: { name: "" },
+      attributes: { name: '' },
       nodes: [],
       edges: [],
       options: null,
@@ -131,13 +131,13 @@ export const useMainStore = defineStore("mainStore", {
     },
     interactionGraphData: null,
     pathwayLayouting: {
-      pathwayList: [{ text: "empty", value: "empty", title: "empty" }],
+      pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
       pathwayNodeDictionary: {},
       nodePathwayDictionary: {},
       pathwayNodeDictionaryClean: {},
       rootIds: [],
     },
-    pathwayDropdown: { title: "", value: "", text: "" },
+    pathwayDropdown: { title: '', value: '', text: '' },
     omicsRecieved: {
       transcriptomics: false,
       proteomics: false,
@@ -153,7 +153,7 @@ export const useMainStore = defineStore("mainStore", {
     addClickedNode(val: { queryID: string; name: string }) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       // TODO multiIDs will not work at the moment
-      const keggIDs = val.queryID.split(";");
+      const keggIDs = val.queryID.split(';');
       const enteredKeys = this.clickedNodes.map((row) => {
         return row.id;
       });
@@ -163,14 +163,14 @@ export const useMainStore = defineStore("mainStore", {
             this.appendClickedNode(val);
           }
         } catch (error) {
-          console.log("click nodes: ", error);
+          console.log('click nodes: ', error);
         }
       });
     },
     addClickedNodeFromTable(row: { [key: string]: string }) {
       console.log(row);
       let id = row[this.usedSymbolCols.proteomics];
-      if (this.targetDatabase === "kegg") {
+      if (this.targetDatabase === 'kegg') {
         id = this.proteomicsSymbolDict[id];
       }
       console.log(this.targetDatabase);
@@ -179,21 +179,21 @@ export const useMainStore = defineStore("mainStore", {
       });
       try {
         if (!enteredKeys.includes(id)) {
-          this.appendClickedNode({ queryID: id, name: "" });
+          this.appendClickedNode({ queryID: id, name: '' });
         }
       } catch (error) {
-        console.log("click nodes: ", error);
+        console.log('click nodes: ', error);
       }
     },
     appendClickedNode(val: { queryID: string; name: string }) {
       let tableEntry = {
-        id: "",
-        name: "",
+        id: '',
+        name: '',
         fcTranscript: -1,
         fcProt: -1,
         delete: val,
       };
-      if (this.targetDatabase === "kegg") {
+      if (this.targetDatabase === 'kegg') {
         const symbolProt = this.proteomicsKeggIDDict[val.queryID];
         const symbolTrans = this.transcriptomicsKeggIDDict[val.queryID];
         tableEntry = {
@@ -204,8 +204,8 @@ export const useMainStore = defineStore("mainStore", {
           delete: val,
         };
       }
-      if (this.targetDatabase === "reactome") {
-        console.log("test", this.fcsReactome);
+      if (this.targetDatabase === 'reactome') {
+        console.log('test', this.fcsReactome);
         tableEntry = {
           id: val.queryID,
           name: `${val.name}`,
@@ -218,19 +218,19 @@ export const useMainStore = defineStore("mainStore", {
     },
     queryEgoGraps(val: number) {
       let ids: string[] = [];
-      if (this.targetDatabase === "kegg") {
+      if (this.targetDatabase === 'kegg') {
         ids = this.clickedNodes.map((elem) => {
           return this.proteomicsKeggIDDict[elem.id];
         });
       }
-      if (this.targetDatabase === "reactome") {
+      if (this.targetDatabase === 'reactome') {
         ids = this.clickedNodes.map((elem) => {
           return elem.id;
         });
       }
-      fetch("/interaction_graph", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      fetch('/interaction_graph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nodes: ids, threshold: val }),
       })
         .then((response) => response.json())
@@ -239,14 +239,14 @@ export const useMainStore = defineStore("mainStore", {
         );
     },
     removeClickedNode(val: string) {
-      console.log("removedNode", val);
+      console.log('removedNode', val);
 
       const indexNode = this.clickedNodes
         .map((row) => {
           return row.id;
         })
         .indexOf(val);
-      console.log("removedNode", indexNode);
+      console.log('removedNode', indexNode);
       if (indexNode > -1) {
         this.clickedNodes.splice(indexNode, 1);
       }
@@ -305,7 +305,7 @@ export const useMainStore = defineStore("mainStore", {
       };
     }) {
       this.fcs = val;
-      console.log("fcs", val);
+      console.log('fcs', val);
       const fcsTranscriptomics: number[] = [];
       const fcsProteomics: number[] = [];
       const fcsMetabolomics: number[] = [];
@@ -316,13 +316,13 @@ export const useMainStore = defineStore("mainStore", {
           proteomics: string | number;
           metabolomics: string | number;
         } = val[key];
-        if (!(typeof entry.transcriptomics === "string")) {
+        if (!(typeof entry.transcriptomics === 'string')) {
           fcsTranscriptomics.push(entry.transcriptomics);
         }
-        if (!(typeof entry.proteomics === "string")) {
+        if (!(typeof entry.proteomics === 'string')) {
           fcsProteomics.push(entry.proteomics);
         }
-        if (!(typeof entry.metabolomics === "string")) {
+        if (!(typeof entry.metabolomics === 'string')) {
           fcsMetabolomics.push(entry.metabolomics);
         }
       }
@@ -393,7 +393,7 @@ export const useMainStore = defineStore("mainStore", {
       metabolomics: { [key: string]: number };
     }) {
       this.fcsReactome = val;
-      console.log("fcs", val);
+      console.log('fcs', val);
       const fcsTranscriptomicsAsc = Object.values(val.transcriptomics).sort(
         (a, b) => a - b
       );
@@ -403,7 +403,7 @@ export const useMainStore = defineStore("mainStore", {
       const fcsMetabolomicsAsc = Object.values(val.metabolomics).sort(
         (a, b) => a - b
       );
-      console.log("metafc", fcsMetabolomicsAsc);
+      console.log('metafc', fcsMetabolomicsAsc);
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
         const pos = (arr.length - 1) * q;
@@ -469,9 +469,9 @@ export const useMainStore = defineStore("mainStore", {
       const pathwayNodeDictClean: { [key: string]: string[] } = {};
       Object.keys(val.pathwayNodeDictionary).forEach((pathwayID) => {
         val.pathwayNodeDictionary[pathwayID].forEach((nodeIDstr) => {
-          const nodeIDs = nodeIDstr.split(";");
+          const nodeIDs = nodeIDstr.split(';');
           nodeIDs.forEach((nodeID) => {
-            const nodeIDreplace = nodeID.replace("cpd:", "").replace("gl:", "");
+            const nodeIDreplace = nodeID.replace('cpd:', '').replace('gl:', '');
             // for nodePathwayDict
             if (Object.keys(nodePathwayDict).includes(nodeIDreplace)) {
               nodePathwayDict[nodeIDreplace].push(pathwayID);
@@ -498,7 +498,7 @@ export const useMainStore = defineStore("mainStore", {
       pathwayList: [{ text: string; value: string; title: string }];
       pathwayNodeDictionary: { [key: string]: string[] };
     }) {
-      console.log("TESTEST", val.pathwayNodeDictionary);
+      console.log('TESTEST', val.pathwayNodeDictionary);
       this.pathwayLayouting = {
         ...val,
         nodePathwayDictionary: val.pathwayNodeDictionary,
@@ -507,7 +507,7 @@ export const useMainStore = defineStore("mainStore", {
       };
     },
     focusPathwayViaOverview(val: string) {
-      const valClean = val.replace("path:", "");
+      const valClean = val.replace('path:', '');
       this.pathwayDropdown = {
         title: valClean,
         value: valClean,
@@ -523,7 +523,7 @@ export const useMainStore = defineStore("mainStore", {
     },
     selectPathwayCompare(val: string[]) {
       val.forEach((element) => {
-        const valClean = element.replace("path:", "");
+        const valClean = element.replace('path:', '');
         if (!this.pathwayCompare.includes(valClean))
           this.pathwayCompare.unshift(valClean);
       });

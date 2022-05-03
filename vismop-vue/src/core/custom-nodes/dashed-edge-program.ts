@@ -20,13 +20,13 @@
  * the CPU & GPU (normals are computed on the CPU side).
  * @module
  */
-import { floatColor, canUse32BitsIndices } from "sigma/utils";
-import { NodeDisplayData } from "sigma/types";
-import { ColorfadeEdgeDisplayData } from "./types";
-import vertexShaderSource from "./dashed-edge-vertex-shader.glsl?raw";
-import fragmentShaderSource from "./dashed-edge-fragment-shader.glsl?raw";
-import { AbstractEdgeProgram } from "sigma/rendering/webgl/programs/common/edge";
-import { RenderParams } from "sigma/rendering/webgl/programs/common/program";
+import { floatColor, canUse32BitsIndices } from 'sigma/utils';
+import { NodeDisplayData } from 'sigma/types';
+import { ColorfadeEdgeDisplayData } from './types';
+import vertexShaderSource from './dashed-edge-vertex-shader.glsl?raw';
+import fragmentShaderSource from './dashed-edge-fragment-shader.glsl?raw';
+import { AbstractEdgeProgram } from 'sigma/rendering/webgl/programs/common/edge';
+import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
 
 const POINTS = 4;
 const ATTRIBUTES = 5;
@@ -54,60 +54,60 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     // Initializing indices buffer
     const indicesBuffer = gl.createBuffer();
     if (indicesBuffer === null)
-      throw new Error("EdgeProgram: error while creating indicesBuffer");
+      throw new Error('EdgeProgram: error while creating indicesBuffer');
     this.indicesBuffer = indicesBuffer;
 
     // Locations
-    this.positionLocation = gl.getAttribLocation(this.program, "a_position");
-    this.colorLocation = gl.getAttribLocation(this.program, "a_color");
-    this.normalLocation = gl.getAttribLocation(this.program, "a_normal");
+    this.positionLocation = gl.getAttribLocation(this.program, 'a_position');
+    this.colorLocation = gl.getAttribLocation(this.program, 'a_color');
+    this.normalLocation = gl.getAttribLocation(this.program, 'a_normal');
 
-    const matrixLocation = gl.getUniformLocation(this.program, "u_matrix");
+    const matrixLocation = gl.getUniformLocation(this.program, 'u_matrix');
     if (matrixLocation === null)
-      throw new Error("EdgeProgram: error while getting matrixLocation");
+      throw new Error('EdgeProgram: error while getting matrixLocation');
     this.matrixLocation = matrixLocation;
 
     const correctionRatioLocation = gl.getUniformLocation(
       this.program,
-      "u_correctionRatio"
+      'u_correctionRatio'
     );
     if (correctionRatioLocation === null)
       throw new Error(
-        "EdgeProgram: error while getting correctionRatioLocation"
+        'EdgeProgram: error while getting correctionRatioLocation'
       );
     this.correctionRatioLocation = correctionRatioLocation;
 
     const sqrtZoomRatioLocation = gl.getUniformLocation(
       this.program,
-      "u_sqrtZoomRatio"
+      'u_sqrtZoomRatio'
     );
     if (sqrtZoomRatioLocation === null)
-      throw new Error("EdgeProgram: error while getting sqrtZoomRatioLocation");
+      throw new Error('EdgeProgram: error while getting sqrtZoomRatioLocation');
     this.sqrtZoomRatioLocation = sqrtZoomRatioLocation;
 
     const dashLengthLocation = gl.getUniformLocation(
       this.program,
-      "u_dashLength"
+      'u_dashLength'
     );
     if (dashLengthLocation === null)
-      throw new Error("EdgeProgram: error while getting dashLengthLocation");
+      throw new Error('EdgeProgram: error while getting dashLengthLocation');
     this.dashLengthLocation = dashLengthLocation;
 
     const gapLengthLocation = gl.getUniformLocation(
       this.program,
-      "u_gapLength"
+      'u_gapLength'
     );
     if (gapLengthLocation === null)
-      throw new Error("EdgeProgram: error while getting gapLengthLocation");
+      throw new Error('EdgeProgram: error while getting gapLengthLocation');
     this.gapLengthLocation = gapLengthLocation;
 
     const viewportResolutionLocation = gl.getUniformLocation(
       this.program,
-      "u_viewportResolution"
+      'u_viewportResolution'
     );
     if (viewportResolutionLocation === null) {
       throw new Error(
-        "EdgeProgram: error while getting viewportResolutionLocation"
+        'EdgeProgram: error while getting viewportResolutionLocation'
       );
     }
     this.viewportResolutionLocation = viewportResolutionLocation;

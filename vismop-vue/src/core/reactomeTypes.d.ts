@@ -4,7 +4,7 @@
 Basic Types
 */
 
-import { glyphData } from "../core/generalTypes";
+import { glyphData } from '../core/generalTypes';
 
 interface form {
   name: string;
@@ -32,6 +32,16 @@ interface reactomeEntry {
   pathwayName: string;
   maplinks: { [key: string]: { own_id: number; toplevel_id: number } };
   subtreeIds: string[];
+  ownMeasuredEntryIDs: {
+    proteomics: string[];
+    transcriptomics: string[];
+    metabolomics: string[];
+  };
+  insetPathwayEntryIDs: {
+    proteomics: { [key: number]: { stableID: string; nodes: string[] } };
+    transcriptomics: { [key: number]: { stableID: string; nodes: string[] } };
+    metabolomics: { [key: number]: { stableID: string; nodes: string[] } };
+  };
 }
 
 interface graphNode {

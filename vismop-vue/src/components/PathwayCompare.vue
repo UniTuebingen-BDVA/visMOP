@@ -41,13 +41,13 @@
                 <td>Transcriptomics:</td>
                 <td>
                   {{
-                    glyphData[pathway]["transcriptomics"]["nodeState"][
-                      "regulated"
+                    glyphData[pathway]['transcriptomics']['nodeState'][
+                      'regulated'
                     ]
                   }}
                   of
                   {{
-                    glyphData[pathway]["transcriptomics"]["nodeState"]["total"]
+                    glyphData[pathway]['transcriptomics']['nodeState']['total']
                   }}
                 </td>
               </tr>
@@ -55,8 +55,8 @@
                 <td>Avg. FC:</td>
                 <td>
                   {{
-                    glyphData[pathway]["transcriptomics"][
-                      "meanFoldchange"
+                    glyphData[pathway]['transcriptomics'][
+                      'meanFoldchange'
                     ].toFixed(3)
                   }}
                 </td>
@@ -66,17 +66,17 @@
                 <td>Proteomics:</td>
                 <td>
                   {{
-                    glyphData[pathway]["proteomics"]["nodeState"]["regulated"]
+                    glyphData[pathway]['proteomics']['nodeState']['regulated']
                   }}
                   of
-                  {{ glyphData[pathway]["proteomics"]["nodeState"]["total"] }}
+                  {{ glyphData[pathway]['proteomics']['nodeState']['total'] }}
                 </td>
               </tr>
               <tr>
                 <td>Avg. FC:</td>
                 <td>
                   {{
-                    glyphData[pathway]["proteomics"]["meanFoldchange"].toFixed(
+                    glyphData[pathway]['proteomics']['meanFoldchange'].toFixed(
                       3
                     )
                   }}
@@ -87,18 +87,18 @@
                 <td>Metabolomics:</td>
                 <td>
                   {{
-                    glyphData[pathway]["metabolomics"]["nodeState"]["regulated"]
+                    glyphData[pathway]['metabolomics']['nodeState']['regulated']
                   }}
                   of
-                  {{ glyphData[pathway]["metabolomics"]["nodeState"]["total"] }}
+                  {{ glyphData[pathway]['metabolomics']['nodeState']['total'] }}
                 </td>
               </tr>
               <tr>
                 <td>Avg. FC:</td>
                 <td>
                   {{
-                    glyphData[pathway]["metabolomics"][
-                      "meanFoldchange"
+                    glyphData[pathway]['metabolomics'][
+                      'meanFoldchange'
                     ].toFixed(3)
                   }}
                 </td>
@@ -112,9 +112,9 @@
 </template>
 
 <script setup lang="ts">
-import * as d3 from "d3";
-import { useMainStore } from "@/stores";
-import { computed, nextTick } from "vue";
+import * as d3 from 'd3';
+import { useMainStore } from '@/stores';
+import { computed, nextTick } from 'vue';
 
 const mainStore = useMainStore();
 

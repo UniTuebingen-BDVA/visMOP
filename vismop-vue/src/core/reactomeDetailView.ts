@@ -1,5 +1,5 @@
-import { useMainStore } from "@/stores";
-import * as d3 from "d3";
+import { useMainStore } from '@/stores';
+import * as d3 from 'd3';
 import {
   foldChangesByID,
   foldChangesByType,
@@ -10,54 +10,59 @@ import {
   segment,
   reactomeNode,
   graphJSON,
-} from "../core/reactomeTypes";
-import { generateGlyphVariation } from "../core/overviewGlyph";
+} from '../core/reactomeTypes';
+import { generateGlyphVariation } from '../core/overviewGlyph';
 
-const colorsAlternative: { [key: string]: string } = {
+const _colorsAlternative: { [key: string]: string } = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
-  Chemical: "#A5D791",
-  ChemicalDrug: "#B89AE6",
-  compartment: "rgba(235, 178, 121, 0.5)",
-  compartmentEdge: "rgb(235, 178, 121)",
-  Complex: "#ABD1E3",
-  Entity: "#A5D791",
-  EntitySet: "#A0BBCD",
-  Gene: "#F3D1AF",
-  ProcessNode: "#A5D791",
-  EncapsulatedNode: "#A5D791",
-  Protein: "#8DC7BB",
-  RNA: "#A5D791",
-  ComplexDrug: "#FFFFFF",
-  EntitySetDrug: "#FFFFFF",
+  Chemical: '#A5D791',
+  ChemicalDrug: '#B89AE6',
+  compartment: 'rgba(235, 178, 121, 0.5)',
+  compartmentEdge: 'rgb(235, 178, 121)',
+  Complex: '#ABD1E3',
+  Entity: '#A5D791',
+  EntitySet: '#A0BBCD',
+  Gene: '#F3D1AF',
+  ProcessNode: '#A5D791',
+  EncapsulatedNode: '#A5D791',
+  Protein: '#8DC7BB',
+  RNA: '#A5D791',
+  ComplexDrug: '#FFFFFF',
+  EntitySetDrug: '#FFFFFF',
 };
 // main color table containing grays for most nodes to indicated the unavailibility of the corresponding elements in the suppliet dataset
 const colors: { [key: string]: string } = {
-  Chemical: "#999999",
-  ChemicalDrug: "#999999",
-  compartment: "rgba(180, 180, 180, 0.5)",
-  compartmentEdge: "rgb(180, 180, 180)",
-  Complex: "#999999",
-  Entity: "#999999",
-  EntitySet: "#999999",
-  Gene: "#999999",
-  ProcessNode: "#999999",
-  EncapsulatedNode: "#999999",
-  Protein: "#999999",
-  RNA: "#999999",
-  ComplexDrug: "#999999",
-  EntitySetDrug: "#999999",
+  Chemical: '#999999',
+  ChemicalDrug: '#999999',
+  compartment: 'rgba(180, 180, 180, 0.5)',
+  compartmentEdge: 'rgb(180, 180, 180)',
+  Complex: '#999999',
+  Entity: '#999999',
+  EntitySet: '#999999',
+  Gene: '#999999',
+  ProcessNode: '#999999',
+  EncapsulatedNode: '#999999',
+  Protein: '#999999',
+  RNA: '#999999',
+  ComplexDrug: '#999999',
+  EntitySetDrug: '#999999',
 };
-const lineColor = "#333333";
-const fontSize = "10px";
-const compartmentFontSize = "16px";
+const lineColor = '#333333';
+const fontSize = '10px';
+const compartmentFontSize = '16px';
 
 export default class ReactomeDetailView {
-  private mainSVG: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
-  private mainChartArea: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private comparmentG: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private nodesG: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private linesG: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-  private tooltipG: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+  private mainSVG: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown>;
+  private mainChartArea: d3.Selection<
+    SVGGElement,
+    unknown,
+    HTMLElement,
+    unknown
+  >;
+  private comparmentG: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
+  private nodesG: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
+  private linesG: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
+  private tooltipG: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
   private layoutData: layoutJSON;
   private graphData: graphJSON;
   private containerID: string;
@@ -92,20 +97,20 @@ export default class ReactomeDetailView {
     const height = box?.height as number;
     this.mainSVG = d3
       .select(containerID)
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("viewBox", [0, 0, this.layoutData.maxX, this.layoutData.maxY]);
-    this.mainChartArea = this.mainSVG.append("g");
-    this.comparmentG = this.mainChartArea.append("g");
-    this.linesG = this.mainChartArea.append("g");
-    this.nodesG = this.mainChartArea.append("g");
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', [0, 0, this.layoutData.maxX, this.layoutData.maxY]);
+    this.mainChartArea = this.mainSVG.append('g');
+    this.comparmentG = this.mainChartArea.append('g');
+    this.linesG = this.mainChartArea.append('g');
+    this.nodesG = this.mainChartArea.append('g');
     this.tooltipG = this.mainChartArea
-      .append("g")
-      .attr("id", "tooltipG")
-      .on("click", (event, d) => {
-        d3.select("#tooltipG").selectAll("svg").remove();
-        d3.select("#tooltipG").selectAll("circle").remove();
+      .append('g')
+      .attr('id', 'tooltipG')
+      .on('click', (_event, _d) => {
+        d3.select('#tooltipG').selectAll('svg').remove();
+        d3.select('#tooltipG').selectAll('circle').remove();
       });
 
     // order of drawing corresponds to ordering of elements
@@ -120,9 +125,9 @@ export default class ReactomeDetailView {
     this.drawReactionNodes();
     this.drawEndShapes();
     this.drawLinks();
-    const zoom = d3.zoom<SVGSVGElement, unknown>().on("zoom", (event) => {
+    const zoom = d3.zoom<SVGSVGElement, unknown>().on('zoom', (event) => {
       const { transform } = event;
-      this.mainChartArea.attr("transform", transform);
+      this.mainChartArea.attr('transform', transform);
     });
     this.mainSVG.call(zoom);
   }
@@ -138,46 +143,46 @@ export default class ReactomeDetailView {
       .selectAll()
       .data(this.layoutData.compartments)
       .enter()
-      .append("rect")
-      .attr("id", function (d, i) {
-        return "compartment" + i;
+      .append('rect')
+      .attr('id', function (d, i) {
+        return 'compartment' + i;
       })
-      .attr("x", (d) => d.prop.x)
-      .attr("y", (d) => d.prop.y)
-      .attr("width", (d) => d.prop.width)
-      .attr("height", (d) => d.prop.height)
-      .attr("stroke-width", 6)
-      .attr("stroke", colors.compartmentEdge)
-      .attr("fill", colors.compartment);
+      .attr('x', (d) => d.prop.x)
+      .attr('y', (d) => d.prop.y)
+      .attr('width', (d) => d.prop.width)
+      .attr('height', (d) => d.prop.height)
+      .attr('stroke-width', 6)
+      .attr('stroke', colors.compartmentEdge)
+      .attr('fill', colors.compartment);
 
     const entriesWithInsets = this.layoutData.compartments.filter((d) => {
-      return "insets" in d;
+      return 'insets' in d;
     });
     this.comparmentG
       .selectAll()
       .data(entriesWithInsets)
       .enter()
-      .append("rect")
-      .attr("id", function (d, i) {
-        return "compartment_inset" + i;
+      .append('rect')
+      .attr('id', function (d, i) {
+        return 'compartment_inset' + i;
       })
-      .attr("x", (d) => d.insets.x)
-      .attr("y", (d) => d.insets.y)
-      .attr("width", (d) => d.insets.width)
-      .attr("height", (d) => d.insets.height)
-      .attr("stroke-width", 6)
-      .attr("stroke", colors.compartmentEdge)
-      .attr("fill", "none");
+      .attr('x', (d) => d.insets.x)
+      .attr('y', (d) => d.insets.y)
+      .attr('width', (d) => d.insets.width)
+      .attr('height', (d) => d.insets.height)
+      .attr('stroke-width', 6)
+      .attr('stroke', colors.compartmentEdge)
+      .attr('fill', 'none');
     this.comparmentG
       .selectAll()
       .data(this.layoutData.compartments)
       .enter()
-      .append("text")
-      .attr("x", (d) => d.textPosition.x)
-      .attr("y", (d) => d.textPosition.y)
-      .attr("dy", "1em")
-      .style("font-size", compartmentFontSize)
-      .style("font-weight", "bold")
+      .append('text')
+      .attr('x', (d) => d.textPosition.x)
+      .attr('y', (d) => d.textPosition.y)
+      .attr('dy', '1em')
+      .style('font-size', compartmentFontSize)
+      .style('font-weight', 'bold')
       .text((d) => d.displayName);
   }
 
@@ -186,17 +191,17 @@ export default class ReactomeDetailView {
    */
   private drawSegments() {
     const filteredData = this.layoutData.edges.filter((d) => {
-      return "segments" in d;
+      return 'segments' in d;
     });
     this.linesG
-      .append("g")
-      .selectAll("path")
+      .append('g')
+      .selectAll('path')
       .data(filteredData)
       .enter()
-      .append("path")
-      .attr("d", (d) => this.makeEdgePath(d))
-      .attr("stroke", lineColor)
-      .attr("fill", "none");
+      .append('path')
+      .attr('d', (d) => this.makeEdgePath(d))
+      .attr('stroke', lineColor)
+      .attr('fill', 'none');
   }
 
   /**
@@ -204,57 +209,57 @@ export default class ReactomeDetailView {
    * to different acitons of the given connection, e.g. activation, inhibiton
    */
   private drawConnectors() {
-    const connectorsLineG = this.linesG.append("g");
-    const connectorsShapeG = this.nodesG.append("g");
+    const connectorsLineG = this.linesG.append('g');
+    const connectorsShapeG = this.nodesG.append('g');
 
     const connectors: connector[] = [];
     for (const node of this.layoutData.nodes) {
-      if ("connectors" in node) {
+      if ('connectors' in node) {
         for (const connector of node.connectors) {
           connectors.push(connector);
         }
       }
     }
     connectorsLineG
-      .selectAll("path")
+      .selectAll('path')
       .data(connectors)
       .enter()
-      .append("path")
-      .attr("d", (d) => this.segmentsToPath(d.segments))
-      .attr("stroke", lineColor)
-      .attr("fill", "none");
+      .append('path')
+      .attr('d', (d) => this.segmentsToPath(d.segments))
+      .attr('stroke', lineColor)
+      .attr('fill', 'none');
 
     const connectorsWithEndShape = connectors.filter((d) => {
-      return "endShape" in d;
+      return 'endShape' in d;
     });
     connectorsShapeG
-      .selectAll("path")
+      .selectAll('path')
       .data(connectorsWithEndShape)
       .enter()
-      .append("path")
-      .attr("d", (d) => this.drawDecorators(d.endShape))
-      .attr("stroke", lineColor)
-      .attr("fill", (d) => (d.endShape.empty ? "white" : lineColor));
+      .append('path')
+      .attr('d', (d) => this.drawDecorators(d.endShape))
+      .attr('stroke', lineColor)
+      .attr('fill', (d) => (d.endShape.empty ? 'white' : lineColor));
   }
 
   /**
    * Draw links, which are connecting lines indicating distant nodes or related processes
    */
   private drawLinks() {
-    if ("links" in this.layoutData) {
+    if ('links' in this.layoutData) {
       this.linesG
         .selectAll()
         .data(this.layoutData.links)
         .enter()
-        .append("path")
-        .attr("id", (d, i) => "test" + i)
-        .attr("d", (d) => this.segmentsToPath(d.segments))
-        .attr("stroke", lineColor)
-        .attr("fill", "none")
-        .attr("stroke-dasharray", (d) =>
-          d.renderableClass === "EntitySetAndMemberLink" ||
-          d.renderableClass === "EntitySetAndEntitySetLink"
-            ? "4 2"
+        .append('path')
+        .attr('id', (d, i) => 'test' + i)
+        .attr('d', (d) => this.segmentsToPath(d.segments))
+        .attr('stroke', lineColor)
+        .attr('fill', 'none')
+        .attr('stroke-dasharray', (d) =>
+          d.renderableClass === 'EntitySetAndMemberLink' ||
+          d.renderableClass === 'EntitySetAndEntitySetLink'
+            ? '4 2'
             : null
         );
       /*
@@ -272,17 +277,17 @@ export default class ReactomeDetailView {
         .attr('fill', d => d.reactionShape.empty ? 'white' : lineColor)
       */
       const entriesWithEndShape = this.layoutData.links.filter((d) => {
-        return "endShape" in d;
+        return 'endShape' in d;
       });
       this.nodesG
-        .append("g")
-        .selectAll("path")
+        .append('g')
+        .selectAll('path')
         .data(entriesWithEndShape)
         .enter()
-        .append("path")
-        .attr("d", (d) => this.drawDecorators(d.endShape))
-        .attr("stroke", lineColor)
-        .attr("fill", (d) => (d.reactionShape.empty ? "white" : lineColor));
+        .append('path')
+        .attr('d', (d) => this.drawDecorators(d.endShape))
+        .attr('stroke', lineColor)
+        .attr('fill', (d) => (d.reactionShape.empty ? 'white' : lineColor));
     }
   }
 
@@ -291,17 +296,17 @@ export default class ReactomeDetailView {
    */
   private drawReactionNodes() {
     const entriesWithReactionShape = this.layoutData.edges.filter((d) => {
-      return "reactionShape" in d;
+      return 'reactionShape' in d;
     });
     this.nodesG
-      .append("g")
-      .selectAll("path")
+      .append('g')
+      .selectAll('path')
       .data(entriesWithReactionShape)
       .enter()
-      .append("path")
-      .attr("d", (d) => this.drawDecorators(d.reactionShape))
-      .attr("stroke", lineColor)
-      .attr("fill", (d) => (d.reactionShape.empty ? "white" : lineColor));
+      .append('path')
+      .attr('d', (d) => this.drawDecorators(d.reactionShape))
+      .attr('stroke', lineColor)
+      .attr('fill', (d) => (d.reactionShape.empty ? 'white' : lineColor));
   }
 
   /**
@@ -309,17 +314,17 @@ export default class ReactomeDetailView {
    */
   private drawEndShapes() {
     const entriesWithEndShape = this.layoutData.edges.filter((d) => {
-      return "endShape" in d;
+      return 'endShape' in d;
     });
     this.nodesG
-      .append("g")
-      .selectAll("path")
+      .append('g')
+      .selectAll('path')
       .data(entriesWithEndShape)
       .enter()
-      .append("path")
-      .attr("d", (d) => this.drawDecorators(d.endShape))
-      .attr("stroke", lineColor)
-      .attr("fill", (d) => (d.endShape.empty ? "white" : lineColor));
+      .append('path')
+      .attr('d', (d) => this.drawDecorators(d.endShape))
+      .attr('stroke', lineColor)
+      .attr('fill', (d) => (d.endShape.empty ? 'white' : lineColor));
   }
 
   /**
@@ -328,14 +333,14 @@ export default class ReactomeDetailView {
    * @returns string, a svg path string
    */
   private drawDecorators(shape: shape): string {
-    let outString = "";
-    if (shape.type === "BOX") {
+    let outString = '';
+    if (shape.type === 'BOX') {
       outString += `M${shape.a.x},${shape.a.y}L${shape.b.x},${shape.a.y}L${shape.b.x},${shape.b.y}L${shape.a.x},${shape.b.y}z`;
     }
-    if (shape.type === "ARROW") {
+    if (shape.type === 'ARROW') {
       outString += `M${shape.a.x},${shape.a.y}L${shape.b.x},${shape.b.y}L${shape.c.x},${shape.c.y}z`;
     }
-    if (shape.type === "CIRCLE") {
+    if (shape.type === 'CIRCLE') {
       outString += `M${shape.c.x + shape.r},${shape.c.y}`;
       outString += `A${shape.r},${shape.r},0,0,1,${shape.c.x},${
         shape.c.y + shape.r
@@ -350,10 +355,10 @@ export default class ReactomeDetailView {
         shape.c.y
       }z`;
     }
-    if (shape.type === "STOP") {
+    if (shape.type === 'STOP') {
       outString += `M${shape.a.x},${shape.a.y}L${shape.b.x},${shape.b.y}`;
     }
-    if (shape.type === "DOUBLE CIRCLE") {
+    if (shape.type === 'DOUBLE CIRCLE') {
       outString += `M${shape.c.x + shape.r},${shape.c.y}`;
       outString += `A${shape.r},${shape.r},0,0,1,${shape.c.x},${
         shape.c.y + shape.r
@@ -393,28 +398,28 @@ export default class ReactomeDetailView {
   private drawNodes() {
     const chemicals = this.layoutData.nodes.filter((d) => {
       return (
-        d.renderableClass === "Chemical" || d.renderableClass === "ChemicalDrug"
+        d.renderableClass === 'Chemical' || d.renderableClass === 'ChemicalDrug'
       );
     });
     const complexes = this.layoutData.nodes.filter((d) => {
-      return d.renderableClass === "Complex";
+      return d.renderableClass === 'Complex';
     });
     const proteins = this.layoutData.nodes.filter((d) => {
-      return d.renderableClass === "Protein";
+      return d.renderableClass === 'Protein';
     });
     const processNode = this.layoutData.nodes.filter((d) => {
-      return d.renderableClass === "ProcessNode";
+      return d.renderableClass === 'ProcessNode';
     });
     const entitySet = this.layoutData.nodes.filter((d) => {
-      return d.renderableClass === "EntitySet";
+      return d.renderableClass === 'EntitySet';
     });
     const nonChemicals = this.layoutData.nodes.filter((d) => {
       return (
-        d.renderableClass !== "Chemical" &&
-        d.renderableClass !== "Complex" &&
-        d.renderableClass !== "Protein" &&
-        d.renderableClass !== "ProcessNode" &&
-        d.renderableClass !== "EntitySet"
+        d.renderableClass !== 'Chemical' &&
+        d.renderableClass !== 'Complex' &&
+        d.renderableClass !== 'Protein' &&
+        d.renderableClass !== 'ProcessNode' &&
+        d.renderableClass !== 'EntitySet'
       );
     });
 
@@ -433,12 +438,12 @@ export default class ReactomeDetailView {
    * @param {reactomeNode[]} data reactomeNode array containing all the nodes to be drawn
    */
   private drawRect(data: reactomeNode[]) {
-    const nodeG = this.nodesG.append("g").selectAll().data(data);
+    const nodeG = this.nodesG.append('g').selectAll().data(data);
     const enterG = nodeG
       .enter()
-      .append("g")
-      .attr("class", " nodeG")
-      .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
+      .append('g')
+      .attr('class', ' nodeG')
+      .attr('transform', (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
 
     for (const node of data) {
@@ -454,31 +459,31 @@ export default class ReactomeDetailView {
     }
 
     enterG
-      .append("rect")
-      .attr("id", function (d, i) {
-        return "" + d.renderableClass + i;
+      .append('rect')
+      .attr('id', function (d, i) {
+        return '' + d.renderableClass + i;
       })
-      .attr("x", (d) => -d.prop.width / 2)
-      .attr("y", (d) => -d.prop.height / 2)
-      .attr("width", (d) => d.prop.width)
-      .attr("height", (d) => d.prop.height)
-      .attr("stroke-width", 1)
-      .attr("stroke", lineColor)
-      .attr("fill", (d) => colors[d.renderableClass]);
+      .attr('x', (d) => -d.prop.width / 2)
+      .attr('y', (d) => -d.prop.height / 2)
+      .attr('width', (d) => d.prop.width)
+      .attr('height', (d) => d.prop.height)
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', (d) => colors[d.renderableClass]);
     enterG
-      .append("text")
-      .attr("class", "nodeText")
-      .append("tspan")
-      .attr("width", (d) => d.prop.width * 0.9)
-      .style("text-anchor", "middle")
-      .style("alignment-baseline", "middle")
-      .style("font-size", fontSize)
-      .selectAll("tspan")
+      .append('text')
+      .attr('class', 'nodeText')
+      .append('tspan')
+      .attr('width', (d) => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
       .data((d, i) => textLines[i])
       .enter()
-      .append("tspan")
-      .attr("x", 0)
-      .attr("y", (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text((d) => d.text);
   }
 
@@ -490,13 +495,15 @@ export default class ReactomeDetailView {
    * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
    */
   private drawProtein(data: reactomeNode[]) {
-    const nodeG = this.nodesG.append("g").selectAll().data(data);
+    const nodeG = this.nodesG.append('g').selectAll().data(data);
     const enterG = nodeG
       .enter()
-      .append("g")
-      .attr("class", " nodeG")
-      .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
+      .append('g')
+      .attr('class', ' nodeG')
+      .attr('transform', (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
     for (const node of data) {
@@ -512,54 +519,54 @@ export default class ReactomeDetailView {
     }
 
     enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "protein" + i;
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'protein' + i;
       })
-      .attr("d", (d) => this.proteinPath(d, "left"))
-      .attr("fill", (d) =>
+      .attr('d', (d) => this.proteinPath(d, 'left'))
+      .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.transcriptomics
           ? this.colorScaleTranscriptomics(
               this.foldChanges.transcriptomics[d.reactomeId]
             )
           : colors[d.renderableClass]
       )
-      .append("title")
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.transcriptomics
-          ? "Transcriptomics:" + this.foldChanges.transcriptomics[d.reactomeId]
-          : ""
+          ? 'Transcriptomics:' + this.foldChanges.transcriptomics[d.reactomeId]
+          : ''
       );
 
     enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "protein" + i;
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'protein' + i;
       })
-      .attr("d", (d) => this.proteinPath(d, "right"))
-      .attr("fill", (d) =>
+      .attr('d', (d) => this.proteinPath(d, 'right'))
+      .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.proteomics
           ? this.colorScaleProteomics(this.foldChanges.proteomics[d.reactomeId])
           : colors[d.renderableClass]
       )
-      .append("title")
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.proteomics
-          ? "Proteomics:" + this.foldChanges.proteomics[d.reactomeId]
-          : ""
+          ? 'Proteomics:' + this.foldChanges.proteomics[d.reactomeId]
+          : ''
       );
 
     enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "protein" + i;
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'protein' + i;
       })
-      .attr("d", (d) => this.proteinPath(d, "full"))
-      .attr("stroke-width", 1)
-      .attr("stroke", lineColor)
-      .attr("fill", "none");
+      .attr('d', (d) => this.proteinPath(d, 'full'))
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', 'none');
 
-    enterG.on("click", (event, d) => {
+    enterG.on('click', (event, d) => {
       const mainStore = useMainStore();
       // maybe save uniprot id when drawing?
       const uniprotID = self.graphData.nodes[d.reactomeId].identifier;
@@ -567,19 +574,19 @@ export default class ReactomeDetailView {
     });
 
     enterG
-      .append("text")
-      .attr("class", "nodeText")
-      .append("tspan")
-      .attr("width", (d) => d.prop.width * 0.9)
-      .style("text-anchor", "middle")
-      .style("alignment-baseline", "middle")
-      .style("font-size", fontSize)
-      .selectAll("tspan")
+      .append('text')
+      .attr('class', 'nodeText')
+      .append('tspan')
+      .attr('width', (d) => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
       .data((d, i) => textLines[i])
       .enter()
-      .append("tspan")
-      .attr("x", 0)
-      .attr("y", (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text((d) => d.text);
   }
 
@@ -593,14 +600,16 @@ export default class ReactomeDetailView {
    * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
    */
   private drawComplex(data: reactomeNode[]) {
-    const nodeG = this.nodesG.append("g").selectAll().data(data);
+    const nodeG = this.nodesG.append('g').selectAll().data(data);
     const enterG = nodeG
       .enter()
-      .append("g")
-      .attr("class", " nodeG")
-      .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
+      .append('g')
+      .attr('class', ' nodeG')
+      .attr('transform', (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
     const size = 100;
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     for (const node of data) {
       textLines.push(
@@ -614,61 +623,61 @@ export default class ReactomeDetailView {
       }
     }
     enterG
-      .append("path")
-      .attr("d", (d) => this.complexPath(d, "left"))
-      .attr("fill", (d) => this.complexColor(d.reactomeId, "transcriptomics"))
-      .append("title")
+      .append('path')
+      .attr('d', (d) => this.complexPath(d, 'left'))
+      .attr('fill', (d) => this.complexColor(d.reactomeId, 'transcriptomics'))
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.transcriptomics
-          ? "Transcriptomics:" + this.foldChanges.transcriptomics[d.reactomeId]
-          : ""
+          ? 'Transcriptomics:' + this.foldChanges.transcriptomics[d.reactomeId]
+          : ''
       );
 
     enterG
-      .append("path")
-      .attr("d", (d) => this.complexPath(d, "center"))
-      .attr("fill", (d) => this.complexColor(d.reactomeId, "proteomics"))
-      .append("title")
+      .append('path')
+      .attr('d', (d) => this.complexPath(d, 'center'))
+      .attr('fill', (d) => this.complexColor(d.reactomeId, 'proteomics'))
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.proteomics
-          ? "Proteomics:" + this.foldChanges.proteomics[d.reactomeId]
-          : ""
+          ? 'Proteomics:' + this.foldChanges.proteomics[d.reactomeId]
+          : ''
       );
 
     enterG
-      .append("path")
-      .attr("d", (d) => this.complexPath(d, "right"))
-      .attr("fill", (d) => this.complexColor(d.reactomeId, "metabolomics"))
-      .append("title")
+      .append('path')
+      .attr('d', (d) => this.complexPath(d, 'right'))
+      .attr('fill', (d) => this.complexColor(d.reactomeId, 'metabolomics'))
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.metabolomics
-          ? "Metabolomics:" + this.foldChanges.metabolomics[d.reactomeId]
-          : ""
+          ? 'Metabolomics:' + this.foldChanges.metabolomics[d.reactomeId]
+          : ''
       );
 
-    const complex = enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "node" + i;
+    const _complex = enterG
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'node' + i;
       })
-      .attr("d", (d) => this.complexPath(d, "full"))
-      .attr("stroke-width", 1)
-      .attr("stroke", lineColor)
-      .attr("fill", "none");
+      .attr('d', (d) => this.complexPath(d, 'full'))
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', 'none');
 
-    enterG.on("click", (event, d) => {
-      self.tooltipG.selectAll("svg").remove();
-      self.tooltipG.selectAll("circle").remove();
+    enterG.on('click', (event, d) => {
+      self.tooltipG.selectAll('svg').remove();
+      self.tooltipG.selectAll('circle').remove();
       self.tooltipG.attr(
-        "transform",
+        'transform',
         `translate(${d.position.x - size},${d.position.y - size})`
       );
       self.tooltipG
-        .append("circle")
-        .attr("r", size)
-        .attr("cx", size)
-        .attr("cy", size)
-        .attr("fill", "white");
+        .append('circle')
+        .attr('r', size)
+        .attr('cx', size)
+        .attr('cy', size)
+        .attr('fill', 'white');
       self.tooltipG.append(() =>
         generateGlyphVariation(
           self.foldChangeReactome[d.reactomeId],
@@ -679,19 +688,19 @@ export default class ReactomeDetailView {
       );
     });
     enterG
-      .append("text")
-      .attr("class", "nodeText")
-      .append("tspan")
-      .attr("width", (d) => d.prop.width * 0.9)
-      .style("text-anchor", "middle")
-      .style("alignment-baseline", "middle")
-      .style("font-size", fontSize)
-      .selectAll("tspan")
+      .append('text')
+      .attr('class', 'nodeText')
+      .append('tspan')
+      .attr('width', (d) => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
       .data((d, i) => textLines[i])
       .enter()
-      .append("tspan")
-      .attr("x", 0)
-      .attr("y", (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text((d) => d.text);
   }
 
@@ -704,14 +713,16 @@ export default class ReactomeDetailView {
    * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
    */
   private drawEntitySet(data: reactomeNode[]) {
-    const nodeG = this.nodesG.append("g").selectAll().data(data);
+    const nodeG = this.nodesG.append('g').selectAll().data(data);
     const enterG = nodeG
       .enter()
-      .append("g")
-      .attr("class", " nodeG")
-      .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
+      .append('g')
+      .attr('class', ' nodeG')
+      .attr('transform', (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
     const size = 100;
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     for (const node of data) {
       textLines.push(
@@ -725,91 +736,91 @@ export default class ReactomeDetailView {
       }
     }
     enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "protein" + i;
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'protein' + i;
       })
-      .attr("d", (d) => this.proteinPath(d, "left"))
-      .attr("fill", (d) =>
+      .attr('d', (d) => this.proteinPath(d, 'left'))
+      .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.transcriptomics
           ? this.colorScaleTranscriptomics(
               this.foldChanges.transcriptomics[d.reactomeId]
             )
           : colors[d.renderableClass]
       )
-      .append("title")
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.transcriptomics
-          ? "Transcriptomics:" + this.foldChanges.transcriptomics[d.reactomeId]
-          : ""
+          ? 'Transcriptomics:' + this.foldChanges.transcriptomics[d.reactomeId]
+          : ''
       );
 
     enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "protein" + i;
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'protein' + i;
       })
-      .attr("d", (d) => this.proteinPath(d, "right"))
-      .attr("fill", (d) =>
+      .attr('d', (d) => this.proteinPath(d, 'right'))
+      .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.proteomics
           ? this.colorScaleProteomics(this.foldChanges.proteomics[d.reactomeId])
           : colors[d.renderableClass]
       )
-      .append("title")
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.proteomics
-          ? "Proteomics:" + this.foldChanges.proteomics[d.reactomeId]
-          : ""
+          ? 'Proteomics:' + this.foldChanges.proteomics[d.reactomeId]
+          : ''
       );
 
     enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "protein" + i;
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'protein' + i;
       })
-      .attr("d", (d) => this.proteinPath(d, "full"))
-      .attr("stroke-width", 1)
-      .attr("stroke", lineColor)
-      .attr("fill", "none");
+      .attr('d', (d) => this.proteinPath(d, 'full'))
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', 'none');
     enterG
-      .append("path")
-      .attr("id", function (d, i) {
-        return "protein" + i;
+      .append('path')
+      .attr('id', function (d, i) {
+        return 'protein' + i;
       })
-      .attr("d", (d) => this.proteinPath(d, "outline"))
-      .attr("stroke-width", 1)
-      .attr("stroke", lineColor)
-      .attr("fill", "none");
+      .attr('d', (d) => this.proteinPath(d, 'outline'))
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', 'none');
 
     enterG
-      .append("text")
-      .attr("class", "nodeText")
-      .append("tspan")
-      .attr("width", (d) => d.prop.width * 0.9)
-      .style("text-anchor", "middle")
-      .style("alignment-baseline", "middle")
-      .style("font-size", fontSize)
-      .selectAll("tspan")
+      .append('text')
+      .attr('class', 'nodeText')
+      .append('tspan')
+      .attr('width', (d) => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
       .data((d, i) => textLines[i])
       .enter()
-      .append("tspan")
-      .attr("x", 0)
-      .attr("y", (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text((d) => d.text);
 
-    enterG.on("click", (event, d) => {
-      self.tooltipG.selectAll("svg").remove();
-      self.tooltipG.selectAll("circle").remove();
+    enterG.on('click', (event, d) => {
+      self.tooltipG.selectAll('svg').remove();
+      self.tooltipG.selectAll('circle').remove();
       self.tooltipG.attr(
-        "transform",
+        'transform',
         `translate(${d.position.x - size},${d.position.y - size})`
       );
       self.tooltipG
-        .append("circle")
-        .attr("r", size)
-        .attr("cx", size)
-        .attr("cy", size)
-        .attr("fill", "white");
+        .append('circle')
+        .attr('r', size)
+        .attr('cx', size)
+        .attr('cy', size)
+        .attr('fill', 'white');
       self.tooltipG.append(() =>
         generateGlyphVariation(
           self.foldChangeReactome[d.reactomeId],
@@ -830,14 +841,16 @@ export default class ReactomeDetailView {
    * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
    */
   private drawProcesses(data: reactomeNode[]) {
-    const nodeG = this.nodesG.append("g").selectAll().data(data);
+    const nodeG = this.nodesG.append('g').selectAll().data(data);
     const enterG = nodeG
       .enter()
-      .append("g")
-      .attr("class", " nodeG")
-      .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
+      .append('g')
+      .attr('class', ' nodeG')
+      .attr('transform', (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
     const size = 100;
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     for (const node of data) {
       textLines.push(
@@ -851,66 +864,66 @@ export default class ReactomeDetailView {
       }
     }
 
-    const processNode = enterG
-      .append("rect")
-      .attr("id", function (d, i) {
-        return "" + d.renderableClass + i;
+    enterG
+      .append('rect')
+      .attr('id', function (d, i) {
+        return '' + d.renderableClass + i;
       })
-      .attr("x", (d) => -d.prop.width / 2)
-      .attr("y", (d) => -d.prop.height / 2)
-      .attr("width", (d) => d.prop.width)
-      .attr("height", (d) => d.prop.height)
-      .attr("stroke-width", 1)
-      .attr("stroke", lineColor)
-      .attr("fill", "none");
+      .attr('x', (d) => -d.prop.width / 2)
+      .attr('y', (d) => -d.prop.height / 2)
+      .attr('width', (d) => d.prop.width)
+      .attr('height', (d) => d.prop.height)
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', 'none');
 
     enterG
-      .append("rect")
-      .attr("id", function (d, i) {
-        return "" + d.renderableClass + i;
+      .append('rect')
+      .attr('id', function (d, i) {
+        return '' + d.renderableClass + i;
       })
-      .attr("x", (d) => -d.prop.width / 2)
-      .attr("y", (d) => -d.prop.height / 2)
-      .attr("width", (d) => d.prop.width / 3)
-      .attr("height", (d) => d.prop.height)
-      .attr("stroke", "none")
-      .attr("fill", (d) => this.complexColor(d.reactomeId, "transcriptomics"));
+      .attr('x', (d) => -d.prop.width / 2)
+      .attr('y', (d) => -d.prop.height / 2)
+      .attr('width', (d) => d.prop.width / 3)
+      .attr('height', (d) => d.prop.height)
+      .attr('stroke', 'none')
+      .attr('fill', (d) => this.complexColor(d.reactomeId, 'transcriptomics'));
     enterG
-      .append("rect")
-      .attr("id", function (d, i) {
-        return "" + d.renderableClass + i;
+      .append('rect')
+      .attr('id', function (d, i) {
+        return '' + d.renderableClass + i;
       })
-      .attr("x", (d) => -d.prop.width / 6)
-      .attr("y", (d) => -d.prop.height / 2)
-      .attr("width", (d) => d.prop.width / 3)
-      .attr("height", (d) => d.prop.height)
-      .attr("stroke", "none")
-      .attr("fill", (d) => this.complexColor(d.reactomeId, "proteomics"));
+      .attr('x', (d) => -d.prop.width / 6)
+      .attr('y', (d) => -d.prop.height / 2)
+      .attr('width', (d) => d.prop.width / 3)
+      .attr('height', (d) => d.prop.height)
+      .attr('stroke', 'none')
+      .attr('fill', (d) => this.complexColor(d.reactomeId, 'proteomics'));
     enterG
-      .append("rect")
-      .attr("id", function (d, i) {
-        return "" + d.renderableClass + i;
+      .append('rect')
+      .attr('id', function (d, i) {
+        return '' + d.renderableClass + i;
       })
-      .attr("x", (d) => +d.prop.width / 6)
-      .attr("y", (d) => -d.prop.height / 2)
-      .attr("width", (d) => d.prop.width / 3)
-      .attr("height", (d) => d.prop.height)
-      .attr("stroke", "none")
-      .attr("fill", (d) => this.complexColor(d.reactomeId, "metabolomics"));
+      .attr('x', (d) => +d.prop.width / 6)
+      .attr('y', (d) => -d.prop.height / 2)
+      .attr('width', (d) => d.prop.width / 3)
+      .attr('height', (d) => d.prop.height)
+      .attr('stroke', 'none')
+      .attr('fill', (d) => this.complexColor(d.reactomeId, 'metabolomics'));
 
-    enterG.on("click", (event, d) => {
-      self.tooltipG.selectAll("svg").remove();
-      self.tooltipG.selectAll("circle").remove();
+    enterG.on('click', (_event, d) => {
+      self.tooltipG.selectAll('svg').remove();
+      self.tooltipG.selectAll('circle').remove();
       self.tooltipG.attr(
-        "transform",
+        'transform',
         `translate(${d.position.x - size},${d.position.y - size})`
       );
       self.tooltipG
-        .append("circle")
-        .attr("r", size)
-        .attr("cx", size)
-        .attr("cy", size)
-        .attr("fill", "white");
+        .append('circle')
+        .attr('r', size)
+        .attr('cx', size)
+        .attr('cy', size)
+        .attr('fill', 'white');
       self.tooltipG.append(() =>
         generateGlyphVariation(
           self.foldChangeReactome[d.reactomeId],
@@ -922,19 +935,19 @@ export default class ReactomeDetailView {
     });
 
     enterG
-      .append("text")
-      .attr("class", "nodeText")
-      .append("tspan")
-      .attr("width", (d) => d.prop.width * 0.9)
-      .style("text-anchor", "middle")
-      .style("alignment-baseline", "middle")
-      .style("font-size", fontSize)
-      .selectAll("tspan")
+      .append('text')
+      .attr('class', 'nodeText')
+      .append('tspan')
+      .attr('width', (d) => d.prop.width * 0.9)
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('font-size', fontSize)
+      .selectAll('tspan')
       .data((d, i) => textLines[i])
       .enter()
-      .append("tspan")
-      .attr("x", 0)
-      .attr("y", (d, i) => (i - d.textLength / 2 + 0.8) * 12)
+      .append('tspan')
+      .attr('x', 0)
+      .attr('y', (d, i) => (i - d.textLength / 2 + 0.8) * 12)
       .text((d) => d.text);
   }
 
@@ -945,43 +958,43 @@ export default class ReactomeDetailView {
    * @param {reactomeNode[]} data  reactomeNode array containing all the nodes to be drawn
    */
   private drawChemical(data: reactomeNode[]) {
-    const nodeG = this.nodesG.append("g").selectAll().data(data);
+    const nodeG = this.nodesG.append('g').selectAll().data(data);
     const enterG = nodeG
       .enter()
-      .append("g")
-      .attr("class", " nodeG")
-      .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
+      .append('g')
+      .attr('class', ' nodeG')
+      .attr('transform', (d) => `translate(${d.position.x},${d.position.y})`);
 
     enterG
-      .append("ellipse")
-      .attr("id", function (d, i) {
-        return "chemical" + i;
+      .append('ellipse')
+      .attr('id', function (d, i) {
+        return 'chemical' + i;
       })
-      .attr("rx", (d) => d.prop.width / 2)
-      .attr("ry", (d) => d.prop.height / 2)
-      .attr("stroke-width", 1)
-      .attr("stroke", lineColor)
-      .attr("fill", (d) =>
+      .attr('rx', (d) => d.prop.width / 2)
+      .attr('ry', (d) => d.prop.height / 2)
+      .attr('stroke-width', 1)
+      .attr('stroke', lineColor)
+      .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.metabolomics
           ? this.colorScaleMetabolomics(
               this.foldChanges.metabolomics[d.reactomeId]
             )
           : colors[d.renderableClass]
       )
-      .append("title")
+      .append('title')
       .text((d) =>
         d.reactomeId in this.foldChanges.metabolomics
-          ? "Metabolomics:" + this.foldChanges.metabolomics[d.reactomeId]
-          : ""
+          ? 'Metabolomics:' + this.foldChanges.metabolomics[d.reactomeId]
+          : ''
       );
 
     enterG
-      .append("text")
-      .attr("class", "nodeText")
-      .style("text-anchor", "middle")
-      .style("alignment-baseline", "middle")
-      .style("dominant-baseline", "central")
-      .style("font-size", fontSize)
+      .append('text')
+      .attr('class', 'nodeText')
+      .style('text-anchor', 'middle')
+      .style('alignment-baseline', 'middle')
+      .style('dominant-baseline', 'central')
+      .style('font-size', fontSize)
       .text((d) => d.displayName);
   }
 
@@ -1002,8 +1015,8 @@ export default class ReactomeDetailView {
     const xHalf = node.prop.width / 2;
     const radius = 4;
 
-    let pathString = "";
-    if (type === "outline") {
+    let pathString = '';
+    if (type === 'outline') {
       pathString += `M${-(xHalf - 3) + radius},${yHalf - 3}`;
       pathString += `A${radius},${radius},0,0,1,${-(xHalf - 3)},${
         yHalf - 3 - radius
@@ -1021,7 +1034,7 @@ export default class ReactomeDetailView {
         yHalf - 3
       }z`;
     }
-    if (type === "full") {
+    if (type === 'full') {
       pathString += `M${-xHalf + radius},${yHalf}`;
       pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`;
       pathString += `L${-xHalf},${-yHalf + radius}`;
@@ -1031,7 +1044,7 @@ export default class ReactomeDetailView {
       pathString += `L${xHalf},${yHalf - radius}`;
       pathString += `A${radius},${radius},0,0,1,${xHalf - radius},${yHalf}z`;
     }
-    if (type === "left") {
+    if (type === 'left') {
       pathString += `M${-xHalf + radius},${yHalf}`;
       pathString += `A${radius},${radius},0,0,1,${-xHalf},${yHalf - radius}`;
       pathString += `L${-xHalf},${-yHalf + radius}`;
@@ -1039,7 +1052,7 @@ export default class ReactomeDetailView {
       pathString += `L0,${-yHalf}`;
       pathString += `L0,${yHalf}z`;
     }
-    if (type === "right") {
+    if (type === 'right') {
       pathString += `M0,${-yHalf}`;
       pathString += `L${xHalf - radius},${-yHalf}`;
       pathString += `A${radius},${radius},0,0,1,${xHalf},${-yHalf + radius}`;
@@ -1060,7 +1073,7 @@ export default class ReactomeDetailView {
   private complexColor(reactomeId: number, type: string): string {
     let color = colors.Complex;
     if (reactomeId in this.foldChangeReactome) {
-      if (type === "proteomics") {
+      if (type === 'proteomics') {
         color =
           this.foldChangeReactome[reactomeId].proteomics.meanFoldchange !== -100
             ? this.colorScaleProteomics(
@@ -1068,7 +1081,7 @@ export default class ReactomeDetailView {
               )
             : colors.Complex;
       }
-      if (type === "transcriptomics") {
+      if (type === 'transcriptomics') {
         color =
           this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange !==
           -100
@@ -1078,7 +1091,7 @@ export default class ReactomeDetailView {
               )
             : colors.Complex;
       }
-      if (type === "metabolomics") {
+      if (type === 'metabolomics') {
         color =
           this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange !==
           -100
@@ -1104,17 +1117,17 @@ export default class ReactomeDetailView {
     const xHalf = node.prop.width / 2;
     const xTwoFifth = (3 * node.prop.width) / 7;
     const xSixth = node.prop.width / 6;
-    let pathString = "";
-    if (type === "full") {
+    let pathString = '';
+    if (type === 'full') {
       pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}z`;
     }
-    if (type === "left") {
+    if (type === 'left') {
       pathString = `M${-xTwoFifth},${yHalf}L${-xHalf},${yTwoFifth}L${-xHalf},${-yTwoFifth}L${-xTwoFifth},${-yHalf}L${-xSixth},${-yHalf}L${-xSixth},${yHalf}z`;
     }
-    if (type === "center") {
+    if (type === 'center') {
       pathString = `M${-xSixth},${-yHalf}L${-xSixth},${yHalf}L${xSixth},${yHalf}L${xSixth},${-yHalf}z`;
     }
-    if (type === "right") {
+    if (type === 'right') {
       pathString = `M${xSixth},${-yHalf}L${xTwoFifth},${-yHalf}L${xHalf},${-yTwoFifth}L${xHalf},${yTwoFifth}L${xTwoFifth},${yHalf}L${xSixth},${yHalf}z`;
     }
     return pathString;
@@ -1127,13 +1140,13 @@ export default class ReactomeDetailView {
    * @returns {string} svg-path string
    */
   private makeEdgePath(datum: reactomeEdge): string {
-    let outStr = "";
-    if ("segments" in datum && datum.segments.length > 0) {
+    let outStr = '';
+    if ('segments' in datum && datum.segments.length > 0) {
       const startPoint = datum.segments[0];
       const endPoint = datum.segments[datum.segments.length - 1];
-      if ("inputs" in datum) {
+      if ('inputs' in datum) {
         for (const input of datum.inputs) {
-          if ("points" in input) {
+          if ('points' in input) {
             outStr += `M${input.points[0].x},${input.points[0].y}`;
             for (const point of input.points) {
               outStr += `L${point.x},${point.y}`;
@@ -1142,9 +1155,9 @@ export default class ReactomeDetailView {
           }
         }
       }
-      if ("outputs" in datum) {
+      if ('outputs' in datum) {
         for (const output of datum.outputs) {
-          if ("points" in output) {
+          if ('points' in output) {
             outStr += `M${output.points[0].x},${output.points[0].y}`;
             for (const point of output.points) {
               outStr += `L${point.x},${point.y}`;
@@ -1169,7 +1182,7 @@ export default class ReactomeDetailView {
    * @returns {string} svg-path string corresponding to the supplied segment array
    */
   private segmentsToPath(segments: segment[]): string {
-    let outStr = "";
+    let outStr = '';
     for (let index = 0; index < segments.length; index++) {
       const element = segments[index];
       if (index === 0) outStr += `M${element.from.x},${element.from.y}`;
@@ -1186,8 +1199,8 @@ export default class ReactomeDetailView {
    */
   private getTextWidth(text: string): number {
     const context = document
-      .createElement("canvas")
-      .getContext("2d") as CanvasRenderingContext2D;
+      .createElement('canvas')
+      .getContext('2d') as CanvasRenderingContext2D;
     const width = context.measureText(text).width;
     return width;
   }
@@ -1210,12 +1223,12 @@ export default class ReactomeDetailView {
     if (!words[0]) words.shift();
 
     let line: { text: string; textLength: number } = {
-      text: "",
+      text: '',
       textLength: 0,
     };
     const lines = [];
     for (let i = 0; i < words.length; ++i) {
-      const lineText = (line.text ? line.text + " " : "") + words[i];
+      const lineText = (line.text ? line.text + ' ' : '') + words[i];
       const lineWidth = this.getTextWidth(lineText);
       if (lineWidth < width) {
         line.text = lineText;
@@ -1244,6 +1257,6 @@ export default class ReactomeDetailView {
       ?.getBoundingClientRect();
     const width = box?.width as number;
     const height = box?.height as number;
-    this.mainSVG.attr("width", width).attr("height", height);
+    this.mainSVG.attr('width', width).attr('height', height);
   }
 }

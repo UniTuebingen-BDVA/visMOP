@@ -1,34 +1,34 @@
-import * as _ from "lodash";
-import { graphData, networkxNodeLink } from "@/core/graphTypes";
-import Sigma from "sigma";
-import { MultiGraph } from "graphology";
-import forceAtlas2 from "graphology-layout-forceatlas2";
-import random from "graphology-layout/random";
-import ColorFadeEdgeProgram from "@/core/custom-nodes/colorfade-edge-program";
-import getNodeProgramImage from "sigma/rendering/webgl/programs/node.image";
-import * as d3 from "d3";
-import { PieArcDatum } from "d3-shape";
-import { DEFAULT_SETTINGS } from "sigma/settings";
+import * as _ from 'lodash';
+import { graphData, networkxNodeLink } from '@/core/graphTypes';
+import Sigma from 'sigma';
+import { MultiGraph } from 'graphology';
+import forceAtlas2 from 'graphology-layout-forceatlas2';
+import random from 'graphology-layout/random';
+import ColorFadeEdgeProgram from '@/core/custom-nodes/colorfade-edge-program';
+import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
+import * as d3 from 'd3';
+import { PieArcDatum } from 'd3-shape';
+import { DEFAULT_SETTINGS } from 'sigma/settings';
 const satColors = [
-  "rgba(228,26,28,1.0)",
-  "rgba(55,126,184,1.0)",
-  "rgba(77,175,74,1.0)",
-  "rgba(152,78,163,1.0)",
-  "rgba(255,127,0,1.0)",
-  "rgba(255,255,51,1.0)",
-  "rgba(166,86,40,1.0)",
-  "rgba(247,129,191,1.0)",
+  'rgba(228,26,28,1.0)',
+  'rgba(55,126,184,1.0)',
+  'rgba(77,175,74,1.0)',
+  'rgba(152,78,163,1.0)',
+  'rgba(255,127,0,1.0)',
+  'rgba(255,255,51,1.0)',
+  'rgba(166,86,40,1.0)',
+  'rgba(247,129,191,1.0)',
 ];
 // todo alpha blending still seems to be wrong
 const colors = [
-  "rgba(248,187,187,0.95)",
-  "rgba(197,219,238,0.95)",
-  "rgba(203,233,202,0.95)",
-  "rgba(227,204,231,0.95)",
-  "rgba(255,217,179,0.95)",
-  "rgba(255,255,179,0.95)",
-  "rgba(241,211,194,0.95)",
-  "rgba(251,184,219,0.95)",
+  'rgba(248,187,187,0.95)',
+  'rgba(197,219,238,0.95)',
+  'rgba(203,233,202,0.95)',
+  'rgba(227,204,231,0.95)',
+  'rgba(255,217,179,0.95)',
+  'rgba(255,255,179,0.95)',
+  'rgba(241,211,194,0.95)',
+  'rgba(251,184,219,0.95)',
 ];
 
 /**
@@ -41,9 +41,9 @@ export function generateInteractionGraphData(
   nodeLink: networkxNodeLink
 ): graphData {
   const svgURLs = generatePieCharts(nodeLink.graph.identities);
-  console.log("interactionData", nodeLink);
+  console.log('interactionData', nodeLink);
   const graph = {
-    attributes: { name: "BaseNetwork" },
+    attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
     options: [],
@@ -55,16 +55,16 @@ export function generateInteractionGraphData(
         label: node.labelName ? node.labelName : node.key,
         x: 0,
         y: 0,
-        type: "egoNode" in node ? "circle" : "image",
+        type: 'egoNode' in node ? 'circle' : 'image',
         image: node.labelName
           ? svgURLs.saturated[node.identity]
           : svgURLs.faded[node.identity],
         color:
-          "egoNode" in node
+          'egoNode' in node
             ? node.labelName
               ? satColors[parseInt(node.egoNode) % satColors.length]
               : colors[parseInt(node.egoNode) % colors.length]
-            : "rgba(255,255,255,0.0)",
+            : 'rgba(255,255,255,0.0)',
         size: node.size ? node.size : 5,
       },
     });
@@ -77,19 +77,19 @@ export function generateInteractionGraphData(
       attributes: {
         zIndex: edge.egoEgoEdge ? 2 : edge.edgeType ? 1 : 0,
         weight: edge.weight,
-        type: "colorFade",
+        type: 'colorFade',
         size: edge.egoEgoEdge ? 3 : 1,
         // type: edge.edgeType ? 'line' : 'dashed',
         // color: edge.edgeType ? 'rgb(75,75,75)' : 'rgb(255,75,75)',
-        color: edge.color ? edge.color : "rgb(75,75,75)",
+        color: edge.color ? edge.color : 'rgb(75,75,75)',
         sourceColor: edge.egoEgoEdge
           ? satColors[parseInt(edge.egoEgoEdge[0]) % satColors.length]
-          : "egoEdge" in edge
+          : 'egoEdge' in edge
           ? satColors[parseInt(edge.egoEdge) % satColors.length]
           : colors[parseInt(edge.identity) % colors.length],
         targetColor: edge.egoEgoEdge
           ? satColors[parseInt(edge.egoEgoEdge[1]) % satColors.length]
-          : "egoEdge" in edge
+          : 'egoEdge' in edge
           ? satColors[parseInt(edge.egoEdge) % satColors.length]
           : colors[parseInt(edge.identity) % colors.length],
       },
@@ -111,8 +111,8 @@ export function generateInteractionGraph(
   const elem = document.getElementById(elemID) as HTMLElement;
   const graph = MultiGraph.from(graphData);
   random.assign(graph);
-  console.log("NODES", graph.nodes());
-  console.log("TARDIV PPI", elem, elemID);
+  console.log('NODES', graph.nodes());
+  console.log('TARDIV PPI', elem, elemID);
   const inferredSettings = forceAtlas2.inferSettings(graph);
   const start = Date.now();
   forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings });
@@ -153,11 +153,11 @@ function generatePieCharts(identities: number[]): {
     );
     const pieSVGstring = serializer.serializeToString(pieSVG);
     const svgBlob = new Blob([pieSVGstring], {
-      type: "image/svg+xml;charset=utf-8",
+      type: 'image/svg+xml;charset=utf-8',
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
-    console.log("pieAccessor: ", elem, elem.join(";"));
-    pieCharts.saturated[elem.join(";")] = svgURL;
+    console.log('pieAccessor: ', elem, elem.join(';'));
+    pieCharts.saturated[elem.join(';')] = svgURL;
   });
   combinations.forEach((elem) => {
     elem.sort();
@@ -169,11 +169,11 @@ function generatePieCharts(identities: number[]): {
     );
     const pieSVGstring = serializer.serializeToString(pieSVG);
     const svgBlob = new Blob([pieSVGstring], {
-      type: "image/svg+xml;charset=utf-8",
+      type: 'image/svg+xml;charset=utf-8',
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
-    console.log("pieAccessor: ", elem, elem.join(";"));
-    pieCharts.faded[elem.join(";")] = svgURL;
+    console.log('pieAccessor: ', elem, elem.join(';'));
+    pieCharts.faded[elem.join(';')] = svgURL;
   });
   return pieCharts;
 }
@@ -202,23 +202,22 @@ function generateSinglePieChart(
   const height = diameter + 4;
   const radius = diameter / 1.8;
 
-  const svg = d3.create("svg").attr("width", width).attr("height", height);
+  const svg = d3.create('svg').attr('width', width).attr('height', height);
   const g = svg
-    .append("g")
-    .attr("transform", `translate(${width / 2},${height / 2})`);
+    .append('g')
+    .attr('transform', `translate(${width / 2},${height / 2})`);
 
   const dummyDat: number[] = [];
-  _.range(segments).forEach((element) => {
+  _.range(segments).forEach((_element) => {
     dummyDat.push(1);
   });
-  const color = d3.scaleOrdinal().range(colors);
   const pies = d3.pie<number>()(dummyDat);
   const arc = d3.arc<PieArcDatum<number>>().innerRadius(0).outerRadius(radius);
-  g.selectAll("path")
+  g.selectAll('path')
     .data(pies)
-    .join("path")
-    .attr("d", arc)
-    .attr("fill", (d, i) => colors[i % colors.length]);
+    .join('path')
+    .attr('d', arc)
+    .attr('fill', (d, i) => colors[i % colors.length]);
 
   return svg.node() as SVGElement;
 }

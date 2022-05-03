@@ -1,16 +1,14 @@
-import Graph, { MultiGraph } from "graphology";
-import FA2Layout from "graphology-layout-forceatlas2/worker";
-import forceAtlas2 from "graphology-layout-forceatlas2";
-import Sigma from "sigma";
-import { graphData } from "@/core/graphTypes";
-import SquareNodeProgram from "@/core/custom-nodes/square-node-program";
-import ColorFadeEdgeProgram from "@/core/custom-nodes/colorfade-edge-program";
-import OutlineCircleProgram from "@/core/custom-nodes/circle-outline-node-program";
-import { Attributes } from "graphology-types";
-import drawHover from "@/core/customHoverRenderer";
-import { PlainObject } from "sigma/types";
-import { subgraph } from "graphology-operators";
-import { useMainStore } from "@/stores/index";
+import { MultiGraph } from 'graphology';
+import Sigma from 'sigma';
+import { graphData } from '@/core/graphTypes';
+import SquareNodeProgram from '@/core/custom-nodes/square-node-program';
+import ColorFadeEdgeProgram from '@/core/custom-nodes/colorfade-edge-program';
+import OutlineCircleProgram from '@/core/custom-nodes/circle-outline-node-program';
+import { Attributes } from 'graphology-types';
+import drawHover from '@/core/customHoverRenderer';
+import { PlainObject } from 'sigma/types';
+import { subgraph } from 'graphology-operators';
+import { useMainStore } from '@/stores/index';
 
 export default class pathwayGraph {
   private canvasContainer: HTMLElement;
@@ -43,8 +41,6 @@ export default class pathwayGraph {
       this.currentSigma.kill();
     }
 
-    const inferredSettings = forceAtlas2.inferSettings(this.currentGraphModel);
-
     // from events SIGMA2 example, initialze sets for highlight on hover:
     let highlighedNodes = new Set();
     let highlighedEdges = new Set();
@@ -52,7 +48,7 @@ export default class pathwayGraph {
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: unknown, data: Attributes) => {
       if (highlighedNodes.has(node)) {
-        return { ...data, outlineColor: "rgba(255,0,0,1.0)", zIndex: 1 };
+        return { ...data, outlineColor: 'rgba(255,0,0,1.0)', zIndex: 1 };
       }
 
       return data;
@@ -63,8 +59,8 @@ export default class pathwayGraph {
       if (highlighedEdges.has(edge)) {
         return {
           ...data,
-          sourceColor: "rgba(255,0,0,1.0)",
-          targetColor: "rgba(255,0,0,1.0)",
+          sourceColor: 'rgba(255,0,0,1.0)',
+          targetColor: 'rgba(255,0,0,1.0)',
           zIndex: 1,
         };
       }
@@ -94,8 +90,8 @@ export default class pathwayGraph {
     );
 
     // TODO: from events example:
-    sigmaInstance.on("enterNode", ({ node }) => {
-      console.log("Entering: ", node);
+    sigmaInstance.on('enterNode', ({ node }) => {
+      console.log('Entering: ', node);
       highlighedNodes = new Set(this.currentGraphModel.neighbors(node));
       highlighedNodes.add(node);
 
@@ -104,8 +100,8 @@ export default class pathwayGraph {
       sigmaInstance.refresh();
     });
 
-    sigmaInstance.on("leaveNode", ({ node }) => {
-      console.log("Leaving:", node);
+    sigmaInstance.on('leaveNode', ({ node }) => {
+      console.log('Leaving:', node);
 
       highlighedNodes.clear();
       highlighedEdges.clear();
@@ -113,10 +109,10 @@ export default class pathwayGraph {
       sigmaInstance.refresh();
     });
 
-    sigmaInstance.on("clickNode", ({ node }) => {
-      console.log("clicking Node: ", node);
+    sigmaInstance.on('clickNode', ({ node }) => {
+      console.log('clicking Node: ', node);
       const mainStore = useMainStore();
-      mainStore.addClickedNode({ queryID: node, name: "" });
+      mainStore.addClickedNode({ queryID: node, name: '' });
     });
     return sigmaInstance;
   }
@@ -130,7 +126,7 @@ export default class pathwayGraph {
   private layoutToPathway(pathway: string, nodeIDs: string[]): MultiGraph {
     const copyGraph = subgraph(
       this.completeGraphModel,
-      function (nodeID, attr) {
+      function (nodeID, _attr) {
         return nodeIDs.includes(nodeID);
       }
     );
@@ -144,7 +140,7 @@ export default class pathwayGraph {
       // attributes.y= center_y + (attributes.origPos[pathway][1] - 0.5) * 250
       attributes.color = attributes.nonFadeColor as string;
       attributes.secondaryColor = attributes.nonFadeColorSecondary as string;
-      attributes.outlineColor = "rgba(30,30,30,1.0)";
+      attributes.outlineColor = 'rgba(30,30,30,1.0)';
       attributes.zIndex = 2;
       const origPos = attributes.origPos as { [key: string]: [number, number] };
       newPosisitons[nodeID] = {

@@ -1,4 +1,4 @@
-import { graphJSON, entityNode } from "../core/reactomeTypes";
+import { graphJSON, entityNode } from '../core/reactomeTypes';
 
 export function getEntryAmounts(entryID: number, graphJson: graphJSON) {
   const molecules: number[] = [];
@@ -21,13 +21,13 @@ function getComplexEntryAmountsRecursion(
   proteins: number[],
   graphJson: graphJSON
 ) {
-  if (tar.schemaClass === "EntityWithAccessionedSequence") {
+  if (tar.schemaClass === 'EntityWithAccessionedSequence') {
     proteins.push(tar.dbId);
-  } else if (tar.schemaClass === "SimpleEntity") {
+  } else if (tar.schemaClass === 'SimpleEntity') {
     molecules.push(tar.dbId);
   } else {
-    if (tar.schemaClass !== "Pathway") {
-      if ("children" in tar) {
+    if (tar.schemaClass !== 'Pathway') {
+      if ('children' in tar) {
         for (const newTar of tar.children) {
           const newTarNode = graphJson.nodes[newTar];
           if (newTarNode !== undefined) {
@@ -44,7 +44,7 @@ function getComplexEntryAmountsRecursion(
           }
         }
       } else {
-        console.log("Unknown Target:", tar);
+        console.log('Unknown Target:', tar);
       }
     }
   }

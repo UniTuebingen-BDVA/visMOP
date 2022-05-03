@@ -133,7 +133,7 @@ from: https://codepen.io/chriscoyier/pen/eYNQyPe*/
   margin-bottom: 3px;
 }
 .bubble::after {
-  content: "";
+  content: '';
   width: 2px;
   height: 2px;
   background: #a8bfff;
@@ -147,7 +147,7 @@ from: https://codepen.io/chriscoyier/pen/eYNQyPe*/
   margin: 0 auto;
 }
 .glyphText {
-  font-family: "Roboto", sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 0.25rem;
   text-anchor: middle;
   dominant-baseline: middle;

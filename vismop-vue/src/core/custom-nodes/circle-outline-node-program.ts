@@ -1,12 +1,12 @@
 /**
  * programs changed from sigma.js examples //ToDo copyright stuff
  */
-import { AbstractNodeProgram } from "sigma/rendering/webgl/programs/common/node";
-import { SplitNodeDisplayData } from "./types";
-import { floatColor } from "sigma/utils";
-import vertexShaderSource from "./circle-outline-vertex-shader.glsl?raw";
-import fragmentShaderSource from "./circle-outline-fragment-shader.glsl?raw";
-import { RenderParams } from "sigma/rendering/webgl/programs/common/program";
+import { AbstractNodeProgram } from 'sigma/rendering/webgl/programs/common/node';
+import { SplitNodeDisplayData } from './types';
+import { floatColor } from 'sigma/utils';
+import vertexShaderSource from './circle-outline-vertex-shader.glsl?raw';
+import fragmentShaderSource from './circle-outline-fragment-shader.glsl?raw';
+import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
 
 const POINTS = 1;
 const ATTRIBUTES = 5;
@@ -18,10 +18,10 @@ export default class CustomNodeProgram extends AbstractNodeProgram {
   constructor(gl: WebGLRenderingContext) {
     super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES);
     // Locations
-    this.positionLocation = gl.getAttribLocation(this.program, "a_position");
-    this.sizeLocation = gl.getAttribLocation(this.program, "a_size");
-    this.colorLocation0 = gl.getAttribLocation(this.program, "a_color0");
-    this.colorLocation1 = gl.getAttribLocation(this.program, "a_color1");
+    this.positionLocation = gl.getAttribLocation(this.program, 'a_position');
+    this.sizeLocation = gl.getAttribLocation(this.program, 'a_size');
+    this.colorLocation0 = gl.getAttribLocation(this.program, 'a_color0');
+    this.colorLocation1 = gl.getAttribLocation(this.program, 'a_color1');
 
     this.bind();
   }

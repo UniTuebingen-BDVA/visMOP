@@ -1,6 +1,6 @@
-extension: ["ts"]
+extension: ['ts']
 recursive: true
-pacakge: "./package.json"
-spec: "./tests/**.test.ts"
+pacakge: './package.json'
+spec: './tests/**.test.ts'
 require:
   - ./node_modules/ts-node/register

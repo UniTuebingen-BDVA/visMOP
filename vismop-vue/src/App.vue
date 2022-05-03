@@ -20,18 +20,18 @@
       bordered
       :width="500"
     >
-      <SideBar></SideBar>
+      <side-bar></side-bar>
     </q-drawer>
 
     <q-page-container>
-      <MainPage></MainPage>
+      <main-page></main-page>
     </q-page-container>
   </q-layout>
 </template>
 
 <script lang="ts">
-import { ref } from "vue";
-import svgIcon from "./assets/vmod_icon.svg";
+import { ref } from 'vue';
+import svgIcon from './assets/vmod_icon.svg';
 
 export default {
   setup() {
@@ -47,5 +47,5 @@ export default {
 };
 </script>
 <style>
-@import "./css/networkGraph.css";
+@import './css/networkGraph.css';
 </style>

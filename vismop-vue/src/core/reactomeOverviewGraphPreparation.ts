@@ -1,14 +1,12 @@
-import * as _ from "lodash";
+import * as _ from 'lodash';
 import {
   node,
   edge,
-  entry,
   graphData,
-  relation,
   baseNodeAttr,
   baseEdgeAttr,
-} from "@/core/graphTypes";
-import { reactomeEntry } from "./reactomeTypes";
+} from '@/core/graphTypes';
+import { reactomeEntry } from './reactomeTypes';
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -21,7 +19,7 @@ export function generateGraphData(
   rootIds: string[]
 ): graphData {
   const graph = {
-    attributes: { name: "BaseNetwork" },
+    attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
     options: [],
@@ -37,11 +35,11 @@ export function generateGraphData(
       key: id,
       // label: "",
       attributes: {
-        entryType: "temp",
-        type: "image",
+        entryType: 'temp',
+        type: 'image',
         image: glyphs[id],
         name: _.escape(name),
-        color: entry.rootId === entry.pathwayId ? "#FF99FF" : "#FFFFFF",
+        color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
         label: `${_.escape(name)}`,
         x: initPosX,
         y: initPosY,
@@ -54,7 +52,7 @@ export function generateGraphData(
     const currentEdge = generateForceGraphEdge(
       entry.rootId,
       entry.pathwayId,
-      "hierarchical"
+      'hierarchical'
     );
     if (
       !addedEdges.includes(currentEdge.key) &&
@@ -72,7 +70,7 @@ export function generateGraphData(
               const currentEdge = generateForceGraphEdge(
                 entry.pathwayId,
                 loopEntry.pathwayId,
-                "maplink"
+                'maplink'
               );
               if (
                 !addedEdges.includes(currentEdge.key) &&
@@ -102,11 +100,9 @@ function generateForceGraphEdge(
   targetID: string,
   type: string
 ): edge {
-  const fadeGray = "rgba(30,30,30,0.2)";
-
   const edgeColors: { [key: string]: string } = {
-    hierarchy: "#999999",
-    maplink: "rgba(0.2,0.2,0.2,1.0)",
+    hierarchy: '#999999',
+    maplink: 'rgba(0.2,0.2,0.2,1.0)',
   };
 
   const entry1 = sourceID;
@@ -118,8 +114,8 @@ function generateForceGraphEdge(
     undirected: true,
     attributes: {
       zIndex: 0,
-      type: type === "maplink" ? "dashed" : "line",
-      color: type === "maplink" ? edgeColors.maplink : edgeColors.hierarchy,
+      type: type === 'maplink' ? 'dashed' : 'line',
+      color: type === 'maplink' ? edgeColors.maplink : edgeColors.hierarchy,
     } as baseEdgeAttr,
   } as edge;
   return edge;
