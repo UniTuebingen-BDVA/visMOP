@@ -6,4 +6,25 @@ type typeExtractor<TarObj> = TarObj extends (infer U)[]
     : never
   : never;
 
+// eslint-disable-next-line no-unused-vars
 type ColType = typeExtractor<QTableProps["columns"]>;
+
+interface measureData {
+  name: string;
+  value: number;
+  queryID: string;
+}
+
+interface omicsData {
+  available: boolean;
+  foldChanges: measureData[];
+  meanFoldchange: number;
+  nodeState: { total: number; regulated: number };
+}
+
+export interface glyphData {
+  pathwayID: string;
+  proteomics: omicsData;
+  metabolomics: omicsData;
+  transcriptomics: omicsData;
+}

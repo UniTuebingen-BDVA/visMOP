@@ -47,15 +47,35 @@
 <script setup lang="ts">
 import DetailNetwork from "../core/keggDetailView";
 import { generateGraphData } from "../core/detailGraphPreparation";
-import { computed, onMounted, PropType, ref, Ref, watch } from "vue";
+import {
+  computed,
+  onMounted,
+  PropType,
+  ref,
+  Ref,
+  watch,
+  defineProps,
+} from "vue";
 import { useMainStore } from "@/stores";
 
 const props = defineProps({
-  contextID: String,
-  transcriptomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  proteomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  metabolomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  isActive: Boolean,
+  contextID: { type: String, required: true },
+  transcriptomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  proteomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  metabolomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  isActive: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 const mainStore = useMainStore();

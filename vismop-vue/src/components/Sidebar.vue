@@ -260,10 +260,7 @@
 import { ColType } from "@/core/generalTypes";
 import { useMainStore } from "@/stores";
 import { useQuasar } from "quasar";
-import { ref, Ref, computed, watch, onMounted } from "vue";
-import prot from "@/assets/icons/Prots.svg?raw";
-import trans from "@/assets/icons/RNA.svg?raw";
-import metabolomics from "@/assets/icons/Metabolites.svg?raw";
+import { ref, Ref, computed, watch } from "vue";
 const mainStore = useMainStore();
 
 const $q = useQuasar();
@@ -322,7 +319,6 @@ const targetDatabases = ref([
   { text: "KEGG", value: "kegg" },
 ]);
 const targetDatabase = ref({ text: "Reactome", value: "reactome" });
-const reactomeLevelSelection = ref(1);
 const sliderVals = ref({
   transcriptomics: {},
   proteomics: {},

@@ -4,6 +4,8 @@
 Basic Types
 */
 
+import { glyphData } from "../core/generalTypes";
+
 interface form {
   name: string;
   toplevelId: number[];

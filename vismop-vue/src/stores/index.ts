@@ -2,8 +2,7 @@ import _ from "lodash";
 import * as d3 from "d3";
 import { defineStore } from "pinia";
 import { entry, graphData, networkxNodeLink } from "@/core/graphTypes";
-import { QTableProps } from "quasar";
-import { ColType } from "@/core/generalTypes";
+import { ColType, glyphData } from "@/core/generalTypes";
 import { reactomeEntry } from "@/core/reactomeTypes";
 
 interface State {
@@ -86,7 +85,9 @@ interface State {
   };
   keggIDGenesymbolDict: { [key: string]: string };
   pathwayCompare: string[];
-  glyphData: unknown;
+  glyphData: {
+    [key: string]: glyphData;
+  };
   glyphs: {
     url: { [key: string]: string };
     svg: { [key: string]: SVGElement };
@@ -161,7 +162,9 @@ export const useMainStore = defineStore("mainStore", {
           if (!enteredKeys.includes(element)) {
             this.appendClickedNode(val);
           }
-        } catch (error) {}
+        } catch (error) {
+          console.log("click nodes: ", error);
+        }
       });
     },
     addClickedNodeFromTable(row: { [key: string]: string }) {
@@ -178,7 +181,9 @@ export const useMainStore = defineStore("mainStore", {
         if (!enteredKeys.includes(id)) {
           this.appendClickedNode({ queryID: id, name: "" });
         }
-      } catch (error) {}
+      } catch (error) {
+        console.log("click nodes: ", error);
+      }
     },
     appendClickedNode(val: { queryID: string; name: string }) {
       let tableEntry = {
@@ -543,7 +548,7 @@ export const useMainStore = defineStore("mainStore", {
     }) {
       this.pathayAmountDict = val;
     },
-    setGlyphData(val: unknown) {
+    setGlyphData(val: { [key: string]: glyphData }) {
       this.glyphData = val;
     },
     setGlyphs(val: {

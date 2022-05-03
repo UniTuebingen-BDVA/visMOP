@@ -28,27 +28,36 @@ import {
   generateGlyphDataReactome,
   generateGlyphs,
 } from "../core/overviewGlyph";
-import { computed, onMounted, PropType, Ref, ref, watch } from "vue";
+import {
+  computed,
+  onMounted,
+  PropType,
+  Ref,
+  ref,
+  watch,
+  defineProps,
+} from "vue";
 import { reactomeEntry } from "@/core/reactomeTypes";
 import { useMainStore } from "@/stores";
 
-interface Data {
-  expandOverview: boolean;
-  outstandingDraw: boolean;
-  networkGraph: OverviewGraph | undefined;
-  transcriptomicsIntersection: string[];
-  transcriptomicsUnion: string[];
-  proteomicsIntersection: string[];
-  proteomicsUnion: string[];
-  metabolomicsIntersection: string[];
-  metabolomicsUnion: string[];
-}
 const props = defineProps({
-  contextID: String,
-  transcriptomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  proteomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  metabolomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  isActive: Boolean,
+  contextID: { type: String, required: true },
+  transcriptomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  proteomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  metabolomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  isActive: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 const mainStore = useMainStore();

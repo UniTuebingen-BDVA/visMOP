@@ -32,10 +32,12 @@
 import { generateInteractionGraph } from "../core/interactionGraph";
 import Sigma from "sigma";
 import { useMainStore } from "@/stores";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, defineProps } from "vue";
 import type { Ref } from "vue";
 
-const props = defineProps(["contextID"]);
+const props = defineProps({
+  contextID: { type: String, required: true },
+});
 
 const mainStore = useMainStore();
 

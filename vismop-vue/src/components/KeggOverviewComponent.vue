@@ -25,16 +25,36 @@
 import OverviewGraph from "../core/overviewNetwork";
 import { generateGraphData } from "../core/keggOverviewGraphPreparation";
 import { generateGlyphData, generateGlyphs } from "../core/overviewGlyph";
-import { computed, onMounted, PropType, Ref, ref, watch } from "vue";
+import {
+  computed,
+  onMounted,
+  PropType,
+  Ref,
+  ref,
+  watch,
+  defineProps,
+} from "vue";
 import { useMainStore } from "@/stores";
 import { entry } from "@/core/graphTypes";
 
 const props = defineProps({
-  contextID: String,
-  transcriptomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  proteomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  metabolomicsSelection: Array as PropType<{ [key: string]: string }[]>,
-  isActive: Boolean,
+  contextID: { type: String, required: true },
+  transcriptomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  proteomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  metabolomicsSelection: {
+    type: Array as PropType<{ [key: string]: string }[]>,
+    required: true,
+  },
+  isActive: {
+    type: Boolean,
+    required: true,
+  },
 });
 const mainStore = useMainStore();
 

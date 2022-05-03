@@ -11,8 +11,7 @@ import {
   reactomeNode,
   graphJSON,
 } from "../core/reactomeTypes";
-import { glyphData, generateGlyphVariation } from "../core/overviewGlyph";
-import { fill } from "lodash";
+import { generateGlyphVariation } from "../core/overviewGlyph";
 
 const colorsAlternative: { [key: string]: string } = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
@@ -258,11 +257,11 @@ export default class ReactomeDetailView {
             ? "4 2"
             : null
         );
-
+      /*
       const entriesWithReactionShape = this.layoutData.links.filter((d) => {
         return "reactionShape" in d;
       });
-      /*
+    
       this.nodesG.append('g')
         .selectAll('path')
         .data(entriesWithReactionShape)
@@ -498,7 +497,6 @@ export default class ReactomeDetailView {
       .attr("class", " nodeG")
       .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
     for (const node of data) {
@@ -603,7 +601,6 @@ export default class ReactomeDetailView {
       .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
     const size = 100;
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     for (const node of data) {
       textLines.push(
@@ -715,7 +712,6 @@ export default class ReactomeDetailView {
       .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
     const size = 100;
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     for (const node of data) {
       textLines.push(
@@ -842,7 +838,6 @@ export default class ReactomeDetailView {
       .attr("transform", (d) => `translate(${d.position.x},${d.position.y})`);
     const textLines: { text: string; textLength: number }[][] = [];
     const size = 100;
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     for (const node of data) {
       textLines.push(

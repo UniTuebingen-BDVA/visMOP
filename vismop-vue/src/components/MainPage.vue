@@ -189,7 +189,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { mapState } from "pinia";
 import KeggDetailComponent from "./KeggDetailComponent.vue";
 import ReactomeDetailComponent from "./ReactomeDetailComponent.vue";
 import KeggOverviewComponent from "./KeggOverviewComponent.vue";
@@ -199,7 +198,7 @@ import PathwayCompare from "./PathwayCompare.vue";
 import ReactomeOverviewComponent from "./ReactomeOverviewComponent.vue";
 import { useMainStore } from "@/stores";
 import { computed, Ref, ref, watch } from "vue";
-import { QTable, QTableProps } from "quasar";
+import { QTable } from "quasar";
 import { ColType } from "@/core/generalTypes";
 
 const mainStore = useMainStore();
@@ -410,23 +409,23 @@ watch(pathwayDropdown, () => {
 });
 
 const transcriptomicsSelection = (
-  event: Event,
-  row: { [key: string]: string },
-  index: number
+  _event: Event,
+  _row: { [key: string]: string },
+  _index: number
 ) => {
   // this.transcriptomicsSelectionData = val
 };
 const proteomicsSelection = (
-  event: Event,
+  _event: Event,
   row: { [key: string]: string },
-  index: number
+  _index: number
 ) => {
   mainStore.addClickedNodeFromTable(row);
 };
 const metabolomicsSelection = (
-  event: Event,
-  row: { [key: string]: string },
-  index: number
+  _event: Event,
+  _row: { [key: string]: string },
+  _index: number
 ) => {
   // this.metabolomicsSelectionData = val
 };
