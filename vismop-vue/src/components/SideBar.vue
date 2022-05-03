@@ -6,7 +6,7 @@
       label="Target Database"
       option-label="text"
       option-value="value"
-      @update:modelValue="setTargetDatabase"
+      @update:model-value="setTargetDatabase"
     ></q-select>
     <q-select
       v-model="targetOrganism"
@@ -41,7 +41,7 @@
               v-model="transcriptomicsFile"
               chips
               label=".xlsx File Input"
-              @update:modelValue="fetchTranscriptomicsTable"
+              @update:model-value="fetchTranscriptomicsTable"
             ></q-file>
 
             <q-separator></q-separator>
@@ -116,7 +116,7 @@
               v-model="proteomicsFile"
               chips
               label=".xlsx File Input"
-              @update:modelValue="fetchProteomicsTable"
+              @update:model-value="fetchProteomicsTable"
             ></q-file>
 
             <q-separator></q-separator>
@@ -191,7 +191,7 @@
               v-model="metabolomicsFile"
               chips
               label=".xlsx File Input"
-              @update:modelValue="fetchMetabolomicsTable"
+              @update:model-value="fetchMetabolomicsTable"
             ></q-file>
 
             <q-separator></q-separator>
