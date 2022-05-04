@@ -2,15 +2,28 @@
   <div>
     <q-card :class="expandOverview ? 'overviewFullscreen' : ''">
       <div class="col-12 q-pa-md">
-        <q-fab icon="keyboard_arrow_down" direction="down">
+        <q-fab
+          icon="keyboard_arrow_down"
+          direction="down"
+          vertical-actions-align="left"
+        >
           <q-fab-action
+            color="primary"
             icon="keyboard_arrow_left"
             @click="expandComponent"
           ></q-fab-action>
           <q-fab-action
+            color="primary"
             icon="keyboard_arrow_right"
             @click="minimizeComponent"
           ></q-fab-action>
+          <q-fab-action>
+            <graph-filter
+              v-model:transcriptomics="transcriptomicsFilter"
+              v-model:proteomics="proteomicsFilter"
+              v-model:metabolomics="metabolomicsFilter"
+            ></graph-filter>
+          </q-fab-action>
         </q-fab>
         <div
           :id="contextID"
@@ -23,6 +36,7 @@
 
 <script setup lang="ts">
 import OverviewGraph from '../core/overviewNetwork';
+import GraphFilter from './GraphFilter.vue';
 import { generateGraphData } from '../core/reactomeOverviewGraphPreparation';
 import {
   generateGlyphDataReactome,
@@ -71,6 +85,25 @@ const proteomicsIntersection: Ref<string[]> = ref([]);
 const proteomicsUnion: Ref<string[]> = ref([]);
 const metabolomicsIntersection: Ref<string[]> = ref([]);
 const metabolomicsUnion: Ref<string[]> = ref([]);
+
+const transcriptomicsFilter = ref({
+  limits: { min: 0, max: 5 },
+  value: { min: 1, max: 2 },
+  filterActive: false,
+  inside: true,
+});
+const proteomicsFilter = ref({
+  limits: { min: 0, max: 5 },
+  value: { min: 1, max: 2 },
+  filterActive: false,
+  inside: true,
+});
+const metabolomicsFilter = ref({
+  limits: { min: 0, max: 5 },
+  value: { min: 1, max: 2 },
+  filterActive: false,
+  inside: true,
+});
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
