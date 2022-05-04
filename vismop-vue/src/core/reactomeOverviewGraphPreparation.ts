@@ -7,6 +7,7 @@ import {
   baseEdgeAttr,
 } from '@/core/graphTypes';
 import { reactomeEntry } from './reactomeTypes';
+import { glyphData } from './generalTypes';
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -16,6 +17,9 @@ import { reactomeEntry } from './reactomeTypes';
 export function generateGraphData(
   nodeList: reactomeEntry[],
   glyphs: { [key: string]: string },
+  glyphData: {
+    [key: string]: glyphData;
+  },
   rootIds: string[]
 ): graphData {
   const graph = {
@@ -39,8 +43,18 @@ export function generateGraphData(
         type: 'image',
         image: glyphs[id],
         name: _.escape(name),
+        hidden: false,
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
         label: `${_.escape(name)}`,
+        averageTranscriptomics: glyphData[id].transcriptomics.available
+          ? glyphData[id].transcriptomics.meanFoldchange
+          : 0,
+        averageProteomics: glyphData[id].proteomics.available
+          ? glyphData[id].proteomics.meanFoldchange
+          : 0,
+        averageMetabolonmics: glyphData[id].metabolomics.available
+          ? glyphData[id].metabolomics.meanFoldchange
+          : 0,
         x: initPosX,
         y: initPosY,
         zIndex: 1,

@@ -10,12 +10,58 @@ import drawHover from '@/core/customHoverRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
+import { filterValues } from './generalTypes';
 
 export default class overviewGraph {
   private currentPathway = '';
   private pathwaysContainingIntersection: string[] = [];
   private pathwaysContainingUnion: string[] = [];
   private renderer;
+  private averageFilter: {
+    transcriptomics: filterValues;
+    proteomics: filterValues;
+    metabolomics: filterValues;
+  } = {
+    transcriptomics: {
+      limits: {
+        min: 0,
+        max: 0,
+      },
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+    proteomics: {
+      limits: {
+        min: 0,
+        max: 0,
+      },
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+    metabolomics: {
+      limits: {
+        min: 0,
+        max: 0,
+      },
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+  };
 
   constructor(containerID: string, graphData: graphData) {
     this.renderer = this.mainGraph(containerID, graphData);
@@ -289,5 +335,15 @@ export default class overviewGraph {
 
   public killGraph() {
     this.renderer.kill();
+  }
+
+  public setAverageFilter(
+    transcriptomics: filterValues,
+    proteomics: filterValues,
+    metabolomics: filterValues
+  ) {
+    this.averageFilter.transcriptomics = transcriptomics;
+    this.averageFilter.proteomics = proteomics;
+    this.averageFilter.metabolomics = metabolomics;
   }
 }

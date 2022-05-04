@@ -28,3 +28,17 @@ export interface glyphData {
   metabolomics: omicsData;
   transcriptomics: omicsData;
 }
+
+export interface filterValues {
+  limits: {
+    min: number;
+    max: number;
+  };
+  value: {
+    min: number;
+    max: number;
+  };
+  filterActive: boolean;
+  inside: boolean;
+  disable: boolean;
+}

@@ -11,6 +11,7 @@
             v-model="transcriptomicsFilter.filterActive"
             checked-icon="task_alt"
             unchecked-icon="highlight_off"
+            :disable="transcriptomicsFilter.disable"
           />
         </div>
         <div class="col-8">
@@ -19,13 +20,15 @@
             thumb-label
             :min="transcriptomicsFilter.limits.min"
             :max="transcriptomicsFilter.limits.max"
-            :step="1"
+            :step="0.1"
+            label
             :color="
               transcriptomicsFilter.inside ? 'primary' : 'graphFilterSlider'
             "
             :track-color="
               transcriptomicsFilter.inside ? 'graphFilterSlider' : 'primary'
             "
+            :disable="transcriptomicsFilter.disable"
           >
           </q-range>
         </div>
@@ -35,6 +38,7 @@
             checked-icon="mdi-arrow-collapse-horizontal"
             color="primary"
             unchecked-icon="mdi-arrow-split-vertical"
+            :disable="transcriptomicsFilter.disable"
           />
         </div>
       </div>
@@ -49,6 +53,7 @@
             v-model="proteomicsFilter.filterActive"
             checked-icon="task_alt"
             unchecked-icon="highlight_off"
+            :disable="proteomicsFilter.disable"
           />
         </div>
         <div class="col-8">
@@ -57,11 +62,13 @@
             thumb-label
             :min="proteomicsFilter.limits.min"
             :max="proteomicsFilter.limits.max"
-            :step="1"
+            :step="0.1"
+            label
             :color="proteomicsFilter.inside ? 'primary' : 'graphFilterSlider'"
             :track-color="
               proteomicsFilter.inside ? 'graphFilterSlider' : 'primary'
             "
+            :disable="proteomicsFilter.disable"
           >
           </q-range>
         </div>
@@ -71,6 +78,7 @@
             checked-icon="mdi-arrow-collapse-horizontal"
             color="primary"
             unchecked-icon="mdi-arrow-split-vertical"
+            :disable="proteomicsFilter.disable"
           />
         </div>
       </div>
@@ -85,6 +93,7 @@
             v-model="metabolomicsFilter.filterActive"
             checked-icon="task_alt"
             unchecked-icon="highlight_off"
+            :disable="metabolomicsFilter.disable"
           />
         </div>
         <div class="col-8">
@@ -93,11 +102,13 @@
             thumb-label
             :min="metabolomicsFilter.limits.min"
             :max="metabolomicsFilter.limits.max"
-            :step="1"
+            :step="0.1"
+            label
             :color="metabolomicsFilter.inside ? 'primary' : 'graphFilterSlider'"
             :track-color="
               metabolomicsFilter.inside ? 'graphFilterSlider' : 'primary'
             "
+            :disable="metabolomicsFilter.disable"
           >
           </q-range>
         </div>
@@ -107,6 +118,7 @@
             checked-icon="mdi-arrow-collapse-horizontal"
             color="primary"
             unchecked-icon="mdi-arrow-split-vertical"
+            :disable="metabolomicsFilter.disable"
           />
         </div>
       </div>
@@ -126,6 +138,7 @@ const props = defineProps({
       value: { min: number; max: number };
       filterActive: boolean;
       inside: boolean;
+      disable: boolean;
     }>,
     required: true,
   },
@@ -135,6 +148,7 @@ const props = defineProps({
       value: { min: number; max: number };
       filterActive: boolean;
       inside: boolean;
+      disable: boolean;
     }>,
     required: true,
   },
@@ -144,6 +158,7 @@ const props = defineProps({
       value: { min: number; max: number };
       filterActive: boolean;
       inside: boolean;
+      disable: boolean;
     }>,
     required: true,
   },

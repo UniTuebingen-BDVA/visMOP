@@ -52,6 +52,7 @@ import {
   defineProps,
 } from 'vue';
 import { reactomeEntry } from '@/core/reactomeTypes';
+import { glyphData } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
 
 const props = defineProps({
@@ -85,24 +86,30 @@ const proteomicsIntersection: Ref<string[]> = ref([]);
 const proteomicsUnion: Ref<string[]> = ref([]);
 const metabolomicsIntersection: Ref<string[]> = ref([]);
 const metabolomicsUnion: Ref<string[]> = ref([]);
+const glyphDataVar: Ref<{
+  [key: string]: glyphData;
+}> = ref({});
 
 const transcriptomicsFilter = ref({
   limits: { min: 0, max: 5 },
   value: { min: 1, max: 2 },
   filterActive: false,
   inside: true,
+  disable: true,
 });
 const proteomicsFilter = ref({
   limits: { min: 0, max: 5 },
   value: { min: 1, max: 2 },
   filterActive: false,
   inside: true,
+  disable: true,
 });
 const metabolomicsFilter = ref({
   limits: { min: 0, max: 5 },
   value: { min: 1, max: 2 },
   filterActive: false,
   inside: true,
+  disable: true,
 });
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
@@ -243,6 +250,73 @@ watch(
   }
 );
 
+watch(glyphDataVar, () => {
+  let transcriptomicsAvailable = false;
+  let proteomicsAvailable = false;
+  let metabolomicsAvailable = false;
+  let transcriptomicsLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
+  let proteomicsLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
+  let metabolomicsLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
+
+  for (const pathwayKey in glyphDataVar.value) {
+    const currPathway = glyphDataVar.value[pathwayKey];
+    if (currPathway.transcriptomics.available) {
+      transcriptomicsAvailable = true;
+      if (
+        currPathway.transcriptomics.meanFoldchange < transcriptomicsLimits.min
+      )
+        transcriptomicsLimits.min = currPathway.transcriptomics.meanFoldchange;
+      if (
+        currPathway.transcriptomics.meanFoldchange > transcriptomicsLimits.max
+      )
+        transcriptomicsLimits.max = currPathway.transcriptomics.meanFoldchange;
+    }
+    if (currPathway.proteomics.available) {
+      proteomicsAvailable = true;
+      if (currPathway.proteomics.meanFoldchange < proteomicsLimits.min)
+        proteomicsLimits.min = currPathway.transcriptomics.meanFoldchange;
+      if (currPathway.proteomics.meanFoldchange > proteomicsLimits.max)
+        proteomicsLimits.max = currPathway.proteomics.meanFoldchange;
+    }
+    if (currPathway.metabolomics.available) {
+      metabolomicsAvailable = true;
+      if (currPathway.metabolomics.meanFoldchange < metabolomicsLimits.min)
+        metabolomicsLimits.min = currPathway.metabolomics.meanFoldchange;
+      if (currPathway.metabolomics.meanFoldchange > metabolomicsLimits.max)
+        metabolomicsLimits.max = currPathway.metabolomics.meanFoldchange;
+    }
+  }
+  transcriptomicsFilter.value.disable = !transcriptomicsAvailable;
+  proteomicsFilter.value.disable = !proteomicsAvailable;
+  metabolomicsFilter.value.disable = !metabolomicsAvailable;
+
+  transcriptomicsFilter.value.limits.max = transcriptomicsLimits.max;
+  transcriptomicsFilter.value.limits.max = transcriptomicsLimits.max;
+
+  proteomicsFilter.value.limits.max = proteomicsLimits.max;
+  proteomicsFilter.value.limits.max = proteomicsLimits.max;
+
+  metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
+  metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
+});
+
+watch([transcriptomicsFilter, proteomicsFilter, metabolomicsFilter], () => {
+  networkGraph?.value?.setAverageFilter(
+    transcriptomicsFilter.value,
+    proteomicsFilter.value,
+    metabolomicsFilter.value
+  );
+});
+
 onMounted(() => {
   console.log('OVDATA', overviewData);
   if (overviewData.value) {
@@ -258,16 +332,17 @@ const minimizeComponent = () => {
 const drawNetwork = () => {
   networkGraph.value?.killGraph();
   // const fcExtents = fcQuantiles
-  const glyphData = generateGlyphDataReactome();
-  mainStore.setGlyphData(glyphData);
-  console.log('GLYPH DATA', glyphData);
-  const generatedGlyphs = generateGlyphs(glyphData);
+  glyphDataVar.value = generateGlyphDataReactome();
+  mainStore.setGlyphData(glyphDataVar.value);
+  console.log('GLYPH DATA', glyphDataVar.value);
+  const generatedGlyphs = generateGlyphs(glyphDataVar.value);
   mainStore.setGlyphs(generatedGlyphs);
   const glyphsURL = generatedGlyphs.url;
   console.log('GLYPHs', mainStore.glyphs);
   const networkData = generateGraphData(
     overviewData.value,
     glyphsURL,
+    glyphDataVar.value,
     pathwayLayouting.value.rootIds
   );
   console.log('base dat', networkData);
