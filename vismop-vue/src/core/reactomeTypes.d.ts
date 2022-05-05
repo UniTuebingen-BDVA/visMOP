@@ -1,5 +1,7 @@
 // https://reactome.org/dev/diagram/pathway-diagram-specs for infos
-
+import {
+  upDatedPos
+} from '@/core/graphTypes'
 /*
 Basic Types
 */
@@ -19,13 +21,19 @@ interface omicsEntry{
   measured: {[key: string]: measure}
   total: number
 }
+
+
 interface reactomeEntry{
   entries: {proteomics: omicsEntry, transcriptomics: omicsEntry, metabolomics: omicsEntry}
   pathwayId: string
+  moduleNum: number
   rootId: string
   pathwayName: string
   maplinks: {[key: string]: {'own_id': number, 'toplevel_id': number}}
   subtreeIds: string[]
+  up: upDatedPos
+  initialPosX: number
+  initialPosY: number
   
 }
 

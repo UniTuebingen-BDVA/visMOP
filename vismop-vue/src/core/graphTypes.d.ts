@@ -95,7 +95,7 @@ export interface node {
  * Defines a Graph Data object
  */
 export interface graphData {
-  attributes: { name: string };
+  attributes: { [name: string]: string };
   nodes: node[];
   edges: edge[];
   cluster_rects: [number[]];

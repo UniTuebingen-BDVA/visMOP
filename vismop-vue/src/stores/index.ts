@@ -53,7 +53,7 @@ interface State {
 export const useMainStore = defineStore('mainStore', {
   state: (): State => ({
     sideBarExpand: true,
-    overviewData: null,
+    overviewData: {},
     targetDatabase: 'reactome',
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
@@ -68,16 +68,20 @@ export const useMainStore = defineStore('mainStore', {
     metabolomicsTableData: [],
     usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
     graphData: {
-      attributes: { name: '' },
+      attributes: {},
       nodes: [],
       edges: [],
+      cluster_rects: [[]],
       options: null
     },
     fcs: {},
     fcsReactome: { transcriptomics: {}, proteomics: {}, metabolomics: {} },
     fcQuantiles: { transcriptomics: [0, 0], proteomics: [0, 0], metabolomics: [0, 0] },
     fcScales: { transcriptomics: d3.scaleDiverging(), proteomics: d3.scaleDiverging(), metabolomics: d3.scaleDiverging() },
-    interactionGraphData: null,
+    interactionGraphData: {
+    graph: {identities:[]},
+    nodes: [{}],
+    links: [{}]},
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
       pathwayNodeDictionary: { },

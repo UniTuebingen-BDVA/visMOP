@@ -9,8 +9,7 @@
     "buildtsc": "vue-tsc --noEmit && vite build --emptyOutDir",
     "dev": "vite",
     "preview": "vite preview",
-    "test": "./node_modules/.bin/mocha --config=./.mocharc.yml",
-    "postinstall": "patch-package"
+    "test": "./node_modules/.bin/mocha --config=./.mocharc.yml"
   },
   "dependencies": {
     "@mdi/font": "5.9.55",
@@ -24,14 +23,12 @@
     "graphology-layout-noverlap": "^0.4.2",
     "graphology-operators": "^1.5.1",
     "graphology-shortest-path": "^2.0.0",
-    "graphology-types": "^0.24.3",
     "lodash": "^4.17.21",
     "pinia": "^2.0.13",
     "quasar": "^2.6.5",
     "roboto-fontface": "*",
     "sigma": "^2.3.0",
     "vue": "^3.2.31",
-    "vuex": "^4.0.2",
     "webfontloader": "^1.0.0",
     "webcola": "^3.4.0"
   },

@@ -27,7 +27,7 @@
   import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph'
   import { computed, onMounted, PropType, Ref, ref, watch } from 'vue'
   import { useMainStore } from '@/stores'
-import { entry } from '@/core/graphTypes'
+  import { entry } from '@/core/graphTypes'
 
   const props = defineProps(
     {
