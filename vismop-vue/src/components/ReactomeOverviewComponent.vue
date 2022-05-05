@@ -309,13 +309,21 @@ watch(glyphDataVar, () => {
   metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
 });
 
-watch([transcriptomicsFilter, proteomicsFilter, metabolomicsFilter], () => {
-  networkGraph?.value?.setAverageFilter(
+watch(
+  [
     transcriptomicsFilter.value,
     proteomicsFilter.value,
-    metabolomicsFilter.value
-  );
-});
+    metabolomicsFilter.value,
+  ],
+  () => {
+    console.log('change Filter');
+    networkGraph?.value?.setAverageFilter(
+      transcriptomicsFilter.value,
+      proteomicsFilter.value,
+      metabolomicsFilter.value
+    );
+  }
+);
 
 onMounted(() => {
   console.log('OVDATA', overviewData);

@@ -17,6 +17,9 @@ export default class overviewGraph {
   private pathwaysContainingIntersection: string[] = [];
   private pathwaysContainingUnion: string[] = [];
   private renderer;
+  private filterFuncTrans: (x: number) => boolean = (_x: number) => true;
+  private filterFuncProt: (x: number) => boolean = (_x: number) => true;
+  private filterFuncMeta: (x: number) => boolean = (_x: number) => true;
   private averageFilter: {
     transcriptomics: filterValues;
     proteomics: filterValues;
@@ -98,6 +101,26 @@ export default class overviewGraph {
 
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: string, data: Attributes) => {
+      // handle filter
+      let hidden = false;
+      if (
+        this.averageFilter.metabolomics.filterActive ||
+        this.averageFilter.proteomics.filterActive ||
+        this.averageFilter.transcriptomics.filterActive
+      ) {
+        if (data.isRoot) {
+          hidden = false;
+        } else if (
+          this.filterFuncTrans(data.averageTranscriptomics) &&
+          this.filterFuncProt(data.averageProteomics) &&
+          this.filterFuncMeta(data.averageMetabolonmics)
+        ) {
+          hidden = false;
+        } else {
+          hidden = true;
+        }
+      }
+
       const nodeSize =
         highlighedNodesHover.has(node) ||
         this.currentPathway === node.replace('path:', '')
@@ -166,7 +189,7 @@ export default class overviewGraph {
           size: nodeSize,
         };
       }
-      return data;
+      return { ...data, hidden: hidden };
     };
 
     // same for edges
@@ -345,5 +368,53 @@ export default class overviewGraph {
     this.averageFilter.transcriptomics = transcriptomics;
     this.averageFilter.proteomics = proteomics;
     this.averageFilter.metabolomics = metabolomics;
+
+    this.filterFuncTrans = this.averageFilter.transcriptomics.filterActive
+      ? this.averageFilter.transcriptomics.inside
+        ? (x: number) => {
+            return (
+              x <= this.averageFilter.transcriptomics.value.max &&
+              x >= this.averageFilter.transcriptomics.value.min
+            );
+          }
+        : (x: number) => {
+            return (
+              x >= this.averageFilter.transcriptomics.value.max ||
+              x <= this.averageFilter.transcriptomics.value.min
+            );
+          }
+      : (_x: number) => true;
+    this.filterFuncProt = this.averageFilter.proteomics.filterActive
+      ? this.averageFilter.proteomics.inside
+        ? (x: number) => {
+            return (
+              x <= this.averageFilter.proteomics.value.max &&
+              x >= this.averageFilter.proteomics.value.min
+            );
+          }
+        : (x: number) => {
+            return (
+              x >= this.averageFilter.proteomics.value.max ||
+              x <= this.averageFilter.proteomics.value.min
+            );
+          }
+      : (_x: number) => true;
+    this.filterFuncMeta = this.averageFilter.metabolomics.filterActive
+      ? this.averageFilter.metabolomics.inside
+        ? (x: number) => {
+            return (
+              x <= this.averageFilter.metabolomics.value.max &&
+              x >= this.averageFilter.metabolomics.value.min
+            );
+          }
+        : (x: number) => {
+            return (
+              x >= this.averageFilter.metabolomics.value.max ||
+              x <= this.averageFilter.metabolomics.value.min
+            );
+          }
+      : (_x: number) => true;
+
+    this.renderer.refresh();
   }
 }

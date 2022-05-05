@@ -48,16 +48,17 @@ export function generateGraphData(
         label: `${_.escape(name)}`,
         averageTranscriptomics: glyphData[id].transcriptomics.available
           ? glyphData[id].transcriptomics.meanFoldchange
-          : 0,
+          : NaN,
         averageProteomics: glyphData[id].proteomics.available
           ? glyphData[id].proteomics.meanFoldchange
-          : 0,
+          : NaN,
         averageMetabolonmics: glyphData[id].metabolomics.available
           ? glyphData[id].metabolomics.meanFoldchange
-          : 0,
+          : NaN,
         x: initPosX,
         y: initPosY,
         zIndex: 1,
+        isRoot: entry.rootId === entry.pathwayId,
         size: entry.rootId === entry.pathwayId ? 15 : 10,
         fixed: false, // fixed property on nodes excludes nodes from layouting
       } as baseNodeAttr,
