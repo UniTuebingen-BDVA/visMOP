@@ -253,7 +253,7 @@ def kegg_parsing():
     overall_reactions = {}
     proteomics_symbol_dict = {}
     symbol_kegg_dict_transcriptomics = {}
-    target_db = request.json['targetOrganism']
+    target_db = request.json['targetOrganism']['value']
     transcriptomics = request.json['transcriptomics']
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']

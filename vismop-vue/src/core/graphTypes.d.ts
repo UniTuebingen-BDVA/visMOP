@@ -1,4 +1,4 @@
-import { Attributes } from 'graphology-types'
+import { Attributes } from 'graphology-types';
 /**
  * Defines a set of edge attributes
  */
@@ -42,7 +42,6 @@ export interface baseNodeAttr extends Attributes {
 }
 
 export interface detailNodeAttr extends baseNodeAttr {
-
   origPos: { [key: string]: number[] };
 
   secondaryColor: string;
@@ -72,7 +71,6 @@ export interface baseNodeAttr extends Attributes {
 export interface CartesianVector {
   x: number;
   y: number;
-
 }
 /**
  * Defines a updated node position
@@ -99,12 +97,12 @@ export interface graphData {
   nodes: node[];
   edges: edge[];
   cluster_rects: [number[]];
-  options: unkown
+  options: unkown;
 }
-export interface networkxNodeLink{
-  graph: {identities: number[]};
-  nodes: [{ [key: string]: string}];
-  links: [{ [key: string]: string}];
+export interface networkxNodeLink {
+  graph: { identities: number[] };
+  nodes: [{ [key: string]: string }];
+  links: [{ [key: string]: string }];
 }
 /**
  * Defines a kegg relation

@@ -2,7 +2,6 @@ from cmath import inf
 from pickle import TRUE
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from tables import Col
 from umap import UMAP
 from sklearn.cluster import KMeans
 import pandas as pd

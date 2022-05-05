@@ -299,20 +299,12 @@ class PathwayHierarchy(dict):
                     self[pathway[0]].total_measured_proteins[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
                     self[pathway[0]].own_measured_proteins.append(query_key)
             elif query_type == 'gene':
-                try:
-                    b = self[pathway[0]]
-                except Exception as r:
-                    print(r)
                 if query_key in self[pathway[0]].total_measured_genes:
                     self[pathway[0]].total_measured_genes[query_key]['forms'][current_reactome_id] = {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }
                     self[pathway[0]].own_measured_genes.append(query_key)
                 else:
-                    try:
-                        self[pathway[0]].total_measured_genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
-                        self[pathway[0]].own_measured_genes.append(query_key)
-                    except Exception as r:
-                        b = self[pathway[0]]
-                        print(b)
+                    self[pathway[0]].total_measured_genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
+                    self[pathway[0]].own_measured_genes.append(query_key)
             elif query_type == 'metabolite':
                 if query_key in self[pathway[0]].total_measured_metabolites:
                     self[pathway[0]].total_measured_metabolites[query_key]['forms'][current_reactome_id] =  {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }
