@@ -1,620 +1,495 @@
 <template>
-  <v-list nav dense>
-    <v-select
-      :items="targetDatabases"
+  <q-list nav class='q-pa-sm'>
+    <q-select
+      :options="targetDatabases"
       label="Target Database"
       v-model="targetDatabase"
-      v-on:change="setTargetDatabase"
-      @click="lockHover"
-      @input="unlockHover"
-    ></v-select>
-    <v-select
-      :items="targetOrganisms"
+      option-label="text"
+      option-value="value"
+      @update:model-value="setTargetDatabase"
+    ></q-select>
+    <q-select
+      :options="targetOrganisms"
       label="Target Organism"
       v-model="targetOrganism"
-      @click="lockHover"
-      @input="unlockHover"
-    ></v-select>
-    Selected Omics:
-    {{ chosenOmics.length }}
-    <v-chip-group active-class="primary--text" column>
-      <v-chip v-for="variable in chosenOmics" :key="variable">
+      option-label="text"
+      option-value="value"
+    ></q-select>
+      Selected Omics:
+      {{ chosenOmics.length }}
+    <!--
+    <q-chip-group active-class="primary--text" column>
+      <q-chip
+        v-for="variable in chosenOmics"
+        :key="variable"
+      >
         {{ variable }}
-      </v-chip>
-    </v-chip-group>
-    <v-expansion-panels>
-      <v-expansion-panel>
-        <v-expansion-panel-header>
-          Transcriptomics Data
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <v-file-input
-            v-on:change="fetchTranscriptomicsTable"
-            v-model="transcriptomicsFile"
-            chips
-            label=".xlsx File Input"
-          ></v-file-input>
+      </q-chip>
+    </q-chip-group>
+    -->
+    <q-list bordered class="rounded-borders">
+      <q-expansion-item
+        label = "Transcriptomics Data"
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
+        group="omicsSelect"
+        icon="svguse:/icons/RNA.svg#rna|0 0 9 9"
+      >
+        <q-card>
+          <q-card-section>
+            <q-file
+              v-on:update:modelValue="fetchTranscriptomicsTable"
+              v-model="transcriptomicsFile"
+              chips
+              label=".xlsx File Input"
+            ></q-file>
 
-          <v-spacer></v-spacer>
+            <q-separator></q-separator>
 
-          <v-text-field
-            :rules="sheetRules"
-            label="Sheet Number"
-            :value="transcriptomicsSheetVal"
-            v-model="transcriptomicsSheetVal"
-            :disabled="overlay"
-          ></v-text-field>
+            <q-input :rules="sheetRules" label="Sheet Number" :value="transcriptomicsSheetVal" v-model="transcriptomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
-          <v-spacer></v-spacer>
+            <q-separator></q-separator>
 
-          <v-select
-            :items="transcriptomicsTableHeaders"
-            v-model="transcriptomicsSymbolCol"
-            label="Genesymbol Col."
-            @click="lockHover"
-            @input="unlockHover"
-          ></v-select>
+            <q-select
+              :options="transcriptomicsTableHeaders"
+              v-model="transcriptomicsSymbolCol"
+              option-label="label"
+              option-value="name"
+              label="Genesymbol Col."
+            ></q-select>
 
-          <v-spacer></v-spacer>
+            <q-separator></q-separator>
 
-          <v-select
-            :items="transcriptomicsTableHeaders"
-            v-model="transcriptomicsValueCol"
-            label="Value Col."
-            @click="lockHover"
-            @input="unlockHover"
-          ></v-select>
-          <v-spacer></v-spacer>
-          Input Filter:
-          <v-row v-for="variable in sliderTranscriptomics" :key="variable.text">
-            <v-checkbox
-              v-model="sliderVals.transcriptomics[variable.text].empties"
-              :label="'Empties'"
-            ></v-checkbox>
-            <v-range-slider
-              v-model="sliderVals.transcriptomics[variable.text].vals"
-              :max="variable.max"
-              :min="variable.min"
-              :step="variable.step"
-              :hint="variable.text"
-              thumb-label
-              persistent-hint
+            <q-select
+              :options="transcriptomicsTableHeaders"
+              v-model="transcriptomicsValueCol"
+              option-label="label"
+              option-value="name"
+              label="Value Col."
+            ></q-select>
+            <q-separator></q-separator>
+            Input Filter:
+            <div class="row"
+              v-for="variable in sliderTranscriptomics"
+              :key="variable.text"
             >
-            </v-range-slider>
-          </v-row>
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-      <v-expansion-panel>
-        <v-expansion-panel-header> Proteomics Data </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <v-file-input
-            v-on:change="fetchProteomicsTable"
-            v-model="proteomicsFile"
-            chips
-            label=".xlsx File Input"
-          ></v-file-input>
+              <q-badge color="primary">
+                {{ variable.text }}
+              </q-badge>
+              <q-checkbox
+                v-model="sliderVals.transcriptomics[variable.text].empties"
+                :label="'Empties'"
+              ></q-checkbox>
+              <q-range
+                v-model="sliderVals.transcriptomics[variable.text].vals"
+                :max="variable.max"
+                :min="variable.min"
+                :step="variable.step"
+                thumb-label
+                persistent-hint
+              >
+              </q-range>
+            </div>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
 
-          <v-spacer></v-spacer>
+      <q-separator />
 
-          <v-text-field
-            :rules="sheetRules"
-            label="Sheet Number"
-            :value="proteomicsSheetVal"
-            v-model="proteomicsSheetVal"
-            :disabled="overlay"
-          ></v-text-field>
+      <q-expansion-item
+        label="Proteomics Data"
+        group="omicsSelect"
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
+        icon="svguse:/icons/Prots.svg#prots|0 0 9 9"
+      >
+        <q-card>
+          <q-card-section>
 
-          <v-spacer></v-spacer>
+            <q-file
+              v-on:update:modelValue="fetchProteomicsTable"
+              v-model="proteomicsFile"
+              chips
+              label=".xlsx File Input"
+            ></q-file>
 
-          <v-select
-            :items="proteomicsTableHeaders"
-            v-model="proteomicsSymbolCol"
-            label="Symbol Col."
-            @click="lockHover"
-            @input="unlockHover"
-          ></v-select>
+            <q-separator></q-separator>
 
-          <v-spacer></v-spacer>
+            <q-input :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal" v-model="proteomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
-          <v-select
-            :items="proteomicsTableHeaders"
-            v-model="proteomicsValueCol"
-            label="Value Col."
-            @click="lockHover"
-            @input="unlockHover"
-          ></v-select>
-          <v-spacer></v-spacer>
-          Input Filter:
-          <v-row v-for="variable in sliderProteomics" :key="variable.text">
-            <v-checkbox
-              v-model="sliderVals.proteomics[variable.text].empties"
-              :label="'Empties'"
-            ></v-checkbox>
-            <v-range-slider
-              v-model="sliderVals.proteomics[variable.text].vals"
-              :max="variable.max"
-              :min="variable.min"
-              :step="variable.step"
-              :hint="variable.text"
-              thumb-label
-              persistent-hint
+            <q-separator></q-separator>
+
+            <q-select
+              :options="proteomicsTableHeaders"
+              v-model="proteomicsSymbolCol"
+              label="Symbol Col."
+              option-label="label"
+              option-value="name"
+            ></q-select>
+
+            <q-separator></q-separator>
+
+            <q-select
+              :options="proteomicsTableHeaders"
+              v-model="proteomicsValueCol"
+              option-label="label"
+              option-value="name"
+              label="Value Col."
+            ></q-select>
+            <q-separator></q-separator>
+            Input Filter:
+            <div class="row"
+              v-for="variable in sliderProteomics"
+              :key="variable.text"
             >
-            </v-range-slider>
-          </v-row>
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-      <v-expansion-panel>
-        <v-expansion-panel-header> Metabolomics Data </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <v-file-input
-            v-on:change="fetchMetabolomicsTable"
-            v-model="metabolomicsFile"
-            chips
-            label=".xlsx File Input"
-          ></v-file-input>
+              <q-badge color="primary">
+                {{ variable.text }}
+              </q-badge>
+              <q-checkbox
+                v-model="sliderVals.proteomics[variable.text].empties"
+                :label="'Empties'"
+              ></q-checkbox>
+              <q-range
+                v-model="sliderVals.proteomics[variable.text].vals"
+                :max="variable.max"
+                :min="variable.min"
+                :step="variable.step"
+                :hint="variable.text"
+                thumb-label
+                persistent-hint
+              >
+              </q-range>
+            </div>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
 
-          <v-spacer></v-spacer>
+      <q-separator />
+      <q-expansion-item
+        label="Metabolomics Data"
+        group="omicsSelect"
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
+        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
 
-          <v-text-field
-            :rules="sheetRules"
-            label="Sheet Number"
-            :value="metabolomicsSheetVal"
-            v-model="metabolomicsSheetVal"
-            :disabled="overlay"
-          ></v-text-field>
+      >
+        <q-card>
+          <q-card-section>
+            <q-file
+              v-on:update:modelValue="fetchMetabolomicsTable"
+              v-model="metabolomicsFile"
+              chips
+              label=".xlsx File Input"
+            ></q-file>
 
-          <v-spacer></v-spacer>
+            <q-separator></q-separator>
 
-          <v-select
-            :items="metabolomicsTableHeaders"
-            v-model="metabolomicsSymbolCol"
-            label="Symbol Col."
-            @click="lockHover"
-            @input="unlockHover"
-          ></v-select>
+            <q-input :rules="sheetRules" label="Sheet Number" :value="metabolomicsSheetVal" v-model="metabolomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
-          <v-spacer></v-spacer>
+            <q-separator></q-separator>
 
-          <v-select
-            :items="metabolomicsTableHeaders"
-            v-model="metabolomicsValueCol"
-            label="Value Col."
-            @click="lockHover"
-            @input="unlockHover"
-          ></v-select>
-          <v-spacer></v-spacer>
-          Input Filter:
-          <v-row v-for="variable in sliderMetabolomics" :key="variable.text">
-            <v-checkbox
-              v-model="sliderVals.metabolomics[variable.text].empties"
-              :label="'Empties'"
-            ></v-checkbox>
-            <v-range-slider
-              v-model="sliderVals.metabolomics[variable.text].vals"
-              :max="variable.max"
-              :min="variable.min"
-              :step="variable.step"
-              :hint="variable.text"
-              thumb-label
-              persistent-hint
+            <q-select
+              :options="metabolomicsTableHeaders"
+              v-model="metabolomicsSymbolCol"
+              option-label="label"
+              option-value="name"
+              label="Symbol Col."
+            ></q-select>
+
+            <q-separator></q-separator>
+
+            <q-select
+              :options="metabolomicsTableHeaders"
+              v-model="metabolomicsValueCol"
+              option-label="label"
+              option-value="name"
+              label="Value Col."
+            ></q-select>
+            <q-separator></q-separator>
+            Input Filter:
+            <div class="row"
+              v-for="variable in sliderMetabolomics"
+              :key="variable.text"
             >
-            </v-range-slider>
-          </v-row>
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-    <!-- </v-expansion-panels> -->
-    <!-- <v-spacer></v-spacer> -->
-    <!-- <v-expansion-panels> -->
-      <v-expansion-panel>
-        <v-expansion-panel-header> Layout Attributes </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <v-select
-            :items="layoutOmics"
-            v-model="currentLayoutOmic"
-            label="Omic Type"
-            @click="lockHover"
-            @input="unlockHover"
-          ></v-select>
-          <v-spacer></v-spacer>
-          <div v-if="currentLayoutOmic != ''">
-          <v-select
-            :items="layoutAttributes"
-            v-model="chosenLayoutAttributes"
-            label="Attributes"
-            @click="lockHover"
-            @input="unlockHover"
-            multiple
-          ></v-select>
-          <v-spacer></v-spacer>
-          <v-row v-if="currentLayoutOmic != 'not related to specific omic'">
-            <v-text-field
-                  v-model="omicLimitMin"
-                  type="number"
-                  step="0.1"
-                  class="mt-4 mr-5 ml-3"
-                  style="width: 30px"
-                  label="minimal FC limit"
-                ></v-text-field>
-          <v-text-field
-                  v-model="omicLimitMax"
-                  type="number"
-                  step="0.1"
-                  class="mt-4 ml-2 mr-5"
-                  style="width: 30px"
-                  label="maximal FC limit"
-                ></v-text-field>
-          </v-row>
-          </div>
+              <q-badge color="primary">
+                {{ variable.text }}
+              </q-badge>
+              <q-checkbox
+                v-model="sliderVals.metabolomics[variable.text].empties"
+                :label="'Empties'"
+              ></q-checkbox>
+              <q-range
+                v-model="sliderVals.metabolomics[variable.text].vals"
+                :max="variable.max"
+                :min="variable.min"
+                :step="variable.step"
+                :hint="variable.text"
+                thumb-label
+                persistent-hint
+              >
+              </q-range>
+            </div>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
 
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-    </v-expansion-panels>
-    <v-btn v-on:click="dataQuery">Plot</v-btn>
-  </v-list>
+      <q-expansion-item>
+        <q-separator />
+      <q-expansion-item
+        label="Layout Attributes"
+        group="omicsSelect"
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
+        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
+      >
+      <q-card>
+          <q-card-section>
+             <q-select
+              :options="layoutOmics"
+              v-model="currentLayoutOmic"
+              option-label="label"
+              option-value="name"
+              label="Omic Type"
+            ></q-select>
+            <div v-if="currentLayoutOmic != ''">
+              <q-select
+              :options="layoutAttributes"
+              v-model="chosenLayoutAttributes"
+              option-label="label"
+              option-value="name"
+              label="Attributes"
+              multiple
+            ></q-select>
+            <div v-if="currentLayoutOmic != 'not related to specific omic'">
+              <q-input
+                v-model.number="omicLimitMin"
+                type="number"
+                step="0.1"
+                style="max-width: 30px"
+                class="mt-4 mr-5 ml-3"
+                label="minimal FC limit"
+                filled
+              />
+              <q-input
+                v-model.number="omicLimitMax"
+                type="number"
+                step="0.1"
+                style="max-width: 30px"
+                class="mt-4 ml-2 mr-5"
+                label="maximal FC limit"
+                filled
+              />
+            </div>
+            </div>
+      </q-card-section>
+        </q-card>
+      </q-expansion-item>
+    </q-list>
+    <q-btn v-on:click="dataQuery">Plot</q-btn>
+  </q-list>
 </template>
 
-<script lang="ts">
-import { mapState } from 'vuex'
-import Vue from 'vue'
-import { Function } from 'lodash'
+<script setup lang="ts">
+  import { ColType } from '@/core/generalTypes'
+  import { useMainStore } from '@/stores'
+  import { useQuasar } from 'quasar'
+  import { ref, Ref, computed, watch, onMounted } from 'vue'
+  import prot from '@/assets/icons/Prots.svg?raw'
+  import trans from '@/assets/icons/RNA.svg?raw'
+  import metabolomics from '@/assets/icons/Metabolites.svg?raw'
+  import { Function } from 'lodash'
 
-interface layoutSettings{
-    'Transcriptomics ': { attributes: string[], limits: number[]};
-    'Proteomics ': { attributes: string[], limits: number[]};
-    'Metabolomics ': { attributes: string[], limits: number[]};
-    'not related to specific omic ': { attributes: string[], limits: number[] };
-}
-interface Data {
-  overlay: boolean;
-  transcriptomicsFile: File | null;
-  transcriptomicsSheetVal: string;
-  transcriptomicsSymbolCol: string;
-  transcriptomicsValueCol: string;
-  chosenLayoutAttributes: string[];
-  layoutAttributes: string [];
-  recievedTranscriptomicsData: boolean;
-  allOmicLayoutAttributes: string[];
-  allNoneOmicAttributes: string[];
-  proteomicsFile: File | null;
-  proteomicsSheetVal: string;
-  proteomicsSymbolCol: string;
-  proteomicsValueCol: string;
-  recievedProteomicsData: boolean;
-  metabolomicsFile: File | null;
-  metabolomicsSheetVal: string;
-  metabolomicsSymbolCol: string;
-  metabolomicsValueCol: string;
-  currentLayoutOmic: string;
-  recievedMetabolomicsData: boolean;
-  targetOrganisms: { text: string; value: string }[];
-  targetOrganism: string;
-  targetDatabases: { text: string; value: string }[];
-  targetDatabase: string;
-  reactomeLevelSelection: number;
-  sliderVals: {
-    transcriptomics: { [key: string]: { vals: number[]; empties: boolean } };
-    proteomics: { [key: string]: { vals: number[]; empties: boolean } };
-    metabolomics: { [key: string]: { vals: number[]; empties: boolean } };
-  };
-  availableOmics: string[];
-  sheetRules(value: string): boolean | string;
-}
-
-export default Vue.extend({
-  name: 'SideBar',
-  components: {},
-
-  data: () => ({
-    transcriptomicsFile: null,
-    transcriptomicsSheetVal: '0',
-    transcriptomicsSymbolCol: '',
-    transcriptomicsValueCol: '',
-    recievedTranscriptomicsData: false,
-    currentLayoutOmic: '',
-    chosenLayoutAttributes: [''],
-    allOmicLayoutAttributes: ['Number of values', 'Mean expression above limit', '% values above limit',
-      'Mean expression below limit ', '% values below limit ', '% regulated', '% unregulated', '% with measured value'],
-    allNoneOmicAttributes: ['Pathway size'],
-    layoutOmics: [''],
-    omicLimitMin: -1.3,
-    omicLimitMax: 1.3,
-    layoutAttributes: [''],
-    // currentLayoutOmicLimit: [],
-    proteomicsFile: null,
-    proteomicsSheetVal: '0',
-    proteomicsSymbolCol: '',
-    proteomicsValueCol: '',
-    recievedProteomicsData: false,
-    metabolomicsFile: null,
-    metabolomicsSheetVal: '0',
-    metabolomicsSymbolCol: '',
-    metabolomicsValueCol: '',
-    recievedMetabolomicsData: false,
-    targetOrganisms: [
-      { text: 'Mouse', value: 'mmu' },
-      { text: 'Human', value: 'hsa' }
-    ],
-    targetOrganism: 'mmu',
-    targetDatabases: [
+  interface layoutSettings{
+      'Transcriptomics ': { attributes: string[], limits: number[]};
+      'Proteomics ': { attributes: string[], limits: number[]};
+      'Metabolomics ': { attributes: string[], limits: number[]};
+      'not related to specific omic ': { attributes: string[], limits: number[] };
+  }
+  const mainStore = useMainStore()
+  
+  const $q = useQuasar()
+  const transcriptomicsFile: Ref<File | null> = ref(null)
+  const transcriptomicsSheetVal = ref('0')
+  const transcriptomicsSymbolCol: Ref<ColType> = ref({name:'', label:'', field:'', align: undefined})
+  const transcriptomicsValueCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const recievedTranscriptomicsData = ref(false)
+  const proteomicsFile: Ref<File | null> = ref(null)
+  const proteomicsSheetVal = ref('0')
+  const proteomicsSymbolCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const proteomicsValueCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const recievedProteomicsData = ref(false)
+  const metabolomicsFile: Ref<File | null> = ref(null)
+  const metabolomicsSheetVal = ref('0')
+  const metabolomicsSymbolCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const metabolomicsValueCol: Ref<ColType> = ref({field: '', label: '', name: '', align: undefined})
+  const recievedMetabolomicsData = ref(false)
+  const targetOrganism = ref({ text: 'Mouse', value: 'mmu' })
+  const targetDatabases = ref([
       { text: 'Reactome', value: 'reactome' },
       { text: 'KEGG', value: 'kegg' }
-    ],
-    targetDatabase: 'reactome',
-    reactomeLevelSelection: 1,
-    sliderVals: { transcriptomics: {}, proteomics: {}, metabolomics: {} } as {
-      transcriptomics: { [key: string]: { vals: number[]; empties: boolean } };
-      proteomics: { [key: string]: { vals: number[]; empties: boolean } };
-      metabolomics: { [key: string]: { vals: number[]; empties: boolean } };
-    },
-    availableOmics: ['Transcriptomics ', 'Proteomics ', 'Metabolomics ', 'not related to specific omic '],
-    layoutSettings: { 'Transcriptomics ': { attributes: [''], limits: [-1.3, 1.3] }, 'Proteomics ': { attributes: [''], limits: [0.8, 1.2] }, 'Metabolomics ': { attributes: [''], limits: [0.8, 1.2] }, 'not related to specific omic ': { attributes: [''], limits: [0, 0] } },
-    sheetRules: [
+    ])
+  const targetDatabase = ref({ text: 'Reactome', value: 'reactome' })
+  const reactomeLevelSelection = ref(1)
+  const sliderVals = ref({ transcriptomics: {}, proteomics: {}, metabolomics: {} } as { transcriptomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, proteomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}}, metabolomics: {[key: string]: {vals: {min: number, max: number}, empties: boolean}} })
+  const sheetRules = ref([
       (value: string) => {
         const pattern = /^([0-9]*)$/
         return pattern.test(value) || 'Enter a number'
+      } ])
+  const availableOmics: ref(['Transcriptomics ', 'Proteomics ', 'Metabolomics ', 'not related to specific omic '])
+  const layoutSettings: { 'Transcriptomics ': { attributes: [''], limits: [-1.3, 1.3] }, 'Proteomics ': { attributes: [''], limits: [0.8, 1.2] }, 'Metabolomics ': { attributes: [''], limits: [0.8, 1.2] }, 'not related to specific omic ': { attributes: [''], limits: [0, 0] } }
+  const omicLimitMin: ref(-1.3)
+  const omicLimitMax: 1.3
+  const currentLayoutOmic: ''
+  const chosenLayoutAttributes: ['']
+
+  const transcriptomicsTableHeaders = computed(() => mainStore.transcriptomicsTableHeaders)
+  const proteomicsTableHeaders = computed(() => mainStore.proteomicsTableHeaders)
+  const metabolomicsTableHeaders = computed(() => mainStore.metabolomicsTableHeaders)
+  const transcriptomicsTableData = computed(() => mainStore.transcriptomicsTableData)
+  const proteomicsTableData = computed(() => mainStore.proteomicsTableData)
+  const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData)
+
+  const chosenOmics = computed((): string[] => {
+      const chosen = []
+      if (recievedTranscriptomicsData) chosen.push('Transcriptomics')
+      if (recievedProteomicsData) chosen.push('Proteomics')
+      if (recievedMetabolomicsData) chosen.push('Metabolomics')
+      return chosen
+    })
+  const sliderTranscriptomics = computed(() => {
+    const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+    const typedArrayData = transcriptomicsTableData.value
+    const typedArrayHeader = transcriptomicsTableHeaders.value
+    typedArrayHeader.forEach(element => {
+      if ((element.field !== 'available') && (typeof element.field === 'string')) {
+        const valArr = typedArrayData.map(elem => (typeof element.field === 'string') ? elem[element.field]: '')
+        const numArr: number[] = []
+        let amtNum = 0
+        let amtNonNum = 0
+        let empties = 0
+        valArr.forEach((val) => {
+          if (typeof val === 'number') {
+            amtNum += 1
+            numArr.push(val)
+          } else if (val === 'None') {
+            empties += 1
+          } else amtNonNum += 1
+        })
+        if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+          console.log(element.field, numArr)
+          const min = Math.floor(Math.min(...numArr))
+          const max = Math.ceil(Math.max(...numArr))
+          outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+          if (!Object.keys(sliderVals.value.transcriptomics).includes(element.field)) {
+            sliderVals.value.transcriptomics[element.field] = { vals: {min: min, max: max}, empties: true }
+          }
+        }
       }
-    ]
-  }),
-  mounted () {
-    this.layoutSettings['Transcriptomics '].attributes = this.allOmicLayoutAttributes
-    this.layoutSettings['Proteomics '].attributes = this.allOmicLayoutAttributes
-    this.layoutSettings['Metabolomics '].attributes = this.allOmicLayoutAttributes
-    this.layoutSettings['not related to specific omic '].attributes = this.allNoneOmicAttributes
-  },
-  computed: {
-    ...mapState({
-      transcriptomicsTableHeaders: (state: any) =>
-        state.transcriptomicsTableHeaders,
-      proteomicsTableHeaders: (state: any) => state.proteomicsTableHeaders,
-      metabolomicsTableHeaders: (state: any) => state.metabolomicsTableHeaders,
-      transcriptomicsTableData: (state: any) => state.transcriptomicsTableData,
-      proteomicsTableData: (state: any) => state.proteomicsTableData,
-      metabolomicsTableData: (state: any) => state.metabolomicsTableData,
-      overlay: (state: any) => state.overlay
-    }),
-    chosenOmics: {
-      get: function () {
-        const chosen = []
-        if (
-          this.recievedTranscriptomicsData &&
-          this.transcriptomicsSymbolCol !== '' &&
-          this.transcriptomicsValueCol !== ''
-        ) { chosen.push('Transcriptomics') }
-        if (
-          this.recievedProteomicsData &&
-          this.proteomicsSymbolCol !== '' &&
-          this.proteomicsValueCol !== ''
-        ) { chosen.push('Proteomics') }
-        if (
-          this.recievedMetabolomicsData &&
-          this.metabolomicsSymbolCol !== '' &&
-          this.metabolomicsValueCol !== ''
-        ) { chosen.push('Metabolomics') }
-        return chosen
+    })
+    return outObj
+  })
+
+  const sliderProteomics = computed(() => {
+    const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+    const typedArrayData = proteomicsTableData.value
+    const typedArrayHeader = proteomicsTableHeaders.value
+    console.log('proteomics sliders', typedArrayHeader)
+    typedArrayHeader.forEach(element => {
+      if ((element.field !== 'available') && (typeof element.field === 'string')) {
+        const valArr = typedArrayData.map(elem => (typeof element.field === 'string') ? elem[element.field]: '')
+        const numArr: number[] = []
+        let amtNum = 0
+        let amtNonNum = 0
+        let empties = 0
+        valArr.forEach((val) => {
+          if (typeof val === 'number') {
+            amtNum += 1
+            numArr.push(val)
+          } else if (val === 'None') {
+            empties += 1
+          } else amtNonNum += 1
+        })
+        if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+          console.log(element.field, numArr)
+          const min = Math.floor(Math.min(...numArr))
+          const max = Math.ceil(Math.max(...numArr))
+          outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+          if (!Object.keys(sliderVals.value.proteomics).includes(element.field)) {
+            sliderVals.value.proteomics[element.field] = { vals: {min: min, max: max}, empties: true }
+          }
+        }
       }
-    },
-    sliderTranscriptomics: {
-      get: function () {
-        const outObj: {
-          [key: string]: {
-            min: number;
-            max: number;
-            step: number;
-            text: string;
-          };
-        } = {}
-        const typedArrayData = this.transcriptomicsTableData as [
-          { [key: string]: number }
-        ]
-        const typedArrayHeader = this.transcriptomicsTableHeaders as [
-          { [key: string]: string }
-        ]
-        typedArrayHeader.forEach((element) => {
-          if (element.value !== 'available') {
-            const valArr = typedArrayData.map((elem) => elem[element.value])
-            const numArr: number[] = []
-            let amtNum = 0
-            let amtNonNum = 0
-            let empties = 0
-            valArr.forEach((val) => {
-              if (typeof val === 'number') {
-                amtNum += 1
-                numArr.push(val)
-              } else if (val === 'None') {
-                empties += 1
-              } else amtNonNum += 1
-            })
-            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-              console.log(element.value, numArr)
-              const min = Math.floor(Math.min(...numArr))
-              const max = Math.ceil(Math.max(...numArr))
-              outObj[element.value] = {
-                min: min,
-                max: max,
-                step: (Math.abs(min) + Math.abs(max)) / 100,
-                text: element.value
-              }
-              if (
-                !Object.keys(this.sliderVals.transcriptomics).includes(
-                  element.value
-                )
-              ) {
-                this.sliderVals.transcriptomics[element.value] = {
-                  vals: [min, max],
-                  empties: true
-                }
-              }
-              console.log(element.value, this.sliderVals)
+    })
+    return outObj
+  })
+
+  const sliderMetabolomics = computed(() => {
+    const outObj: { [key: string]: {min: number, max: number, step: number, text: string} } = {}
+    const typedArrayData = metabolomicsTableData.value
+    const typedArrayHeader = metabolomicsTableHeaders.value
+
+    typedArrayHeader.forEach(element => {
+      if ((element.field !== 'available') && (typeof element.field === 'string')) {
+          const valArr = typedArrayData.map(elem => (typeof element.field === 'string') ?  elem[element.field] : '')
+          const numArr: number[] = []
+          let amtNum = 0
+          let amtNonNum = 0
+          let empties = 0
+          valArr.forEach((val) => {
+            if (typeof val === 'number') {
+              amtNum += 1
+              numArr.push(val)
+            } else if (val === 'None') {
+              empties += 1
+            } else amtNonNum += 1
+          })
+          if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
+            console.log(element.field, numArr)
+            const min = Math.floor(Math.min(...numArr))
+            const max = Math.ceil(Math.max(...numArr))
+            outObj[element.field] = { min: min, max: max, step: (Math.abs(min) + Math.abs(max)) / 100, text: element.field }
+            if (!Object.keys(sliderVals.value.metabolomics).includes(element.field)) {
+              sliderVals.value.metabolomics[element.field] = { vals: {min: min, max: max}, empties: true }
             }
           }
-        })
-        return outObj
-      }
-    },
-    sliderProteomics: {
-      get: function () {
-        const outObj: {
-          [key: string]: {
-            min: number;
-            max: number;
-            step: number;
-            text: string;
-          };
-        } = {}
-        const typedArrayData = this.proteomicsTableData as [
-          { [key: string]: number }
-        ]
-        const typedArrayHeader = this.proteomicsTableHeaders as [
-          { [key: string]: string }
-        ]
+        }
+      })
+      return outObj
+    })
 
-        typedArrayHeader.forEach((element) => {
-          if (element.value !== 'available') {
-            const valArr = typedArrayData.map((elem) => elem[element.value])
-            const numArr: number[] = []
-            let amtNum = 0
-            let amtNonNum = 0
-            let empties = 0
-            valArr.forEach((val) => {
-              if (typeof val === 'number') {
-                amtNum += 1
-                numArr.push(val)
-              } else if (val === 'None') {
-                empties += 1
-              } else amtNonNum += 1
-            })
-            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-              console.log(element.value, numArr)
-              const min = Math.floor(Math.min(...numArr))
-              const max = Math.ceil(Math.max(...numArr))
-              outObj[element.value] = {
-                min: min,
-                max: max,
-                step: (Math.abs(min) + Math.abs(max)) / 100,
-                text: element.value
-              }
-              if (
-                !Object.keys(this.sliderVals.proteomics).includes(element.value)
-              ) {
-                this.sliderVals.proteomics[element.value] = {
-                  vals: [min, max],
-                  empties: true
-                }
-              }
-              console.log(element.value, this.sliderVals)
-            }
-          }
-        })
-        return outObj
-      }
-    },
-    sliderMetabolomics: {
-      get: function () {
-        const outObj: {
-          [key: string]: {
-            min: number;
-            max: number;
-            step: number;
-            text: string;
-          };
-        } = {}
-        const typedArrayData = this.metabolomicsTableData as [
-          { [key: string]: number }
-        ]
-        const typedArrayHeader = this.metabolomicsTableHeaders as [
-          { [key: string]: string }
-        ]
-
-        typedArrayHeader.forEach((element) => {
-          if (element.value !== 'available') {
-            const valArr = typedArrayData.map((elem) => elem[element.value])
-            const numArr: number[] = []
-            let amtNum = 0
-            let amtNonNum = 0
-            let empties = 0
-            valArr.forEach((val) => {
-              if (typeof val === 'number') {
-                amtNum += 1
-                numArr.push(val)
-              } else if (val === 'None') {
-                empties += 1
-              } else amtNonNum += 1
-            })
-            if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-              console.log(element.value, numArr)
-              const min = Math.floor(Math.min(...numArr))
-              const max = Math.ceil(Math.max(...numArr))
-              outObj[element.value] = {
-                min: min,
-                max: max,
-                step: (Math.abs(min) + Math.abs(max)) / 100,
-                text: element.value
-              }
-              if (
-                !Object.keys(this.sliderVals.metabolomics).includes(
-                  element.value
-                )
-              ) {
-                this.sliderVals.metabolomics[element.value] = {
-                  vals: [min, max],
-                  empties: true
-                }
-              }
-              console.log(element.value, this.sliderVals)
-            }
-          }
-        })
-        return outObj
-      }
-    }
-  },
-
-  watch: {
-    chosenOmics: function () {
-      this.layoutOmics = this.chosenOmics.concat('not related to specific omic')
-    },
-    currentLayoutOmic: function () {
+  watch(transcriptomicsSheetVal, () => { fetchTranscriptomicsTable(transcriptomicsFile.value) })
+  watch(proteomicsSheetVal, () => { fetchProteomicsTable(proteomicsFile.value) })
+  watch(metabolomicsSheetVal, () => { fetchMetabolomicsTable(metabolomicsFile.value) })
+  watch(chosenOmics, () => { layoutOmics = chosenOmics.concat('not related to specific omic') })
+  watch(currentLayoutOmic, ()  => {
       // change dropdown list Attributes
-      this.layoutAttributes = (this.currentLayoutOmic === 'not related to specific omic') ? this.allNoneOmicAttributes : this.allOmicLayoutAttributes
-      this.chosenLayoutAttributes = this.layoutSettings[this.currentLayoutOmic + ' ' as keyof layoutSettings].attributes
-      // console.log(typeof (this.layoutSettings))
+      layoutAttributes = (currentLayoutOmic === 'not related to specific omic') ? allNoneOmicAttributes : allOmicLayoutAttributes
+      chosenLayoutAttributes = layoutSettings[currentLayoutOmic + ' ' as keyof layoutSettings].attributes
+      // console.log(typeof (layoutSettings))
       // change limits
-      const limits = this.layoutSettings[this.currentLayoutOmic + ' ' as keyof layoutSettings].limits
-      this.omicLimitMin = limits[0]
-      this.omicLimitMax = limits[1]
-    },
-    omicLimitMin: function () {
-      this.layoutSettings[this.currentLayoutOmic + ' ' as keyof layoutSettings].limits[0] = this.omicLimitMin
-    },
-    omicLimitMax: function () {
-      this.layoutSettings[this.currentLayoutOmic + ' ' as keyof layoutSettings].limits[1] = this.omicLimitMax
-    },
-    chosenLayoutAttributes: function () {
+      const limits = layoutSettings[currentLayoutOmic + ' ' as keyof layoutSettings].limits
+      omicLimitMin = limits[0]
+      omicLimitMax = limits[1]
+    })
+  watch(omicLimitMin, () => {
+      layoutSettings[currentLayoutOmic + ' ' as keyof layoutSettings].limits[0] = omicLimitMin
+    })
+  watch(omicLimitMax, () => { layoutSettings[currentLayoutOmic + ' ' as keyof layoutSettings].limits[1] = omicLimitMax})
+  watch(chosenLayoutAttributes, () => {
       // save choosen Layout attribute for omic
-      this.layoutSettings[this.currentLayoutOmic + ' ' as keyof layoutSettings].attributes = this.chosenLayoutAttributes
-    },
-    transcriptomicsSheetVal: function () {
-      this.fetchTranscriptomicsTable(this.transcriptomicsFile)
-    },
-    proteomicsSheetVal: function () {
-      this.fetchProteomicsTable(this.proteomicsFile)
-    },
-    metabolomicsSheetVal: function () {
-      this.fetchMetabolomicsTable(this.metabolomicsFile)
-    }
-  },
+      layoutSettings[currentLayoutOmic + ' ' as keyof layoutSettings].attributes = chosenLayoutAttributes
+    })
 
-  methods: {
-    fetchTranscriptomicsTable (fileInput: File | null) {
-      this.$store.dispatch('setTranscriptomicsTableHeaders', [])
-      this.$store.dispatch('setTranscriptomicsTableData', [])
-      this.$store.dispatch('setTranscriptomicsData', [])
-      Vue.set(this.sliderVals, 'transcriptomics', {})
+  const fetchTranscriptomicsTable  = (fileInput: File | null) => {
+      mainStore.setTranscriptomicsTableHeaders([])
+      mainStore.setTranscriptomicsTableData([])
+      sliderVals.value.transcriptomics = {}
       if (fileInput !== null) {
-        this.$store.dispatch('setOverlay', true)
+        $q.loading.show()
         const formData = new FormData()
         formData.append('dataTable', fileInput)
-        formData.append('sheetNumber', this.transcriptomicsSheetVal)
+        formData.append('sheetNumber', transcriptomicsSheetVal.value)
         fetch('/transcriptomics_table', {
           method: 'POST',
           headers: {},
@@ -622,75 +497,62 @@ export default Vue.extend({
         })
           .then((response) => response.json())
           .then((responseContent) => {
-            this.$store.dispatch(
-              'setTranscriptomicsTableHeaders',
-              responseContent.header
-            )
-            this.$store.dispatch(
-              'setTranscriptomicsTableData',
-              responseContent.entries
-            )
-            this.$store.dispatch(
-              'setTranscriptomicsData',
-              JSON.parse(responseContent.data)
-            )
-            this.recievedTranscriptomicsData = true
+            mainStore.setTranscriptomicsTableHeaders(responseContent.header)
+            mainStore.setTranscriptomicsTableData(responseContent.entries)
+            recievedTranscriptomicsData.value = true
           })
-          .then(() => this.$store.dispatch('setOverlay', false))
+          .then(() => ($q.loading.hide()))
       } else {
         // more errorhandling?
-        this.recievedTranscriptomicsData = false
+        recievedTranscriptomicsData.value = false
         console.log('Transcriptomics file Cleared')
       }
-    },
+    }
 
-    fetchProteomicsTable (fileInput: File | null) {
-      this.$store.dispatch('setProteomicsTableHeaders', [])
-      this.$store.dispatch('setProteomicsTableData', [])
-      this.$store.dispatch('setProteomicsData', [])
-      Vue.set(this.sliderVals, 'proteomics', {})
-      if (fileInput !== null) {
-        this.$store.dispatch('setOverlay', true)
-        const formData = new FormData()
-        formData.append('dataTable', fileInput)
-        formData.append('sheetNumber', this.proteomicsSheetVal)
+  const fetchProteomicsTable = (fileInput: File | null) => {
+    const mainStore = useMainStore()
 
-        fetch('/proteomics_table', {
-          method: 'POST',
-          headers: {},
-          body: formData
+    mainStore.setProteomicsTableHeaders([])
+    mainStore.setProteomicsTableData([])
+    console.log('FETCH PROT')
+    sliderVals.value.proteomics = {}
+    if (fileInput !== null) {
+      $q.loading.show()
+      const formData = new FormData()
+      formData.append('dataTable', fileInput)
+      formData.append('sheetNumber', proteomicsSheetVal.value)
+
+      fetch('/proteomics_table', {
+        method: 'POST',
+        headers: {},
+        body: formData
+
+      })
+        .then((response) => response.json())
+
+        .then((responseContent) => {
+          mainStore.setProteomicsTableHeaders(responseContent.header)
+          mainStore.setProteomicsTableData(responseContent.entries)
+          recievedProteomicsData.value = true
         })
-          .then((response) => response.json())
+        .then(() => ($q.loading.hide()))
+    } else {
+      // more errorhandling?
+      recievedProteomicsData.value = false
+      console.log('Protfile Cleared')
+    }
+  }
+  const fetchMetabolomicsTable = (fileInput: File | null) => {
+      const mainStore = useMainStore()
 
-          .then((responseContent) => {
-            this.$store.dispatch(
-              'setProteomicsTableHeaders',
-              responseContent.header
-            )
-            this.$store.dispatch(
-              'setProteomicsTableData',
-              responseContent.entries
-            )
-            this.$store.dispatch('setProteomicsData', responseContent.data)
-            this.recievedProteomicsData = true
-          })
-          .then(() => this.$store.dispatch('setOverlay', false))
-      } else {
-        // more errorhandling?
-        this.recievedProteomicsData = false
-        console.log('Protfile Cleared')
-      }
-    },
-    fetchMetabolomicsTable (fileInput: File | null) {
-      this.$store.dispatch('setMetabolomicsTableHeaders', [])
-      this.$store.dispatch('setMetabolomicsTableData', [])
-      this.$store.dispatch('setMetabolomicsData', [])
-      Vue.set(this.sliderVals, 'metabolomics', {})
+      mainStore.setMetabolomicsTableHeaders([])
+      mainStore.setMetabolomicsTableData([])
+      sliderVals.value.metabolomics = {}
       if (fileInput !== null) {
-        this.$store.dispatch('setOverlay', true)
+        $q.loading.show()
         const formData = new FormData()
         formData.append('dataTable', fileInput)
-        formData.append('sheetNumber', this.metabolomicsSheetVal)
+        formData.append('sheetNumber', metabolomicsSheetVal.value)
 
         fetch('/metabolomics_table', {
           method: 'POST',
@@ -700,54 +562,48 @@ export default Vue.extend({
           .then((response) => response.json())
 
           .then((responseContent) => {
-            this.$store.dispatch(
-              'setMetabolomicsTableHeaders',
-              responseContent.header
-            )
-            this.$store.dispatch(
-              'setMetabolomicsTableData',
-              responseContent.entries
-            )
-            this.$store.dispatch('setMetabolomicsData', responseContent.data)
-            this.recievedMetabolomicsData = true
+            mainStore.setMetabolomicsTableHeaders(responseContent.header)
+            mainStore.setMetabolomicsTableData(responseContent.entries)
+            recievedMetabolomicsData.value = true
           })
-          .then(() => this.$store.dispatch('setOverlay', false))
+          .then(() => ($q.loading.hide()))
       } else {
         // more errorhandling?
-        this.recievedMetabolomicsData = false
+        recievedMetabolomicsData.value = false
         console.log('Metabol. file Cleared')
       }
-    },
+    }
 
-    dataQuery () {
-      if (this.targetDatabase === 'kegg') {
-        this.generateKGMLs()
-      } else if (this.targetDatabase === 'reactome') {
-        this.queryReactome()
+  const dataQuery = () => {
+      if (targetDatabase.value.value === 'kegg') {
+        generateKGMLs()
+      } else if (targetDatabase.value.value === 'reactome') {
+        queryReactome()
       }
-    },
+    }
 
-    queryReactome () {
-      this.$store.dispatch('setOverlay', true)
+  const queryReactome = () => {
+      const mainStore = useMainStore()
+
+      $q.loading.show()
       const payload = {
-        targetOrganism: this.targetOrganism,
+        targetOrganism: targetOrganism.value,
         transcriptomics: {
-          recieved: this.recievedTranscriptomicsData,
-          symbol: this.transcriptomicsSymbolCol,
-          value: this.transcriptomicsValueCol
+          recieved: recievedTranscriptomicsData.value,
+          symbol: transcriptomicsSymbolCol.value.field,
+          value: transcriptomicsValueCol.value.field
         },
         proteomics: {
-          recieved: this.recievedProteomicsData,
-          symbol: this.proteomicsSymbolCol,
-          value: this.proteomicsValueCol
+          recieved: recievedProteomicsData.value,
+          symbol: proteomicsSymbolCol.value.field,
+          value: proteomicsValueCol.value.field
         },
         metabolomics: {
-          recieved: this.recievedMetabolomicsData,
-          symbol: this.metabolomicsSymbolCol,
-          value: this.metabolomicsValueCol
+          recieved: recievedMetabolomicsData.value,
+          symbol: metabolomicsSymbolCol.value.field,
+          value: metabolomicsValueCol.value.field
         },
-        sliderVals: this.sliderVals,
-        layoutSettings: this.layoutSettings
+        sliderVals: sliderVals.value
       }
       fetch('/reactome_parsing', {
         method: 'POST',
@@ -759,17 +615,14 @@ export default Vue.extend({
         .then((response) => response.json())
         .then((dataContent) => {
           if (dataContent === 1) return 1
-          this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
-          this.$store.dispatch(
-            'setUsedSymbolCols',
-            dataContent.used_symbol_cols
-          )
-          this.$store.dispatch('setFCSReactome', dataContent.fcs)
+          mainStore.setOmicsRecieved(dataContent.omicsRecieved)
+          mainStore.setUsedSymbolCols(dataContent.used_symbol_cols)
+          mainStore.setFCSReactome(dataContent.fcs)
         })
-        .then(() => this.getReactomeData())
-    },
+        .then(() => getReactomeData())
+    }
 
-    getReactomeData () {
+  const getReactomeData = () => {
       fetch('/reactome_overview', {
         method: 'GET',
         headers: {
@@ -778,38 +631,35 @@ export default Vue.extend({
       })
         .then((response) => response.json())
         .then((dataContent) => {
-          this.$store.dispatch('setOverviewData', dataContent.overviewData)
-          this.$store.dispatch('setModuleAreas', dataContent.moduleAreas)
-          this.$store.dispatch(
-            'setPathwayLayoutingReactome',
-            dataContent.pathwayLayouting
-          )
-          // this.$store.dispatch('setOverviewData', dataContent.overview_data)
-        })
-        .then(() => this.$store.dispatch('setOverlay', false))
-    },
-    generateKGMLs () {
-      console.log('sliderTest', this.sliderVals)
-      this.$store.dispatch('setOverlay', true)
+          console.log('PATHWAYLAYOUTING', dataContent)
+          mainStore.setOverviewData(dataContent.overviewData)
+          mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting)
+          mainStore.setModuleAreas(dataContent.moduleAreas)
+          mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting)
+        }).then(() => $q.loading.hide())
+    }
+  const generateKGMLs = () => {
+      console.log('sliderTest', sliderVals.value)
+      $q.loading.show()
       const payload = {
-        targetOrganism: this.targetOrganism,
+        targetOrganism: targetOrganism.value,
         transcriptomics: {
-          recieved: this.recievedTranscriptomicsData,
-          symbol: this.transcriptomicsSymbolCol,
-          value: this.transcriptomicsValueCol
+          recieved: recievedTranscriptomicsData.value,
+          symbol: transcriptomicsSymbolCol.value.field,
+          value: transcriptomicsValueCol.value.field
         },
         proteomics: {
-          recieved: this.recievedProteomicsData,
-          symbol: this.proteomicsSymbolCol,
-          value: this.proteomicsValueCol
+          recieved: recievedProteomicsData.value,
+          symbol: proteomicsSymbolCol.value.field,
+          value: proteomicsValueCol.value.field
         },
         metabolomics: {
-          recieved: this.recievedMetabolomicsData,
-          symbol: this.metabolomicsSymbolCol,
-          value: this.metabolomicsValueCol
+          recieved: recievedMetabolomicsData.value,
+          symbol: metabolomicsSymbolCol.value.field,
+          value: metabolomicsValueCol.value.field
         },
-        sliderVals: this.sliderVals,
-        layoutSettings: this.layoutSettings
+        sliderVals: sliderVals.value,
+        layoutSettings: layoutSettings
       }
       fetch('/kegg_parsing', {
         method: 'POST',
@@ -821,50 +671,23 @@ export default Vue.extend({
         .then((response) => response.json())
         .then((dataContent) => {
           if (dataContent === 1) return 1
-          this.$store.dispatch('setOmicsRecieved', dataContent.omicsRecieved)
-          this.$store.dispatch('setModuleAreas', dataContent.moduleAreas)
-          this.$store.dispatch(
-            'setPathayAmountDict',
-            dataContent.pathways_amount_dict
-          )
-          this.$store.dispatch('setOverviewData', dataContent.overview_data)
-          this.$store.dispatch('setGraphData', dataContent.main_data)
-          this.$store.dispatch('setFCS', dataContent.fcs)
-          this.$store.dispatch(
-            'setTranscriptomicsSymbolDict',
-            dataContent.transcriptomics_symbol_dict
-          )
-          this.$store.dispatch(
-            'setProteomicsSymbolDict',
-            dataContent.proteomics_symbol_dict
-          )
-          this.$store.dispatch(
-            'setUsedSymbolCols',
-            dataContent.used_symbol_cols
-          )
-          this.$store.dispatch(
-            'setPathwayLayoutingKegg',
-            dataContent.pathwayLayouting
-          )
+          mainStore.setOmicsRecieved(dataContent.omicsRecieved)
+          mainStore.setPathayAmountDict(dataContent.pathways_amount_dict)
+          mainStore.setOverviewData(dataContent.overview_data)
+          mainStore.setGraphData(dataContent.main_data)
+          mainStore.setFCS(dataContent.fcs)
+          mainStore.setTranscriptomicsSymbolDict(dataContent.transcriptomics_symbol_dict)
+          mainStore.setProteomicsSymbolDict(dataContent.proteomics_symbol_dict)
+          mainStore.setUsedSymbolCols(dataContent.used_symbol_cols)
+          mainStore.setPathwayLayoutingKegg(dataContent.pathwayLayouting)
+          mainStore.setModuleAreas(dataContent.moduleAreas)
         })
         .then((val) => {
-          if (val) {
-            alert(
-              'Empty Data Selection! Adjust data source and/or filter settings'
-            )
-          }
-          this.$store.dispatch('setOverlay', false)
+          if (val) alert('Empty Data Selection! Adjust data source and/or filter settings')
+          $q.loading.hide()
         })
-    },
-    lockHover () {
-      this.$store.dispatch('setSideBarExpand', false)
-    },
-    unlockHover () {
-      this.$store.dispatch('setSideBarExpand', true)
-    },
-    setTargetDatabase () {
-      this.$store.dispatch('setTargetDatabase', this.targetDatabase)
     }
-  }
-})
+  const setTargetDatabase = (inputVal: {text: string, value: string}) => {
+      mainStore.setTargetDatabase(inputVal.value)
+    }
 </script>

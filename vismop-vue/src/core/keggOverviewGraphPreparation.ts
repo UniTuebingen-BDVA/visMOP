@@ -9,8 +9,8 @@ import {
   baseEdgeAttr,
   upDatedPos
 } from '@/core/graphTypes'
-import store from '@/store'
 import { pfsPrime } from '@/core/noverlap_pfsp'
+import { useMainStore } from '@/stores'
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -19,11 +19,11 @@ import { pfsPrime } from '@/core/noverlap_pfsp'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: entry},
-  fcsExtent: number[],
+  nodeList: { [key: string]: entry },
   glyphs: {[key: string]: string},
   moduleAreas: [number[]] = [[]]
 ): graphData {
+  const mainStore = useMainStore()
   const fadeGray = 'rgba(30,30,30,0.2)'
   const graph = {
     attributes: { name: 'BaseNetwork' },
@@ -46,7 +46,7 @@ export function generateGraphData (
         const modNum = entry.moduleNum
         maxModuleNum = Math.max(maxModuleNum, modNum)
         const color = '#FFFFFF'
-        const trueName = store.state.pathwayLayouting.pathwayList.find(elem => elem.value === currentNames[0].replace('path:', ''))?.text
+        const trueName = mainStore.pathwayLayouting.pathwayList.find(elem => elem.value === currentNames[0].replace('path:', ''))?.text
         const currentNode = {
           index: index,
           key: keggID,

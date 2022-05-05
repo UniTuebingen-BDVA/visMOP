@@ -10,7 +10,7 @@ import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
 import { PlainObject } from 'sigma/types'
 import { subgraph } from 'graphology-operators'
-import store from '@/store'
+import {useMainStore} from '@/stores/index'
 
 export default class pathwayGraph {
   private canvasContainer: HTMLElement;
@@ -102,7 +102,8 @@ export default class pathwayGraph {
 
     sigmaInstance.on('clickNode', ({ node }) => {
       console.log('clicking Node: ', node)
-      store.dispatch('addClickedNode', { queryID: node, name: '' })
+      const mainStore = useMainStore()
+      mainStore.addClickedNode({ queryID: node, name: '' })
     })
     return sigmaInstance
   }

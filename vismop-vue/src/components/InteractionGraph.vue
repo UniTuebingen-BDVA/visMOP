@@ -1,77 +1,62 @@
 
 <template>
   <div>
-    <v-card>
-      <v-row justify="space-between" align="center">
-        <v-col cols="4">
-          <v-card-title>
+    <q-card>
+      <div class="row" justify="space-between" align="center">
+        <div class="col-4">
+          <div>
             InteractionGraph
-          </v-card-title>
-        </v-col>
-        <v-col cols="3">
-          <v-btn v-on:click="queryEgoGraphs">Plot</v-btn>
-        </v-col>
-        <v-col cols="5">
-          <v-slider
+          </div>
+        </div>
+        <div class="col-3">
+          <q-btn v-on:click="queryEgoGraphs">Plot</q-btn>
+        </div>
+        <div class="col-5">
+          <q-slider
             thumb-label
             v-model="stringSlider"
-            min=400
-            max=1000
-            hide-details=""
-          > </v-slider>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="12" class="mb-2">
-          <div :id="contextID" class="webglContainer"></div>
-        </v-col>
-      </v-row>
-    </v-card>
+            :min="400"
+            :max="1000"
+            :step="1"
+          > </q-slider>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 mb-2">
+          <div :id="props.contextID" class="webglContainerInteraction"></div>
+        </div>
+      </div>
+    </q-card>
   </div>
 </template>
 
-<script lang="ts">
-import { mapState } from 'vuex'
-import { generateInteractionGraph } from '../core/interactionGraph'
-import Vue from 'vue'
-import Sigma from 'sigma'
+<script setup lang="ts">
+  import { generateInteractionGraph } from '../core/interactionGraph'
+  import Sigma from 'sigma'
+  import { useMainStore } from '@/stores'
+  import { computed, ref, watch } from 'vue'
+  import type { Ref } from 'vue'
 
-interface Data {
-  stringSlider: number;
-  interactionGraph: Sigma | undefined;
-}
+  const props = defineProps(['contextID'])
 
-export default Vue.extend({
-  // name of the component
-  name: 'InteractionGraph',
+  const mainStore = useMainStore()
 
   // data section of the Vue component. Access via this.<varName> .
-  data: (): Data => ({
-    stringSlider: 900,
-    interactionGraph: undefined
-  }),
+  const stringSlider = ref(900)
+  const interactionGraph: Ref<Sigma | undefined> = ref(undefined)
 
-  computed: {
-    ...mapState({
-      overlay: (state: any) => state.overlay,
-      interactionGraphData: (state: any) => state.interactionGraphData
-    })
-  },
-  watch: {
-    interactionGraphData: function () {
-      if (this.interactionGraph) {
-        this.interactionGraph.kill()
+  // get from store
+  const interactionGraphData = computed(() => mainStore.interactionGraphData) 
+
+  // watch
+  watch(interactionGraphData, () => {
+      if (interactionGraph.value) {
+       interactionGraph.value.kill()
       }
-      this.interactionGraph = generateInteractionGraph(this.contextID, this.interactionGraphData)
-    }
-  },
-
-  // mounted () {},
-  props: ['contextID'],
-  methods: {
-    queryEgoGraphs () {
-      this.$store.dispatch('queryEgoGraps', this.stringSlider)
-    }
-  }
-})
+      interactionGraph.value = generateInteractionGraph(props.contextID, mainStore.interactionGraphData)
+    })
+  // methods
+  const queryEgoGraphs = () => {
+      mainStore.queryEgoGraps(stringSlider.value)
+    } 
 </script>

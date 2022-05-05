@@ -2,16 +2,13 @@ import * as _ from 'lodash'
 import {
   node,
   edge,
-  entry,
   graphData,
-  relation,
   baseNodeAttr,
   baseEdgeAttr,
-  upDatedPos
 } from '@/core/graphTypes'
-import store from '@/store'
 import { pfsPrime } from '@/core/noverlap_pfsp_module'
-import { vpsc } from '@/core/noverlap_vpsc'
+// import { vpsc } from '@/core/noverlap_vpsc'
+import { reactomeEntry } from './reactomeTypes'
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -19,7 +16,7 @@ import { vpsc } from '@/core/noverlap_vpsc'
  * @returns
  */
 export function generateGraphData (
-  nodeList: { [key: string]: {pathwayId: string, moduleNum: number, up: upDatedPos, rootId: string, pathwayName: string, maplinks: string[], subtreeIds: string[], initialPosX: number, initialPosY: number} },
+  nodeList: reactomeEntry[],
   glyphs: {[key: string]: string},
   rootIds: string[],
   moduleAreas: [number[]] = [[]]

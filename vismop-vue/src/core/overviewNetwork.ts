@@ -7,7 +7,7 @@ import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image'
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program'
 import { Attributes } from 'graphology-types'
 import drawHover from '@/core/customHoverRenderer'
-import store from '@/store'
+import { useMainStore } from '@/stores'
 import { DEFAULT_SETTINGS } from 'sigma/settings'
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path'
 import * as d3 from 'd3'
@@ -31,6 +31,7 @@ export default class overviewGraph {
      */
   mainGraph (elemID: string, graphData: graphData): Sigma {
     console.log(graphData)
+    const mainStore = useMainStore()
 
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLCanvasElement
@@ -170,7 +171,7 @@ export default class overviewGraph {
       console.log('clicking Node: ', node)
       console.log('clicking event', event)
       if (event.original.ctrlKey) {
-        store.dispatch('selectPathwayCompare', [node])
+        mainStore.selectPathwayCompare([node])
       } else if (event.original.altKey) {
         if (shortestPathClick.length === 2) shortestPathClick.pop()
         shortestPathClick.push(node)
@@ -179,7 +180,7 @@ export default class overviewGraph {
           if (shortestPathNodes?.length > 0) {
             shortestPathEdges = edgePathFromNodePath(graph, shortestPathNodes as string[])
             console.log('shortest Path edges', shortestPathEdges)
-            store.dispatch('selectPathwayCompare', shortestPathNodes)
+            mainStore.selectPathwayCompare(shortestPathNodes)
           } else {
             shortestPathClick = []
           }
@@ -192,7 +193,7 @@ export default class overviewGraph {
         highlighedNodesClick.clear()
         highlighedNodesClick = new Set(graph.neighbors(node))
         highlighedEdgesClick = new Set(graph.edges(node))
-        store.dispatch('focusPathwayViaOverview', node)
+        mainStore.focusPathwayViaOverview(node)
       }
     })
 
@@ -232,7 +233,8 @@ export default class overviewGraph {
   }
 
   public refreshCurrentPathway () {
-    this.currentPathway = store.state.pathwayDropdown
+    const mainStore = useMainStore()
+    this.currentPathway = mainStore.pathwayDropdown.value
     this.renderer.refresh()
   }
 

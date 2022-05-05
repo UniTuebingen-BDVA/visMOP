@@ -299,13 +299,20 @@ class PathwayHierarchy(dict):
                     self[pathway[0]].total_measured_proteins[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
                     self[pathway[0]].own_measured_proteins.append(query_key)
             elif query_type == 'gene':
-                b = self[pathway[0]]
+                try:
+                    b = self[pathway[0]]
+                except Exception as r:
+                    print(r)
                 if query_key in self[pathway[0]].total_measured_genes:
                     self[pathway[0]].total_measured_genes[query_key]['forms'][current_reactome_id] = {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }
                     self[pathway[0]].own_measured_genes.append(query_key)
                 else:
-                    self[pathway[0]].total_measured_genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
-                    self[pathway[0]].own_measured_genes.append(query_key)
+                    try:
+                        self[pathway[0]].total_measured_genes[query_key] = {'measurement': entity_data['measurement'], 'forms':{current_reactome_id: {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_proteins[current_reactome_id].keys()) }}}
+                        self[pathway[0]].own_measured_genes.append(query_key)
+                    except Exception as r:
+                        b = self[pathway[0]]
+                        print(b)
             elif query_type == 'metabolite':
                 if query_key in self[pathway[0]].total_measured_metabolites:
                     self[pathway[0]].total_measured_metabolites[query_key]['forms'][current_reactome_id] =  {'name':entity_data['name'], 'toplevelId': list(self[pathway[0]].total_metabolites[current_reactome_id].keys()) }
@@ -562,6 +569,9 @@ def get_contained_entities_graph_json(node_ids, formatted_json):
         if node_value['schemaClass'] == 'EntityWithAccessionedSequence':
             contained_proteins[node_value['stId']] = get_occurrences_graph_json(formatted_json['nodes'], node_id)
             is_overview = False
+        if node_value['schemaClass'] == 'GenomeEncodedEntity': # Maybe not correct to assign them "protein" but they might be proteinogenic
+            contained_proteins[node_value['stId']] = get_occurrences_graph_json(formatted_json['nodes'], node_id)
+            is_overview = False
         elif node_value['schemaClass'] == 'Pathway':
             contained_maplinks[node_value['stId']] = get_occurrences_graph_json(formatted_json['nodes'], node_id)
         elif node_value['schemaClass'] == 'SimpleEntity':
@@ -668,8 +678,6 @@ def _occurrences_recursive_graph_json(intermediate_node_dict, entry_id, occurren
             occurrences[entry['dbId']] = {'internalID': entry['dbId'], 'stableID': entry['stId']}
             for elem in entry['parents']:
                 _occurrences_recursive_graph_json(intermediate_node_dict, elem, occurrences)
-    else:
-        print('end recursion')
 
 def get_leaves_graph_json(intermediate_node_dict, entry_id):
     """ Gets leaves of an .graph.json entry

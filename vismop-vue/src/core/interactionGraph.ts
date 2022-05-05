@@ -94,8 +94,8 @@ export function generateInteractionGraph (elemID: string, nodeLink: networkxNode
   const graph = MultiGraph.from(graphData)
   // random.assign(graph)
   console.log('NODES', graph.nodes())
-  // const positions = noverlap(graph, {maxIterations: 50})
-  // const inferredSettings = forceAtlas2.inferSettings(graph)
+  console.log('TARDIV PPI', elem, elemID)
+  const inferredSettings = forceAtlas2.inferSettings(graph)
   const start = Date.now()
   // forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings })
   const duration = (Date.now() - start) / 1000
