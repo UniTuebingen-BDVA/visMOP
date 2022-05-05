@@ -48,14 +48,15 @@
                   <q-table
                     id="transcriptomics"
                     v-model:pagination="pagination"
-                    v-model="selectedTranscriptomics"
+                    v-model:selected="selectedTranscriptomics"
+                    selection="multiple"
                     dense
                     virtual-scroll
                     style="height: 63vh"
                     :rows-per-page-options="[0]"
                     :columns="transcriptomicsTableHeaders"
                     :rows="transcriptomicsTableData"
-                    row-key="name"
+                    :row-key="usedSymbolCols.transcriptomics"
                     :filter="tableSearch"
                     @row-dblclick="transcriptomicsSelection"
                   >
@@ -71,14 +72,15 @@
                   <q-table
                     id="proteomicsTable"
                     v-model:pagination="pagination"
-                    v-model="selectedProteomics"
+                    v-model:selected="selectedProteomics"
+                    selection="multiple"
                     dense
                     virtual-scroll
                     style="height: 63vh"
                     :rows-per-page-options="[0]"
                     :columns="proteomicsTableHeaders"
                     :rows="proteomicsTableData"
-                    row-key="name"
+                    :row-key="usedSymbolCols.proteomics"
                     :filter="tableSearch"
                     @row-dblclick="proteomicsSelection"
                   >
@@ -94,14 +96,15 @@
                   <q-table
                     id="metabolomicsTable"
                     v-model:pagination="pagination"
-                    v-model="selectedMetabolomics"
+                    v-model:selected="selectedMetabolomics"
+                    selection="multiple"
                     dense
                     virtual-scroll
                     style="height: 63vh"
                     :rows-per-page-options="[0]"
                     :columns="metabolomicsTableHeaders"
                     :rows="metabolomicsTableData"
-                    row-key="name"
+                    :row-key="usedSymbolCols.metabolomics"
                     :filter="tableSearch"
                     @row-dblclick="metabolomicsSelection"
                   >
@@ -136,9 +139,9 @@
                 <keep-alive>
                   <kegg-overview-component
                     context-i-d="overviewContext"
-                    :transcriptomics-selection="transcriptomicsSelectionData"
-                    :proteomics-selection="proteomicsSelectionData"
-                    :metabolomics-selection="metabolomicsSelectionData"
+                    :transcriptomics-selection="selectedTranscriptomics"
+                    :proteomics-selection="selectedProteomics"
+                    :metabolomics-selection="selectedMetabolomics"
                     :is-active="activeOverview"
                   >
                   </kegg-overview-component>
@@ -148,9 +151,9 @@
                 <keep-alive>
                   <reactome-overview-component
                     context-i-d="overviewContext"
-                    :transcriptomics-selection="transcriptomicsSelectionData"
-                    :proteomics-selection="proteomicsSelectionData"
-                    :metabolomics-selection="metabolomicsSelectionData"
+                    :transcriptomics-selection="selectedTranscriptomics"
+                    :proteomics-selection="selectedProteomics"
+                    :metabolomics-selection="selectedMetabolomics"
                     :is-active="activeOverview"
                   >
                   </reactome-overview-component>
@@ -162,9 +165,9 @@
               <keep-alive>
                 <kegg-detail-component
                   context-i-d="detailcontext"
-                  :transcriptomics-selection="transcriptomicsSelectionData"
-                  :proteomics-selection="proteomicsSelectionData"
-                  :metabolomics-selection="metabolomicsSelectionData"
+                  :transcriptomics-selection="selectedTranscriptomics"
+                  :proteomics-selection="selectedProteomics"
+                  :metabolomics-selection="selectedMetabolomics"
                   :is-active="activeOverview"
                 >
                 </kegg-detail-component>
@@ -174,9 +177,9 @@
               <keep-alive>
                 <reactome-detail-component
                   context-i-d="reactomeDetail"
-                  :transcriptomics-selection="transcriptomicsSelectionData"
-                  :proteomics-selection="proteomicsSelectionData"
-                  :metabolomics-selection="metabolomicsSelectionData"
+                  :transcriptomics-selection="selectedTranscriptomics"
+                  :proteomics-selection="selectedProteomics"
+                  :metabolomics-selection="selectedMetabolomics"
                   :is-active="activeOverview"
                 >
                 </reactome-detail-component>
@@ -207,9 +210,6 @@ const tableSearch = ref('');
 const selectedTabTable = ref('transcriptomics');
 const selectedTabNetwork = ref('overviewNetwork');
 const selectedTabMisc = ref('dataTable');
-const transcriptomicsSelectionData: Ref<{ [key: string]: string }[]> = ref([]);
-const proteomicsSelectionData: Ref<{ [key: string]: string }[]> = ref([]);
-const metabolomicsSelectionData: Ref<{ [key: string]: string }[]> = ref([]);
 const selectedTranscriptomics: Ref<{ [key: string]: string }[]> = ref([]);
 const selectedProteomics: Ref<{ [key: string]: string }[]> = ref([]);
 const selectedMetabolomics: Ref<{ [key: string]: string }[]> = ref([]);
@@ -315,15 +315,6 @@ watch(pathwayLayouting, () => {
   );
   mainStore.setMetabolomicsTableHeaders(metabolomicsTableHeaders.value);
   mainStore.setMetabolomicsTableData(metabolomicsTableData.value);
-});
-watch(selectedTranscriptomics, () => {
-  transcriptomicsSelectionData.value = selectedTranscriptomics.value;
-});
-watch(selectedProteomics, () => {
-  proteomicsSelectionData.value = selectedProteomics.value;
-});
-watch(selectedMetabolomics, () => {
-  metabolomicsSelectionData.value = selectedMetabolomics.value;
 });
 watch(pathwayDropdown, () => {
   const mainStore = useMainStore();

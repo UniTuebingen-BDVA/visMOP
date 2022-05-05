@@ -127,9 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { useMainStore } from '@/stores';
-import { computed, ref, watch, defineProps, defineEmits, PropType } from 'vue';
-import type { Ref } from 'vue';
+import { computed, defineProps, defineEmits, PropType } from 'vue';
 
 const props = defineProps({
   transcriptomics: {
@@ -169,8 +167,6 @@ const emit = defineEmits([
   'update:proteomics',
   'update:metabolomics',
 ]);
-
-const mainStore = useMainStore();
 
 const transcriptomicsFilter = computed({
   get: () => props.transcriptomics,
