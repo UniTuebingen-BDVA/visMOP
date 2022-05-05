@@ -279,7 +279,7 @@
                   v-model.number="omicLimitMin"
                   type="number"
                   step="0.1"
-                  style="max-width: 30px"
+                  style="max-width: 130px"
                   class="mt-4 mr-5 ml-3"
                   label="minimal FC limit"
                   filled
@@ -288,7 +288,7 @@
                   v-model.number="omicLimitMax"
                   type="number"
                   step="0.1"
-                  style="max-width: 30px"
+                  style="max-width: 130px"
                   class="mt-4 ml-2 mr-5"
                   label="maximal FC limit"
                   filled
@@ -364,6 +364,10 @@ const metabolomicsValueCol: Ref<ColType> = ref({
 });
 const recievedMetabolomicsData = ref(false);
 const targetOrganism = ref({ text: "Mouse", value: "mmu" });
+const targetOrganisms = ref([
+  { text: 'Mouse', value: 'mmu' },
+  { text: 'Human', value: 'hsa' },
+]);
 const targetDatabases = ref([
   { text: "Reactome", value: "reactome" },
   { text: "KEGG", value: "kegg" },
@@ -449,9 +453,9 @@ const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
 
 const chosenOmics = computed((): string[] => {
   const chosen = [];
-  if (recievedTranscriptomicsData) chosen.push("Transcriptomics");
-  if (recievedProteomicsData) chosen.push("Proteomics");
-  if (recievedMetabolomicsData) chosen.push("Metabolomics");
+  if (recievedTranscriptomicsData.value) chosen.push("Transcriptomics");
+  if (recievedProteomicsData.value) chosen.push("Proteomics");
+  if (recievedMetabolomicsData.value) chosen.push("Metabolomics");
   return chosen;
 });
 const sliderTranscriptomics = computed(() => {
@@ -616,31 +620,31 @@ watch(currentLayoutOmic, () => {
       ? allNoneOmicAttributes
       : allOmicLayoutAttributes;
   chosenLayoutAttributes.value =
-    layoutSettings[
+    layoutSettings.value[
       (currentLayoutOmic.value + " ") as keyof layoutSettings
     ].attributes;
   // console.log(typeof (layoutSettings))
   // change limits
   const limits =
-    layoutSettings[(currentLayoutOmic.value + " ") as keyof layoutSettings]
+    layoutSettings.value[(currentLayoutOmic.value + " ") as keyof layoutSettings]
       .limits;
   omicLimitMin.value = limits[0];
   omicLimitMax.value = limits[1];
 });
 watch(omicLimitMin, () => {
   layoutSettings.value[
-    (currentLayoutOmic + " ") as keyof layoutSettings
+    (currentLayoutOmic.value + " ") as keyof layoutSettings
   ].limits[0] = omicLimitMin.value;
 });
 watch(omicLimitMax, () => {
   layoutSettings.value[
-    (currentLayoutOmic + " ") as keyof layoutSettings
+    (currentLayoutOmic.value + " ") as keyof layoutSettings
   ].limits[1] = omicLimitMax.value;
 });
 watch(chosenLayoutAttributes, () => {
   // save choosen Layout attribute for omic
   layoutSettings.value[
-    (currentLayoutOmic + " ") as keyof layoutSettings
+    (currentLayoutOmic.value + " ") as keyof layoutSettings
   ].attributes = chosenLayoutAttributes.value;
 });
 

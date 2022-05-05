@@ -1,3 +1,3 @@
 from visMOP import app
 if __name__ == "__main__":
-    app.run(debug=False, threaded=False, processes=1)
+    app.run(debug=True, threaded=False)
