@@ -98,6 +98,7 @@ export interface graphData {
   attributes: { name: string };
   nodes: node[];
   edges: edge[];
+  cluster_rects: [number[]];
   options: unkown
 }
 export interface networkxNodeLink{

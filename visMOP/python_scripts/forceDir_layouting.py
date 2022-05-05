@@ -73,8 +73,6 @@ def get_pos_in_force_dir_layout(graph, mod_num = 0, ewi=1):
     return pos_out
 
 
-
-
 """ OLD """
 # def get_networkx_with_edge_weights(node_dict, pathway_info_dict, stringGraph):
 #     stringGraph.filter_by_confidence(900)

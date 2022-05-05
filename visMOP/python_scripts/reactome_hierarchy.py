@@ -6,6 +6,7 @@ from  visMOP.python_scripts.kegg_pathway import get_PathwaySummaryData_omic
 import os
 from operator import itemgetter
 from copy import deepcopy
+import collections
 
 class ReactomePathway:
     """ Pathway Class for ractome pathway entries
@@ -47,7 +48,6 @@ class ReactomePathway:
         self.level = -1
         self.root_id = ''
         
-        
     def asdict(self):
         """ Returns Object as dictionary 
         """
@@ -70,7 +70,11 @@ class PathwayHierarchy(dict):
        super(PathwayHierarchy, self).__init__(*arg, **kw)
        self.levels = {}
        self.omics_recieved = []
+       self.layout_settings = {}
 
+    def set_layout_settings(self, settings):
+        self.layout_settings = settings
+        
     def set_omics_recieved(self, omics_recieved):
         self.omics_recieved = omics_recieved
 
@@ -384,6 +388,7 @@ class PathwayHierarchy(dict):
         pathway_ids.extend(self.levels[0])
         pathway_ids = list(set(pathway_ids))
         query_pathway_dict = {}
+        root_subpathways = collections.defaultdict(list)
         pathway_dropdown = []
         root_ids = []
         pathway_summary_stats_dict = {}
@@ -393,10 +398,12 @@ class PathwayHierarchy(dict):
             if entry.has_data:
                 pathway_dict, dropdown_entry, pathway_summary_data = generate_overview_pathway_entry(entry, pathway, query_pathway_dict, True, verbose, omic_limits, self.omics_recieved)
                 pathway_dropdown.append(dropdown_entry)
-                out_data.append( pathway_dict )
+                out_data.append(pathway_dict)
                 root_ids.append(entry.root_id)
+                root_subpathways[entry.root_id].extend(pathway_dict['subtreeIds'])
                 pathway_summary_stats_dict[entry.reactome_sID] = pathway_summary_data
-        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index'), self.omics_recieved
+
+        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), root_subpathways, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index'), self.omics_recieved
 
 ###
 #Auxilliary Functions

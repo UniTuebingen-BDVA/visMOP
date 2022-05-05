@@ -28,6 +28,7 @@ export function generateGraphData (
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
+    cluster_rects: [[]],
     options: []
   } as graphData
   const addedEdges: string[] = []
@@ -88,9 +89,8 @@ export function generateGraphData (
     }
     index += 1
   }
-  console.log('here I am', graph)
+  graph.cluster_rects = moduleAreas
   graph.nodes = pfsPrime(graph.nodes, maxModuleNum, moduleAreas)
-  console.log('here I am', graph)
   return graph
 }
 

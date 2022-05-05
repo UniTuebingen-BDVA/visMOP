@@ -26,6 +26,7 @@ export function generateGraphData (
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
+    cluster_rects: [[]],
     options: []
   } as graphData
   const addedEdges: string[] = []

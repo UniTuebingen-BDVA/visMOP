@@ -59,10 +59,9 @@ except:
     print("Stringraph Error")
 
 
-def getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict):
+def getModuleLayout(omics_recieved, up_down_reg_limits, data_col_used, statistic_data_complete, pathway_connection_dict, reactome_roots={}):
     up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
     num_vals_per_omic = sum(omics_recieved)
-    data_col_used = omic_stats_used * num_vals_per_omic + [use_pathway_size]
    
     omics_names = ['t', 'p', 'm']
     stat_value_names = ['num values', 'mean exp (high ', '% vals (higher ',
@@ -84,12 +83,29 @@ def getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pat
 
     statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
-    module_layout = Module_layout(statistic_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic)
+    module_layout = Module_layout(statistic_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots)
     module_node_pos = module_layout.get_final_node_positions()
     module_areas = module_layout.get_module_areas()
         
     return module_node_pos, module_areas 
 
+def get_layout_settings(settings, omics_recieved):
+    possible_omic_attributes = ['Number of values', 'Mean expression above limit', '% values above limit',
+    'Mean expression below limit ', '% values below limit ', '% regulated', '% unregulated', '% with measured value']
+    possible_no_omic_attributes = ['Pathway size']
+    attributes = []
+    limits = []
+    omics_recieved.append(True)
+    for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
+        if recieved and omic != 'not related to specific omic ':
+            attribute_boolean = [att in layout_settings['attributes'] for att in possible_omic_attributes]
+            attributes += attribute_boolean
+            omic_limits = [float(i) for i in layout_settings['limits']]
+            limits.append(omic_limits)
+        elif recieved:
+            attribute_boolean = [att in layout_settings['attributes'] for att in possible_no_omic_attributes]
+            attributes += attribute_boolean
+    return {'attributes': attributes, 'limits':limits}
 
 """
 Default app routes for index and favicon
@@ -221,9 +237,6 @@ def uniprot_access(colname, filter_obj):
     # set cache for structures
     cache.set('prot_dict_global', json.dumps(protein_dict))
     #cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
-  
-    
-
 
 """
 App route for querying and parsing kegg files
@@ -241,6 +254,7 @@ def kegg_parsing():
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
     slider_vals = request.json['sliderVals']
+    layout_settings = request.json['layoutSettings']
 
     #gene_symbols_col = request.json['geneSymbolsCol']
     #value_col = request.json['valueCol']
@@ -426,13 +440,12 @@ def kegg_parsing():
     
     # user choice 
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
-    up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
-    use_pathway_size = False
-    omic_stats_used = [True, True, True, True, True, True, True, True]
     # generate dataframe of summary Data for all pathways
     statistic_data_complete = pd.DataFrame.from_dict({'path:'+ pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
-    
-    module_node_pos, module_areas = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
+    layout_setting_bools = get_layout_settings(layout_settings, omics_recieved)
+    layout_limits = layout_setting_bools.layout_settings['limits']
+    layout_attributes_used = layout_setting_bools.layout_settings['attributes']
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict)
     pd.set_option("display.max_rows", None, "display.max_columns", None)
 
     pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
@@ -491,6 +504,7 @@ def reactome_parsing():
     proteomics = request.json['proteomics']
     metabolomics = request.json['metabolomics']
     slider_vals = request.json['sliderVals']
+    layout_settings = request.json['layoutSettings']
 
     ##
     # Initialize Reactome Hierarchy
@@ -605,6 +619,9 @@ def reactome_parsing():
     # Aggregate Data in Hierarcy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
+    print('aaaaa')
+    reactome_hierarchy.set_layout_settings(get_layout_settings(layout_settings, omics_recieved))
+    print('bbbbb')
     
     cache.set('reactome_hierarchy', reactome_hierarchy)
     dropdown_pathways = [] # TODO 
@@ -627,22 +644,23 @@ def reactome_overview():
                                     list of Ids belonging to root nodes 
     """
     reactome_hierarchy = cache.get('reactome_hierarchy')
-
+    print('nsjkankdna')
     # user choice
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
-    up_down_reg_limits = [[-1.3, 1.3],[0.8,1.2],[0.8,1.2]]
-    use_pathway_size = False
-    omic_stats_used = [True, True, True, True, True, True, True, True]
+    layout_limits = reactome_hierarchy.layout_settings['limits']
+    layout_attributes_used = reactome_hierarchy.layout_settings['attributes']
+    print(layout_limits, layout_attributes_used)
    
-    out_data, pathway_dict, dropdown_data, root_ids, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(up_down_reg_limits, False)
+    out_data, pathway_dict, dropdown_data, root_ids, root_subpathways, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(layout_limits, False)
+    
+    pathway_connection_dict = get_overview_reactome(out_data)
+    # print(pathway_connection_dict.keys())
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways)
+    # with open('modul_layout.pkl', "rb") as f:
+    #     module_node_pos = pickle.load(f)
 
-    # pathway_connection_dict = get_overview_reactome(out_data)
-    # module_node_pos, module_areas = getModuleLayout(omics_recieved, up_down_reg_limits, omic_stats_used, use_pathway_size, statistic_data_complete, pathway_connection_dict)
-    with open('modul_layout.pkl', "rb") as f:
-        module_node_pos = pickle.load(f)
-
-    with open('module_areas.pkl', "rb") as f:
-        module_areas = pickle.load(f)
+    # with open('module_areas.pkl', "rb") as f:
+    #     module_areas = pickle.load(f)
 
     # a_file = open("modul_layout.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
@@ -650,13 +668,12 @@ def reactome_overview():
     # a_file = open("module_areas.pkl", "wb")
     # pickle.dump(module_areas, a_file)
     # a_file.close()
-    
+    print(root_ids)
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway['pathwayId']]
         pathway["initialPosX"] = x_y_pos[0]
         pathway["initialPosY"] = x_y_pos[1]
         pathway["moduleNum"] = x_y_pos[2]
-
     
     return json.dumps({'overviewData': out_data, 'moduleAreas': module_areas, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 

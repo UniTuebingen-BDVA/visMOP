@@ -20,19 +20,22 @@ from copy import deepcopy
 import time
 import matplotlib.pyplot as plt
 
+def most_frequent(List):
+    return max(set(List), key = List.count)
 
 class Module_layout:
 
-    def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, drm='umap'):
+    def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots, drm='umap'):
         startTime = time.time()
         self.kmeans = KMeans(n_clusters=5, random_state=0)
         self.module_nodes_num = []
         print("Calculating module layout...")
         networkx_dict = generate_networkx_dict(graph_dict)
         self.full_graph = nx.Graph(networkx_dict)
-        self.data_table = data_table
+        reactome_root_ids = list(reactome_roots.keys())
+        self.data_table = data_table.drop(reactome_root_ids)
         self.data_table_scaled_filled = StandardScaler().fit_transform(
-            self.fill_missing_values_with_neighbor_mean(graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic))
+            self.fill_missing_values_with_neighbor_mean(graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_root_ids))
         print("Scaled input data")
         self.initial_node_pos = self.get_initial_node_pos(drm)
         print("initial node positions calculated")
@@ -43,16 +46,17 @@ class Module_layout:
         self.module_pair_min_dist = None
         self.relative_distances = self.getRealtiveDistancesBetweenModules(
             self.modules_center)
+        self.add_reactome_roots_to_modules(reactome_roots)
         self.weights = self.getModulesWeights()
         print("Relative distances between modules and module weights calculated")
         self.getModulePos()
         print("Module Positions identified")
         self.modules_area = self.getSizeOfModulesRegion()
         print("Module sizes identified")
-        self.final_node_pos = self.getNodePositions()
+        self.final_node_pos = self.getNodePositions(reactome_roots)
         print("final node positions identified")
         endTime = time.time()
-        self.get_stats()
+        # self.get_stats()
         #self.get_stat_plots()
         print("Time for Module Layout calculation {:.3f} s".format((endTime-startTime)))
         
@@ -93,7 +97,7 @@ class Module_layout:
             plt.clf()
 
     # defold values per omic and pos
-    def fill_missing_values_with_neighbor_mean(self, graph_dict, recieved_omics, defaul_means, numValsPerOmic):
+    def fill_missing_values_with_neighbor_mean(self, graph_dict, recieved_omics, defaul_means, numValsPerOmic, root_ids):
         defaul_means_rec_omic = [default_mean for (default_mean, recieved) in zip(
             defaul_means, recieved_omics) if recieved]
         node_names = list(self.data_table.index)
@@ -112,7 +116,7 @@ class Module_layout:
                     for node_info in neighbor_nodes:
                         neighbor_name = node_info['target']
                         neighbor_val = self.data_table.loc[neighbor_name][pos]
-                        if not math.isnan(neighbor_val):
+                        if not math.isnan(neighbor_val) and neighbor_name not in root_ids:
                             calc_node_val += neighbor_val
                             node_vals_not_none += 1
                     new_val = calc_node_val/node_vals_not_none if node_vals_not_none != 0 else default_val
@@ -158,8 +162,20 @@ class Module_layout:
         nums_in_cl = list(
             dict(sorted(Counter(kmeans_fit).items())).values())
         split_array = [sum(nums_in_cl[:i+1]) for i, _ in enumerate(nums_in_cl)]
-        cl_list = np.split(ordered_nodes, split_array)
-        return cl_list[:-1]
+        cl_list = np.split(ordered_nodes, split_array)[:-1]
+
+        
+        return cl_list
+
+    def add_reactome_roots_to_modules(self, reactome_roots):
+        # add roots again 
+        mod_dic = {}
+        for mod_num, module in enumerate(self.modules):
+            for pathway in module:
+                mod_dic[pathway] = mod_num
+        for root, subpathways in reactome_roots.items():
+            maj_mod_num = most_frequent([mod_dic[pathway] for pathway in subpathways if pathway in mod_dic.keys()])
+            self.modules[maj_mod_num] = np.append(self.modules[maj_mod_num], root)
 
     def get_initial_node_pos(self, drm):
         node_pos = self.get_umap_layout_pos() if drm == 'umap' else self.get_pca_layout_pos()
@@ -402,7 +418,7 @@ class Module_layout:
                 xy[1], min_y, max_y, [x_y_ranges[2], x_y_ranges[3]])] for node, xy in node_positions.items()}
         return adjusted_node_positions
 
-    def getNodePositions(self):
+    def getNodePositions(self, reactome_roots):
         '''
         1. for all modules 
             1.1 get force directed layout
@@ -417,14 +433,22 @@ class Module_layout:
                 module_node_positions, module_area, True)
             node_positions = {**node_positions, **adjusted_node_positions}
 
+        # for root, subpathways in reactome_roots.items():
+        #     a_subpathways = [pathway for pathway in subpathways if pathway in node_positions.keys()]
+        #     root_pos = [node_positions[subpathway] for subpathway in a_subpathways]
+        #     # print(len(subpathways), len(a_subpathways))
+        #     num_subpathways = len(a_subpathways)
+        #     root_pos = [sum(subpathway_pos)/num_subpathways if pos!=2 else most_frequent(subpathway_pos) for pos, subpathway_pos in enumerate(zip(*root_pos))]
+        #     node_positions[root] = root_pos
+            
         # kann man sich vllt sparen?
         # adjusted_to_ncd = self.normalizeNodePositionInRange(
         #     node_positions, [-1, 1, -1, 1])
 
         return node_positions
-
+    
     def get_final_node_positions(self):
-        print(self.final_node_pos)
+        # print(self.final_node_pos)
         return self.final_node_pos
 
     def get_module_areas(self):

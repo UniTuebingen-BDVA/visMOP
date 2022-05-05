@@ -45,6 +45,7 @@ export default class overviewGraph {
     // ctx.rect(50, 50, 150, 80)
     // ctx.stroke()
     const graph = UndirectedGraph.from(graphData)
+    const additionalData = { clusterAreas: graphData.cluster_rects }
     // console.log('NODES', graph.nodes())
     // noverlap.assign(graph)
 
@@ -131,7 +132,7 @@ export default class overviewGraph {
         image: getNodeProgramImage()
       },
       hoverRenderer: drawHover
-    })
+    }, additionalData)
     console.log('Node Programs:')
     console.log(renderer.getSetting('nodeProgramClasses'))
 
