@@ -552,6 +552,7 @@ const sliderProteomics = computed(() => {
 });
 
 const sliderMetabolomics = computed(() => {
+  console.log('asdasd')
   const outObj: {
     [key: string]: { min: number; max: number; step: number; text: string };
   } = {};
