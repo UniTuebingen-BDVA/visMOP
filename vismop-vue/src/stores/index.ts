@@ -92,6 +92,7 @@ interface State {
     url: { [key: string]: string };
     svg: { [key: string]: SVGElement };
   };
+  moduleAreas: [number[]]
 }
 
 export const useMainStore = defineStore('mainStore', {
@@ -153,6 +154,8 @@ export const useMainStore = defineStore('mainStore', {
     pathwayCompare: [],
     glyphData: {},
     glyphs: { url: {}, svg: {} },
+    moduleAreas: [[]]
+    
   }),
   actions: {
     addClickedNode(val: { queryID: string; name: string }) {
@@ -301,6 +304,9 @@ export const useMainStore = defineStore('mainStore', {
     },
     setGraphData(val: graphData) {
       this.graphData = val;
+    },
+    setModuleAreas (val: [number []]) {
+      this.moduleAreas = val
     },
     setFCS(val: {
       [x: string]: {

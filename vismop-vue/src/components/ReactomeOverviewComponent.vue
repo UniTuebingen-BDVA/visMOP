@@ -352,9 +352,9 @@ const drawNetwork = () => {
   const networkData = generateGraphData(
     overviewData.value,
     glyphsURL,
+    pathwayLayouting.value.rootIds,
     glyphDataVar.value,
-    moduleAreas,
-    pathwayLayouting.value.rootIds
+    moduleAreas
   );
   console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(

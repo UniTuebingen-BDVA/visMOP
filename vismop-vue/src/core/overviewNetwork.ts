@@ -1,6 +1,4 @@
 import { UndirectedGraph } from 'graphology';
-import forceAtlas2 from 'graphology-layout-forceatlas2';
-import noverlap from 'graphology-layout-noverlap';
 import Sigma from 'sigma';
 import { graphData } from '@/core/graphTypes';
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
@@ -10,7 +8,7 @@ import drawHover from '@/core/customHoverRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
-import * as d3 from 'd3';
+import { filterValues } from './generalTypes';
 
 export default class overviewGraph {
   private currentPathway = '';

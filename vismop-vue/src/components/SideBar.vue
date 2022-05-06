@@ -772,6 +772,7 @@ const queryReactome = () => {
       value: metabolomicsValueCol.value.field,
     },
     sliderVals: sliderVals.value,
+    layoutSettings: layoutSettings.value
   };
   fetch('/reactome_parsing', {
     method: 'POST',

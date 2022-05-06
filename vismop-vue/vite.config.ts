@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
+import glsl from 'vite-plugin-glsl';
 
 export default defineConfig({
   build: {
@@ -9,6 +10,7 @@ export default defineConfig({
     sourcemap: true,
   },
   plugins: [
+    glsl(),
     vue({
       template: {
         transformAssetUrls,
