@@ -17,6 +17,11 @@
             icon="keyboard_arrow_right"
             @click="minimizeComponent"
           ></q-fab-action>
+          <q-fab-action
+            color="primary"
+            icon="mdi-restore"
+            @click="resetZoom"
+          ></q-fab-action>
           <q-fab-action>
             <graph-filter
               v-model:transcriptomics="transcriptomicsFilter"
@@ -336,6 +341,9 @@ const expandComponent = () => {
 };
 const minimizeComponent = () => {
   expandOverview.value = false;
+};
+const resetZoom = () => {
+  networkGraph.value?.resetZoom();
 };
 const drawNetwork = () => {
   networkGraph.value?.killGraph();

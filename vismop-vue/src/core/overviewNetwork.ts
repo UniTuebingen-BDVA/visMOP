@@ -17,6 +17,7 @@ export default class overviewGraph {
   private pathwaysContainingIntersection: string[] = [];
   private pathwaysContainingUnion: string[] = [];
   private renderer;
+  private camera;
   private filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   private filterFuncProt: (x: number) => boolean = (_x: number) => true;
   private filterFuncMeta: (x: number) => boolean = (_x: number) => true;
@@ -68,6 +69,7 @@ export default class overviewGraph {
 
   constructor(containerID: string, graphData: graphData) {
     this.renderer = this.mainGraph(containerID, graphData);
+    this.camera = this.renderer.getCamera();
     this.refreshCurrentPathway();
   }
 
@@ -338,6 +340,10 @@ export default class overviewGraph {
       easing: 'linear',
       duration: 1000,
     });
+  }
+
+  public resetZoom() {
+    this.camera.animatedReset({ duration: 1000 });
   }
 
   public refreshCurrentPathway() {
