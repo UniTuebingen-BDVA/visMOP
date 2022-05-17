@@ -9,14 +9,15 @@ def get_overview(pathway_node_dict, without_empty, global_dict_entries, pathway_
         key = "path:" + str(item)
         pathway_connection_dict[key] = {
             'incoming_edges': [], 'outgoingEdges': [], "outgoingOnceRemoved": [], 'entryType': "pathway", 'isempty': False, "name": [key], "keggID": key}
- 
+
     # remove all genes from the without_empty --> keep only pathways to identify relevant maplinks
     for pathway in pathway_objs:
         pathwayKey = "path:" + str(pathway.keggID)
         for maplink in pathway.maplinks:
-            if str(maplink).replace("path:", "")in displayed_pathways :
+            if str(maplink).replace("path:", "") in displayed_pathways:
                 if not(maplink == pathwayKey):
-                    pathway_connection_dict[pathwayKey]["outgoingEdges"].append({'edgeType': 'relation', 'relationID': pathwayKey+"+"+maplink, 'source': pathwayKey, 'target': maplink, 'relationType': 'maplink', 'relation_subtype': ['compound'], 'pathway_ID': pathwayKey, 'pathway_name': ''})
+                    pathway_connection_dict[pathwayKey]["outgoingEdges"].append({'edgeType': 'relation', 'relationID': pathwayKey+"+"+maplink, 'source': pathwayKey,
+                                                                                'target': maplink, 'relationType': 'maplink', 'relation_subtype': ['compound'], 'pathway_ID': pathwayKey, 'pathway_name': ''})
 
     """
     copy_without_empty = without_empty.copy()

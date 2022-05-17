@@ -2,6 +2,7 @@ import pickle
 import sys
 import pathlib
 
+
 def generate_pickles(file_path, mapping_file):
     """ generate pickle mapping objects from mapping files. This is function should be run when updating the reactome data
 
@@ -25,15 +26,20 @@ def generate_pickles(file_path, mapping_file):
                 database_2_reactome[organism] = {}
             if uniprot_ID in database_2_reactome[organism]:
                 if reactome_entity_ID in database_2_reactome[organism][uniprot_ID]:
-                    database_2_reactome[organism][uniprot_ID][reactome_entity_ID]['pathways'].append((reactome_pathway_ID, reactome_pathway_Name))
+                    database_2_reactome[organism][uniprot_ID][reactome_entity_ID]['pathways'].append(
+                        (reactome_pathway_ID, reactome_pathway_Name))
                 else:
-                    database_2_reactome[organism][uniprot_ID][reactome_entity_ID] = {'reactome_id':reactome_entity_ID, 'name': entity_name, 'pathways': [(reactome_pathway_ID, reactome_pathway_Name)]}
+                    database_2_reactome[organism][uniprot_ID][reactome_entity_ID] = {
+                        'reactome_id': reactome_entity_ID, 'name': entity_name, 'pathways': [(reactome_pathway_ID, reactome_pathway_Name)]}
             else:
                 database_2_reactome[organism][uniprot_ID] = {}
-                database_2_reactome[organism][uniprot_ID][reactome_entity_ID] = {'reactome_id':reactome_entity_ID, 'name': entity_name, 'pathways': [(reactome_pathway_ID, reactome_pathway_Name)]}
+                database_2_reactome[organism][uniprot_ID][reactome_entity_ID] = {
+                    'reactome_id': reactome_entity_ID, 'name': entity_name, 'pathways': [(reactome_pathway_ID, reactome_pathway_Name)]}
     for key in database_2_reactome.keys():
         with open(data_path / 'pickles' / '{}_{}.pickle'.format(key, mapping_file.split('_')[0]), 'wb') as handle:
-            pickle.dump(database_2_reactome[key], handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(
+                database_2_reactome[key], handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 if __name__ == "__main__":
     # run with path_to_files, filename as args

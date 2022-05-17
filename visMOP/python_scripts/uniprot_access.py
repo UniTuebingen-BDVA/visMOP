@@ -10,14 +10,14 @@ import json
 def make_protein_dict(df, colname):
     column_names = df.columns
 
-    
     # stores data for each uniprot ID
 
     prot_dict = df.to_dict('index')
 
     # convert all gene symbols to a list
     for key in prot_dict.copy():
-        prot_dict[key]['Gene Symbol'] = prot_dict.copy()[key]['Gene Symbol'].split(' ')
+        prot_dict[key]['Gene Symbol'] = prot_dict.copy()[
+            key]['Gene Symbol'].split(' ')
 
     return prot_dict
 
@@ -25,6 +25,8 @@ def make_protein_dict(df, colname):
 '''
 retrieve entry as txt format
 '''
+
+
 def get_uniprot_entry(protein_dict, data_path):
     print("Retrieving Uniprot Data...")
     script_dir = data_path
@@ -69,6 +71,8 @@ def get_uniprot_entry(protein_dict, data_path):
 get location and STRING_ID from uniprot files
 modifies dict inplace
 '''
+
+
 def add_uniprot_info(dict):
     for filename in dict.keys():
         id = filename.split('.')[0]
@@ -102,7 +106,8 @@ def add_uniprot_info(dict):
         try:
 
             #### OLD CODE ####
-            location = loc.split('SUBCELLULAR LOCATION: ', 1)[1].split('.', 1)[0].split('{')[0].strip()
+            location = loc.split('SUBCELLULAR LOCATION: ', 1)[
+                1].split('.', 1)[0].split('{')[0].strip()
 
             # format location
             if ';' in location:
@@ -111,8 +116,6 @@ def add_uniprot_info(dict):
             dict[id]['location'] = location
             #dict[id]['string_id'] = string_id
             #### END OLD CODE ####
-
-
 
             #### NEW ####
             '''
@@ -132,37 +135,47 @@ def add_uniprot_info(dict):
             evidence_ranks = {"ECO:0000269": 10, "ECO:0000303": 9, "ECO:0000305": 8, "ECO:0000250": 7, "ECO:0000255": 6,
                               "ECO:0000256": 5, "ECO:0000312": 4, "ECO:0000313": 3, "ECO:0007744": 2, "ECO:0007829": 1}
 
-            all_locations_new = ' '.join(loc.split('SUBCELLULAR LOCATION: ', 1)[1].split()).split('.')  # .join removes unnecessary tabs and whitespace
+            all_locations_new = ' '.join(loc.split('SUBCELLULAR LOCATION: ', 1)[
+                                         1].split()).split('.')  # .join removes unnecessary tabs and whitespace
 
             # remove empty strings
             all_locations_new = list(filter(None, all_locations_new))
 
-
             # include only items with "evidence" --> indicated by "{"; removes "Notes=..."
-            all_locations_new = list(filter(lambda item: item.index("{"), all_locations_new))
+            all_locations_new = list(
+                filter(lambda item: item.index("{"), all_locations_new))
 
             # removes further specifications such as "Multi-Pass protein ..."
             # TODO: should be implemented in future versions
-            all_locations_new = [i.split(";")[0].strip() for i in all_locations_new]
+            all_locations_new = [i.split(";")[0].strip()
+                                 for i in all_locations_new]
 
-            all_locations_new = [i.split("]:") for i in all_locations_new] # list of lists
+            all_locations_new = [i.split("]:")
+                                 for i in all_locations_new]  # list of lists
 
             for item in all_locations_new:
                 if len(item) == 1:
                     loc_key = item[0].split("{")[0].strip()
-                    evidence_list = item[0].split("{")[1].strip()[:-1].split(",")  # -1 cuts off "}" at end of evidence string
-                    evidence_codes = [evidence_ranks[i.split("|")[0].strip()] for i in evidence_list] # extract only the evidence codes, omit publication codes
+                    # -1 cuts off "}" at end of evidence string
+                    evidence_list = item[0].split("{")[1].strip()[
+                        :-1].split(",")
+                    # extract only the evidence codes, omit publication codes
+                    evidence_codes = [evidence_ranks[i.split(
+                        "|")[0].strip()] for i in evidence_list]
                     note = "none"
 
                 # happens if Isoform is defined
                 elif len(item) == 2:
                     isoform = item[0][1::]  # removes first character "["
                     loc_key = item[1].split("{")[0].strip()
-                    evidence_list = item[1].split("{")[1].strip()[:-1].split(",")  # -1 cuts off "}" at end of evidence string
+                    # -1 cuts off "}" at end of evidence string
+                    evidence_list = item[1].split("{")[1].strip()[
+                        :-1].split(",")
 
                     # extract only the evidence codes, omit publication codes
                     # convert codes to scores
-                    evidence_codes = [evidence_ranks[i.split("|")[0].strip()] for i in evidence_list]
+                    evidence_codes = [evidence_ranks[i.split(
+                        "|")[0].strip()] for i in evidence_list]
                     note = isoform
 
                 # calculate evidence score (sum of all evidence types provided)
@@ -171,24 +184,28 @@ def add_uniprot_info(dict):
                 if 'location_new' in dict[id]:
 
                     # get previous location key
-                    prev_key = list(filter(lambda x: x != "note", list(dict[id]['location_new'].keys())))[0]
+                    prev_key = list(filter(lambda x: x != "note", list(
+                        dict[id]['location_new'].keys())))[0]
 
                     # only put new location if score is higher
                     if evidence_score > (dict[id]['location_new'][prev_key][0]):
                         dict[id]['location_new'] = {}
                         dict[id]['location_new']['location'] = loc_key
-                        dict[id]['location_new']["evidence"] = [evidence_score, evidence_codes]
+                        dict[id]['location_new']["evidence"] = [
+                            evidence_score, evidence_codes]
                         dict[id]['location_new']["note"] = note
                 else:
                     dict[id]['location_new'] = {}
                     dict[id]['location_new']['location'] = loc_key
-                    dict[id]['location_new']["evidence"] = [evidence_score, evidence_codes]
+                    dict[id]['location_new']["evidence"] = [
+                        evidence_score, evidence_codes]
                     dict[id]['location_new']["note"] = note
 
             #### END NEW ####
 
         except:
-            dict[id]['location_new'] = {'location': 'n/a', "evidence": [0, []], "note": "none"}
+            dict[id]['location_new'] = {
+                'location': 'n/a', "evidence": [0, []], "note": "none"}
             dict[id]['location'] = 'n/a'
             #dict[id]['string_id'] = 'n/a'
 
@@ -198,6 +215,8 @@ Get interaction data from STRING database:
 file needs to be downloaded (10090.protein.physical.links.v11.0.txt) and filepath needs to be specified
 interaction_dict = {string_id :{string_id_interaction_prot1 : score, string_id_interaction_prot2 : score, ...}}
 '''
+
+
 def make_interaction_dict(filepath, data_path):
     start_time = time.time()
     cache_path = data_path / 'interaction_dict.json'
@@ -211,7 +230,8 @@ def make_interaction_dict(filepath, data_path):
                 interaction_dict = json.load(in_file)
 
         except:
-            print("interaction_dict cache was empty. Creating interaction_dict from file.")
+            print(
+                "interaction_dict cache was empty. Creating interaction_dict from file.")
 
             with open(filepath, 'r') as file:
                 line = file.readline()
@@ -229,8 +249,8 @@ def make_interaction_dict(filepath, data_path):
                         interaction_dict[prot1][prot2] = score
 
             with open(cache_path, 'w+', encoding='utf-8') as out_file:
-                json.dump(interaction_dict, out_file, ensure_ascii=False, indent=4)
-
+                json.dump(interaction_dict, out_file,
+                          ensure_ascii=False, indent=4)
 
     # map string_id to uniprot identifier (problem: 2 million entries)
     """query = ""
@@ -256,4 +276,3 @@ def make_interaction_dict(filepath, data_path):
     print("--- Parsing took %s seconds ---" % (time.time() - start_time))
 
     return interaction_dict
-
