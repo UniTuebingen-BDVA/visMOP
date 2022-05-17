@@ -56,7 +56,7 @@
                     :rows-per-page-options="[0]"
                     :columns="transcriptomicsTableHeaders"
                     :rows="transcriptomicsTableData"
-                    :row-key="usedSymbolCols.transcriptomics"
+                    row-key="_reserved_sort_id"
                     :filter="tableSearch"
                     @row-dblclick="transcriptomicsSelection"
                   >
@@ -80,7 +80,7 @@
                     :rows-per-page-options="[0]"
                     :columns="proteomicsTableHeaders"
                     :rows="proteomicsTableData"
-                    :row-key="usedSymbolCols.proteomics"
+                    row-key="_reserved_sort_id"
                     :filter="tableSearch"
                     @row-dblclick="proteomicsSelection"
                   >
@@ -104,7 +104,7 @@
                     :rows-per-page-options="[0]"
                     :columns="metabolomicsTableHeaders"
                     :rows="metabolomicsTableData"
-                    :row-key="usedSymbolCols.metabolomics"
+                    row-key="_reserved_sort_id"
                     :filter="tableSearch"
                     @row-dblclick="metabolomicsSelection"
                   >
