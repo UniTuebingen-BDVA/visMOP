@@ -368,7 +368,11 @@ const sliderTranscriptomics = computed(() => {
   const typedArrayData = transcriptomicsTableData.value;
   const typedArrayHeader = transcriptomicsTableHeaders.value;
   typedArrayHeader.forEach((element) => {
-    if (element.field !== 'available' && typeof element.field === 'string') {
+    if (
+      element.field !== 'available' &&
+      element.field !== '_reserved_sort_id' &&
+      typeof element.field === 'string'
+    ) {
       const valArr = typedArrayData.map((elem) =>
         typeof element.field === 'string' ? elem[element.field] : ''
       );
@@ -416,7 +420,11 @@ const sliderProteomics = computed(() => {
   const typedArrayHeader = proteomicsTableHeaders.value;
   console.log('proteomics sliders', typedArrayHeader);
   typedArrayHeader.forEach((element) => {
-    if (element.field !== 'available' && typeof element.field === 'string') {
+    if (
+      element.field !== 'available' &&
+      element.field !== '_reserved_sort_id' &&
+      typeof element.field === 'string'
+    ) {
       const valArr = typedArrayData.map((elem) =>
         typeof element.field === 'string' ? elem[element.field] : ''
       );
@@ -462,7 +470,11 @@ const sliderMetabolomics = computed(() => {
   const typedArrayHeader = metabolomicsTableHeaders.value;
 
   typedArrayHeader.forEach((element) => {
-    if (element.field !== 'available' && typeof element.field === 'string') {
+    if (
+      element.field !== 'available' &&
+      element.field !== '_reserved_sort_id' &&
+      typeof element.field === 'string'
+    ) {
       const valArr = typedArrayData.map((elem) =>
         typeof element.field === 'string' ? elem[element.field] : ''
       );
