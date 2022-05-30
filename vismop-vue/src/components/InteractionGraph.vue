@@ -34,6 +34,7 @@ import Sigma from 'sigma';
 import { useMainStore } from '@/stores';
 import { computed, ref, watch, defineProps } from 'vue';
 import type { Ref } from 'vue';
+import { useQuasar } from 'quasar';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -46,7 +47,10 @@ const stringSlider = ref(900);
 const interactionGraph: Ref<Sigma | undefined> = ref(undefined);
 
 // get from store
+const targetDatabase = computed(() => mainStore.targetDatabase);
 const interactionGraphData = computed(() => mainStore.interactionGraphData);
+const clickedNodes = computed(() => mainStore.clickedNodes);
+const proteomicsKeggIDDict = computed(() => mainStore.proteomicsKeggIDDict);
 
 // watch
 watch(interactionGraphData, () => {
@@ -60,6 +64,29 @@ watch(interactionGraphData, () => {
 });
 // methods
 const queryEgoGraphs = () => {
+  const $q = useQuasar();
+  $q.loading.show();
+  let ids: string[] = [];
+  if (targetDatabase.value === 'kegg') {
+    ids = clickedNodes.value.map((elem) => {
+      return proteomicsKeggIDDict.value[elem.id];
+    });
+  }
+  if (targetDatabase.value === 'reactome') {
+    ids = clickedNodes.value.map((elem) => {
+      return elem.id;
+    });
+  }
+  fetch('/interaction_graph', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nodes: ids, threshold: stringSlider.value }),
+  })
+    .then((response) => response.json())
+    .then((content) => {
+      mainStore.setInteractionGraphData(content.interaction_graph);
+      $q.loading.hide();
+    });
   mainStore.queryEgoGraps(stringSlider.value);
 };
 </script>

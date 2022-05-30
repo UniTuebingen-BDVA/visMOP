@@ -4,6 +4,7 @@ import { defineStore } from 'pinia';
 import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
 import { reactomeEntry } from '@/core/reactomeTypes';
+import { useQuasar } from 'quasar';
 
 interface State {
   sideBarExpand: boolean;
@@ -217,6 +218,8 @@ export const useMainStore = defineStore('mainStore', {
       this.clickedNodes.push(tableEntry);
     },
     queryEgoGraps(val: number) {
+      const $q = useQuasar();
+      $q.loading.show();
       let ids: string[] = [];
       if (this.targetDatabase === 'kegg') {
         ids = this.clickedNodes.map((elem) => {
@@ -234,9 +237,13 @@ export const useMainStore = defineStore('mainStore', {
         body: JSON.stringify({ nodes: ids, threshold: val }),
       })
         .then((response) => response.json())
-        .then(
-          (content) => (this.interactionGraphData = content.interaction_graph)
-        );
+        .then((content) => {
+          this.interactionGraphData = content.interaction_graph;
+          $q.loading.show();
+        });
+    },
+    setInteractionGraphData(val: networkxNodeLink) {
+      this.interactionGraphData = val;
     },
     removeClickedNode(val: string) {
       console.log('removedNode', val);
