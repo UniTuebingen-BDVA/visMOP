@@ -6,8 +6,8 @@ import re
 from visMOP.python_scripts.kegg_get_entry import KeggGet
 
 # DATA PATHS: (1) Local, (2) tuevis
-#data_path = pathlib.Path().resolve()
-#data_path = pathlib.Path("/var/www/vismop")
+# data_path = pathlib.Path().resolve()
+# data_path = pathlib.Path("/var/www/vismop")
 
 
 def associacte_value_keggID(datatable, symbol_col, val_col, symbol_kegg_dict):
@@ -21,12 +21,13 @@ def associacte_value_keggID(datatable, symbol_col, val_col, symbol_kegg_dict):
             out_dict[symbol_kegg_dict[current_symbol]] = series[val_col]
         except:
             print("Genesymbol not found! (Probably not available on KEGG)")
+
     datatable.apply(apply_func, axis=1)
     return out_dict, val_extent, all_fcs
 
 
 def cache_kegg_data(cache_path, data_dict):
-    """ Dumps requested data dictionaries into specified cache
+    """Dumps requested data dictionaries into specified cache
 
     as shown in https://stackoverflow.com/a/12309296
 
@@ -35,12 +36,12 @@ def cache_kegg_data(cache_path, data_dict):
         data_dict: data_dictionary to be cached
     """
 
-    with open(cache_path, 'w+', encoding='utf-8') as out_file:
+    with open(cache_path, "w+", encoding="utf-8") as out_file:
         json.dump(data_dict, out_file, ensure_ascii=False, indent=4)
 
 
 def check_cache(caching_path, check_keys):
-    """ Checks if provided keys are already in cache 
+    """Checks if provided keys are already in cache
 
     Args:
         caching_path: Path to cach file
@@ -65,7 +66,7 @@ def check_cache(caching_path, check_keys):
 
 
 def kegg_conv(origin_IDs=None, kegg_DB=None, origin_DB=None, caching_path=None):
-    """ Converts non-KEGG IDs to KEGG IDs
+    """Converts non-KEGG IDs to KEGG IDs
 
     for kegg api infos see: https://www.kegg.jp/kegg/rest/keggapi.html
 
@@ -88,13 +89,13 @@ def kegg_conv(origin_IDs=None, kegg_DB=None, origin_DB=None, caching_path=None):
 
     if query_IDs:
         origin_query = "+".join(query_IDs)
-        kegg_api_url = "http://rest.kegg.jp/conv/{}/{}".format(
-            kegg_DB, origin_query)
+        kegg_api_url = "http://rest.kegg.jp/conv/{}/{}".format(kegg_DB, origin_query)
         print(kegg_api_url)
         try:
             with urllib.request.urlopen(kegg_api_url) as kegg_response:
                 api_text_lines = filter(
-                    None, kegg_response.read().decode("utf-8").split("\n"))
+                    None, kegg_response.read().decode("utf-8").split("\n")
+                )
                 for line in api_text_lines:
                     tmp_line = line.strip().split("\t")
                     converted_IDs_cache[tmp_line[0]] = tmp_line[1]
@@ -119,24 +120,23 @@ def kegg_conv(origin_IDs=None, kegg_DB=None, origin_DB=None, caching_path=None):
 
 
 def kegg_find(gene_symbol, organism):
-    """ performs find kegg api request 
+    """performs find kegg api request
 
     Args:
         gene_symbol: string corresponding to the required gene symbol
         organisum strign corresponding to the target organism (e.g. "mmu")
     """
-    kegg_api_url = "http://rest.kegg.jp/find/{}/{}".format(
-        organism, gene_symbol)
+    kegg_api_url = "http://rest.kegg.jp/find/{}/{}".format(organism, gene_symbol)
     print("KEGG-URL, ", kegg_api_url)
     regex_pattern = re.compile(r"(?i)(\\t|\t| ){}(,|;)".format(gene_symbol))
     try:
         with urllib.request.urlopen(kegg_api_url) as kegg_response:
             api_text_lines = kegg_response.read().decode("utf-8")
             lines_list = api_text_lines.split("\n")
-            if lines_list[-1] == '':
+            if lines_list[-1] == "":
                 lines_list = lines_list[:-1]
             for line in lines_list:
-                if(regex_pattern.search(line)):
+                if regex_pattern.search(line):
                     return line.split("\t")[0]
     except urllib.error.HTTPError as e:
         print("URL ERROR: {}".format(e.__dict__))
@@ -145,7 +145,7 @@ def kegg_find(gene_symbol, organism):
 
 
 def gene_symbols_to_keggID(gene_symbols, organism, caching_path=None):
-    """ converts a list of genesymbols to kegg IDs of a given organism
+    """converts a list of genesymbols to kegg IDs of a given organism
 
     Args:
         gene_symbols: list of gene_symbols
@@ -164,8 +164,7 @@ def gene_symbols_to_keggID(gene_symbols, organism, caching_path=None):
             with open(caching_path) as in_file:
                 cache_data = json.load(in_file)
                 set_cache = set(cache_data[organism].keys())
-                query_symbols = [
-                    elem for elem in gene_symbols if elem not in set_cache]
+                query_symbols = [elem for elem in gene_symbols if elem not in set_cache]
         except:
             print("Cache was empty!!! Querying all supplied gene symbols")
             query_symbols = gene_symbols
@@ -194,7 +193,7 @@ def gene_symbols_to_keggID(gene_symbols, organism, caching_path=None):
 
 
 def kegg_get(keggIDs=None, kegg_DB=None, options=None, caching_path=None):
-    """ Gets KEGG entries specified in keggIDs from the specified KEGG database 
+    """Gets KEGG entries specified in keggIDs from the specified KEGG database
 
     for kegg api infos see: https://www.kegg.jp/kegg/rest/keggapi.html
 
@@ -223,20 +222,21 @@ def kegg_get(keggIDs=None, kegg_DB=None, options=None, caching_path=None):
     else:
         query_IDs = format_IDs
 
-    ID_chunks = [query_IDs[i:i+10] for i in range(0, len(query_IDs), 10)]
+    ID_chunks = [query_IDs[i : i + 10] for i in range(0, len(query_IDs), 10)]
 
     query_chunks = ["+".join(ID_chunk) for ID_chunk in ID_chunks]
 
     if options:
-        query_chunks = [query_chunk +
-                        "/{}".format(options) for query_chunk in query_chunks]
+        query_chunks = [
+            query_chunk + "/{}".format(options) for query_chunk in query_chunks
+        ]
 
     result_collection = []
     if query_chunks:
         print("Querying KEGG Database!!")
         for query_chunk in query_chunks:
 
-            time.sleep(.1)
+            time.sleep(0.1)
             kegg_api_url = "http://rest.kegg.jp/get/{}".format(query_chunk)
             print(kegg_api_url)
             try:
@@ -244,7 +244,7 @@ def kegg_get(keggIDs=None, kegg_DB=None, options=None, caching_path=None):
                     api_text_lines = kegg_response.read().decode("utf-8")
                     get_results = api_text_lines.split("///\n")
 
-                if get_results[-1] == '':
+                if get_results[-1] == "":
                     get_results = get_results[:-1]
                 result_collection.extend(get_results)
             except urllib.error.HTTPError as e:
@@ -290,7 +290,7 @@ def query_kgmls(pathways_ids, caching_path):
     successful_query = []
     # query kgmls
     for pathway in not_contained:
-        if(pathway not in temporary_blacklist):
+        if pathway not in temporary_blacklist:
             kegg_api_url = "http://rest.kegg.jp/get/{}/kgml".format(pathway)
             try:
                 with urllib.request.urlopen(kegg_api_url) as kegg_response:
@@ -302,7 +302,7 @@ def query_kgmls(pathways_ids, caching_path):
                 print("HTTP ERROR: {}".format(e.__dict__))
             except urllib.error.URLError as e:
                 print("URL ERROR: {}".format(e.__dict__))
-            time.sleep(.1)
+            time.sleep(0.1)
     cache_kegg_data(caching_path, cache_data)
     out_dict = {}
     for ID in pathways_ids:
@@ -310,7 +310,9 @@ def query_kgmls(pathways_ids, caching_path):
             out_dict[ID] = cache_data[ID]
         except:
             print(
-                pathway, "not found in cache, probably it does not exist for target organism")
+                pathway,
+                "not found in cache, probably it does not exist for target organism",
+            )
     return out_dict
 
 
@@ -326,7 +328,7 @@ def multiple_query(query_function, **func_options):
     not_get = None
     out_dict = {}
     while True:
-        time.sleep(.1)
+        time.sleep(0.1)
         try:
             out_dict, remaining = query_function(**func_options)
             if len(remaining) == not_get:
@@ -350,10 +352,10 @@ def query_gene_symbols(gene_symbols, organism):
     """
     out_dict = {}
     for symbol in gene_symbols:
-        time.sleep(.5)
+        time.sleep(0.5)
         try:
             query_result = kegg_find(symbol, organism)
-            if(query_result):
+            if query_result:
                 print(query_result)
                 out_dict[symbol] = query_result
             else:
@@ -399,7 +401,7 @@ def parse_get(get_response, keggID):
     return kegg_get
 
 
-def get_unique_pathways(list_KeggGets, kegg_target_organism='mmu'):
+def get_unique_pathways(list_KeggGets, kegg_target_organism="mmu"):
     """Returns a list of unique pathways
 
     Args:
@@ -411,8 +413,9 @@ def get_unique_pathways(list_KeggGets, kegg_target_organism='mmu'):
     unique_pathways = []
     for entry in list_KeggGets:
         current_pathways = entry.pathways
-        current_pathways = [entry.replace(
-            "map", kegg_target_organism) for entry in current_pathways]
+        current_pathways = [
+            entry.replace("map", kegg_target_organism) for entry in current_pathways
+        ]
         for pathway in current_pathways:
             if pathway not in unique_pathways:
                 unique_pathways.append(pathway)
@@ -433,37 +436,37 @@ if __name__ == "__main__":
 
     print(unique_pathways)
     """
-    #uniprot_IDs = ["Q8BWN8","P47740","Q9R0H0","Q9DBK0","O88844","Q9D379","P34914","Q9QZD8","O08756","P45952","Q9QXD1","Q61425","P51660","Q2TPA8","Q8QZT1","Q9Z2Z6","Q99LB2","O35459","Q5XG73","Q8VCW8","Q91Z53","P52825","Q8CC88","Q921G7","Q8R086","Q8BH86","Q9R112","Q9D6M3","Q8BW75","O09174","P26443","Q9Z2I8","Q9JHW2","Q8R0Y8","Q9EQ20","Q3URE1","Q07417","Q99LB7","Q8BGA8","Q3UEG6","Q8R164","Q9QXX4","Q9D938","Q8C5Q4","Q61387","Q8QZS1","Q8R216","Q8BK72","P67778","P11352","Q9DBF1","O35129","P05202","Q8CHT0","Q61578","Q9DCW4","Q3ULD5","P53395","Q9CPY7","Q9JHI5","Q8R4H7","P97823","Q8BIP0","A2AS89","Q9CXT8","Q8QZY2","O35857","Q8K370","Q9WTQ8","Q9CR61","P47791","P63038","Q9Z1P6","Q9WVM8","Q78J03","Q9CQS4","Q9CQH3","Q9D051","Q9WU19","Q91YT0","Q8BKZ9","Q91VD9","Q8VEM8","O35490","Q9DC70","Q3UIU2","Q9CQZ6","Q8K2B3","Q9CQJ8","Q9DB20","Q8BUY5","Q99LC3","Q8VE38","Q6PB66","Q91VR2","P35486","Q9D6J5","Q91WD5","Q99LY9","P03930","O08601","Q9D6J6","Q91WK1","P03921","Q9DCT2","P35564","Q8BK30","Q9DCS9","Q60930","Q9ERS2","Q6ZQI3","Q9CZU6","Q9CQF9","Q9EQI8","Q8BU14","Q9CR21","Q8JZR0","A2APY7","P08003","P47738","Q9EQH2","P45878","Q9CQF4","Q8VHE0","Q9D0F3","Q9CRB8","Q9ERR7","Q9CQZ5","Q9CXV1","O09159","Q60932","P06909","P08226","Q9DCM0","P00329","Q60931","Q8CCJ3","P57759","O09158","Q8BVI4","Q9D8V0","Q8BMF4","Q8C7X2","Q64310","Q9QXT0","Q99PG0","P04939","Q60936","P12265","Q8BM55","P50580","Q80UM7","Q62186","Q9JKR6","P62900","Q9JK42","Q99L04","P34884","P20029","Q922R8","Q99LM2","P53026","P50172","O88986","Q91YW3","P47962","Q91YQ5","P62717","P47963","O08807","P61620","Q8BVA5","P33267","O54734","P19221","P19253","P14148","Q9DCN2","P47911","Q8K2T4","O08600","P16406","Q8VCR2","P61358","P50427","Q8QZR3","Q99PL5","Q91V92","P07759","O88587","P56657","Q68FF9","Q9D1M7","Q91W64"]
+    # uniprot_IDs = ["Q8BWN8","P47740","Q9R0H0","Q9DBK0","O88844","Q9D379","P34914","Q9QZD8","O08756","P45952","Q9QXD1","Q61425","P51660","Q2TPA8","Q8QZT1","Q9Z2Z6","Q99LB2","O35459","Q5XG73","Q8VCW8","Q91Z53","P52825","Q8CC88","Q921G7","Q8R086","Q8BH86","Q9R112","Q9D6M3","Q8BW75","O09174","P26443","Q9Z2I8","Q9JHW2","Q8R0Y8","Q9EQ20","Q3URE1","Q07417","Q99LB7","Q8BGA8","Q3UEG6","Q8R164","Q9QXX4","Q9D938","Q8C5Q4","Q61387","Q8QZS1","Q8R216","Q8BK72","P67778","P11352","Q9DBF1","O35129","P05202","Q8CHT0","Q61578","Q9DCW4","Q3ULD5","P53395","Q9CPY7","Q9JHI5","Q8R4H7","P97823","Q8BIP0","A2AS89","Q9CXT8","Q8QZY2","O35857","Q8K370","Q9WTQ8","Q9CR61","P47791","P63038","Q9Z1P6","Q9WVM8","Q78J03","Q9CQS4","Q9CQH3","Q9D051","Q9WU19","Q91YT0","Q8BKZ9","Q91VD9","Q8VEM8","O35490","Q9DC70","Q3UIU2","Q9CQZ6","Q8K2B3","Q9CQJ8","Q9DB20","Q8BUY5","Q99LC3","Q8VE38","Q6PB66","Q91VR2","P35486","Q9D6J5","Q91WD5","Q99LY9","P03930","O08601","Q9D6J6","Q91WK1","P03921","Q9DCT2","P35564","Q8BK30","Q9DCS9","Q60930","Q9ERS2","Q6ZQI3","Q9CZU6","Q9CQF9","Q9EQI8","Q8BU14","Q9CR21","Q8JZR0","A2APY7","P08003","P47738","Q9EQH2","P45878","Q9CQF4","Q8VHE0","Q9D0F3","Q9CRB8","Q9ERR7","Q9CQZ5","Q9CXV1","O09159","Q60932","P06909","P08226","Q9DCM0","P00329","Q60931","Q8CCJ3","P57759","O09158","Q8BVI4","Q9D8V0","Q8BMF4","Q8C7X2","Q64310","Q9QXT0","Q99PG0","P04939","Q60936","P12265","Q8BM55","P50580","Q80UM7","Q62186","Q9JKR6","P62900","Q9JK42","Q99L04","P34884","P20029","Q922R8","Q99LM2","P53026","P50172","O88986","Q91YW3","P47962","Q91YQ5","P62717","P47963","O08807","P61620","Q8BVA5","P33267","O54734","P19221","P19253","P14148","Q9DCN2","P47911","Q8K2T4","O08600","P16406","Q8VCR2","P61358","P50427","Q8QZR3","Q99PL5","Q91V92","P07759","O88587","P56657","Q68FF9","Q9D1M7","Q91W64"]
 
-    #print(data_path / 'kegg_cache')
-    #out_dict = read_into_cache(kegg_conv, origin_IDs=uniprot_IDs, kegg_DB="mmu", origin_DB="up", caching_path=data_path / 'kegg_cache/converted_IDs.json')
+    # print(data_path / 'kegg_cache')
+    # out_dict = read_into_cache(kegg_conv, origin_IDs=uniprot_IDs, kegg_DB="mmu", origin_DB="up", caching_path=data_path / 'kegg_cache/converted_IDs.json')
 
     # print(out_dict.values())
 
-    #test = read_into_cache(kegg_get, keggIDs=list(out_dict.values()),caching_path=data_path / 'kegg_cache/kegg_gets.json')
+    # test = read_into_cache(kegg_get, keggIDs=list(out_dict.values()),caching_path=data_path / 'kegg_cache/kegg_gets.json')
     # list(out_dict.values()),caching_path=data_path / 'kegg_cache/kgml_gets.json'
 
-    #test_key = list(test.keys())[0]
-    #test_get =  "ENTRY       217830            CDS       T01002\nNAME        Dglucy, 9030617O03Rik\nDEFINITION  (RefSeq) D-glutamate cyclase\nORTHOLOGY   K22210  D-glutamate cyclase [EC:4.2.1.48]\nORGANISM    mmu  Mus musculus (mouse)\nPATHWAY     mmu00471  D-Glutamine and D-glutamate metabolism\n            mmu01100  Metabolic pathways\nBRITE       KEGG Orthology (KO) [BR:mmu00001]\n             09100 Metabolism\n              09106 Metabolism of other amino acids\n               00471 D-Glutamine and D-glutamate metabolism\n                217830 (Dglucy)\n            Enzymes [BR:mmu01000]\n             4. Lyases\n              4.2  Carbon-oxygen lyases\n               4.2.1  Hydro-lyases\n                4.2.1.48  D-glutamate cyclase\n                 217830 (Dglucy)\nPOSITION    12; 12 E\nMOTIF       Pfam: DUF4392 DUF1445\nDBLINKS     NCBI-GeneID: 217830\n            NCBI-ProteinID: NP_663423\n            MGI: 2444813\n            Ensembl: ENSMUSG00000021185\n            Vega: OTTMUSG00000024490\n            UniProt: Q8BH86\nAASEQ       617\n            MTISFLLRSCLRSAVRSLPKAALIRNTSSMTEGLQPASVVVLPRSLAPAFESFCQGNRGP\n            LPLLGQSEAVKTLPQLSAVSDIRTICPQLQKYKFGTCTGILTSLEEHSEQLKEMVTFIID\n            CSFSIEEALEQAGIPRRDLTGPSHAGAYKTTVPCATIAGFCCPLVVTMRPIPKDKLERLL\n            QATHAIRGQQGQPIHIGDPGLLGIEALSKPDYGSYVECRPEDVPVFWPSPLTSLEAVISC\n            KAPLAFASPPGCMVMVPKDTASSASCLTPEMVPEVHAISKDPLHYSIVSAPAAQKVRELE\n            STIAVDPGNRGIGHLLLKDELLQAALSLSHARSVLVTTGFPTHFNHEPPEETDGPPGAIA\n            LAAFLQALGKETAMVVDQRALNLHMRIVEDAIRQGVLKTPIPILTYQGRSMEDARAFLCK\n            DGDPKSPRFDHLVAIERAGRAADGNYYNARKMNIKHLVDPIDDIFLAAQKIPGISSTGVG\n            DGGNELGMGKVKAAVKKHIRNGDVIACDVEADFAVIAGVSNWGGYALACALYILNSCQVH\n            ERYLRRATGPSRRAGEQSWIQALPSVAKEEKMLGILVENQVRSGVSGIVGMEVDGLPFHD\n            VHAEMIRKLVGATTVHM\nNTSEQ       1854\n            atgaccatctcatttctcctgaggtcctgtcttcgctctgctgtaaggagtctacccaag\n            gcagcacttatcagaaacacttccagcatgacggaaggactccagccggctagtgtggtg\n            gtcctgcccagatccctagcaccagcttttgaaagcttctgccagggcaaccggggtcct\n            ctgcccctccttggacaaagtgaggcggtgaagacactccctcagctgagcgctgtttca\n            gacataaggaccatctgtccacagttgcagaaatacaagtttggcacctgcacaggcatc\n            ctgacctcactggaagagcactcagaacaactaaaagaaatggtgaccttcatcatagac\n            tgcagcttctccatagaagaggccttggagcaggcagggatccccagaagagacctaaca\n            ggtcccagccatgcaggagcatacaagacaacagtgccctgtgccaccattgctggcttc\n            tgctgccctctggtggtcacaatgagacccattcccaaggacaagctggaaaggctgttg\n            caggccactcacgccataagaggacagcaaggacaacccattcacatcggtgacccaggt\n            cttttgggaattgaggcactttccaaacctgactacgggagttatgtggagtgtcggccc\n            gaggatgtccctgtgttctggccatctccgctgaccagtctggaagcagtcatcagctgc\n            aaggctccattggctttcgccagccctccaggctgcatggtgatggtcccgaaggacaca\n            gcgtcttcagccagttgtctgactcctgagatggttccagaagtccatgccatttccaaa\n            gaccctttgcattacagcatagtgtcagcccctgctgctcaaaaggtcagagagctagag\n            tccacaattgccgtagacccagggaaccgaggaatcgggcacctactacttaaagatgag\n            ctactgcaagctgctttgtcactgtctcatgcccgctccgtactcgtcaccactggattc\n            ccaacacatttcaatcatgagcccccagaagagacagatggcccaccaggagccatcgcc\n            ttagctgccttcctacaggctctggggaaggagaccgccatggtagtagaccagagagcc\n            ttgaacttgcatatgaggattgttgaagacgccattaggcaaggagttctaaagacaccg\n            attcccatattaacttaccaaggaagatccatggaagatgctcgggcatttttgtgcaaa\n            gatggggaccctaagtctcctagatttgaccatctggtggccatagagcgtgcgggaagg\n            gctgctgatggcaattactacaacgcgaggaagatgaacatcaaacacttagttgacccc\n            attgatgacattttccttgctgcacaaaagattcctggcatctcatcaactggtgttggt\n            gacggaggcaatgagcttggaatgggcaaagtaaaggcggccgtgaagaagcacattaga\n            aatggagatgtcattgcctgtgatgtggaggctgattttgctgtcattgccggtgtttct\n            aactggggaggctacgccctggcctgtgcactgtatattctgaactcatgtcaagtccat\n            gagcgctacctgaggagggcaactggaccttccaggagagctggggaacagagctggatc\n            caggccctgccatctgtcgctaaggaagaaaagatgttgggcatcctggtagagaaccaa\n            gtccgcagtggtgtctcaggcatcgtgggcatggaagtggatgggctgcctttccatgac\n            gttcatgctgagatgatccggaagctggtgggtgccaccacagtgcacatgtga\n"
+    # test_key = list(test.keys())[0]
+    # test_get =  "ENTRY       217830            CDS       T01002\nNAME        Dglucy, 9030617O03Rik\nDEFINITION  (RefSeq) D-glutamate cyclase\nORTHOLOGY   K22210  D-glutamate cyclase [EC:4.2.1.48]\nORGANISM    mmu  Mus musculus (mouse)\nPATHWAY     mmu00471  D-Glutamine and D-glutamate metabolism\n            mmu01100  Metabolic pathways\nBRITE       KEGG Orthology (KO) [BR:mmu00001]\n             09100 Metabolism\n              09106 Metabolism of other amino acids\n               00471 D-Glutamine and D-glutamate metabolism\n                217830 (Dglucy)\n            Enzymes [BR:mmu01000]\n             4. Lyases\n              4.2  Carbon-oxygen lyases\n               4.2.1  Hydro-lyases\n                4.2.1.48  D-glutamate cyclase\n                 217830 (Dglucy)\nPOSITION    12; 12 E\nMOTIF       Pfam: DUF4392 DUF1445\nDBLINKS     NCBI-GeneID: 217830\n            NCBI-ProteinID: NP_663423\n            MGI: 2444813\n            Ensembl: ENSMUSG00000021185\n            Vega: OTTMUSG00000024490\n            UniProt: Q8BH86\nAASEQ       617\n            MTISFLLRSCLRSAVRSLPKAALIRNTSSMTEGLQPASVVVLPRSLAPAFESFCQGNRGP\n            LPLLGQSEAVKTLPQLSAVSDIRTICPQLQKYKFGTCTGILTSLEEHSEQLKEMVTFIID\n            CSFSIEEALEQAGIPRRDLTGPSHAGAYKTTVPCATIAGFCCPLVVTMRPIPKDKLERLL\n            QATHAIRGQQGQPIHIGDPGLLGIEALSKPDYGSYVECRPEDVPVFWPSPLTSLEAVISC\n            KAPLAFASPPGCMVMVPKDTASSASCLTPEMVPEVHAISKDPLHYSIVSAPAAQKVRELE\n            STIAVDPGNRGIGHLLLKDELLQAALSLSHARSVLVTTGFPTHFNHEPPEETDGPPGAIA\n            LAAFLQALGKETAMVVDQRALNLHMRIVEDAIRQGVLKTPIPILTYQGRSMEDARAFLCK\n            DGDPKSPRFDHLVAIERAGRAADGNYYNARKMNIKHLVDPIDDIFLAAQKIPGISSTGVG\n            DGGNELGMGKVKAAVKKHIRNGDVIACDVEADFAVIAGVSNWGGYALACALYILNSCQVH\n            ERYLRRATGPSRRAGEQSWIQALPSVAKEEKMLGILVENQVRSGVSGIVGMEVDGLPFHD\n            VHAEMIRKLVGATTVHM\nNTSEQ       1854\n            atgaccatctcatttctcctgaggtcctgtcttcgctctgctgtaaggagtctacccaag\n            gcagcacttatcagaaacacttccagcatgacggaaggactccagccggctagtgtggtg\n            gtcctgcccagatccctagcaccagcttttgaaagcttctgccagggcaaccggggtcct\n            ctgcccctccttggacaaagtgaggcggtgaagacactccctcagctgagcgctgtttca\n            gacataaggaccatctgtccacagttgcagaaatacaagtttggcacctgcacaggcatc\n            ctgacctcactggaagagcactcagaacaactaaaagaaatggtgaccttcatcatagac\n            tgcagcttctccatagaagaggccttggagcaggcagggatccccagaagagacctaaca\n            ggtcccagccatgcaggagcatacaagacaacagtgccctgtgccaccattgctggcttc\n            tgctgccctctggtggtcacaatgagacccattcccaaggacaagctggaaaggctgttg\n            caggccactcacgccataagaggacagcaaggacaacccattcacatcggtgacccaggt\n            cttttgggaattgaggcactttccaaacctgactacgggagttatgtggagtgtcggccc\n            gaggatgtccctgtgttctggccatctccgctgaccagtctggaagcagtcatcagctgc\n            aaggctccattggctttcgccagccctccaggctgcatggtgatggtcccgaaggacaca\n            gcgtcttcagccagttgtctgactcctgagatggttccagaagtccatgccatttccaaa\n            gaccctttgcattacagcatagtgtcagcccctgctgctcaaaaggtcagagagctagag\n            tccacaattgccgtagacccagggaaccgaggaatcgggcacctactacttaaagatgag\n            ctactgcaagctgctttgtcactgtctcatgcccgctccgtactcgtcaccactggattc\n            ccaacacatttcaatcatgagcccccagaagagacagatggcccaccaggagccatcgcc\n            ttagctgccttcctacaggctctggggaaggagaccgccatggtagtagaccagagagcc\n            ttgaacttgcatatgaggattgttgaagacgccattaggcaaggagttctaaagacaccg\n            attcccatattaacttaccaaggaagatccatggaagatgctcgggcatttttgtgcaaa\n            gatggggaccctaagtctcctagatttgaccatctggtggccatagagcgtgcgggaagg\n            gctgctgatggcaattactacaacgcgaggaagatgaacatcaaacacttagttgacccc\n            attgatgacattttccttgctgcacaaaagattcctggcatctcatcaactggtgttggt\n            gacggaggcaatgagcttggaatgggcaaagtaaaggcggccgtgaagaagcacattaga\n            aatggagatgtcattgcctgtgatgtggaggctgattttgctgtcattgccggtgtttct\n            aactggggaggctacgccctggcctgtgcactgtatattctgaactcatgtcaagtccat\n            gagcgctacctgaggagggcaactggaccttccaggagagctggggaacagagctggatc\n            caggccctgccatctgtcgctaaggaagaaaagatgttgggcatcctggtagagaaccaa\n            gtccgcagtggtgtctcaggcatcgtgggcatggaagtggatgggctgcctttccatgac\n            gttcatgctgagatgatccggaagctggtgggtgccaccacagtgcacatgtga\n"
 
-    #parsed_gets = [parse_get(v,k) for k,v in test.items()]
+    # parsed_gets = [parse_get(v,k) for k,v in test.items()]
 
-    #unique_pathways = get_unique_pathways(parsed_gets)
+    # unique_pathways = get_unique_pathways(parsed_gets)
 
     # test = read_into_cache(kegg_get, keggIDs=unique_pathways, ,caching_path=data_path) / 'kegg_cache/pathway_kgml.json')
 
-    #keggIDs = list(out_dict.values())
-    #not_get = len(out_dict.values())
+    # keggIDs = list(out_dict.values())
+    # not_get = len(out_dict.values())
 
-    #kegg_kgml = query_kgmls(unique_pathways, data_path / 'kegg_cache/kgml_cache.json')
-    #from kegg_parsing import parse_KGML
+    # kegg_kgml = query_kgmls(unique_pathways, data_path / 'kegg_cache/kgml_cache.json')
+    # from kegg_parsing import parse_KGML
 
     # with open(data_path / 'kegg_cache/kgml_cache.json') as in_file:
     #    read_data = json.load(in_file)
     #    dict_kgml = parse_KGML('mmu00062', read_data['mmu00062'])
     #    print(dict_kgml)
 
-    #print(kegg_find("Acot1", "mmu"))
+    # print(kegg_find("Acot1", "mmu"))
 
     a = [1, 2, 3, 4, 5]
     b = [6, 7, 8, 9, 10]

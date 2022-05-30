@@ -9,14 +9,15 @@ def create_df(file_type, sheet_no):
         read_table: file as a pandas data frame
     """
     read_table = pd.read_excel(
-        file_type, sheet_name=sheet_no, header=None, engine='openpyxl')
-    read_table = read_table.dropna(how='all')
+        file_type, sheet_name=sheet_no, header=None, engine="openpyxl"
+    )
+    read_table = read_table.dropna(how="all")
     read_table = read_table.rename(columns=read_table.iloc[0])
     read_table = read_table.drop(read_table.index[0])
     read_table = read_table.fillna(value="None")
-    read_table['_reserved_sort_id'] = read_table.index
-    read_table['available'] = 'No'
-    read_table['inSelected'] = 'No'
+    read_table["_reserved_sort_id"] = read_table.index
+    read_table["available"] = "No"
+    read_table["inSelected"] = "No"
     return read_table
 
 
@@ -32,17 +33,23 @@ def generate_vue_table_header(df):
 
     for entry in header:
         vue_header = {}
-        vue_header['label'] = entry
-        vue_header['name'] = entry
-        vue_header['field'] = entry
-        vue_header['align'] = 'none' if (entry == 'inSelected') else 'left'
-        vue_header['sortable'] = True
-        vue_header['classes'] = 'ellipsis',
-        vue_header['style'] = 'max-width: 200px' if (
-            entry != '_reserved_sort_id') else 'max-width: 200px; display: none'
-        vue_header['headerClasses'] = 'bg-primary text-white',
-        vue_header['headerStyle'] = 'max-width: 200px' if (
-            entry != '_reserved_sort_id') else 'max-width: 200px; display: none'
+        vue_header["label"] = entry
+        vue_header["name"] = entry
+        vue_header["field"] = entry
+        vue_header["align"] = "none" if (entry == "inSelected") else "left"
+        vue_header["sortable"] = True
+        vue_header["classes"] = ("ellipsis",)
+        vue_header["style"] = (
+            "max-width: 200px"
+            if (entry != "_reserved_sort_id")
+            else "max-width: 200px; display: none"
+        )
+        vue_header["headerClasses"] = ("bg-primary text-white",)
+        vue_header["headerStyle"] = (
+            "max-width: 200px"
+            if (entry != "_reserved_sort_id")
+            else "max-width: 200px; display: none"
+        )
         vue_headers.append(vue_header)
     return vue_headers
 
