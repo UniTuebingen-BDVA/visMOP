@@ -17,6 +17,7 @@ import { glyphData } from './generalTypes';
 export function generateGraphData(
   nodeList: reactomeEntry[],
   glyphs: { [key: string]: string },
+  glyphsHighres: { [key: string]: string },
   glyphData: {
     [key: string]: glyphData;
   },
@@ -42,6 +43,8 @@ export function generateGraphData(
         entryType: 'temp',
         type: 'image',
         image: glyphs[id],
+        imageLowRes: glyphs[id],
+        imageHighRes: glyphsHighres[id],
         name: _.escape(name),
         hidden: false,
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',

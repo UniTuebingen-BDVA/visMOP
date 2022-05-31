@@ -71,6 +71,7 @@ export default class overviewGraph {
     this.renderer = this.mainGraph(containerID, graphData);
     this.camera = this.renderer.getCamera();
     this.refreshCurrentPathway();
+
   }
 
   /**
@@ -105,6 +106,25 @@ export default class overviewGraph {
     const nodeReducer = (node: string, data: Attributes) => {
       // handle filter
       let hidden = false;
+      let condition = false;
+      let xDisplay: number | undefined = -100;
+      let yDisplay: number | undefined = -100;
+      if (this.renderer){
+        let currentView = this.renderer.viewRectangle()
+        xDisplay = this.renderer.getNodeDisplayData(node)?.x
+        yDisplay = this.renderer.getNodeDisplayData(node)?.y
+        
+        if (!xDisplay) { xDisplay = -100}
+        if (!yDisplay) { yDisplay = -100}
+        condition =
+        (this.renderer.getCamera().ratio < 0.4) &&
+        (xDisplay >= currentView.x1) &&
+        (xDisplay <= currentView.x2) &&
+        (yDisplay >= currentView.y1 - currentView.height) &&
+        (yDisplay <= currentView.y2);
+      }
+
+      let lodImage = condition ? data.imageHighRes : data.imageLowRes;
       if (
         this.averageFilter.metabolomics.filterActive ||
         this.averageFilter.proteomics.filterActive ||
@@ -130,7 +150,13 @@ export default class overviewGraph {
           : 10;
       if (shortestPathNodes?.length > 0) {
         if (shortestPathClick.includes(node)) {
-          return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 };
+          return {
+            ...data,
+            color: 'rgba(255,0,255,1.0)',
+            zIndex: 1,
+            size: 15,
+            image: lodImage,
+          };
         }
         if (shortestPathNodes.includes(node)) {
           return {
@@ -138,13 +164,25 @@ export default class overviewGraph {
             color: 'rgba(255,180,255,1.0)',
             zIndex: 1,
             size: 10,
+            image: lodImage,
           };
         } else {
-          return { ...data, color: 'rgba(255,255,255,1.0)', size: 5 };
+          return {
+            ...data,
+            color: 'rgba(255,255,255,1.0)',
+            size: 5,
+            image: lodImage,
+          };
         }
       }
       if (shortestPathClick.includes(node)) {
-        return { ...data, color: 'rgba(255,0,255,1.0)', zIndex: 1, size: 15 };
+        return {
+          ...data,
+          color: 'rgba(255,0,255,1.0)',
+          zIndex: 1,
+          size: 15,
+          image: lodImage,
+        };
       }
       if (
         this.currentPathway === node.replace('path:', '') ||
@@ -155,6 +193,7 @@ export default class overviewGraph {
           color: 'rgba(255,0,0,1.0)',
           zIndex: 1,
           size: nodeSize,
+          image: lodImage,
         };
       }
       if (
@@ -165,6 +204,7 @@ export default class overviewGraph {
           color: 'rgba(0,255,0,1.0)',
           zIndex: 1,
           size: nodeSize,
+          image: lodImage,
         };
       }
       if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
@@ -173,6 +213,7 @@ export default class overviewGraph {
           color: 'rgba(0,0,255,1.0)',
           zIndex: 1,
           size: nodeSize,
+          image: lodImage,
         };
       }
       if (highlighedNodesHover.has(node)) {
@@ -181,6 +222,7 @@ export default class overviewGraph {
           color: 'rgba(255,200,200,1.0)',
           zIndex: 1,
           size: nodeSize,
+          image: lodImage,
         };
       }
       if (highlighedNodesClick.has(node)) {
@@ -189,9 +231,10 @@ export default class overviewGraph {
           color: 'rgba(255,200,200,1.0)',
           zIndex: 1,
           size: nodeSize,
+          image: lodImage,
         };
       }
-      return { ...data, hidden: hidden };
+      return { ...data, hidden: hidden, image: lodImage };
     };
 
     // same for edges
@@ -266,7 +309,6 @@ export default class overviewGraph {
       highlighedNodesHover.clear();
       highlighedEdgesHover.clear();
       highlightedCenterHover = '';
-
       renderer.refresh();
     });
 

@@ -352,12 +352,14 @@ const drawNetwork = () => {
   mainStore.setGlyphData(glyphDataVar.value);
   console.log('GLYPH DATA', glyphDataVar.value);
   const generatedGlyphs = generateGlyphs(glyphDataVar.value);
+  const generatedGlyphsHighRes = generateGlyphs(glyphDataVar.value,96);
   mainStore.setGlyphs(generatedGlyphs);
   const glyphsURL = generatedGlyphs.url;
   console.log('GLYPHs', mainStore.glyphs);
   const networkData = generateGraphData(
     overviewData.value,
-    glyphsURL,
+    generatedGlyphs.url,
+    generatedGlyphsHighRes.url,
     glyphDataVar.value,
     pathwayLayouting.value.rootIds
   );

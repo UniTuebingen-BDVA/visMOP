@@ -183,7 +183,7 @@ export function generateGlyphDataReactome(): { [key: string]: glyphData } {
   return outGlyphData;
 }
 
-export function generateGlyphs(inputData: { [key: string]: glyphData }): {
+export function generateGlyphs(inputData: { [key: string]: glyphData }, diameter = 28): {
   url: { [key: string]: string };
   svg: { [key: string]: SVGElement };
 } {
@@ -196,7 +196,9 @@ export function generateGlyphs(inputData: { [key: string]: glyphData }): {
     const glyphSVG = generateGlyphVariation(
       glyphData,
       false,
-      idx
+      idx,
+      true,
+      diameter
     ) as SVGElement;
     const glyphSVGstring = serializer.serializeToString(glyphSVG);
     const svgBlob = new Blob([glyphSVGstring], {
@@ -204,7 +206,7 @@ export function generateGlyphs(inputData: { [key: string]: glyphData }): {
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
 
-    const glyphSVGlegend = generateGlyphVariation(glyphData, true, idx);
+    const glyphSVGlegend = generateGlyphVariation(glyphData, true, idx, true, diameter);
     // const glyphSVGstringlegend = serializer.serializeToString(glyphSVGlegend)
     // const svgBloblegend = new Blob([glyphSVGstringlegend], { type: 'image/svg+xml;charset=utf-8' })
     // const svgURLlegend = window.URL.createObjectURL(svgBloblegend)
@@ -220,7 +222,8 @@ export function generateGlyphVariation(
   glyphDat: glyphData,
   drawLabels: boolean,
   glyphIdx: number,
-  pathwayCompare = true
+  pathwayCompare = true,
+  diameter: number
 ): SVGElement {
   const mainStore = useMainStore();
 
@@ -232,7 +235,6 @@ export function generateGlyphVariation(
   const thirdCircle = 2 * (Math.PI / availableOmics);
   const thirdCircleElement = 1.8 * (Math.PI / availableOmics);
   const circlePadding = 0.1 * (Math.PI / availableOmics);
-  const diameter = 28;
   const layerWidth = diameter / 7;
   const width = diameter + (drawLabels ? 7 : 0);
   const height = diameter + (drawLabels ? 7 : 0);
