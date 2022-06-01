@@ -74,7 +74,10 @@ class PathwayHierarchy(dict):
 
     def set_layout_settings(self, settings):
         self.layout_settings = settings
-        
+
+    def get_pathway_String_info_dict(self):
+        return self.keggID, {'numEntries': len(self.entries), 'StringIds': self.prot_in_pathway_StringIds, 'brite_hier_superheadings': self.brite_hier_superheadings,'brite_hier_subcategories': self.brite_hier_subcategories ,'brite_hier_proteinIDs': self.brite_hier_proteinIDs}
+    
     def set_omics_recieved(self, omics_recieved):
         self.omics_recieved = omics_recieved
 

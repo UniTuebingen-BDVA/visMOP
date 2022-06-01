@@ -68,15 +68,15 @@ export default class overviewGraph {
     this.renderer = this.mainGraph(containerID, graphData);
     this.refreshCurrentPathway();
   }
-
-  /**
-   * Initializes the omics graph
+      
+  /**   
+   * Initializes the omics graph  
    * @param {string} elemID
    * @param {graphData} graphData
    * @returns {Sigma} Sigma instance
    */
   mainGraph(elemID: string, graphData: graphData): Sigma {
-    console.log(graphData);
+    console.log(graphData,'hhhhh');
     const mainStore = useMainStore();
 
     // select target div and initialize graph
@@ -226,7 +226,7 @@ export default class overviewGraph {
       return data;
     };
     // end example
-
+    console.log('asdasd')
     // construct Sigma main instance
     const renderer = new Sigma(
       graph,

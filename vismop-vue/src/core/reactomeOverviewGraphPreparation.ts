@@ -6,7 +6,7 @@ import {
   baseNodeAttr,
   baseEdgeAttr,
 } from '@/core/graphTypes';
-import { pfsPrime } from '@/core/noverlap_pfsp_module';
+import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 // import { vpsc } from '@/core/noverlap_vpsc'
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from './generalTypes';
@@ -36,6 +36,7 @@ export function generateGraphData(
   console.log('TESTEST', nodeList);
   let index = 0;
   let maxModuleNum = 0;
+  console.log('Änderungen!!!!!')
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey];
     const name = entry.pathwayName;
@@ -118,7 +119,7 @@ export function generateGraphData(
     index += 1;
   }
   graph.cluster_rects = moduleAreas;
-  graph.nodes = pfsPrime(graph.nodes, maxModuleNum, moduleAreas);
+  graph.nodes = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
   return graph;
 }
 

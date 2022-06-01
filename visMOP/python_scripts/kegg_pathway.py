@@ -152,8 +152,6 @@ class KeggPathway:
 
     def return_pathway_kegg_String_info_dict(self):
         return self.keggID, {'numEntries': len(self.entries), 'StringIds': self.prot_in_pathway_StringIds, 'brite_hier_superheadings': self.brite_hier_superheadings,'brite_hier_subcategories': self.brite_hier_subcategories ,'brite_hier_proteinIDs': self.brite_hier_proteinIDs}
-        #current_entries = [entry.keggID for entry in self.entries if not entry.is_empty]
-        
 
     def return_amounts(self):
         amounts = {"genes": self.amount_genes,

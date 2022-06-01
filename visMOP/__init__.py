@@ -85,9 +85,9 @@ def getModuleLayout(omics_recieved, up_down_reg_limits, data_col_used, statistic
     statistic_data_complete.columns = complete_stat_names
     module_layout = Module_layout(statistic_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots)
     module_node_pos = module_layout.get_final_node_positions()
-    module_areas = module_layout.get_module_areas()
+    module_areas, convex_hulls_points = module_layout.get_module_areas()
         
-    return module_node_pos, module_areas 
+    return module_node_pos, module_areas, convex_hulls_points 
 
 def get_layout_settings(settings, omics_recieved):
     possible_omic_attributes = ['Number of values', 'Mean expression above limit', '% values above limit',
@@ -449,7 +449,7 @@ def kegg_parsing():
     layout_setting_bools = get_layout_settings(layout_settings, omics_recieved)
     layout_limits = layout_setting_bools.layout_settings['limits']
     layout_attributes_used = layout_setting_bools.layout_settings['attributes']
-    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict)
+    module_node_pos, module_areas, convex_hulls_points = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict)
     pd.set_option("display.max_rows", None, "display.max_columns", None)
 
     pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
@@ -625,9 +625,7 @@ def reactome_parsing():
     # Aggregate Data in Hierarcy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
-    print('aaaaa')
     reactome_hierarchy.set_layout_settings(get_layout_settings(layout_settings, omics_recieved))
-    print('bbbbb')
     
     cache.set('reactome_hierarchy', reactome_hierarchy)
     dropdown_pathways = [] # TODO 
@@ -656,24 +654,32 @@ def reactome_overview():
     layout_limits = reactome_hierarchy.layout_settings['limits']
     layout_attributes_used = reactome_hierarchy.layout_settings['attributes']
     print(layout_limits, layout_attributes_used)
+
    
     out_data, pathway_dict, dropdown_data, root_ids, root_subpathways, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(layout_limits, False)
     
     pathway_connection_dict = get_overview_reactome(out_data)
+    # network_overview = generate_networkx_dict(pathway_connection_dict)
+    # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
+    # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
+    print('done')
+
     # print(pathway_connection_dict.keys())
-    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways)
+    module_node_pos, module_areas, convex_hulls_points = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways)
+
+    # a_file = open("modul_layout.pkl", "wb")
+    # pickle.dump(module_node_pos, a_file)
+    # a_file.close()
+    # a_file = open("module_areas.pkl", "wb") 
+    # pickle.dump(module_areas, a_file)
+    # a_file.close()
+
     # with open('modul_layout.pkl', "rb") as f:
     #     module_node_pos = pickle.load(f)
 
     # with open('module_areas.pkl', "rb") as f:
     #     module_areas = pickle.load(f)
 
-    # a_file = open("modul_layout.pkl", "wb")
-    # pickle.dump(module_node_pos, a_file)
-
-    # a_file = open("module_areas.pkl", "wb")
-    # pickle.dump(module_areas, a_file)
-    # a_file.close()
     print(root_ids)
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway['pathwayId']]
@@ -681,7 +687,7 @@ def reactome_overview():
         pathway["initialPosY"] = x_y_pos[1]
         pathway["moduleNum"] = x_y_pos[2]
     
-    return json.dumps({'overviewData': out_data, 'moduleAreas': module_areas, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
+    return json.dumps({'overviewData': out_data, 'moduleAreas': convex_hulls_points, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
 
 @app.route('/get_reactome_json_files/<pathway>', methods=['GET'])
