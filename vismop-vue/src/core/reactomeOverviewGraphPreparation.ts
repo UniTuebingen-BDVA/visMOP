@@ -119,7 +119,7 @@ export function generateGraphData(
     index += 1;
   }
   graph.cluster_rects = moduleAreas;
-  graph.nodes = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
+  // graph.nodes = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
   return graph;
 }
 

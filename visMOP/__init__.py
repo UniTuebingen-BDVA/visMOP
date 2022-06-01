@@ -665,7 +665,7 @@ def reactome_overview():
     print('done')
 
     # print(pathway_connection_dict.keys())
-    module_node_pos, module_areas, convex_hulls_points = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways)
+    # module_node_pos, module_areas, convex_hulls_points = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways)
 
     # a_file = open("modul_layout.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
@@ -674,11 +674,11 @@ def reactome_overview():
     # pickle.dump(module_areas, a_file)
     # a_file.close()
 
-    # with open('modul_layout.pkl', "rb") as f:
-    #     module_node_pos = pickle.load(f)
+    with open('modul_layout.pkl', "rb") as f:
+        module_node_pos = pickle.load(f)
 
-    # with open('module_areas.pkl', "rb") as f:
-    #     module_areas = pickle.load(f)
+    with open('module_areas.pkl', "rb") as f:
+        module_areas = pickle.load(f)
 
     print(root_ids)
     for pathway in out_data:
@@ -687,7 +687,7 @@ def reactome_overview():
         pathway["initialPosY"] = x_y_pos[1]
         pathway["moduleNum"] = x_y_pos[2]
     
-    return json.dumps({'overviewData': out_data, 'moduleAreas': convex_hulls_points, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
+    return json.dumps({'overviewData': out_data, 'moduleAreas': module_areas, "pathwayLayouting": {"pathwayList": dropdown_data, "pathwayNodeDictionary": pathway_dict, "rootIds": root_ids}})
 
 
 @app.route('/get_reactome_json_files/<pathway>', methods=['GET'])

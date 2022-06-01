@@ -39,37 +39,31 @@ export function pfsPrime_modules (
         // allNodes.splice(index, 1)
       }
     }
-
     let pfsPrime_moduleNodes = pfsPrime(moduleNodes)
-    // pfsPrime_moduleNodes = pfsPrime(pfsPrime_moduleNodes)
 
     normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum])
 
     updatedNodes = updatedNodes.concat(pfsPrime_moduleNodes)
   }
+ 
   return updatedNodes
 }
 
-
 function normInArea (nodes: node[], area: number[], padding = 1) {
-  const maxMinXY = setXY(nodes)
+  const maxMinXY = getMaxMinXY(nodes)
   area = [area[0] + padding, area[1]- padding, area[2]+ padding, area[3]- padding]
   // rand einbauen 
   _.forEach(nodes, n => {
-    n.attributes.x = area[0] + (((area[1] - area[0]) * (n.attributes.up.x - maxMinXY[0])) / (maxMinXY[1] - maxMinXY[0]))
-    n.attributes.y = area[2] + (((area[3] - area[2]) * (n.attributes.up.y - maxMinXY[2])) / (maxMinXY[3] - maxMinXY[2]))
+    n.attributes.x = area[0] + (((area[1] - area[0]) * (n.attributes.x - maxMinXY[0])) / (maxMinXY[1] - maxMinXY[0]))
+    n.attributes.y = area[2] + (((area[3] - area[2]) * (n.attributes.y - maxMinXY[2])) / (maxMinXY[3] - maxMinXY[2]))
     // delete n.up;
   })
 }
 
-function setXY (nodes: node[]) {
+function getMaxMinXY (nodes: node[]) {
   let maxMinXY = [Infinity, -Infinity, Infinity, -Infinity] as number[]
   _.forEach(nodes, n => {
-    n.attributes.up.x += n.attributes.size / (2 * redParam)
-    n.attributes.up.y += n.attributes.size / (2 * redParam)
-    // console.log('in')
-    maxMinXY = [Math.min(maxMinXY[0], n.attributes.up.x), Math.max(maxMinXY[1], n.attributes.up.x), Math.min(maxMinXY[2], n.attributes.up.y), Math.max(maxMinXY[3], n.attributes.up.y)]
-    // delete n.up;
+    maxMinXY = [Math.min(maxMinXY[0], n.attributes.x), Math.max(maxMinXY[1], n.attributes.x), Math.min(maxMinXY[2], n.attributes.y), Math.max(maxMinXY[3], n.attributes.y)]
   })
   return maxMinXY
 }

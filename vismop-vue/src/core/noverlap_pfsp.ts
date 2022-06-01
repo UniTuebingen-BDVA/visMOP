@@ -13,7 +13,7 @@
 import _ from 'lodash'
 import { node, CartesianVector } from '@/core/graphTypes'
 
-const redParam = 10
+
 /**
  * Executes the Push Force Scan' (PFS') algorithm on this graph
  *
@@ -26,6 +26,7 @@ export function pfsPrime (
   options: { padding: number } = { padding: 0 }
 ): node[] {
   // TODO: add padding
+  
   _.forEach(allNodes, n => {
     console.log('before', n.attributes.x, n.attributes.y)
   })
@@ -38,8 +39,8 @@ export function pfsPrime (
   verticalScan(allNodes)
 
   _.forEach(allNodes, n => {
-    n.attributes.x = n.attributes.up.x + n.attributes.size / (2 * redParam)
-    n.attributes.y = n.attributes.up.y + n.attributes.size / (2 * redParam)
+    n.attributes.x = n.attributes.up.x + n.attributes.size 
+    n.attributes.y = n.attributes.up.y + n.attributes.size 
     console.log('after', n.attributes.x, n.attributes.y)
   })
  
@@ -85,7 +86,7 @@ export function minXY (node: node | node[], xy: string): any {
   }
   const coord = xy === 'x' ? node.attributes.x : node.attributes.y
 
-  return coord - node.attributes.size / (2 * redParam)
+  return coord - node.attributes.size 
 }
 
 /** biggest x belonging to the node list (the rigth border of the label box)
@@ -100,7 +101,7 @@ export function maxXY (node: node | node[], xy: string): any {
 
   const coord = xy === 'x' ? node.attributes.x : node.attributes.y
 
-  return coord - node.attributes.size / (2 * redParam)
+  return coord - node.attributes.size 
 }
 
 /**
@@ -257,17 +258,15 @@ function force (vi: node, vj: node): CartesianVector {
 
   const gij = deltay / deltax
   // console.log('gij',gij)
-  // const Gij = (vi.attributes.size + vj.attributes.size) / (vi.attributes.size + vj.attributes.size)
+  const Gij = (vi.attributes.size + vj.attributes.size) / (vi.attributes.size + vj.attributes.size)
 
-  if ((1 >= gij && gij > 0) || (-1 <= gij && gij < 0) || gij === 0) {
-    f.x = (deltax / adeltax) * ((vi.attributes.size + vj.attributes.size) / 2 - adeltax)
+  if ((Gij >= gij && gij > 0) || (-Gij <= gij && gij < 0) || gij === 0) {
+    f.x = (deltax / adeltax) * ((vi.attributes.size + vj.attributes.size) - adeltax)
     f.y = f.x * gij
-    // console.log(f, (vi.attributes.size + vj.attributes.size) / (2 * redParam)- adeltax)
   }
-  if ((1 < gij && gij > 0) || (-1 > gij && gij < 0)) {
-    f.y = (deltay / adeltay) * ((vi.attributes.size + vj.attributes.size) / 2 - adeltay)
+  if ((Gij < gij && gij > 0) || (-Gij > gij && gij < 0)) {
+    f.y = (deltay / adeltay) * ((vi.attributes.size + vj.attributes.size)  - adeltay)
     f.x = f.y / gij
-    // console.log(f, (vi.attributes.size + vj.attributes.size) / (2 * redParam)- adeltay)
   }
   // console.log('force', f)
   return f
