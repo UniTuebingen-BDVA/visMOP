@@ -11,6 +11,9 @@ import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from './generalTypes';
+import { PlainObject } from 'sigma/types';
+import { animateNodes } from 'sigma/utils/animate';
+import { zoom } from 'd3';
 
 export default class overviewGraph {
   private currentPathway = '';
@@ -18,6 +21,9 @@ export default class overviewGraph {
   private pathwaysContainingUnion: string[] = [];
   private renderer;
   private camera;
+  private prevFrameZoom;
+  private lodRatio = 2.0
+  private cancelCurrentAnimation: (() => void) | null = null;
   private filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   private filterFuncProt: (x: number) => boolean = (_x: number) => true;
   private filterFuncMeta: (x: number) => boolean = (_x: number) => true;
@@ -70,8 +76,8 @@ export default class overviewGraph {
   constructor(containerID: string, graphData: graphData) {
     this.renderer = this.mainGraph(containerID, graphData);
     this.camera = this.renderer.getCamera();
+    this.prevFrameZoom = this.camera.ratio
     this.refreshCurrentPathway();
-
   }
 
   /**
@@ -105,7 +111,7 @@ export default class overviewGraph {
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: string, data: Attributes) => {
       // handle filter
-      let hidden = false;
+      let hidden = data.hidden;
       let condition = false;
       let xDisplay: number | undefined = -100;
       let yDisplay: number | undefined = -100;
@@ -125,6 +131,7 @@ export default class overviewGraph {
       }
 
       let lodImage = condition ? data.imageHighRes : data.imageLowRes;
+
       if (
         this.averageFilter.metabolomics.filterActive ||
         this.averageFilter.proteomics.filterActive ||
@@ -290,7 +297,10 @@ export default class overviewGraph {
     console.log(`layoutDuration: ${duration} S`);
     // const layout = new FA2Layout(graph, {settings: sensibleSettings });
     // layout.start();
-
+    graph.forEachNode((node, attributes) => {
+      attributes.layoutX =  attributes.x
+      attributes.layoutY =  attributes.y
+    })
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
@@ -302,6 +312,39 @@ export default class overviewGraph {
 
       renderer.refresh();
     });
+
+    renderer.on('beforeRender',() => {
+      //console.log("zoomBehaivour Last/Now: ", this.prevFrameZoom, this.camera.ratio)
+      if(this.prevFrameZoom > this.lodRatio && this.camera.ratio < this.lodRatio){
+        if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
+        const tarPositions: PlainObject<PlainObject<number>> = {};
+        graph.forEachNode((node, attributes) => {
+          tarPositions[node] = {
+            x: attributes.layoutX,
+            y: attributes.layoutY,
+          }
+        })
+        this.cancelCurrentAnimation = animateNodes(graph, tarPositions, {duration: 2000}, (() => {}))
+        graph.forEachNode((node, attributes) => {
+          attributes.hidden = false
+        })
+      }
+      if(this.prevFrameZoom < this.lodRatio && this.camera.ratio > this.lodRatio){
+        if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
+        const tarPositions: PlainObject<PlainObject<number>> = {};
+        graph.forEachNode((node, attributes) => {
+          tarPositions[node] = {
+            x: graph.getNodeAttribute(attributes.rootId, 'layoutX'),
+            y: graph.getNodeAttribute(attributes.rootId, 'layoutY')
+          }
+        })
+        this.cancelCurrentAnimation = animateNodes(graph, tarPositions, {duration: 2000}, (() => {graph.forEachNode((node, attributes) => {
+          if (!attributes.isRoot) attributes.hidden = true
+        })}))
+        
+      }
+      this.prevFrameZoom = this.camera.ratio
+    })
 
     renderer.on('leaveNode', ({ node }) => {
       console.log('Leaving:', node);
