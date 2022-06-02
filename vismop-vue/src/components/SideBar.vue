@@ -58,7 +58,7 @@
 
             <q-select
               v-model="transcriptomicsSymbolCol"
-              :options="transcriptomicsTableHeaders"
+              :options="transcriptomicsDropdownHeaders"
               option-label="label"
               option-value="name"
               label="Genesymbol Col."
@@ -68,7 +68,7 @@
 
             <q-select
               v-model="transcriptomicsValueCol"
-              :options="transcriptomicsTableHeaders"
+              :options="transcriptomicsDropdownHeaders"
               option-label="label"
               option-value="name"
               label="Value Col."
@@ -133,7 +133,7 @@
 
             <q-select
               v-model="proteomicsSymbolCol"
-              :options="proteomicsTableHeaders"
+              :options="proteomicsDropdownHeaders"
               label="Symbol Col."
               option-label="label"
               option-value="name"
@@ -143,7 +143,7 @@
 
             <q-select
               v-model="proteomicsValueCol"
-              :options="proteomicsTableHeaders"
+              :options="proteomicsDropdownHeaders"
               option-label="label"
               option-value="name"
               label="Value Col."
@@ -208,7 +208,7 @@
 
             <q-select
               v-model="metabolomicsSymbolCol"
-              :options="metabolomicsTableHeaders"
+              :options="metabolomicsDropdownHeaders"
               option-label="label"
               option-value="name"
               label="Symbol Col."
@@ -218,7 +218,7 @@
 
             <q-select
               v-model="metabolomicsValueCol"
-              :options="metabolomicsTableHeaders"
+              :options="metabolomicsDropdownHeaders"
               option-label="label"
               option-value="name"
               label="Value Col."
@@ -344,10 +344,40 @@ const sheetRules = ref([
 const transcriptomicsTableHeaders = computed(
   () => mainStore.transcriptomicsTableHeaders
 );
+const transcriptomicsDropdownHeaders = computed(() => {
+  return transcriptomicsTableHeaders.value.filter(
+    (elem) =>
+      ![
+        '_reserved_sort_id',
+        '_reserved_inSelected',
+        '_reserved_available',
+      ].includes(elem.name)
+  );
+});
 const proteomicsTableHeaders = computed(() => mainStore.proteomicsTableHeaders);
+const proteomicsDropdownHeaders = computed(() => {
+  return proteomicsTableHeaders.value.filter(
+    (elem) =>
+      ![
+        '_reserved_sort_id',
+        '_reserved_inSelected',
+        '_reserved_available',
+      ].includes(elem.name)
+  );
+});
 const metabolomicsTableHeaders = computed(
   () => mainStore.metabolomicsTableHeaders
 );
+const metabolomicsDropdownHeaders = computed(() => {
+  return metabolomicsTableHeaders.value.filter(
+    (elem) =>
+      ![
+        '_reserved_sort_id',
+        '_reserved_inSelected',
+        '_reserved_available',
+      ].includes(elem.name)
+  );
+});
 const transcriptomicsTableData = computed(
   () => mainStore.transcriptomicsTableData
 );

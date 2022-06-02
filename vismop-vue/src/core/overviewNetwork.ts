@@ -406,11 +406,7 @@ export default class overviewGraph {
   }
 
   zoomLod() {
-    console.log(
-      'zoomBehaivour Last/Now: ',
-      this.prevFrameZoom,
-      this.camera.ratio
-    );
+    //console.log( 'zoomBehaivour Last/Now: ',this.prevFrameZoom, this.camera.ratio);
     if (
       this.prevFrameZoom > this.lodRatio &&
       this.camera.ratio < this.lodRatio

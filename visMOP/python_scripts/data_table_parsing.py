@@ -16,8 +16,8 @@ def create_df(file_type, sheet_no):
     read_table = read_table.drop(read_table.index[0])
     read_table = read_table.fillna(value="None")
     read_table["_reserved_sort_id"] = read_table.index
-    read_table["available"] = "No"
-    read_table["inSelected"] = "No"
+    read_table["_reserved_available"] = "No"
+    read_table["_reserved_inSelected"] = "No"
     return read_table
 
 
@@ -30,10 +30,11 @@ def generate_vue_table_header(df):
     """
     header = df.columns
     vue_headers = []
-
     for entry in header:
         vue_header = {}
-        vue_header["label"] = entry
+        vue_header["label"] = (
+            "In Selected?" if (entry == "_reserved_inSelected") else entry
+        )
         vue_header["name"] = entry
         vue_header["field"] = entry
         vue_header["align"] = "none" if (entry == "inSelected") else "left"
