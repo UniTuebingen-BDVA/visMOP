@@ -13,6 +13,7 @@ import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from './generalTypes';
 import { PlainObject } from 'sigma/types';
 import { animateNodes } from 'sigma/utils/animate';
+import { Object } from 'lodash';
 
 export default class overviewGraph {
   private currentPathway = '';
@@ -24,6 +25,7 @@ export default class overviewGraph {
   private graph;
   private lodRatio = 2.0;
   private cancelCurrentAnimation: (() => void) | null = null;
+  private filtersChanged = false;
   private filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   private filterFuncProt: (x: number) => boolean = (_x: number) => true;
   private filterFuncMeta: (x: number) => boolean = (_x: number) => true;
@@ -111,7 +113,7 @@ export default class overviewGraph {
     // node reducers change and return nodes based on an accessor function
     const nodeReducer = (node: string, data: Attributes) => {
       // handle filter
-      let hidden = data.hidden;
+      const hidden = data.hidden;
       let condition = false;
       let xDisplay: number | undefined = -100;
       let yDisplay: number | undefined = -100;
@@ -135,24 +137,6 @@ export default class overviewGraph {
       }
 
       const lodImage = condition ? data.imageHighRes : data.imageLowRes;
-
-      if (
-        this.averageFilter.metabolomics.filterActive ||
-        this.averageFilter.proteomics.filterActive ||
-        this.averageFilter.transcriptomics.filterActive
-      ) {
-        if (data.isRoot) {
-          hidden = false;
-        } else if (
-          this.filterFuncTrans(data.averageTranscriptomics) &&
-          this.filterFuncProt(data.averageProteomics) &&
-          this.filterFuncMeta(data.averageMetabolonmics)
-        ) {
-          hidden = false;
-        } else {
-          hidden = true;
-        }
-      }
 
       const nodeSize =
         highlighedNodesHover.has(node) ||
@@ -322,6 +306,7 @@ export default class overviewGraph {
 
     renderer.on('beforeRender', () => {
       this.zoomLod();
+      this.filterElements();
     });
 
     renderer.on('leaveNode', ({ node }) => {
@@ -403,6 +388,58 @@ export default class overviewGraph {
       easing: 'linear',
       duration: 1000,
     });
+  }
+
+  filterFunction(attributes: Record<string, number>) {
+    if (attributes.isRoot) {
+      return false;
+    } else if (
+      this.filterFuncTrans(attributes.averageTranscriptomics) &&
+      this.filterFuncProt(attributes.averageProteomics) &&
+      this.filterFuncMeta(attributes.averageMetabolonmics)
+    ) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  filterElements() {
+    if (this.filtersChanged) {
+      this.filtersChanged = false;
+      const tarPositions: PlainObject<PlainObject<number>> = {};
+      this.graph.forEachNode((node, attributes) => {
+        if (!this.filterFunction(attributes)) attributes.hidden = false;
+      });
+      this.graph.forEachNode((node, attributes) => {
+        if (this.filterFunction(attributes)) {
+          tarPositions[node] = {
+            x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
+            y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
+          };
+        } else {
+          tarPositions[node] = {
+            x: attributes.layoutX,
+            y: attributes.layoutY,
+          };
+        }
+      });
+      this.cancelCurrentAnimation = animateNodes(
+        this.graph,
+        tarPositions,
+        {
+          duration: 2000,
+          easing: 'quadraticOut',
+        },
+        () => {
+          this.graph.forEachNode((node, attributes) => {
+            this.filterFunction(attributes)
+              ? (attributes.hidden = true)
+              : (attributes.hidden = false);
+          });
+        }
+      );
+    }
   }
 
   zoomLod() {
@@ -534,7 +571,7 @@ export default class overviewGraph {
             );
           }
       : (_x: number) => true;
-
+    this.filtersChanged = true;
     this.renderer.refresh();
   }
 }

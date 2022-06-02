@@ -16,7 +16,7 @@
         </div>
         <div class="col-8">
           <q-range
-            v-model="transcriptomicsFilter.value"
+            :model-value="transcriptomicsFilter.value"
             thumb-label
             :min="transcriptomicsFilter.limits.min"
             :max="transcriptomicsFilter.limits.max"
@@ -29,6 +29,11 @@
               transcriptomicsFilter.inside ? 'graphFilterSlider' : 'primary'
             "
             :disable="transcriptomicsFilter.disable"
+            @change="
+              (val) => {
+                transcriptomicsFilter.value = val;
+              }
+            "
           >
           </q-range>
         </div>
@@ -58,7 +63,7 @@
         </div>
         <div class="col-8">
           <q-range
-            v-model="proteomicsFilter.value"
+            :model-value="proteomicsFilter.value"
             thumb-label
             :min="proteomicsFilter.limits.min"
             :max="proteomicsFilter.limits.max"
@@ -69,6 +74,11 @@
               proteomicsFilter.inside ? 'graphFilterSlider' : 'primary'
             "
             :disable="proteomicsFilter.disable"
+            @change="
+              (val) => {
+                proteomicsFilter.value = val;
+              }
+            "
           >
           </q-range>
         </div>
@@ -98,7 +108,7 @@
         </div>
         <div class="col-8">
           <q-range
-            v-model="metabolomicsFilter.value"
+            :model-value="metabolomicsFilter.value"
             thumb-label
             :min="metabolomicsFilter.limits.min"
             :max="metabolomicsFilter.limits.max"
@@ -109,6 +119,11 @@
               metabolomicsFilter.inside ? 'graphFilterSlider' : 'primary'
             "
             :disable="metabolomicsFilter.disable"
+            @change="
+              (val) => {
+                metabolomicsFilter.value = val;
+              }
+            "
           >
           </q-range>
         </div>
