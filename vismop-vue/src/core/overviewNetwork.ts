@@ -13,7 +13,6 @@ import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from './generalTypes';
 import { PlainObject } from 'sigma/types';
 import { animateNodes } from 'sigma/utils/animate';
-import { zoom } from 'd3';
 
 export default class overviewGraph {
   private currentPathway = '';
@@ -22,7 +21,8 @@ export default class overviewGraph {
   private renderer;
   private camera;
   private prevFrameZoom;
-  private lodRatio = 2.0
+  private graph;
+  private lodRatio = 2.0;
   private cancelCurrentAnimation: (() => void) | null = null;
   private filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   private filterFuncProt: (x: number) => boolean = (_x: number) => true;
@@ -74,9 +74,10 @@ export default class overviewGraph {
   };
 
   constructor(containerID: string, graphData: graphData) {
-    this.renderer = this.mainGraph(containerID, graphData);
+    this.graph = UndirectedGraph.from(graphData);
+    this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
-    this.prevFrameZoom = this.camera.ratio
+    this.prevFrameZoom = this.camera.ratio;
     this.refreshCurrentPathway();
   }
 
@@ -86,16 +87,15 @@ export default class overviewGraph {
    * @param {graphData} graphData
    * @returns {Sigma} Sigma instance
    */
-  mainGraph(elemID: string, graphData: graphData): Sigma {
-    console.log(graphData);
+  mainGraph(elemID: string): Sigma {
     const mainStore = useMainStore();
 
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
-    const graph = UndirectedGraph.from(graphData);
+
     // console.log('NODES', graph.nodes())
 
-    const inferredSettings = forceAtlas2.inferSettings(graph);
+    const inferredSettings = forceAtlas2.inferSettings(this.graph);
 
     let shortestPathClick: string[] = [];
     let shortestPathNodes: string[] = [];
@@ -115,22 +115,26 @@ export default class overviewGraph {
       let condition = false;
       let xDisplay: number | undefined = -100;
       let yDisplay: number | undefined = -100;
-      if (this.renderer){
-        let currentView = this.renderer.viewRectangle()
-        xDisplay = this.renderer.getNodeDisplayData(node)?.x
-        yDisplay = this.renderer.getNodeDisplayData(node)?.y
-        
-        if (!xDisplay) { xDisplay = -100}
-        if (!yDisplay) { yDisplay = -100}
+      if (this.renderer) {
+        const currentView = this.renderer.viewRectangle();
+        xDisplay = this.renderer.getNodeDisplayData(node)?.x;
+        yDisplay = this.renderer.getNodeDisplayData(node)?.y;
+
+        if (!xDisplay) {
+          xDisplay = -100;
+        }
+        if (!yDisplay) {
+          yDisplay = -100;
+        }
         condition =
-        (this.renderer.getCamera().ratio < 0.4) &&
-        (xDisplay >= currentView.x1) &&
-        (xDisplay <= currentView.x2) &&
-        (yDisplay >= currentView.y1 - currentView.height) &&
-        (yDisplay <= currentView.y2);
+          this.renderer.getCamera().ratio < 0.4 &&
+          xDisplay >= currentView.x1 &&
+          xDisplay <= currentView.x2 &&
+          yDisplay >= currentView.y1 - currentView.height &&
+          yDisplay <= currentView.y2;
       }
 
-      let lodImage = condition ? data.imageHighRes : data.imageLowRes;
+      const lodImage = condition ? data.imageHighRes : data.imageLowRes;
 
       if (
         this.averageFilter.metabolomics.filterActive ||
@@ -270,7 +274,7 @@ export default class overviewGraph {
     // end example
 
     // construct Sigma main instance
-    const renderer = new Sigma(graph, elem, {
+    const renderer = new Sigma(this.graph, elem, {
       nodeReducer: nodeReducer,
       edgeReducer: edgeReducer,
       zIndex: true, // enabling zIndex parameter
@@ -291,60 +295,34 @@ export default class overviewGraph {
 
     // To directly assign the positions to the nodes:
     const start = Date.now();
-    forceAtlas2.assign(graph, { iterations: 500, settings: inferredSettings });
-    noverlap.assign(graph);
+    forceAtlas2.assign(this.graph, {
+      iterations: 500,
+      settings: inferredSettings,
+    });
+    noverlap.assign(this.graph);
     const duration = (Date.now() - start) / 1000;
     console.log(`layoutDuration: ${duration} S`);
     // const layout = new FA2Layout(graph, {settings: sensibleSettings });
     // layout.start();
-    graph.forEachNode((node, attributes) => {
-      attributes.layoutX =  attributes.x
-      attributes.layoutY =  attributes.y
-    })
+    this.graph.forEachNode((node, attributes) => {
+      attributes.layoutX = attributes.x;
+      attributes.layoutY = attributes.y;
+    });
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
-      highlighedNodesHover = new Set(graph.neighbors(node));
+      highlighedNodesHover = new Set(this.graph.neighbors(node));
       highlighedNodesHover.add(node);
       highlightedCenterHover = node;
 
-      highlighedEdgesHover = new Set(graph.edges(node));
+      highlighedEdgesHover = new Set(this.graph.edges(node));
 
       renderer.refresh();
     });
 
-    renderer.on('beforeRender',() => {
-      //console.log("zoomBehaivour Last/Now: ", this.prevFrameZoom, this.camera.ratio)
-      if(this.prevFrameZoom > this.lodRatio && this.camera.ratio < this.lodRatio){
-        if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
-        const tarPositions: PlainObject<PlainObject<number>> = {};
-        graph.forEachNode((node, attributes) => {
-          tarPositions[node] = {
-            x: attributes.layoutX,
-            y: attributes.layoutY,
-          }
-        })
-        this.cancelCurrentAnimation = animateNodes(graph, tarPositions, {duration: 2000}, (() => {}))
-        graph.forEachNode((node, attributes) => {
-          attributes.hidden = false
-        })
-      }
-      if(this.prevFrameZoom < this.lodRatio && this.camera.ratio > this.lodRatio){
-        if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
-        const tarPositions: PlainObject<PlainObject<number>> = {};
-        graph.forEachNode((node, attributes) => {
-          tarPositions[node] = {
-            x: graph.getNodeAttribute(attributes.rootId, 'layoutX'),
-            y: graph.getNodeAttribute(attributes.rootId, 'layoutY')
-          }
-        })
-        this.cancelCurrentAnimation = animateNodes(graph, tarPositions, {duration: 2000}, (() => {graph.forEachNode((node, attributes) => {
-          if (!attributes.isRoot) attributes.hidden = true
-        })}))
-        
-      }
-      this.prevFrameZoom = this.camera.ratio
-    })
+    renderer.on('beforeRender', () => {
+      this.zoomLod();
+    });
 
     renderer.on('leaveNode', ({ node }) => {
       console.log('Leaving:', node);
@@ -365,13 +343,13 @@ export default class overviewGraph {
         shortestPathClick.push(node);
         if (shortestPathClick.length === 2) {
           shortestPathNodes = bidirectional(
-            graph,
+            this.graph,
             shortestPathClick[0],
             shortestPathClick[1]
           ) as string[];
           if (shortestPathNodes?.length > 0) {
             shortestPathEdges = edgePathFromNodePath(
-              graph,
+              this.graph,
               shortestPathNodes as string[]
             );
             console.log('shortest Path edges', shortestPathEdges);
@@ -386,8 +364,8 @@ export default class overviewGraph {
         shortestPathEdges = [];
         highlighedEdgesClick.clear();
         highlighedNodesClick.clear();
-        highlighedNodesClick = new Set(graph.neighbors(node));
-        highlighedEdgesClick = new Set(graph.edges(node));
+        highlighedNodesClick = new Set(this.graph.neighbors(node));
+        highlighedEdgesClick = new Set(this.graph.edges(node));
         mainStore.focusPathwayViaOverview(node);
       }
     });
@@ -425,6 +403,61 @@ export default class overviewGraph {
       easing: 'linear',
       duration: 1000,
     });
+  }
+
+  zoomLod() {
+    console.log(
+      'zoomBehaivour Last/Now: ',
+      this.prevFrameZoom,
+      this.camera.ratio
+    );
+    if (
+      this.prevFrameZoom > this.lodRatio &&
+      this.camera.ratio < this.lodRatio
+    ) {
+      if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
+      const tarPositions: PlainObject<PlainObject<number>> = {};
+      this.graph.forEachNode((node, attributes) => {
+        tarPositions[node] = {
+          x: attributes.layoutX,
+          y: attributes.layoutY,
+        };
+      });
+      this.cancelCurrentAnimation = animateNodes(this.graph, tarPositions, {
+        duration: 2000,
+        easing: 'quadraticOut',
+      });
+      this.graph.forEachNode((node, attributes) => {
+        attributes.hidden = false;
+      });
+    }
+    if (
+      this.prevFrameZoom < this.lodRatio &&
+      this.camera.ratio > this.lodRatio
+    ) {
+      if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
+      const tarPositions: PlainObject<PlainObject<number>> = {};
+      this.graph.forEachNode((node, attributes) => {
+        tarPositions[node] = {
+          x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
+          y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
+        };
+      });
+      this.cancelCurrentAnimation = animateNodes(
+        this.graph,
+        tarPositions,
+        {
+          duration: 2000,
+          easing: 'quadraticOut',
+        },
+        () => {
+          this.graph.forEachNode((node, attributes) => {
+            if (!attributes.isRoot) attributes.hidden = true;
+          });
+        }
+      );
+    }
+    this.prevFrameZoom = this.camera.ratio;
   }
 
   public resetZoom() {
