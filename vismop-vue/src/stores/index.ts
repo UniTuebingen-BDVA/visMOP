@@ -267,6 +267,29 @@ export const useMainStore = defineStore('mainStore', {
     setOverviewData(val: { [key: string]: entry }) {
       this.overviewData = val;
     },
+
+    setOmicsTableHeaders(payload: ColType[], omicsType: string) {
+      if (omicsType == 'Transcriptomics') {
+        this.transcriptomicsTableHeaders = payload;
+      } else if (omicsType == 'Proteomics') {
+        this.proteomicsTableHeaders = payload;
+      } else if (omicsType == 'Metabolomics') {
+        this.metabolomicsTableHeaders = payload;
+      }
+    },
+
+    setOmicsTableData(
+      payload: { [x: string]: string | number }[],
+      omicsType: string
+    ) {
+      if (omicsType == 'Transcriptomics') {
+        this.transcriptomicsTableData = payload;
+      } else if (omicsType == 'Proteomics') {
+        this.proteomicsTableData = payload;
+      } else if (omicsType == 'Metabolomics') {
+        this.metabolomicsTableData = payload;
+      }
+    },
     setTranscriptomicsTableHeaders(val: ColType[]) {
       this.transcriptomicsTableHeaders = val;
     },

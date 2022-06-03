@@ -89,7 +89,7 @@ transcriptomics table recieve
 """
 
 
-@app.route("/transcriptomics_table", methods=["POST"])
+@app.route("/Transcriptomics_table", methods=["POST"])
 def transcriptomics_table_recieve():
     print("table recieve triggered")
 
@@ -118,7 +118,7 @@ protein recieve
 """
 
 
-@app.route("/proteomics_table", methods=["POST"])
+@app.route("/Proteomics_table", methods=["POST"])
 def prot_table_recieve():
 
     # aquire table data-blob
@@ -143,7 +143,7 @@ metabolomics table recieve
 """
 
 
-@app.route("/metabolomics_table", methods=["POST"])
+@app.route("/Metabolomics_table", methods=["POST"])
 def metabolomics_table_recieve():
     print("table recieve triggered")
 
