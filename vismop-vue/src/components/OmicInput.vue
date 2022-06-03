@@ -71,7 +71,7 @@
 
 <script setup lang="ts">
 import { useMainStore } from '@/stores';
-import { computed, ref, defineProps, defineEmits } from 'vue';
+import { computed, ref, defineProps, watch, defineEmits } from 'vue';
 import type { Ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { ColType } from '@/core/generalTypes';
@@ -184,6 +184,10 @@ const slider = computed(() => {
   });
   console.log('outobj', outObj);
   return outObj;
+});
+
+watch(sheetVal, () => {
+  fetchOmicsTable(omicsFile.value);
 });
 
 const fetchOmicsTable = (fileInput: File | null) => {
