@@ -27,9 +27,6 @@ export function pfsPrime (
 ): node[] {
   // TODO: add padding
   
-  _.forEach(allNodes, n => {
-    console.log('before', n.attributes.x, n.attributes.y)
-  })
   horizontalScan(allNodes)
 
   _.forEach(allNodes, n => {
@@ -41,7 +38,6 @@ export function pfsPrime (
   _.forEach(allNodes, n => {
     n.attributes.x = n.attributes.up.x + n.attributes.size 
     n.attributes.y = n.attributes.up.y + n.attributes.size 
-    console.log('after', n.attributes.x, n.attributes.y)
   })
  
   return allNodes

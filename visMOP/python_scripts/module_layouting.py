@@ -3,7 +3,6 @@ import numpy as np
 import math
 import networkx as nx
 import scipy.stats as stats
-from scipy.spatial import ConvexHull, convex_hull_plot_2d
 import time
 import matplotlib.pyplot as plt
 
@@ -16,13 +15,13 @@ from sklearn.cluster import KMeans, DBSCAN, OPTICS
 from yellowbrick.utils import KneeLocator
 from collections import Counter
 from itertools import combinations
-from scipy.spatial import distance
+from scipy.spatial import distance, distance_matrix
 from random import randint
 from copy import deepcopy
 from scipy.signal import argrelextrema
 
 
-from visMOP.python_scripts.forceDir_layouting import get_pos_in_force_dir_layout
+from visMOP.python_scripts.forceDir_layouting import get_adjusted_force_dir_node_pos, get_pos_in_force_dir_layout
 from visMOP.python_scripts.kegg_parsing import generate_networkx_dict
 
 
@@ -33,12 +32,11 @@ def most_frequent(List):
 
 class Module_layout:
 
-    def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots, drm='umap', node_size = 2):
+    def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots, pathways_root_names, drm='umap', node_size = 2):
         self.half_node_size = node_size / 2 
         startTime = time.time()
         self.kmeans = KMeans(n_clusters=5, random_state=0)
         self.module_nodes_num = []
-        self.convex_hulls = []
         print("Calculating module layout...")
         networkx_dict = generate_networkx_dict(graph_dict)
         self.full_graph = nx.Graph(networkx_dict)
@@ -65,7 +63,7 @@ class Module_layout:
             print("Module Positions identified")
             self.modules_area, area_num_node_ratio_ok = self.getSizeOfModulesRegion()
             print("Module sizes identified")
-        self.final_node_pos = self.getNodePositions(reactome_roots)
+        self.final_node_pos = self.getNodePositions(pathways_root_names)
         print("final node positions identified")
         endTime = time.time()
         self.get_stats()
@@ -161,6 +159,46 @@ class Module_layout:
             pos_dic, [0, 1, 0, 1])
         return norm_vals_dict
 
+    def determine_optimal_eps(self, dist_mat) -> float:
+        """
+        Determines optimal epsilon via method of Rahma<https://iopscience.iop.org/article/10.1088/1755-1315/31/1/012012/pdf>
+
+        :param dist_mat: distance matrix
+        :return: optimal eps
+        """
+
+        # Calculate nearest neighbors of segments with distance matrix
+        nn = NearestNeighbors(n_neighbors=3).fit(dist_mat)
+
+        # Get results and sort them
+        dist, ind = nn.kneighbors(dist_mat)
+        dist = np.sort(dist, axis=0)
+        dist = dist[:, 1]
+
+        # Determine point of maximal curvature
+        # If data is too small smoothing with a rolling window approach is necessary
+        if len(dist_mat) < 100:
+            win_size = 3
+            y = pd.DataFrame(np.arange(0, len(dist), 1)).rolling(win_size, center=True).mean()
+            new_dist = pd.DataFrame(dist).rolling(win_size, center=True).mean()
+            x_t = pd.DataFrame(np.gradient(new_dist, axis=0)).rolling(win_size, center=True).mean()
+            y_t = pd.DataFrame(np.gradient(y, axis=0)).rolling(win_size, center=True).mean()
+            x_t2 = pd.DataFrame(np.gradient(x_t, axis=0)).rolling(win_size, center=True).mean()
+            y_t2 = pd.DataFrame(np.gradient(y_t, axis=0)).rolling(win_size, center=True).mean()
+        else:
+            y = pd.DataFrame(np.arange(0, len(dist), 1))
+            new_dist = pd.DataFrame(dist)
+            x_t = pd.DataFrame(np.gradient(new_dist, axis=0))
+            y_t = pd.DataFrame(np.gradient(y, axis=0))
+            x_t2 = pd.DataFrame(np.gradient(x_t, axis=0))
+            y_t2 = pd.DataFrame(np.gradient(y_t, axis=0))
+
+        # Determine eps by getting y value of point of maximal curvature
+        curvature = np.abs(x_t * y_t2 - x_t2 * y_t) / (x_t * x_t + y_t * y_t) ** 1.5
+        curv_max = np.argmax(curvature.fillna(0))
+        eps = dist[curv_max]
+
+        return eps
     '''
     get clusteres
     sort nodes, so that nodes in same Clusteres are together
@@ -170,41 +208,44 @@ class Module_layout:
         # find best epsilon an d min_samples:
         # https://medium.com/@tarammullin/dbscan-parameter-estimation-ff8330e3a3bd
         min_samples = 2 * len(self.data_table.columns)
-        print(min_samples)
-        # neighbors = NearestNeighbors(n_neighbors=min_samples)
-        # neighbors_fit = neighbors.fit(self.data_table_scaled_filled)
-        # distances, _ = neighbors_fit.kneighbors(self.data_table_scaled_filled)
-        # min_distances = [dist_array[3] for dist_array in distances]
-        # sorted_dists = np.sort(min_distances)
-        # distances = np.sort(distances, axis=0)
-        # sorted_dists = distances[:,15]
-        # slopes = np.array([y2 - y1 for y1, y2 in zip(sorted_dists, sorted_dists[1:])])
-        # local_maxima = argrelextrema(slopes, np.greater)
+        
+        neighbors = NearestNeighbors(n_neighbors=3)
+        neighbors_fit = neighbors.fit(self.data_table_scaled_filled)
+        distances, _ = neighbors_fit.kneighbors(self.data_table_scaled_filled)
+        print(distances)
+        min_distances = [dist_array for dist_array in distances]
+        sorted_dists = np.sort(min_distances)
+        distances = np.sort(distances, axis=0)
+        sorted_dists = distances
+        slopes = np.array([y2 - y1 for y1, y2 in zip(sorted_dists, sorted_dists[1:])])
+        local_maxima = argrelextrema(slopes, np.greater)
         # print(local_maxima)
-        # maxima_pos = local_maxima[len(local_maxima)-2]
-        # print(maxima_pos)
+        maxima_pos = local_maxima[len(local_maxima)-2]
+        # print('maxima_pos', maxima_pos)
         # plt.plot(list(range(len(sorted_dists)-1))[-100:], slopes[-100:], color='black')
         # plt.savefig('distances_Ableitung.jpg')
         # plt.plot(list(range(len(sorted_dists))), sorted_dists, color='blue')
         # plt.savefig('distances.jpg')
 
-        # pos_of_max_curvation = np.argmax(slopes)
-        # eps = np.max(slopes)
+        pos_of_max_curvation = np.argmax(slopes)
+        eps = np.max(slopes)
+        print('my eps', eps, pos_of_max_curvation)
+        e_eps = self.determine_optimal_eps(self.data_table_scaled_filled)
+        print('e_eps', e_eps)
         # new_eps = sorted_dists[332]
         # print(new_eps)
         # print(pos_of_max_curvation, sorted_dists[pos_of_max_curvation], eps)
-        # dbscan = DBSCAN(n_jobs=-1, min_samples=min_samples, eps=new_eps)
+        dbscan = DBSCAN(n_jobs=-1, min_samples=min_samples, eps=e_eps)
 
-        # dbscan_fit = dbscan.fit(self.data_table_scaled_filled)
-        kmeans_fit = self.kmeans.fit_predict(
-            self.data_table_scaled_filled)
-        # print(list(set(dbscan_fit.labels_)))
-        # print(sorted(
-        #     zip(dbscan_fit.labels_, self.data_table.index)))
+        dbscan_fit = dbscan.fit(self.data_table_scaled_filled)
+        # kmeans_fit = self.kmeans.fit_predict(
+        #    self.data_table_scaled_filled)
         # optics = OPTICS(min_samples=min_samples, n_jobs=-1)
         # optics_fit = optics.fit(self.data_table_scaled_filled)
         # clustering_labels = optics_fit.labels_
-        clustering_labels = kmeans_fit
+        clustering_labels = dbscan_fit.labels_
+
+        #clustering_labels = kmeans_fit
         ordered_nodes = [x for _, x in sorted(
             zip(clustering_labels, self.data_table.index))]
         nums_in_cl = list(
@@ -319,7 +360,7 @@ class Module_layout:
     def getNewModuleCenter(self, module_center, module_number, distance_similarities):
         total_dist_sim = sum(
             [sim if module_number in module_pair else 0 for module_pair, sim in distance_similarities.items()])
-        dist_bonus = 0 # total_dist_sim/len(self.modules) * 0.4
+        dist_bonus = total_dist_sim/len(self.modules) * 0.4
         change_pos = np.random.binomial(1, 0.4 + dist_bonus) == 0
         new_center = module_center
         if change_pos:
@@ -494,7 +535,7 @@ class Module_layout:
                 xy[1], min_y, max_y, [x_y_ranges[2], x_y_ranges[3]])] for node, xy in node_positions.items()}
         return adjusted_node_positions
 
-    def getNodePositions(self, reactome_roots):
+    def getNodePositions(self, pathways_root_names):
         '''
         1. for all modules 
             1.1 get force directed layout
@@ -502,17 +543,14 @@ class Module_layout:
         2. return node positions 
         '''
         node_positions = {}
-        convex_hulls = []
-        print('hhhhhhhhhhS')
         for mod_num, (module, module_area) in enumerate(zip(self.modules, self.modules_area)):
             sub_graph = self.full_graph.subgraph(module)
-            module_node_positions = get_pos_in_force_dir_layout(sub_graph, mod_num)
+            module_node_positions = get_adjusted_force_dir_node_pos(sub_graph, mod_num, pathways_root_names)
             adjusted_node_positions = self.normalizeNodePositionInRange(
                 module_node_positions, module_area, True)
-            hull = ConvexHull([x[:-1] for x in list(adjusted_node_positions.values())])
-            convex_hulls.append(hull.vertices)
+
             node_positions = {**node_positions, **adjusted_node_positions}
-        self.convex_hulls = convex_hulls
+    
         # for root, subpathways in reactome_roots.items():
         #     a_subpathways = [pathway for pathway in subpathways if pathway in node_positions.keys()]
         #     root_pos = [node_positions[subpathway] for subpathway in a_subpathways]
@@ -532,7 +570,7 @@ class Module_layout:
         return self.final_node_pos
 
     def get_module_areas(self):
-        return self.modules_area, self.convex_hulls
+        return self.modules_area
 
 
 ''' OLD '''

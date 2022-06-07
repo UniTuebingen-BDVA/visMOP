@@ -92,7 +92,7 @@ export default class overviewGraph {
     // ctx.rect(50, 50, 150, 80)
     // ctx.stroke()
     const graph = UndirectedGraph.from(graphData);
-    const additionalData = { clusterAreas: graphData.cluster_rects };
+    const additionalData = { clusterAreas: graphData.clusterAreas } 
     // console.log('NODES', graph.nodes())
     // noverlap.assign(graph)
 
@@ -188,7 +188,7 @@ export default class overviewGraph {
           ...data,
           color: 'rgba(255,200,200,1.0)',
           zIndex: 1,
-          size: nodeSize,
+          size: nodeSize
         };
       }
       if (highlighedNodesClick.has(node)) {
@@ -246,6 +246,7 @@ export default class overviewGraph {
           image: getNodeProgramImage(),
         },
         hoverRenderer: drawHover,
+        clusterVis:  'ConvexHull'
       },
       additionalData
     );

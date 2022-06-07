@@ -10,7 +10,7 @@ import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 // import { vpsc } from '@/core/noverlap_vpsc'
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from './generalTypes';
-
+import hull from "hull.js";
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -29,14 +29,13 @@ export function generateGraphData(
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
-    cluster_rects: [[]],
+    clusterAreas: [[]],
     options: [],
   } as graphData;
   const addedEdges: string[] = [];
   console.log('TESTEST', nodeList);
   let index = 0;
   let maxModuleNum = 0;
-  console.log('Änderungen!!!!!')
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey];
     const name = entry.pathwayName;
@@ -108,7 +107,7 @@ export function generateGraphData(
                   `${currentEdge.target}+${currentEdge.source}`
                 )
               ) {
-                graph.edges.push(currentEdge);
+                graph.edges.push(currentEdge); 
                 addedEdges.push(currentEdge.key);
               }
             }
@@ -118,8 +117,24 @@ export function generateGraphData(
     }
     index += 1;
   }
-  graph.cluster_rects = moduleAreas;
-  // graph.nodes = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
+  let norm_node_pos = [] as node[];
+  let hull_points = [[[0,0]]] as [[[number, number]]];
+  let nodes_per_cluster = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
+  _.forEach(nodes_per_cluster, n => {
+    let clusterHullPoints = hull(n.map(o => [o.attributes.x, o.attributes.y]), 5).slice(0,-1) as [[number, number]]; 
+    hull_points.push(clusterHullPoints);
+    norm_node_pos = norm_node_pos.concat(n);
+  })
+
+  hull_points.shift(); 
+  // hull_points = hull_points.slice(0,2) as [[[number, number]]];
+
+  graph.clusterAreas = hull_points ;
+  // graph.clusterAreas = moduleAreas;
+
+  // graph.convex_hull_points = hull_points;
+  graph.nodes = norm_node_pos;
+
   return graph;
 }
 

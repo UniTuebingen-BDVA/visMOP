@@ -75,7 +75,7 @@ class PathwayHierarchy(dict):
     def set_layout_settings(self, settings):
         self.layout_settings = settings
 
-    def get_pathway_String_info_dict(self):
+    def get_pathway_GO_info_dict(self):
         return self.keggID, {'numEntries': len(self.entries), 'StringIds': self.prot_in_pathway_StringIds, 'brite_hier_superheadings': self.brite_hier_superheadings,'brite_hier_subcategories': self.brite_hier_subcategories ,'brite_hier_proteinIDs': self.brite_hier_proteinIDs}
     
     def set_omics_recieved(self, omics_recieved):
@@ -393,8 +393,8 @@ class PathwayHierarchy(dict):
         root_subpathways = collections.defaultdict(list)
         pathway_dropdown = []
         root_ids = []
+        pathways_root_names = {}
         pathway_summary_stats_dict = {}
-        
         for pathway in pathway_ids:
             entry = self[pathway]
             if entry.has_data:
@@ -402,10 +402,11 @@ class PathwayHierarchy(dict):
                 pathway_dropdown.append(dropdown_entry)
                 out_data.append(pathway_dict)
                 root_ids.append(entry.root_id)
+                pathways_root_names[entry.reactome_sID]= self[entry.root_id].name
                 root_subpathways[entry.root_id].extend(pathway_dict['subtreeIds'])
                 pathway_summary_stats_dict[entry.reactome_sID] = pathway_summary_data
 
-        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), root_subpathways, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index'), self.omics_recieved
+        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), pathways_root_names, root_subpathways, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index'), self.omics_recieved
 
 ###
 #Auxilliary Functions

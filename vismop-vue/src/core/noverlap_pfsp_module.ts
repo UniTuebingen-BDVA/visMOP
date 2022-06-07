@@ -13,7 +13,6 @@
 import _ from 'lodash'
 import { node } from '@/core/graphTypes'
 import { pfsPrime } from '@/core/noverlap_pfsp'
-const redParam = 10
 /**
   * Executes the Push Force Scan' (PFS') algorithm on this graph
   *
@@ -26,9 +25,9 @@ export function pfsPrime_modules (
   maxModuleNum: number,
   moduleAreas: [number[]] = [[-1, 1, -1, 1]],
   options: { padding: number } = { padding: 0 }
-): node[] {
+): [node[]] {
   // TODO: add padding
-  let updatedNodes = [] as node[]
+  let updatedNodes = [[]] as [node[]]
 
   for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
     const moduleNodes = []
@@ -43,9 +42,10 @@ export function pfsPrime_modules (
 
     normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum])
 
-    updatedNodes = updatedNodes.concat(pfsPrime_moduleNodes)
+    updatedNodes.push(pfsPrime_moduleNodes)
   }
- 
+  updatedNodes.shift(); 
+  
   return updatedNodes
 }
 

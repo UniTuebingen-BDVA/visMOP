@@ -2,6 +2,16 @@ from visMOP.python_scripts.deDal_layouting import normalize_in_range
 import networkx as nx
 from fa2 import ForceAtlas2
 import time
+# with all edges
+def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids):
+    G_with_weights = nx.Graph()
+    nodes = list(G.nodes())
+    for i in range(len(nodes)):
+        for j in range(i+1,len(nodes)):
+            w = 0.5 if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]] else 0
+            G_with_weights.add_edge(nodes[i], nodes[j], weight=w) 
+    return get_pos_in_force_dir_layout(G_with_weights, mod_num, 0.05)
+
 
 def get_networkx_with_edge_weights_all_nodes_connected(pathway_info_dict, stringGraph, use_brite, use_interaction):
     stringGraph.filter_by_confidence(900)
