@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 from umap import UMAP
-from sklearn.cluster import KMeans, DBSCAN, OPTICS
+from sklearn.cluster import KMeans, DBSCAN, OPTICS, Birch
 from yellowbrick.utils import KneeLocator
 from collections import Counter
 from itertools import combinations
@@ -19,8 +19,7 @@ from scipy.spatial import distance, distance_matrix
 from random import randint
 from copy import deepcopy
 from scipy.signal import argrelextrema
-
-
+from sklearn import metrics
 from visMOP.python_scripts.forceDir_layouting import get_adjusted_force_dir_node_pos, get_pos_in_force_dir_layout
 from visMOP.python_scripts.kegg_parsing import generate_networkx_dict
 
@@ -35,7 +34,6 @@ class Module_layout:
     def __init__(self, data_table, graph_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots, pathways_root_names, drm='umap', node_size = 2):
         self.half_node_size = node_size / 2 
         startTime = time.time()
-        self.kmeans = KMeans(n_clusters=5, random_state=0)
         self.module_nodes_num = []
         print("Calculating module layout...")
         networkx_dict = generate_networkx_dict(graph_dict)
@@ -66,7 +64,7 @@ class Module_layout:
         self.final_node_pos = self.getNodePositions(pathways_root_names)
         print("final node positions identified")
         endTime = time.time()
-        self.get_stats()
+        # self.get_stats()
         # self.get_stat_plots()
         print("Time for Module Layout calculation {:.3f} s".format((endTime-startTime)))
         
@@ -108,15 +106,14 @@ class Module_layout:
 
     # defold values per omic and pos
     def fill_missing_values_with_neighbor_mean(self, graph_dict, recieved_omics, defaul_means, numValsPerOmic, root_ids):
-        defaul_means_rec_omic = [default_mean for (default_mean, recieved) in zip(
-            defaul_means, recieved_omics) if recieved]
         node_names = list(self.data_table.index)
         new_data = {}
+        default_val_0 = ['num values', 'pathway size', '%']
+        print(self.data_table)
         for node_name in node_names:
             new_node_vec = []
-            for pos, val in enumerate(self.data_table.loc[node_name]):
-                default_val = 0 if pos % 1 != 0 or pos % 2 != 0 or pos//numValsPerOmic > len(
-                    defaul_means_rec_omic)-1 else defaul_means_rec_omic[pos//numValsPerOmic]
+            for ind, val in zip(list(self.data_table.columns), self.data_table.loc[node_name]):
+                default_val = 0 if any(s in ind for s in default_val_0) else defaul_means[ind[0]]
                 new_val = val
                 if math.isnan(val):
                     # get Neighbor for nodes
@@ -125,7 +122,7 @@ class Module_layout:
                     calc_node_val = 0
                     for node_info in neighbor_nodes:
                         neighbor_name = node_info['target']
-                        neighbor_val = self.data_table.loc[neighbor_name][pos]
+                        neighbor_val = self.data_table.loc[neighbor_name][ind]
                         if not math.isnan(neighbor_val) and neighbor_name not in root_ids:
                             calc_node_val += neighbor_val
                             node_vals_not_none += 1
@@ -137,8 +134,8 @@ class Module_layout:
 
         return new_data_table
 
-    def get_pca_layout_pos(self):
-        pca = PCA(n_components=2)
+    def get_pca_layout_pos(self, n_components =2):
+        pca = PCA(n_components=n_components)
         new_pos = pca.fit_transform(self.data_table_scaled_filled)
 
         explained_variation = pca.explained_variance_ratio_
@@ -147,9 +144,9 @@ class Module_layout:
         pos_dic_pca = {node_name: row for row, node_name in zip(
             new_pos, list(self.data_table.index))}
         norm_vals_dict = self.normalizeNodePositionInRange(
-            pos_dic_pca, [0, 1, 0, 1])
+            pos_dic_pca, [0, 1, 0, 1]) # brauch ich das?
 
-        return norm_vals_dict
+        return norm_vals_dict, new_pos 
 
     def get_umap_layout_pos(self):
         new_pos = UMAP().fit_transform(self.data_table_scaled_filled)
@@ -163,8 +160,6 @@ class Module_layout:
         """
         Determines optimal epsilon via method of Rahma<https://iopscience.iop.org/article/10.1088/1755-1315/31/1/012012/pdf>
 
-        :param dist_mat: distance matrix
-        :return: optimal eps
         """
 
         # Calculate nearest neighbors of segments with distance matrix
@@ -177,21 +172,21 @@ class Module_layout:
 
         # Determine point of maximal curvature
         # If data is too small smoothing with a rolling window approach is necessary
-        if len(dist_mat) < 100:
-            win_size = 3
-            y = pd.DataFrame(np.arange(0, len(dist), 1)).rolling(win_size, center=True).mean()
-            new_dist = pd.DataFrame(dist).rolling(win_size, center=True).mean()
-            x_t = pd.DataFrame(np.gradient(new_dist, axis=0)).rolling(win_size, center=True).mean()
-            y_t = pd.DataFrame(np.gradient(y, axis=0)).rolling(win_size, center=True).mean()
-            x_t2 = pd.DataFrame(np.gradient(x_t, axis=0)).rolling(win_size, center=True).mean()
-            y_t2 = pd.DataFrame(np.gradient(y_t, axis=0)).rolling(win_size, center=True).mean()
-        else:
-            y = pd.DataFrame(np.arange(0, len(dist), 1))
-            new_dist = pd.DataFrame(dist)
-            x_t = pd.DataFrame(np.gradient(new_dist, axis=0))
-            y_t = pd.DataFrame(np.gradient(y, axis=0))
-            x_t2 = pd.DataFrame(np.gradient(x_t, axis=0))
-            y_t2 = pd.DataFrame(np.gradient(y_t, axis=0))
+        # if len(dist_mat) < 100:
+        #     win_size = 3
+        #     y = pd.DataFrame(np.arange(0, len(dist), 1)).rolling(win_size, center=True).mean()
+        #     new_dist = pd.DataFrame(dist).rolling(win_size, center=True).mean()
+        #     x_t = pd.DataFrame(np.gradient(new_dist, axis=0)).rolling(win_size, center=True).mean()
+        #     y_t = pd.DataFrame(np.gradient(y, axis=0)).rolling(win_size, center=True).mean()
+        #     x_t2 = pd.DataFrame(np.gradient(x_t, axis=0)).rolling(win_size, center=True).mean()
+        #     y_t2 = pd.DataFrame(np.gradient(y_t, axis=0)).rolling(win_size, center=True).mean()
+        # else:
+        y = pd.DataFrame(np.arange(0, len(dist), 1))
+        new_dist = pd.DataFrame(dist)
+        x_t = pd.DataFrame(np.gradient(new_dist, axis=0))
+        y_t = pd.DataFrame(np.gradient(y, axis=0))
+        x_t2 = pd.DataFrame(np.gradient(x_t, axis=0))
+        y_t2 = pd.DataFrame(np.gradient(y_t, axis=0))
 
         # Determine eps by getting y value of point of maximal curvature
         curvature = np.abs(x_t * y_t2 - x_t2 * y_t) / (x_t * x_t + y_t * y_t) ** 1.5
@@ -208,44 +203,49 @@ class Module_layout:
         # find best epsilon an d min_samples:
         # https://medium.com/@tarammullin/dbscan-parameter-estimation-ff8330e3a3bd
         min_samples = 2 * len(self.data_table.columns)
-        
-        neighbors = NearestNeighbors(n_neighbors=3)
-        neighbors_fit = neighbors.fit(self.data_table_scaled_filled)
-        distances, _ = neighbors_fit.kneighbors(self.data_table_scaled_filled)
-        print(distances)
-        min_distances = [dist_array for dist_array in distances]
-        sorted_dists = np.sort(min_distances)
-        distances = np.sort(distances, axis=0)
-        sorted_dists = distances
-        slopes = np.array([y2 - y1 for y1, y2 in zip(sorted_dists, sorted_dists[1:])])
-        local_maxima = argrelextrema(slopes, np.greater)
-        # print(local_maxima)
-        maxima_pos = local_maxima[len(local_maxima)-2]
-        # print('maxima_pos', maxima_pos)
-        # plt.plot(list(range(len(sorted_dists)-1))[-100:], slopes[-100:], color='black')
+        # neighbors = NearestNeighbors(n_neighbors=min_samples)
+        # neighbors_fit = neighbors.fit(self.data_table_scaled_filled)
+        # distances, _ = neighbors_fit.kneighbors(self.data_table_scaled_filled)
+        # distances = np.sort(distances, axis=0)
+        # sorted_dists = distances[:,1]
+        # slopes = np.array([y2 - y1 for y1, y2 in zip(sorted_dists, sorted_dists[1:])])
+        # plt.plot(list(range(len(sorted_dists)-1))[-150:], slopes[-150:], color='black')
         # plt.savefig('distances_Ableitung.jpg')
-        # plt.plot(list(range(len(sorted_dists))), sorted_dists, color='blue')
+        # plt.clf()
+        # plt.plot(list(range(len(sorted_dists)))[-150:], sorted_dists[-150:], color='blue')
         # plt.savefig('distances.jpg')
+        # plt.clf()
 
-        pos_of_max_curvation = np.argmax(slopes)
-        eps = np.max(slopes)
-        print('my eps', eps, pos_of_max_curvation)
-        e_eps = self.determine_optimal_eps(self.data_table_scaled_filled)
-        print('e_eps', e_eps)
-        # new_eps = sorted_dists[332]
-        # print(new_eps)
-        # print(pos_of_max_curvation, sorted_dists[pos_of_max_curvation], eps)
-        dbscan = DBSCAN(n_jobs=-1, min_samples=min_samples, eps=e_eps)
+        # pos_of_max_curvation = np.argmax(slopes)
+        # eps = sorted_dists[pos_of_max_curvation]
+        # print('my eps', eps, sorted_dists[pos_of_max_curvation-1])
+        # e_eps = self.determine_optimal_eps(self.data_table_scaled_filled)
+        # print('e_eps', e_eps)
+        # dbscan = DBSCAN(n_jobs=-1, min_samples=min_samples, eps=eps)
 
-        dbscan_fit = dbscan.fit(self.data_table_scaled_filled)
-        # kmeans_fit = self.kmeans.fit_predict(
-        #    self.data_table_scaled_filled)
-        # optics = OPTICS(min_samples=min_samples, n_jobs=-1)
-        # optics_fit = optics.fit(self.data_table_scaled_filled)
-        # clustering_labels = optics_fit.labels_
-        clustering_labels = dbscan_fit.labels_
+        # dbscan_fit = dbscan.fit(self.data_table_scaled_filled)
+        
+        optics = OPTICS(min_samples=min_samples, n_jobs=-1, min_cluster_size=0.1)
+        optics_fit = optics.fit(self.data_table_scaled_filled)
+        clustering_labels = optics_fit.labels_
+        # clustering_labels = dbscan_fit.labels_
 
-        #clustering_labels = kmeans_fit
+        # clustering_labels = kmeans_fit
+        # kmeans = KMeans(n_clusters=i, random_state=0)
+        # kmeans_fit = kmeans.fit_predict(self.data_table_scaled_filled)
+        # brc = Birch(n_clusters=i)
+        # brc_fp = brc.fit_predict(self.data_table_scaled_filled)
+        # clustering_labels = kmeans_fit
+        
+        clustering_labels_ss = clustering_labels
+        rand_cl_pos = [i for i,x in enumerate(clustering_labels_ss) if x == -1]
+        data = self.data_table_scaled_filled
+        if len(rand_cl_pos) != 0 and max(clustering_labels_ss)>1:
+            print('hier')
+            data = np.delete(data, rand_cl_pos, axis=0)
+            clustering_labels_ss = [x for x in clustering_labels if x != -1]
+        ss = metrics.silhouette_score(data, clustering_labels_ss, metric='euclidean')
+        print('silhouette_score', ss)
         ordered_nodes = [x for _, x in sorted(
             zip(clustering_labels, self.data_table.index))]
         nums_in_cl = list(
@@ -266,7 +266,7 @@ class Module_layout:
             self.modules[maj_mod_num] = np.append(self.modules[maj_mod_num], root)
 
     def get_initial_node_pos(self, drm):
-        node_pos = self.get_umap_layout_pos() if drm == 'umap' else self.get_pca_layout_pos()
+        node_pos = self.get_umap_layout_pos() if drm == 'umap' else self.get_pca_layout_pos()[0]
         return node_pos
 
     def getModulesWeights(self):
@@ -431,7 +431,6 @@ class Module_layout:
         success = True if sum(nn_a_comp)==len(nn_a_comp) else False
         print(node_num_ratio)
         print(area_ratio)
-        print(nn_a_comp)
 
         return area_list, success
 
@@ -454,7 +453,7 @@ class Module_layout:
                 mod_pair.append(mod)
                 if len(mod_pair)==2:
                     break
-
+        print(mod_pair)
         mod_1 = mod_pair[0]
         mod_2 = mod_pair[1]
 

@@ -405,8 +405,12 @@ class PathwayHierarchy(dict):
                 pathways_root_names[entry.reactome_sID]= self[entry.root_id].name
                 root_subpathways[entry.root_id].extend(pathway_dict['subtreeIds'])
                 pathway_summary_stats_dict[entry.reactome_sID] = pathway_summary_data
-
-        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), pathways_root_names, root_subpathways, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index'), self.omics_recieved
+        stat_vals = ['num values', 'mean exp (high) ', '% vals (higher) ',
+                                        'mean exp(lower) ', '% vals (lower) ', '% Reg', '% Unreg', "% p with val"]
+        omics = [o for i, o in enumerate(['t ', 'p ', 'm ']) if self.omics_recieved[i]]
+        stat_vals_colnames = [o+stat for o in omics for stat in stat_vals]
+        stat_vals_colnames.append('pathway size')
+        return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), pathways_root_names, root_subpathways, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index', columns=stat_vals_colnames), self.omics_recieved
 
 ###
 #Auxilliary Functions

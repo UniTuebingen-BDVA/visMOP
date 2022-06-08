@@ -121,7 +121,7 @@ export function generateGraphData(
   let hull_points = [[[0,0]]] as [[[number, number]]];
   let nodes_per_cluster = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
   _.forEach(nodes_per_cluster, n => {
-    let clusterHullPoints = hull(n.map(o => [o.attributes.x, o.attributes.y]), 5).slice(0,-1) as [[number, number]]; 
+    let clusterHullPoints = hull(n.map(o => [o.attributes.x, o.attributes.y]), 20).slice(0,-1) as [[number, number]]; 
     hull_points.push(clusterHullPoints);
     norm_node_pos = norm_node_pos.concat(n);
   })

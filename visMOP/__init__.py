@@ -60,7 +60,7 @@ except:
 
 
 def getModuleLayout(omics_recieved, up_down_reg_limits, data_col_used, statistic_data_complete, pathway_connection_dict, reactome_roots={}, pathways_root_names={}):
-    up_down_reg_means = [mean(limits) for limits in up_down_reg_limits]
+    up_down_reg_means = {o: mean(limits) for o, limits in zip(['t', 'p', 'm'],up_down_reg_limits)}
     num_vals_per_omic = sum(omics_recieved)
    
     omics_names = ['t', 'p', 'm']
@@ -80,7 +80,7 @@ def getModuleLayout(omics_recieved, up_down_reg_limits, data_col_used, statistic
                     next_col_name += str(limits) + ')'
                 complete_stat_names.append(next_col_name)
     complete_stat_names += ['pathway size']
-
+    print(data_col_used)
     statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
     module_layout = Module_layout(statistic_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots, pathways_root_names)
@@ -655,13 +655,13 @@ def reactome_overview():
     # print(layout_limits, layout_attributes_used)
    
     out_data, pathway_dict, dropdown_data, root_ids, pathways_root_names, root_subpathways, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(layout_limits, False)
-    # pathway_connection_dict = get_overview_reactome(out_data)
+    pathway_connection_dict = get_overview_reactome(out_data)
     # network_overview = generate_networkx_dict(pathway_connection_dict)
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
     # print(pathway_connection_dict.keys())
-    # module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways, pathways_root_names)
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways, pathways_root_names)
 
     # a_file = open("modul_layout.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
@@ -670,11 +670,11 @@ def reactome_overview():
     # pickle.dump(module_areas, a_file)
     # a_file.close()
 
-    with open('modul_layout.pkl', "rb") as f:
-        module_node_pos = pickle.load(f)
+    # with open('modul_layout.pkl', "rb") as f:
+    #     module_node_pos = pickle.load(f)
 
-    with open('module_areas.pkl', "rb") as f:
-        module_areas = pickle.load(f)
+    # with open('module_areas.pkl', "rb") as f:
+    #     module_areas = pickle.load(f)
 
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway['pathwayId']]
