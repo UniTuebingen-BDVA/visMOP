@@ -16,6 +16,8 @@ import { animateNodes } from 'sigma/utils/animate';
 import { Object } from 'lodash';
 
 export default class overviewGraph {
+  static readonly DEFAULT_SIZE = 10;
+  static readonly ROOT_DEFAULT_SIZE = 15;
   private currentPathway = '';
   private pathwaysContainingIntersection: string[] = [];
   private pathwaysContainingUnion: string[] = [];
@@ -139,17 +141,18 @@ export default class overviewGraph {
       const lodImage = condition ? data.imageHighRes : data.imageLowRes;
 
       const nodeSize =
+        highlightedCenterHover === node ||
         highlighedNodesHover.has(node) ||
         this.currentPathway === node.replace('path:', '')
-          ? 15
-          : 10;
+          ? data.nonHoverSize + 10
+          : data.nonHoverSize;
       if (shortestPathNodes?.length > 0) {
         if (shortestPathClick.includes(node)) {
           return {
             ...data,
             color: 'rgba(255,0,255,1.0)',
             zIndex: 1,
-            size: 15,
+            size: data.size + 5,
             image: lodImage,
           };
         }
@@ -158,14 +161,14 @@ export default class overviewGraph {
             ...data,
             color: 'rgba(255,180,255,1.0)',
             zIndex: 1,
-            size: 10,
+            size: data.nonHoverSize,
             image: lodImage,
           };
         } else {
           return {
             ...data,
             color: 'rgba(255,255,255,1.0)',
-            size: 5,
+            size: data.nonHoverSize - 5,
             image: lodImage,
           };
         }
@@ -175,7 +178,7 @@ export default class overviewGraph {
           ...data,
           color: 'rgba(255,0,255,1.0)',
           zIndex: 1,
-          size: 15,
+          size: data.nonHoverSize - 5,
           image: lodImage,
         };
       }
@@ -229,7 +232,11 @@ export default class overviewGraph {
           image: lodImage,
         };
       }
-      return { ...data, hidden: hidden, image: lodImage };
+      return {
+        ...data,
+        hidden: hidden,
+        image: lodImage,
+      };
     };
 
     // same for edges
@@ -429,7 +436,7 @@ export default class overviewGraph {
         tarPositions,
         {
           duration: 2000,
-          easing: 'quadraticOut',
+          //easing: 'quadraticOut',
         },
         () => {
           this.graph.forEachNode((node, attributes) => {
@@ -454,11 +461,17 @@ export default class overviewGraph {
         tarPositions[node] = {
           x: attributes.layoutX,
           y: attributes.layoutY,
+          size: attributes.isRoot
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
+          nonHoverSize: attributes.isRoot
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
         };
       });
       this.cancelCurrentAnimation = animateNodes(this.graph, tarPositions, {
         duration: 2000,
-        easing: 'quadraticOut',
+        //easing: 'quadraticOut',
       });
       this.graph.forEachNode((node, attributes) => {
         attributes.hidden = false;
@@ -474,6 +487,8 @@ export default class overviewGraph {
         tarPositions[node] = {
           x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
           y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
+          size: attributes.isRoot ? 30 : 0,
+          nonHoverSize: attributes.isRoot ? 30 : 0,
         };
       });
       this.cancelCurrentAnimation = animateNodes(

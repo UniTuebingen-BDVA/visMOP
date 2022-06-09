@@ -66,6 +66,7 @@ export function generateGraphData(
         zIndex: 1,
         isRoot: entry.rootId === entry.pathwayId,
         size: entry.rootId === entry.pathwayId ? 15 : 10,
+        nonHoverSize: entry.rootId === entry.pathwayId ? 15 : 10,
         fixed: false, // fixed property on nodes excludes nodes from layouting
       } as baseNodeAttr,
     } as node;
