@@ -16,17 +16,33 @@ import { animateNodes } from 'sigma/utils/animate';
 import { Object } from 'lodash';
 
 export default class overviewGraph {
+  // constants
   static readonly DEFAULT_SIZE = 10;
   static readonly ROOT_DEFAULT_SIZE = 15;
+
+  // data structures for reducers
+  private shortestPathClick: string[] = [];
+  private shortestPathNodes: string[] = [];
+  private shortestPathEdges: string[] = [];
+  private highlighedEdgesClick = new Set();
+  private highlighedNodesClick = new Set();
+  //from events SIGMA2 example, initialze sets for highlight on hover:
+  private highlighedNodesHover = new Set();
+  private highlighedEdgesHover = new Set();
+  private highlightedCenterHover = '';
   private currentPathway = '';
   private pathwaysContainingIntersection: string[] = [];
   private pathwaysContainingUnion: string[] = [];
+
+  // renderer and camera
   private renderer;
   private camera;
   private prevFrameZoom;
   private graph;
   private lodRatio = 2.0;
   private cancelCurrentAnimation: (() => void) | null = null;
+
+  // filter
   private filtersChanged = false;
   private filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   private filterFuncProt: (x: number) => boolean = (_x: number) => true;
@@ -101,173 +117,12 @@ export default class overviewGraph {
 
     const inferredSettings = forceAtlas2.inferSettings(this.graph);
 
-    let shortestPathClick: string[] = [];
-    let shortestPathNodes: string[] = [];
-    let shortestPathEdges: string[] = [];
-
-    let highlighedEdgesClick = new Set();
-    let highlighedNodesClick = new Set();
-    // from events SIGMA2 example, initialze sets for highlight on hover:
-    let highlighedNodesHover = new Set();
-    let highlighedEdgesHover = new Set();
-    let highlightedCenterHover = '';
-
-    // node reducers change and return nodes based on an accessor function
-    const nodeReducer = (node: string, data: Attributes) => {
-      // handle filter
-      const hidden = data.hidden;
-      let condition = false;
-      let xDisplay: number | undefined = -100;
-      let yDisplay: number | undefined = -100;
-      if (this.renderer) {
-        const currentView = this.renderer.viewRectangle();
-        xDisplay = this.renderer.getNodeDisplayData(node)?.x;
-        yDisplay = this.renderer.getNodeDisplayData(node)?.y;
-
-        if (!xDisplay) {
-          xDisplay = -100;
-        }
-        if (!yDisplay) {
-          yDisplay = -100;
-        }
-        condition =
-          this.renderer.getCamera().ratio < 0.4 &&
-          xDisplay >= currentView.x1 &&
-          xDisplay <= currentView.x2 &&
-          yDisplay >= currentView.y1 - currentView.height &&
-          yDisplay <= currentView.y2;
-      }
-
-      const lodImage = condition ? data.imageHighRes : data.imageLowRes;
-
-      const nodeSize =
-        highlightedCenterHover === node ||
-        highlighedNodesHover.has(node) ||
-        this.currentPathway === node.replace('path:', '')
-          ? data.nonHoverSize + 10
-          : data.nonHoverSize;
-      if (shortestPathNodes?.length > 0) {
-        if (shortestPathClick.includes(node)) {
-          return {
-            ...data,
-            color: 'rgba(255,0,255,1.0)',
-            zIndex: 1,
-            size: data.size + 5,
-            image: lodImage,
-          };
-        }
-        if (shortestPathNodes.includes(node)) {
-          return {
-            ...data,
-            color: 'rgba(255,180,255,1.0)',
-            zIndex: 1,
-            size: data.nonHoverSize,
-            image: lodImage,
-          };
-        } else {
-          return {
-            ...data,
-            color: 'rgba(255,255,255,1.0)',
-            size: data.nonHoverSize - 5,
-            image: lodImage,
-          };
-        }
-      }
-      if (shortestPathClick.includes(node)) {
-        return {
-          ...data,
-          color: 'rgba(255,0,255,1.0)',
-          zIndex: 1,
-          size: data.nonHoverSize - 5,
-          image: lodImage,
-        };
-      }
-      if (
-        this.currentPathway === node.replace('path:', '') ||
-        highlightedCenterHover === node
-      ) {
-        return {
-          ...data,
-          color: 'rgba(255,0,0,1.0)',
-          zIndex: 1,
-          size: nodeSize,
-          image: lodImage,
-        };
-      }
-      if (
-        this.pathwaysContainingIntersection.includes(node.replace('path:', ''))
-      ) {
-        return {
-          ...data,
-          color: 'rgba(0,255,0,1.0)',
-          zIndex: 1,
-          size: nodeSize,
-          image: lodImage,
-        };
-      }
-      if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
-        return {
-          ...data,
-          color: 'rgba(0,0,255,1.0)',
-          zIndex: 1,
-          size: nodeSize,
-          image: lodImage,
-        };
-      }
-      if (highlighedNodesHover.has(node)) {
-        return {
-          ...data,
-          color: 'rgba(255,200,200,1.0)',
-          zIndex: 1,
-          size: nodeSize,
-          image: lodImage,
-        };
-      }
-      if (highlighedNodesClick.has(node)) {
-        return {
-          ...data,
-          color: 'rgba(255,200,200,1.0)',
-          zIndex: 1,
-          size: nodeSize,
-          image: lodImage,
-        };
-      }
-      return {
-        ...data,
-        hidden: hidden,
-        image: lodImage,
-      };
-    };
-
-    // same for edges
-    const edgeReducer = (edge: string, data: Attributes) => {
-      if (shortestPathNodes?.length > 0) {
-        if (shortestPathEdges?.includes(edge)) {
-          return {
-            ...data,
-            color: 'rgba(255,180,255,1.0)',
-            zIndex: 1,
-            size: 4,
-          };
-        } else {
-          return { ...data, size: 1 };
-        }
-      }
-      if (highlighedEdgesHover.has(edge)) {
-        return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 };
-      }
-      if (highlighedEdgesClick.has(edge)) {
-        return { ...data, color: 'rgba(255,0,0,1.0)', size: 1, zIndex: 1 };
-      }
-
-      return data;
-    };
     // end example
 
     // construct Sigma main instance
     const renderer = new Sigma(this.graph, elem, {
-      nodeReducer: nodeReducer,
-      edgeReducer: edgeReducer,
+      nodeReducer: this.nodeReducer,
+      edgeReducer: this.edgeReducer,
       zIndex: true, // enabling zIndex parameter
       renderLabels: true, // do not render labels w/o hover
       labelRenderedSizeThreshold: 20,
@@ -302,11 +157,11 @@ export default class overviewGraph {
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
-      highlighedNodesHover = new Set(this.graph.neighbors(node));
-      highlighedNodesHover.add(node);
-      highlightedCenterHover = node;
+      this.highlighedNodesHover = new Set(this.graph.neighbors(node));
+      this.highlighedNodesHover.add(node);
+      this.highlightedCenterHover = node;
 
-      highlighedEdgesHover = new Set(this.graph.edges(node));
+      this.highlighedEdgesHover = new Set(this.graph.edges(node));
 
       renderer.refresh();
     });
@@ -319,9 +174,9 @@ export default class overviewGraph {
     renderer.on('leaveNode', ({ node }) => {
       console.log('Leaving:', node);
 
-      highlighedNodesHover.clear();
-      highlighedEdgesHover.clear();
-      highlightedCenterHover = '';
+      this.highlighedNodesHover.clear();
+      this.highlighedEdgesHover.clear();
+      this.highlightedCenterHover = '';
       renderer.refresh();
     });
 
@@ -331,54 +186,209 @@ export default class overviewGraph {
       if (event.original.ctrlKey) {
         mainStore.selectPathwayCompare([node]);
       } else if (event.original.altKey) {
-        if (shortestPathClick.length === 2) shortestPathClick.pop();
-        shortestPathClick.push(node);
-        if (shortestPathClick.length === 2) {
-          shortestPathNodes = bidirectional(
+        if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
+        this.shortestPathClick.push(node);
+        if (this.shortestPathClick.length === 2) {
+          this.shortestPathNodes = bidirectional(
             this.graph,
-            shortestPathClick[0],
-            shortestPathClick[1]
+            this.shortestPathClick[0],
+            this.shortestPathClick[1]
           ) as string[];
-          if (shortestPathNodes?.length > 0) {
-            shortestPathEdges = edgePathFromNodePath(
+          if (this.shortestPathNodes?.length > 0) {
+            this.shortestPathEdges = edgePathFromNodePath(
               this.graph,
-              shortestPathNodes as string[]
+              this.shortestPathNodes as string[]
             );
-            console.log('shortest Path edges', shortestPathEdges);
-            mainStore.selectPathwayCompare(shortestPathNodes);
+            console.log('shortest Path edges', this.shortestPathEdges);
+            mainStore.selectPathwayCompare(this.shortestPathNodes);
           } else {
-            shortestPathClick = [];
+            this.shortestPathClick = [];
           }
         }
       } else {
-        shortestPathClick = [];
-        shortestPathNodes = [];
-        shortestPathEdges = [];
-        highlighedEdgesClick.clear();
-        highlighedNodesClick.clear();
-        highlighedNodesClick = new Set(this.graph.neighbors(node));
-        highlighedEdgesClick = new Set(this.graph.edges(node));
+        this.shortestPathClick = [];
+        this.shortestPathNodes = [];
+        this.shortestPathEdges = [];
+        this.highlighedEdgesClick.clear();
+        this.highlighedNodesClick.clear();
+        this.highlighedNodesClick = new Set(this.graph.neighbors(node));
+        this.highlighedEdgesClick = new Set(this.graph.edges(node));
         mainStore.focusPathwayViaOverview(node);
       }
     });
 
     return renderer;
   }
+  /**
+   * node reducer function applying reduction function for specific scenarios
+   *
+   * @param node Node name
+   * @param data Node Attributes
+   * @returns reduced Attributes
+   */
+  nodeReducer(node: string, data: Attributes): Attributes {
+    if (this.renderer) {
+      // handle lod detail
+
+      const hidden = data.hidden;
+      let lodCondition = false;
+      let xDisplay: number | undefined = -100;
+      let yDisplay: number | undefined = -100;
+
+      const currentView = this.renderer.viewRectangle();
+      xDisplay = this.renderer.getNodeDisplayData(node)?.x;
+      yDisplay = this.renderer.getNodeDisplayData(node)?.y;
+
+      if (!xDisplay) {
+        xDisplay = -100;
+      }
+      if (!yDisplay) {
+        yDisplay = -100;
+      }
+      lodCondition =
+        this.renderer.getCamera().ratio < 0.4 &&
+        xDisplay >= currentView.x1 &&
+        xDisplay <= currentView.x2 &&
+        yDisplay >= currentView.y1 - currentView.height &&
+        yDisplay <= currentView.y2;
+
+      const lodImage = lodCondition ? data.imageHighRes : data.imageLowRes;
+
+      // handle node size
+
+      const nodeSize =
+        this.highlightedCenterHover === node ||
+        this.highlighedNodesHover.has(node) ||
+        this.currentPathway === node.replace('path:', '')
+          ? data.nonHoverSize + 10
+          : data.nonHoverSize;
+
+      // shortest Path
+      if (this.shortestPathNodes?.length > 0) {
+        if (this.shortestPathClick.includes(node)) {
+          return {
+            ...data,
+            color: 'rgba(255,0,255,1.0)',
+            zIndex: 1,
+            size: data.size + 5,
+            image: lodImage,
+          };
+        }
+        if (this.shortestPathNodes.includes(node)) {
+          return {
+            ...data,
+            color: 'rgba(255,180,255,1.0)',
+            zIndex: 1,
+            size: data.nonHoverSize,
+            image: lodImage,
+          };
+        } else {
+          return {
+            ...data,
+            color: 'rgba(255,255,255,1.0)',
+            size: data.nonHoverSize - 5,
+            image: lodImage,
+          };
+        }
+      }
+      if (this.shortestPathClick.includes(node)) {
+        return {
+          ...data,
+          color: 'rgba(255,0,255,1.0)',
+          zIndex: 1,
+          size: data.nonHoverSize - 5,
+          image: lodImage,
+        };
+      }
+      if (
+        this.currentPathway === node.replace('path:', '') ||
+        this.highlightedCenterHover === node
+      ) {
+        return {
+          ...data,
+          color: 'rgba(255,0,0,1.0)',
+          zIndex: 1,
+          size: nodeSize,
+          image: lodImage,
+        };
+      }
+      if (
+        this.pathwaysContainingIntersection.includes(node.replace('path:', ''))
+      ) {
+        return {
+          ...data,
+          color: 'rgba(0,255,0,1.0)',
+          zIndex: 1,
+          size: nodeSize,
+          image: lodImage,
+        };
+      }
+      if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
+        return {
+          ...data,
+          color: 'rgba(0,0,255,1.0)',
+          zIndex: 1,
+          size: nodeSize,
+          image: lodImage,
+        };
+      }
+      if (this.highlighedNodesHover.has(node)) {
+        return {
+          ...data,
+          color: 'rgba(255,200,200,1.0)',
+          zIndex: 1,
+          size: nodeSize,
+          image: lodImage,
+        };
+      }
+      if (this.highlighedNodesClick.has(node)) {
+        return {
+          ...data,
+          color: 'rgba(255,200,200,1.0)',
+          zIndex: 1,
+          size: nodeSize,
+          image: lodImage,
+        };
+      }
+      return {
+        ...data,
+        hidden: hidden,
+        image: lodImage,
+      };
+    } else {
+      return data;
+    }
+  }
 
   /**
-   * Pans to the specified Node
-   * @param {Sigma} renderer
-   * @param {string} nodeKey
+   *  Edge reducer function applying reduction function for specific scenarios
+   *
+   * @param edge edge name
+   * @param data edge attributes
+   * @returns reduced attributes
    */
-  panToNode(renderer: Sigma, nodeKey: string): void {
-    console.log('pantestNode', {
-      ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
-      ratio: 0.3,
-    });
-    this.panZoomToTarget(renderer, {
-      ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
-      ratio: 0.3,
-    });
+
+  edgeReducer(edge: string, data: Attributes): Attributes {
+    if (this.shortestPathNodes?.length > 0) {
+      if (this.shortestPathEdges?.includes(edge)) {
+        return {
+          ...data,
+          color: 'rgba(255,180,255,1.0)',
+          zIndex: 1,
+          size: 4,
+        };
+      } else {
+        return { ...data, size: 1 };
+      }
+    }
+    if (this.highlighedEdgesHover.has(edge)) {
+      return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 };
+    }
+    if (this.highlighedEdgesClick.has(edge)) {
+      return { ...data, color: 'rgba(255,0,0,1.0)', size: 1, zIndex: 1 };
+    }
+
+    return data;
   }
 
   /**
@@ -397,58 +407,24 @@ export default class overviewGraph {
     });
   }
 
-  filterFunction(attributes: Record<string, number>) {
-    if (attributes.isRoot) {
-      return false;
-    } else if (
-      this.filterFuncTrans(attributes.averageTranscriptomics) &&
-      this.filterFuncProt(attributes.averageProteomics) &&
-      this.filterFuncMeta(attributes.averageMetabolonmics)
-    ) {
-      return false;
-    } else {
-      return true;
-    }
+  /**
+   * Pans to the specified Node
+   * @param {Sigma} renderer
+   * @param {string} nodeKey
+   */
+  panToNode(renderer: Sigma, nodeKey: string): void {
+    console.log('pantestNode', {
+      ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
+      ratio: 0.3,
+    });
+    this.panZoomToTarget(renderer, {
+      ...(renderer.getNodeDisplayData(nodeKey) as { x: number; y: number }),
+      ratio: 0.3,
+    });
   }
-
-  filterElements() {
-    if (this.filtersChanged) {
-      this.filtersChanged = false;
-      const tarPositions: PlainObject<PlainObject<number>> = {};
-      this.graph.forEachNode((node, attributes) => {
-        if (!this.filterFunction(attributes)) attributes.hidden = false;
-      });
-      this.graph.forEachNode((node, attributes) => {
-        if (this.filterFunction(attributes)) {
-          tarPositions[node] = {
-            x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
-            y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
-          };
-        } else {
-          tarPositions[node] = {
-            x: attributes.layoutX,
-            y: attributes.layoutY,
-          };
-        }
-      });
-      this.cancelCurrentAnimation = animateNodes(
-        this.graph,
-        tarPositions,
-        {
-          duration: 2000,
-          //easing: 'quadraticOut',
-        },
-        () => {
-          this.graph.forEachNode((node, attributes) => {
-            this.filterFunction(attributes)
-              ? (attributes.hidden = true)
-              : (attributes.hidden = false);
-          });
-        }
-      );
-    }
-  }
-
+  /**
+   *  Defines behaviour for node animations triggered by the zoom level
+   */
   zoomLod() {
     //console.log( 'zoomBehaivour Last/Now: ',this.prevFrameZoom, this.camera.ratio);
     if (
@@ -508,30 +484,113 @@ export default class overviewGraph {
     this.prevFrameZoom = this.camera.ratio;
   }
 
+  /**
+   * Resets camera zoom and position
+   */
   public resetZoom() {
     this.camera.animatedReset({ duration: 1000 });
   }
 
+  /**
+   * Refresehes sets current pathway to the versionen selected in the store
+   */
   public refreshCurrentPathway() {
     const mainStore = useMainStore();
     this.currentPathway = mainStore.pathwayDropdown.value;
     this.renderer.refresh();
   }
 
+  /**
+   * Sets Pathways containing an intersection of the selected entities of interest
+   * @param val list of IDs defining the intersection
+   */
   public setPathwaysContainingIntersecion(val: string[] = []) {
     this.pathwaysContainingIntersection = val;
     this.renderer.refresh();
   }
 
+  /**
+   * Sets Pathways containing an union of the selected entities of interest
+   * @param val  lost of IDs defining the union
+   */
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;
     this.renderer.refresh();
   }
 
+  /**
+   * Kills the Graph instance
+   */
   public killGraph() {
     this.renderer.kill();
   }
 
+  /**
+   * Function used to apply the GUI filter to a single overview node
+   * @param attributes node attributes
+   * @returns boolean, indicating pass or block by filter
+   */
+  filterFunction(attributes: Record<string, number>) {
+    if (attributes.isRoot) {
+      return false;
+    } else if (
+      this.filterFuncTrans(attributes.averageTranscriptomics) &&
+      this.filterFuncProt(attributes.averageProteomics) &&
+      this.filterFuncMeta(attributes.averageMetabolonmics)
+    ) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /**
+   * Apply GUI filter to graph
+   */
+  filterElements() {
+    if (this.filtersChanged) {
+      this.filtersChanged = false;
+      const tarPositions: PlainObject<PlainObject<number>> = {};
+      this.graph.forEachNode((node, attributes) => {
+        if (!this.filterFunction(attributes)) attributes.hidden = false;
+      });
+      this.graph.forEachNode((node, attributes) => {
+        if (this.filterFunction(attributes)) {
+          tarPositions[node] = {
+            x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
+            y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
+          };
+        } else {
+          tarPositions[node] = {
+            x: attributes.layoutX,
+            y: attributes.layoutY,
+          };
+        }
+      });
+      this.cancelCurrentAnimation = animateNodes(
+        this.graph,
+        tarPositions,
+        {
+          duration: 2000,
+          //easing: 'quadraticOut',
+        },
+        () => {
+          this.graph.forEachNode((node, attributes) => {
+            this.filterFunction(attributes)
+              ? (attributes.hidden = true)
+              : (attributes.hidden = false);
+          });
+        }
+      );
+    }
+  }
+
+  /**
+   * Call this function when GUI filters are changed to set member variables to the new filter functions
+   * @param transcriptomics set of transcriptomics GUI filter values
+   * @param proteomics  set of proteomics GUI filter values
+   * @param metabolomics  set of metabolomics GUI filter values
+   */
   public setAverageFilter(
     transcriptomics: filterValues,
     proteomics: filterValues,
