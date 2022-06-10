@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/overviewNetwork';
+import OverviewGraph from '../core/overviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
 import { generateGraphData } from '../core/reactomeOverviewGraphPreparation';
 import {
@@ -352,7 +352,7 @@ const drawNetwork = () => {
   mainStore.setGlyphData(glyphDataVar.value);
   console.log('GLYPH DATA', glyphDataVar.value);
   const generatedGlyphs = generateGlyphs(glyphDataVar.value);
-  const generatedGlyphsHighRes = generateGlyphs(glyphDataVar.value,96);
+  const generatedGlyphsHighRes = generateGlyphs(glyphDataVar.value, 96);
   mainStore.setGlyphs(generatedGlyphs);
   const glyphsURL = generatedGlyphs.url;
   console.log('GLYPHs', mainStore.glyphs);

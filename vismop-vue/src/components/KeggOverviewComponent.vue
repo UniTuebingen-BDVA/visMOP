@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/overviewNetwork';
+import OverviewGraph from '../core/overviewNetwork/overviewNetwork';
 import { generateGraphData } from '../core/keggOverviewGraphPreparation';
 import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph';
 import {
