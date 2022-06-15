@@ -115,8 +115,8 @@ export default class overviewGraph {
     const inferredSettings = forceAtlas2.inferSettings(this.graph);
     // construct Sigma main instance
     const renderer = new Sigma(this.graph, elem, {
-      nodeReducer: nodeReducer,
-      edgeReducer: edgeReducer,
+      nodeReducer: nodeReducer.bind(this),
+      edgeReducer: edgeReducer.bind(this),
       zIndex: true, // enabling zIndex parameter
       renderLabels: true, // do not render labels w/o hover
       labelRenderedSizeThreshold: 20,
