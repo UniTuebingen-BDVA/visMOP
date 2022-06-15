@@ -4,6 +4,12 @@ import { PieArcDatum } from 'd3-shape';
 import * as _ from 'lodash';
 import { glyphData } from '../generalTypes';
 
+/**
+ * Generates a glyph for each prepared data block in the supplied object
+ * @param inputData glyph data
+ * @param diameter target diamenter of glyphs
+ * @returns object with urls and svgs for each glyph
+ */
 export function generateGlyphs(
   inputData: { [key: string]: glyphData },
   diameter = 28
@@ -37,7 +43,9 @@ export function generateGlyphs(
 
   return { url: outObjURL, svg: outObjSVG };
 }
-
+/**
+ * Glyph class for glyphs describing the results of omics or multiomics experiments on a per pathway basis
+ */
 export class glyph {
   private totalNodes = 0;
   private addedElements = 0;
@@ -149,8 +157,11 @@ export class glyph {
       this.prepareOmics('metabolomics');
     }
   }
-
-  generateGlyphSvg() {
+  /**
+   * Returns SVGElement of the glyph
+   * @returns SVGElement of the glyph
+   */
+  generateGlyphSvg(): SVGElement {
     const mainStore = useMainStore();
     let svg;
     let g;
@@ -245,6 +256,7 @@ export class glyph {
       .arc<PieArcDatum<number>>()
       .innerRadius(this.firstLayer)
       .outerRadius(this.outermostRadius);
+
     const arcMiddle = d3
       .arc<PieArcDatum<number>>()
       .innerRadius(this.secondLayer)
@@ -274,10 +286,6 @@ export class glyph {
       .append('path')
       .attr('d', arcMiddle)
       .attr('fill', (_d, i) => this.innerColors[i]);
-    // graySegments
-    // .on('mouseover', (d, i) => console.log('HOVERTEST', i))
-    // .append('title')
-    // .text((d) => d.hoverData)
 
     if (this.drawLabels) {
       const labelArcOmics = d3
@@ -301,22 +309,12 @@ export class glyph {
         .data(this.labelArcData)
         .enter()
         .append('text')
-        // .attr('dy', (d, i) => labelTextOffset[i])
         .append('textPath')
         .text((_d, i) => this.labelRegTexts[i])
         .attr('startOffset', '25%')
         .style('text-anchor', 'middle')
         .attr('class', 'glyphText')
         .attr('href', (_d, i) => `#labelArcReg${i}`);
-      /*
-      .data(innerArcDat)
-      .enter()
-      .append('text')
-      .attr('class', 'glyphText')
-      .attr('transform', (d) => `translate(${arcMiddle.centroid(d)})`)
-      .append('tspan')
-      .text((d) => d.hoverData)
-      */
 
       g.selectAll('labels')
         .data(this.labelArcData)
@@ -330,13 +328,12 @@ export class glyph {
         .data(this.labelArcData)
         .enter()
         .append('text')
-        // .attr('dy', (d, i) => labelTextOffset[i])
         .append('textPath')
         .text((_d, i) => this.labelTexts[i])
         .attr('startOffset', '25%')
         .attr('class', 'glyphText')
         .attr('href', (_d, i) => `#labelArc${i}`);
-      // .attr('transform', (d) => `translate(${labelArc.centroid(d)})`)
+
       const text = g.append('text').attr('class', 'glyphText centeredText');
 
       text
