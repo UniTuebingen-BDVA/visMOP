@@ -195,7 +195,7 @@ const queryReactome = () => {
       value: metabolomicsValueCol.value.field,
     },
     sliderVals: {
-      transcriptomcis: sliderValsTranscriptomics.value,
+      transcriptomics: sliderValsTranscriptomics.value,
       proteomics: sliderValsProteomics.value,
       metabolomics: sliderValsMetabolomics.value,
     },
