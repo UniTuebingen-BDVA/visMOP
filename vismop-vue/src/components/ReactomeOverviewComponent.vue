@@ -43,10 +43,8 @@
 import OverviewGraph from '../core/overviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
 import { generateGraphData } from '../core/reactomeOverviewGraphPreparation';
-import {
-  generateGlyphDataReactome,
-  generateGlyphs,
-} from '../core/overviewGlyph';
+import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
+import { generateGlyphs } from '../core/overviewGlyphs/overviewGlyph';
 import {
   computed,
   onMounted,
@@ -354,8 +352,8 @@ const drawNetwork = () => {
   const generatedGlyphs = generateGlyphs(glyphDataVar.value);
   const generatedGlyphsHighRes = generateGlyphs(glyphDataVar.value, 96);
   mainStore.setGlyphs(generatedGlyphs);
-  const glyphsURL = generatedGlyphs.url;
   console.log('GLYPHs', mainStore.glyphs);
+  console.log('GLYPHs HighRes', generatedGlyphsHighRes);
   const networkData = generateGraphData(
     overviewData.value,
     generatedGlyphs.url,

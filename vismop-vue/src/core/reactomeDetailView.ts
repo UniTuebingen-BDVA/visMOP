@@ -11,7 +11,7 @@ import {
   reactomeNode,
   graphJSON,
 } from '../core/reactomeTypes';
-import { generateGlyphVariation } from '../core/overviewGlyph';
+import { glyph } from './overviewGlyphs/overviewGlyph';
 
 const _colorsAlternative: { [key: string]: string } = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
@@ -678,14 +678,16 @@ export default class ReactomeDetailView {
         .attr('cx', size)
         .attr('cy', size)
         .attr('fill', 'white');
-      self.tooltipG.append(() =>
-        generateGlyphVariation(
+      self.tooltipG.append(() => {
+        const currentGlyph = new glyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
+          28,
           false
-        )
-      );
+        );
+        return currentGlyph.generateGlyphSvg();
+      });
     });
     enterG
       .append('text')
@@ -821,14 +823,16 @@ export default class ReactomeDetailView {
         .attr('cx', size)
         .attr('cy', size)
         .attr('fill', 'white');
-      self.tooltipG.append(() =>
-        generateGlyphVariation(
+      self.tooltipG.append(() => {
+        const currentGlyph = new glyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
+          28,
           false
-        )
-      );
+        );
+        return currentGlyph.generateGlyphSvg();
+      });
     });
   }
 
@@ -924,14 +928,16 @@ export default class ReactomeDetailView {
         .attr('cx', size)
         .attr('cy', size)
         .attr('fill', 'white');
-      self.tooltipG.append(() =>
-        generateGlyphVariation(
+      self.tooltipG.append(() => {
+        const currentGlyph = new glyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
+          28,
           false
-        )
-      );
+        );
+        return currentGlyph.generateGlyphSvg();
+      });
     });
 
     enterG
