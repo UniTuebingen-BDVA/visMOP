@@ -1,20 +1,9 @@
 <template>
   <q-list nav class="q-pa-sm">
-    <q-select
-      v-model="targetDatabase"
-      :options="targetDatabases"
-      label="Target Database"
-      option-label="text"
-      option-value="value"
-      @update:model-value="setTargetDatabase"
-    ></q-select>
-    <q-select
-      v-model="targetOrganism"
-      :options="targetOrganisms"
-      label="Target Organism"
-      option-label="text"
-      option-value="value"
-    ></q-select>
+    <q-select v-model="targetDatabase" :options="targetDatabases" label="Target Database" option-label="text"
+      option-value="value" @update:model-value="setTargetDatabase"></q-select>
+    <q-select v-model="targetOrganism" :options="targetOrganisms" label="Target Organism" option-label="text"
+      option-value="value"></q-select>
     Selected Omics:
     {{ chosenOmics.length }}
     <!--
@@ -28,73 +17,36 @@
     </q-chip-group>
     -->
     <q-list bordered class="rounded-borders">
-      <q-expansion-item
-        label="Transcriptomics Data"
-        header-class="bg-primary text-white"
-        expand-icon-class="text-white"
-        group="omicsSelect"
-        icon="svguse:/icons/RNA.svg#rna|0 0 9 9"
-      >
+      <q-expansion-item label="Transcriptomics Data" header-class="bg-primary text-white" expand-icon-class="text-white"
+        group="omicsSelect" icon="svguse:/icons/RNA.svg#rna|0 0 9 9">
         <q-card>
           <q-card-section>
-            <q-file
-              v-model="transcriptomicsFile"
-              chips
-              label=".xlsx File Input"
-              @update:modelValue="fetchTranscriptomicsTable"
-            ></q-file>
+            <q-file v-model="transcriptomicsFile" chips label=".xlsx File Input"
+              @update:modelValue="fetchTranscriptomicsTable"></q-file>
 
             <q-separator></q-separator>
 
-            <q-input
-              v-model="transcriptomicsSheetVal"
-              :rules="sheetRules"
-              label="Sheet Number"
-              :value="transcriptomicsSheetVal"
-              :disable="$q.loading.isActive"
-            ></q-input>
+            <q-input v-model="transcriptomicsSheetVal" :rules="sheetRules" label="Sheet Number"
+              :value="transcriptomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
             <q-separator></q-separator>
 
-            <q-select
-              v-model="transcriptomicsSymbolCol"
-              :options="transcriptomicsTableHeaders"
-              option-label="label"
-              option-value="name"
-              label="Genesymbol Col."
-            ></q-select>
+            <q-select v-model="transcriptomicsSymbolCol" :options="transcriptomicsTableHeaders" option-label="label"
+              option-value="name" label="Genesymbol Col."></q-select>
 
             <q-separator></q-separator>
 
-            <q-select
-              v-model="transcriptomicsValueCol"
-              :options="transcriptomicsTableHeaders"
-              option-label="label"
-              option-value="name"
-              label="Value Col."
-            ></q-select>
+            <q-select v-model="transcriptomicsValueCol" :options="transcriptomicsTableHeaders" option-label="label"
+              option-value="name" label="Value Col."></q-select>
             <q-separator></q-separator>
             Input Filter:
-            <div
-              v-for="variable in sliderTranscriptomics"
-              :key="variable.text"
-              class="row"
-            >
+            <div v-for="variable in sliderTranscriptomics" :key="variable.text" class="row">
               <q-badge color="primary">
                 {{ variable.text }}
               </q-badge>
-              <q-checkbox
-                v-model="sliderVals.transcriptomics[variable.text].empties"
-                :label="'Empties'"
-              ></q-checkbox>
-              <q-range
-                v-model="sliderVals.transcriptomics[variable.text].vals"
-                :max="variable.max"
-                :min="variable.min"
-                :step="variable.step"
-                thumb-label
-                persistent-hint
-              >
+              <q-checkbox v-model="sliderVals.transcriptomics[variable.text].empties" :label="'Empties'"></q-checkbox>
+              <q-range v-model="sliderVals.transcriptomics[variable.text].vals" :max="variable.max" :min="variable.min"
+                :step="variable.step" thumb-label persistent-hint>
               </q-range>
             </div>
           </q-card-section>
@@ -103,74 +55,36 @@
 
       <q-separator />
 
-      <q-expansion-item
-        label="Proteomics Data"
-        group="omicsSelect"
-        header-class="bg-primary text-white"
-        expand-icon-class="text-white"
-        icon="svguse:/icons/Prots.svg#prots|0 0 9 9"
-      >
+      <q-expansion-item label="Proteomics Data" group="omicsSelect" header-class="bg-primary text-white"
+        expand-icon-class="text-white" icon="svguse:/icons/Prots.svg#prots|0 0 9 9">
         <q-card>
           <q-card-section>
-            <q-file
-              v-model="proteomicsFile"
-              chips
-              label=".xlsx File Input"
-              @update:modelValue="fetchProteomicsTable"
-            ></q-file>
+            <q-file v-model="proteomicsFile" chips label=".xlsx File Input" @update:modelValue="fetchProteomicsTable">
+            </q-file>
 
             <q-separator></q-separator>
 
-            <q-input
-              v-model="proteomicsSheetVal"
-              :rules="sheetRules"
-              label="Sheet Number"
-              :value="proteomicsSheetVal"
-              :disable="$q.loading.isActive"
-            ></q-input>
+            <q-input v-model="proteomicsSheetVal" :rules="sheetRules" label="Sheet Number" :value="proteomicsSheetVal"
+              :disable="$q.loading.isActive"></q-input>
 
             <q-separator></q-separator>
 
-            <q-select
-              v-model="proteomicsSymbolCol"
-              :options="proteomicsTableHeaders"
-              label="Symbol Col."
-              option-label="label"
-              option-value="name"
-            ></q-select>
+            <q-select v-model="proteomicsSymbolCol" :options="proteomicsTableHeaders" label="Symbol Col."
+              option-label="label" option-value="name"></q-select>
 
             <q-separator></q-separator>
 
-            <q-select
-              v-model="proteomicsValueCol"
-              :options="proteomicsTableHeaders"
-              option-label="label"
-              option-value="name"
-              label="Value Col."
-            ></q-select>
+            <q-select v-model="proteomicsValueCol" :options="proteomicsTableHeaders" option-label="label"
+              option-value="name" label="Value Col."></q-select>
             <q-separator></q-separator>
             Input Filter:
-            <div
-              v-for="variable in sliderProteomics"
-              :key="variable.text"
-              class="row"
-            >
+            <div v-for="variable in sliderProteomics" :key="variable.text" class="row">
               <q-badge color="primary">
                 {{ variable.text }}
               </q-badge>
-              <q-checkbox
-                v-model="sliderVals.proteomics[variable.text].empties"
-                :label="'Empties'"
-              ></q-checkbox>
-              <q-range
-                v-model="sliderVals.proteomics[variable.text].vals"
-                :max="variable.max"
-                :min="variable.min"
-                :step="variable.step"
-                :hint="variable.text"
-                thumb-label
-                persistent-hint
-              >
+              <q-checkbox v-model="sliderVals.proteomics[variable.text].empties" :label="'Empties'"></q-checkbox>
+              <q-range v-model="sliderVals.proteomics[variable.text].vals" :max="variable.max" :min="variable.min"
+                :step="variable.step" :hint="variable.text" thumb-label persistent-hint>
               </q-range>
             </div>
           </q-card-section>
@@ -178,74 +92,36 @@
       </q-expansion-item>
 
       <q-separator />
-      <q-expansion-item
-        label="Metabolomics Data"
-        group="omicsSelect"
-        header-class="bg-primary text-white"
-        expand-icon-class="text-white"
-        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
-      >
+      <q-expansion-item label="Metabolomics Data" group="omicsSelect" header-class="bg-primary text-white"
+        expand-icon-class="text-white" icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9">
         <q-card>
           <q-card-section>
-            <q-file
-              v-model="metabolomicsFile"
-              chips
-              label=".xlsx File Input"
-              @update:modelValue="fetchMetabolomicsTable"
-            ></q-file>
+            <q-file v-model="metabolomicsFile" chips label=".xlsx File Input"
+              @update:modelValue="fetchMetabolomicsTable"></q-file>
 
             <q-separator></q-separator>
 
-            <q-input
-              v-model="metabolomicsSheetVal"
-              :rules="sheetRules"
-              label="Sheet Number"
-              :value="metabolomicsSheetVal"
-              :disable="$q.loading.isActive"
-            ></q-input>
+            <q-input v-model="metabolomicsSheetVal" :rules="sheetRules" label="Sheet Number"
+              :value="metabolomicsSheetVal" :disable="$q.loading.isActive"></q-input>
 
             <q-separator></q-separator>
 
-            <q-select
-              v-model="metabolomicsSymbolCol"
-              :options="metabolomicsTableHeaders"
-              option-label="label"
-              option-value="name"
-              label="Symbol Col."
-            ></q-select>
+            <q-select v-model="metabolomicsSymbolCol" :options="metabolomicsTableHeaders" option-label="label"
+              option-value="name" label="Symbol Col."></q-select>
 
             <q-separator></q-separator>
 
-            <q-select
-              v-model="metabolomicsValueCol"
-              :options="metabolomicsTableHeaders"
-              option-label="label"
-              option-value="name"
-              label="Value Col."
-            ></q-select>
+            <q-select v-model="metabolomicsValueCol" :options="metabolomicsTableHeaders" option-label="label"
+              option-value="name" label="Value Col."></q-select>
             <q-separator></q-separator>
             Input Filter:
-            <div
-              v-for="variable in sliderMetabolomics"
-              :key="variable.text"
-              class="row"
-            >
+            <div v-for="variable in sliderMetabolomics" :key="variable.text" class="row">
               <q-badge color="primary">
                 {{ variable.text }}
               </q-badge>
-              <q-checkbox
-                v-model="sliderVals.metabolomics[variable.text].empties"
-                :label="'Empties'"
-              ></q-checkbox>
-              <q-range
-                v-model="sliderVals.metabolomics[variable.text].vals"
-                :max="variable.max"
-                :min="variable.min"
-                :step="variable.step"
-                :hint="variable.text"
-                thumb-label
-                persistent-hint
-              >
+              <q-checkbox v-model="sliderVals.metabolomics[variable.text].empties" :label="'Empties'"></q-checkbox>
+              <q-range v-model="sliderVals.metabolomics[variable.text].vals" :max="variable.max" :min="variable.min"
+                :step="variable.step" :hint="variable.text" thumb-label persistent-hint>
               </q-range>
             </div>
           </q-card-section>
@@ -253,46 +129,30 @@
       </q-expansion-item>
 
       <q-separator />
-      <q-expansion-item
-        label="Layout Attributes"
-        group="omicsSelect"
-        header-class="bg-primary text-white"
-        expand-icon-class="text-white"
-        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
-      >
+      <q-expansion-item label="Layout Attributes" group="omicsSelect" header-class="bg-primary text-white"
+        expand-icon-class="text-white" icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9">
         <q-card>
           <q-card-section>
-            <q-select
-              v-model="currentLayoutOmic"
-              :options="layoutOmics"
-              label="Omic Type"
-            ></q-select>
+            <q-select v-model="currentLayoutOmic" :options="layoutOmics" label="Omic Type"></q-select>
             <div v-if="currentLayoutOmic != ''">
-              <q-select
-                v-model="chosenLayoutAttributes"
-                :options="layoutAttributes"
-                label="Attributes"
-                multiple
-              ></q-select>
+              <q-select v-model="chosenLayoutAttributes" :options="layoutAttributes" label="Attributes" use-chips
+                clearable multiple>
+                <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
+                  <q-item v-bind="itemProps">
+                    <q-item-section side>
+                      <q-checkbox :model-value="selected" @update:model-value="toggleOption(opt)" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label v-html="opt" />
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
               <div v-if="currentLayoutOmic != 'not related to specific omic'">
-                <q-input
-                  v-model.number="omicLimitMin"
-                  type="number"
-                  step="0.1"
-                  style="max-width: 130px"
-                  class="mt-4 mr-5 ml-3"
-                  label="minimal FC limit"
-                  filled
-                />
-                <q-input
-                  v-model.number="omicLimitMax"
-                  type="number"
-                  step="0.1"
-                  style="max-width: 130px"
-                  class="mt-4 ml-2 mr-5"
-                  label="maximal FC limit"
-                  filled
-                />
+                <q-input v-model.number="omicLimitMin" type="number" step="0.1" style="max-width: 130px"
+                  class="mt-4 ml-2" label="minimal FC limit" filled />
+                <q-input v-model.number="omicLimitMax" type="number" step="0.1" style="max-width: 130px"
+                  class="mt-2 mr-2" label="maximal FC limit" filled />
               </div>
             </div>
           </q-card-section>

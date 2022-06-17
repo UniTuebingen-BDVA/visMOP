@@ -444,12 +444,12 @@ def kegg_parsing():
     
     # user choice 
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
-    # generate dataframe of summary Data for all pathways
-    statistic_data_complete = pd.DataFrame.from_dict({'path:'+ pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, up_down_reg_limits) for pathway in parsed_pathways}, orient='index')
+    layout_limits = layout_setting_bools.layout_settings['limits']
+    statistic_data_complete = pd.DataFrame.from_dict({'path:'+ pathway.keggID: pathway.get_PathwaySummaryData(omics_recieved, layout_limits) for pathway in parsed_pathways}, orient='index')
     layout_setting_bools = get_layout_settings(layout_settings, omics_recieved)
     layout_limits = layout_setting_bools.layout_settings['limits']
     layout_attributes_used = layout_setting_bools.layout_settings['attributes']
-    module_node_pos, module_areas, convex_hulls_points = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict)
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict)
     pd.set_option("display.max_rows", None, "display.max_columns", None)
 
     pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
