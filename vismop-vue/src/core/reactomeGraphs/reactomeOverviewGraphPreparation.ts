@@ -7,7 +7,7 @@ import {
   baseEdgeAttr,
 } from '@/core/graphTypes';
 import { reactomeEntry } from './reactomeTypes';
-import { glyphData } from './generalTypes';
+import { glyphData } from '../generalTypes';
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology

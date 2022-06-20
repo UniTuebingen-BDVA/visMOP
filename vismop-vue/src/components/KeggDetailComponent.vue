@@ -45,8 +45,8 @@
 </template>
 
 <script setup lang="ts">
-import DetailNetwork from '../core/keggDetailView';
-import { generateGraphData } from '../core/detailGraphPreparation';
+import DetailNetwork from '../core/keggGraphs/keggDetailView';
+import { generateGraphData } from '../core/keggGraphs/keggDetailGraphPreparation';
 import {
   computed,
   onMounted,

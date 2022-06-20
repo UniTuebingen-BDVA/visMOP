@@ -9,7 +9,7 @@ import drawHover from '@/core/customHoverRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
-import { filterValues } from '../generalTypes';
+import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom } from './camera';
 import { filterElements, setAverageFilter } from './filter';

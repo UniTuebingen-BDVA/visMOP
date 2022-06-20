@@ -10,8 +10,8 @@ import {
   segment,
   reactomeNode,
   graphJSON,
-} from '../core/reactomeTypes';
-import { glyph } from './overviewGlyphs/overviewGlyph';
+} from './reactomeTypes';
+import { glyph } from '../overviewGlyphs/overviewGlyph';
 
 const _colorsAlternative: { [key: string]: string } = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json

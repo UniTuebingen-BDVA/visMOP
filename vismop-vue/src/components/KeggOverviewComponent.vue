@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/keggOverviewNetwork/overviewNetwork';
-import { generateGraphData } from '../core/keggOverviewGraphPreparation';
+import OverviewGraph from '../core/keggGraphs/keggOverviewNetwork/overviewNetwork';
+import { generateGraphData } from '../core/keggGraphs/keggOverviewGraphPreparation';
 import { generateGlyphData } from '../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../core/overviewGlyphs/overviewGlyph';
 import {

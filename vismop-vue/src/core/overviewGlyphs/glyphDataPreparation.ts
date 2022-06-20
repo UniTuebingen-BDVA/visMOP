@@ -1,6 +1,6 @@
 import { useMainStore } from '@/stores';
 import { glyphData, omicsData } from '../generalTypes';
-import { reactomeEntry } from '../reactomeTypes';
+import { reactomeEntry } from '../reactomeGraphs/reactomeTypes';
 
 export function generateGlyphData(): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {};

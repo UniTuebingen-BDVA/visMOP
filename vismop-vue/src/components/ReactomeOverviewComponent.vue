@@ -40,9 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/reactomeOverviewNetwork/overviewNetwork';
+import OverviewGraph from '../core/reactomeGraphs/reactomeOverviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
-import { generateGraphData } from '../core/reactomeOverviewGraphPreparation';
+import { generateGraphData } from '../core/reactomeGraphs/reactomeOverviewGraphPreparation';
 import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../core/overviewGlyphs/overviewGlyph';
 import {
@@ -54,7 +54,7 @@ import {
   watch,
   defineProps,
 } from 'vue';
-import { reactomeEntry } from '@/core/reactomeTypes';
+import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphData } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
 

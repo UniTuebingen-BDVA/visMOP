@@ -1,6 +1,6 @@
 import { PlainObject } from 'sigma/types';
 import { animateNodes } from 'sigma/utils/animate';
-import { filterValues } from '../generalTypes';
+import { filterValues } from '../../generalTypes';
 import overviewGraph from './overviewNetwork';
 
 /**
