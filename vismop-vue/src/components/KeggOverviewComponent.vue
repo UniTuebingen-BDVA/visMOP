@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/overviewNetwork/overviewNetwork';
+import OverviewGraph from '../core/keggOverviewNetwork/overviewNetwork';
 import { generateGraphData } from '../core/keggOverviewGraphPreparation';
 import { generateGlyphData } from '../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../core/overviewGlyphs/overviewGlyph';
@@ -233,13 +233,14 @@ const drawNetwork = () => {
   mainStore.setGlyphData(glyphData);
   console.log('GLYPH DATA', glyphData);
   const generatedGlyphs = generateGlyphs(glyphData);
+  const generatedGlyphsHighRes = generateGlyphs(glyphData, 96);
   mainStore.setGlyphs(generatedGlyphs);
-  const glyphsURL = generatedGlyphs.url;
   console.log('GLYPHs', mainStore.glyphs);
   console.log('OVERVIEW DATA', overviewData.value);
   const networkData = generateGraphData(
     overviewData.value as { [key: string]: entry },
-    glyphsURL
+    generatedGlyphs.url,
+    generatedGlyphsHighRes.url
   );
   console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(

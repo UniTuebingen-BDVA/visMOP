@@ -35,8 +35,12 @@ export function generateGlyphData(): { [key: string]: glyphData } {
     );
     const usedIDs: string[] = [];
     nodeIDs.forEach((element) => {
+      console.log('GLYPH PREP', element);
       element.forEach((entry) => {
-        const currentEntry = entry.replace('cpd:', '').replace('gl:', '');
+        const currentEntry = entry
+          .replace('cpd:', '')
+          .replace('gl:', '')
+          .replace('ko:', '');
         try {
           if (!usedIDs.includes(currentEntry)) {
             const fcsCurrent = fcs[currentEntry];
@@ -67,7 +71,7 @@ export function generateGlyphData(): { [key: string]: glyphData } {
             usedIDs.push(currentEntry);
           }
         } catch (error) {
-          console.log('Glyph Data: ', error);
+          console.log('Glyph Data, Error, Probably a KOID with no data ');
         }
       });
     });

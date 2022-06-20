@@ -82,7 +82,7 @@ export function nodeReducer(
         ...data,
         color: 'rgba(255,0,255,1.0)',
         zIndex: 1,
-        size: data.nonHoverSize - 5,
+        size: data.nonHoverSize + 5,
         image: lodImage,
       };
     }

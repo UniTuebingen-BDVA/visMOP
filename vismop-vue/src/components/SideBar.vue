@@ -69,7 +69,7 @@
 import { ColType } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
 import { useQuasar } from 'quasar';
-import { ref, Ref, computed, watch } from 'vue';
+import { ref, Ref, computed } from 'vue';
 import OmicInput from './OmicInput.vue';
 const mainStore = useMainStore();
 
@@ -252,9 +252,9 @@ const generateKGMLs = () => {
       value: metabolomicsValueCol.value.field,
     },
     sliderVals: {
-      transcriptomcis: sliderValsTranscriptomics,
-      proteomics: sliderValsProteomics,
-      metabolomics: sliderValsMetabolomics,
+      transcriptomics: sliderValsTranscriptomics.value,
+      proteomics: sliderValsProteomics.value,
+      metabolomics: sliderValsMetabolomics.value,
     },
   };
   fetch('/kegg_parsing', {

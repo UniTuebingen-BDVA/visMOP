@@ -18,7 +18,8 @@ import { useMainStore } from '@/stores';
  */
 export function generateGraphData(
   nodeList: { [key: string]: entry },
-  glyphs: { [key: string]: string }
+  glyphs: { [key: string]: string },
+  glyphsHighres: { [key: string]: string }
 ): graphData {
   const mainStore = useMainStore();
   const graph = {
@@ -34,8 +35,8 @@ export function generateGraphData(
       const currentNames = entry.name;
       const keggID = entry.keggID;
       if (currentNames) {
-        const initPosX = entry.initialPosX;
-        const initPosY = entry.initialPosY;
+        const initPosX = Math.random() * 100;
+        const initPosY = Math.random() * 100;
         const color = '#FFFFFF';
         const trueName = mainStore.pathwayLayouting.pathwayList.find(
           (elem) => elem.value === currentNames[0].replace('path:', '')
@@ -47,6 +48,8 @@ export function generateGraphData(
             entryType: _.escape(entry.entryType),
             type: 'image',
             image: glyphs[entryKey.replace('path:', '')],
+            imageLowRes: glyphs[entryKey.replace('path:', '')],
+            imageHighRes: glyphsHighres[entryKey.replace('path:', '')],
             name: _.escape(currentNames[0]),
             color: color,
             label: `Name: ${_.escape(trueName)}`,
@@ -54,6 +57,7 @@ export function generateGraphData(
             y: initPosY,
             zIndex: 1,
             size: 10,
+            nonHoverSize: 10,
             fixed: false, // fixed property on nodes excludes nodes from layouting
           } as baseNodeAttr,
         } as node;

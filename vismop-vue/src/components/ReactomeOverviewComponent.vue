@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/overviewNetwork/overviewNetwork';
+import OverviewGraph from '../core/reactomeOverviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
 import { generateGraphData } from '../core/reactomeOverviewGraphPreparation';
 import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
