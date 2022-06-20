@@ -22,7 +22,7 @@
             icon="mdi-restore"
             @click="resetZoom"
           ></q-fab-action>
-          <q-fab-action>
+          <q-fab-action color="white">
             <graph-filter
               v-model:transcriptomics="transcriptomicsFilter"
               v-model:proteomics="proteomicsFilter"
