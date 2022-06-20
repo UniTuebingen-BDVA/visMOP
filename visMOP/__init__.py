@@ -83,7 +83,7 @@ def getModuleLayout(omics_recieved, up_down_reg_limits, data_col_used, statistic
     print(data_col_used)
     statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
-    module_layout = Module_layout(statistic_data_user, pathway_connection_dict, omics_recieved, up_down_reg_means, num_vals_per_omic, reactome_roots, pathways_root_names)
+    module_layout = Module_layout(statistic_data_user, pathway_connection_dict, up_down_reg_means, reactome_roots, pathways_root_names)
     module_node_pos = module_layout.get_final_node_positions()
     module_areas = module_layout.get_module_areas()
         

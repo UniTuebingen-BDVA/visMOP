@@ -148,7 +148,7 @@
                   </q-item>
                 </template>
               </q-select>
-              <div v-if="currentLayoutOmic != 'not related to specific omic'">
+              <div class="row" v-if="currentLayoutOmic != 'not related to specific omic'">
                 <q-input v-model.number="omicLimitMin" type="number" step="0.1" style="max-width: 130px"
                   class="mt-4 ml-2" label="minimal FC limit" filled />
                 <q-input v-model.number="omicLimitMax" type="number" step="0.1" style="max-width: 130px"
