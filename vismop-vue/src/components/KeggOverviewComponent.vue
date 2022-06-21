@@ -25,7 +25,7 @@
 import OverviewGraph from '../core/keggGraphs/keggOverviewNetwork/overviewNetwork';
 import { generateGraphData } from '../core/keggGraphs/keggOverviewGraphPreparation';
 import { generateGlyphData } from '../core/overviewGlyphs/glyphDataPreparation';
-import { generateGlyphs } from '../core/overviewGlyphs/overviewGlyph';
+import { generateGlyphs } from '../core/overviewGlyphs/generator';
 import {
   computed,
   onMounted,
@@ -37,6 +37,7 @@ import {
 } from 'vue';
 import { useMainStore } from '@/stores';
 import { entry } from '@/core/graphTypes';
+import { HighDetailGlyph } from '@/core/overviewGlyphs/highDetailGlyph';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -232,8 +233,8 @@ const drawNetwork = () => {
   const glyphData = generateGlyphData();
   mainStore.setGlyphData(glyphData);
   console.log('GLYPH DATA', glyphData);
-  const generatedGlyphs = generateGlyphs(glyphData);
-  const generatedGlyphsHighRes = generateGlyphs(glyphData, 96);
+  const generatedGlyphs = generateGlyphs(glyphData, HighDetailGlyph);
+  const generatedGlyphsHighRes = generateGlyphs(glyphData, HighDetailGlyph, 96);
   mainStore.setGlyphs(generatedGlyphs);
   console.log('GLYPHs', mainStore.glyphs);
   console.log('OVERVIEW DATA', overviewData.value);

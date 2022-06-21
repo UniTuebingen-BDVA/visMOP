@@ -44,7 +44,7 @@ import OverviewGraph from '../core/reactomeGraphs/reactomeOverviewNetwork/overvi
 import GraphFilter from './GraphFilter.vue';
 import { generateGraphData } from '../core/reactomeGraphs/reactomeOverviewGraphPreparation';
 import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
-import { generateGlyphs } from '../core/overviewGlyphs/overviewGlyph';
+import { generateGlyphs } from '../core/overviewGlyphs/generator';
 import {
   computed,
   onMounted,
@@ -57,6 +57,8 @@ import {
 import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphData } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
+import { HighDetailGlyph } from '@/core/overviewGlyphs/highDetailGlyph';
+import { LowDetailGlyph } from '@/core/overviewGlyphs/lowDetailGlyph';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -349,15 +351,26 @@ const drawNetwork = () => {
   glyphDataVar.value = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphDataVar.value);
   console.log('GLYPH DATA', glyphDataVar.value);
-  const generatedGlyphs = generateGlyphs(glyphDataVar.value);
-  const generatedGlyphsHighRes = generateGlyphs(glyphDataVar.value, 96);
+  const generatedGlyphs = generateGlyphs(glyphDataVar.value, HighDetailGlyph);
+  const generatedGlyphsHighRes = generateGlyphs(
+    glyphDataVar.value,
+    HighDetailGlyph,
+    96
+  );
+  const generatedGlyphsLowZoom = generateGlyphs(
+    glyphDataVar.value,
+    LowDetailGlyph
+  );
   mainStore.setGlyphs(generatedGlyphs);
   console.log('GLYPHs', mainStore.glyphs);
   console.log('GLYPHs HighRes', generatedGlyphsHighRes);
+  console.log('GLYPHs lowZOOM', generatedGlyphsLowZoom);
+
   const networkData = generateGraphData(
     overviewData.value,
     generatedGlyphs.url,
     generatedGlyphsHighRes.url,
+    generatedGlyphsLowZoom.url,
     glyphDataVar.value,
     pathwayLayouting.value.rootIds
   );

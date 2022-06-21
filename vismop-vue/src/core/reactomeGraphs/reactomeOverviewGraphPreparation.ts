@@ -18,6 +18,7 @@ export function generateGraphData(
   nodeList: reactomeEntry[],
   glyphs: { [key: string]: string },
   glyphsHighres: { [key: string]: string },
+  glyphsLowZoom: { [key: string]: string },
   glyphData: {
     [key: string]: glyphData;
   },
@@ -45,6 +46,7 @@ export function generateGraphData(
         image: glyphs[id],
         imageLowRes: glyphs[id],
         imageHighRes: glyphsHighres[id],
+        imageLowZoom: glyphsLowZoom[id],
         name: _.escape(name),
         hidden: false,
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',

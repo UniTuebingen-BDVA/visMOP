@@ -11,7 +11,7 @@ import {
   reactomeNode,
   graphJSON,
 } from './reactomeTypes';
-import { glyph } from '../overviewGlyphs/overviewGlyph';
+import { HighDetailGlyph } from '../overviewGlyphs/highDetailGlyph';
 
 const _colorsAlternative: { [key: string]: string } = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
@@ -679,7 +679,7 @@ export default class ReactomeDetailView {
         .attr('cy', size)
         .attr('fill', 'white');
       self.tooltipG.append(() => {
-        const currentGlyph = new glyph(
+        const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
@@ -824,7 +824,7 @@ export default class ReactomeDetailView {
         .attr('cy', size)
         .attr('fill', 'white');
       self.tooltipG.append(() => {
-        const currentGlyph = new glyph(
+        const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
@@ -929,7 +929,7 @@ export default class ReactomeDetailView {
         .attr('cy', size)
         .attr('fill', 'white');
       self.tooltipG.append(() => {
-        const currentGlyph = new glyph(
+        const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
