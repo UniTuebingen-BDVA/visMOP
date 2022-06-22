@@ -115,8 +115,8 @@ export class LowDetailGlyph {
       .attr('transform', `translate(${this.width / 2},${this.height / 2})`);
     const arcOuter = d3
       .arc<PieArcDatum<number>>()
-      .innerRadius(0)
-      .outerRadius(this.radius);
+      .innerRadius(4)
+      .outerRadius(this.radius - 2);
 
     const arcSeg = g
       .selectAll('g')
@@ -126,7 +126,8 @@ export class LowDetailGlyph {
       .attr('d', arcOuter)
       .attr('fill', (_d, i) => this.outerColors[i])
       .attr('class', 'foldArc')
-      .attr('strokewidth', -2);
+      .attr('stroke', '#404040')
+      .attr('stroke-width', 1);
     return svg.node() as SVGElement;
   }
 }

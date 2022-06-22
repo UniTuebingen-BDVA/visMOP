@@ -46,6 +46,14 @@ export class HighDetailGlyph {
     padAngle: number;
     hoverData: string;
   }[] = [];
+  private backroundArcDat: {
+    data: number;
+    value: number;
+    index: number;
+    startAngle: number;
+    endAngle: number;
+    padAngle: number;
+  }[] = [];
   private outerColors: string[] = [];
   private innerColors: string[] = [];
   private labelArcData: {
@@ -84,8 +92,8 @@ export class HighDetailGlyph {
     this.thirdCircleElement = 1.8 * (Math.PI / this.availableOmics);
     this.circlePadding = 0.1 * (Math.PI / this.availableOmics);
     this.layerWidth = this.diameter / 7;
-    this.width = this.diameter + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + (this.drawLabels ? 7 : 0);
+    this.width = this.diameter + 2 + (this.drawLabels ? 7 : 0);
+    this.height = this.diameter + 2 + (this.drawLabels ? 7 : 0);
     this.outermostRadius = this.diameter / 2;
     this.firstLayer = this.outermostRadius - this.layerWidth;
     this.secondLayer = this.firstLayer - this.layerWidth;
@@ -231,7 +239,7 @@ export class HighDetailGlyph {
       .attr('d', arcOuter)
       .attr('fill', (_d, i) => this.outerColors[i])
       .attr('class', 'foldArc')
-      .attr('strokewidth', -2);
+      .attr('stroke-width', -2);
     if (!this.pathwayCompare) {
       arcSeg.on('click', (event, d) => {
         mainStore.addClickedNode({ queryID: d.queryID, name: d.name });
@@ -246,8 +254,26 @@ export class HighDetailGlyph {
       .enter()
       .append('path')
       .attr('d', arcMiddle)
-      .attr('fill', (_d, i) => this.innerColors[i]);
+      .attr('fill', (_d, i) => this.innerColors[i])
+      .attr('stroke-width', -2);
 
+    g.selectAll('g')
+      .data(this.backroundArcDat)
+      .enter()
+      .append('path')
+      .attr('d', arcOuter)
+      .attr('fill', 'none')
+      .attr('stroke', '#404040')
+      .attr('stroke-width', this.drawLabels ? 0.5 : 2);
+
+    g.selectAll('g')
+      .data(this.backroundArcDat)
+      .enter()
+      .append('path')
+      .attr('d', arcMiddle)
+      .attr('fill', 'none')
+      .attr('stroke', '#404040')
+      .attr('stroke-width', this.drawLabels ? 0.5 : 2);
     if (this.drawLabels) {
       const labelArcOmics = d3
         .arc<PieArcDatum<number>>()
@@ -332,6 +358,18 @@ export class HighDetailGlyph {
         this.thirdCircleElement / omicsColors.length,
       this.thirdCircleElement / omicsColors.length
     );
+
+    this.backroundArcDat = [];
+    this.innerArcDat = [];
+    this.outerArcDat = [];
+    this.backroundArcDat.push({
+      data: 1,
+      value: 1,
+      index: 1,
+      startAngle: startAngleVal,
+      endAngle: startAngleVal + this.thirdCircleElement,
+      padAngle: 0,
+    });
     omicsColors.forEach((_element, idx) => {
       const pushDat = {
         data: idx + 1,
@@ -349,6 +387,7 @@ export class HighDetailGlyph {
     const omicsRegulatedQuotient =
       this.glyphData[omicsType].nodeState.regulated /
       this.glyphData[omicsType].nodeState.total;
+
     this.innerArcDat.push({
       data: 1,
       value: 1,
