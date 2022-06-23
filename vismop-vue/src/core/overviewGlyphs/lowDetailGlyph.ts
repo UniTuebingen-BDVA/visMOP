@@ -85,7 +85,7 @@ export class LowDetailGlyph {
               0
             ) / this.glyphData[omicsType].foldChanges.length
           )
-        : 'white';
+        : 'none';
     this.outerColors.push(avgColor);
     const startAngleVal =
       this.addedElements * this.thirdCircle + this.circlePadding;
