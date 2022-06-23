@@ -127,12 +127,9 @@ export function generateGraphData(
   })
 
   hull_points.shift(); 
-  // hull_points = hull_points.slice(0,2) as [[[number, number]]];
 
-  graph.clusterAreas = hull_points ;
-  // graph.clusterAreas = moduleAreas;
-
-  // graph.convex_hull_points = hull_points;
+  graph.clusterAreas = hull_points;
+  
   graph.nodes = norm_node_pos;
 
   return graph;

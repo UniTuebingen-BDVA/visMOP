@@ -225,7 +225,8 @@ class Module_layout:
         norm_vals_dict = normalizeNodePositionInRange(
             pos_dic_pca, [0, 1, 0, 1]) 
 
-        return norm_vals_dict, new_pos 
+        return norm_vals_dict, new_pos
+
     #for clustering higer n_components and n_neighbors and lower min_dist
     def get_umap_layout_pos(self, n_components=2, n_neighbors = 30, min_dist=0):
         new_pos = UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=10).fit_transform(self.data_table_scaled_filled)
@@ -242,36 +243,16 @@ class Module_layout:
     '''
     def get_cluster(self):
         num_features = len(self.data_table_scaled_filled[0])
-        print(self.data_table_scaled_filled)
-        if num_features > 2:
+        if num_features >= 2:
             n_comp = min(math.ceil(num_features / 2), 10)
             positions, data = self.get_umap_layout_pos(n_components=n_comp, n_neighbors = 15, min_dist=0)
         else:
             data = self.data_table_scaled_filled
         # if 2 < cluster_method_threshold:
-        optics = OPTICS(min_samples=5, n_jobs=-1, min_cluster_size=0.1)
+        optics = OPTICS(min_samples=5, n_jobs=-1, min_cluster_size=0.05)
         optics_fit = optics.fit(data)
         clustering_labels = optics_fit.labels_
         print(clustering_labels)
-        # else:
-        #     best_ss = [-1,-1]
-        #     Sum_of_squared_distances = []
-        #     K = range(2,20)
-        #     for num_clusters in K :
-        #         kmeans = KMeans(n_clusters=num_clusters, random_state=10)
-        #         kmeans.fit(data)
-        #         ss = metrics.silhouette_score(data, kmeans.predict(data), metric='euclidean')
-        #         best_ss = [num_clusters, ss] if ss > best_ss[1] else best_ss
-        #         Sum_of_squared_distances.append(kmeans.inertia_)
-        #     best_nc_wcss = optimal_number_of_clusters(Sum_of_squared_distances)
-        #     best_nc_ss = best_ss[0]
-        #     if best_nc_wcss == best_nc_ss:
-        #         best_nc = best_nc_wcss
-        #     else:
-        #         pass #???
-        #     kmeans = KMeans(n_clusters=best_nc_ss, random_state=10)
-        #     kmeans_fit = kmeans.fit_predict(data)
-        #     clustering_labels = kmeans_fit
         
         clustering_labels_ss = clustering_labels
         rand_cl_pos = [i for i,x in enumerate(clustering_labels_ss) if x == -1]
@@ -343,17 +324,18 @@ class Module_layout:
         
         all_distances = distance.pdist(all_vecs, 'cityblock')
         if self.module_pair_min_dist is None:
-            self.module_pair_min_dist = np.argmin(all_distances)
+            self.module_pair_min_dist = np.argmax(all_distances)
 
         min_distance = all_distances[self.module_pair_min_dist]
         relative_distances = [dist/min_distance for dist in all_distances]
 
         return relative_distances
 
-    def evaluateRelativDistanceSimilarity(self, original_mp_order, new_mp_order):
-    
-        distance_similarities = [mp_org == mp_new for mp_org, mp_new in zip(original_mp_order, new_mp_order)]
-        distance_similarities = [ds if m not in self.p_f_m[0] else True for m,ds in enumerate(distance_similarities)]
+    def evaluateRelativDistanceSimilarity(self, original, new):
+        # distance_similarities = [mp_org == mp_new for mp_org, mp_new in zip(original, new)]
+        distance_similarities = [(rd_org + 0.1) >= rd_new <= (rd_org + 0.1) for rd_org, rd_new in zip(original, new)]
+
+        distance_similarities = [ds if m not in self.p_f_m[0] else True for m, ds in enumerate(distance_similarities)]
 
         dist_sim_sum = sum(distance_similarities)
         possibleLayout = dist_sim_sum == len(distance_similarities)
@@ -404,9 +386,9 @@ class Module_layout:
                 new_rel_distances = self.getRealtiveDistancesBetweenModules(
                     new_module_centers)
                 
-                mps_ordered_by_rel_dist = self.get_mod_pair_ordered_by_rel_dist(new_rel_distances)
+                # mps_ordered_by_rel_dist = self.get_mod_pair_ordered_by_rel_dist(new_rel_distances)
                 possibleLayout, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
-                    self.mod_pairs_ordered_by_rel_dist_initial, mps_ordered_by_rel_dist)
+                    self.relative_distances, new_rel_distances)
                 if sum(distance_similarities_new) > sum(distance_similarities):
                     print(sum(distance_similarities_new), len(distance_similarities_new))
                     distance_similarities = distance_similarities_new
@@ -539,7 +521,7 @@ class Module_layout:
         area_1_best, area_2_best, mods_in_area_1_best, num_nodes_area_2, num_nodes_area_1_best, num_nodes_area_2_best, score_min = [
             [], [], [], [], 0, 0, inf]
         area_t_d_size = get_area_size(area_to_divide)
-        for abst in np.arange(0.05, max_dist - 0.05, 0.01):
+        for abst in np.arange(0.01, max_dist - 0.01, 0.01):
             area_1[mod_1_area_pos_to_ad] = min_border_pos + abst
             area_2[mod_2_area_pos_to_ad] = min_border_pos + abst
             mods_in_area_1 = [mod for mod in modules_in_area if mod_center_in_area(module_centers[mod], area_1)]
@@ -560,8 +542,6 @@ class Module_layout:
                 num_nodes_area_2_best = deepcopy(num_nodes_area_2)
         print(score)
         return self.divideSpaceForTwoModules(init,module_centers, module_node_number, deepcopy(module_ia_x_y_distances), area_1_best, mods_in_area_1_best, num_nodes_area_1_best) + self.divideSpaceForTwoModules(init, module_centers, module_node_number, deepcopy(module_ia_x_y_distances), area_2_best, mods_in_area_2_best, num_nodes_area_2_best)
-
-
 
     def getNodePositions(self, pathways_root_names):
         '''
