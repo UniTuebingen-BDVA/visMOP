@@ -54,8 +54,8 @@ export class LowDetailGlyph {
     this.thirdCircle = 2 * (Math.PI / this.availableOmics);
     this.thirdCircleElement = 1.8 * (Math.PI / this.availableOmics);
     this.circlePadding = 0.1 * (Math.PI / this.availableOmics);
-    this.width = this.diameter + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + (this.drawLabels ? 7 : 0);
+    this.width = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
+    this.height = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
     this.radius = this.diameter / 2;
     this.colorScales = mainStore.fcScales;
     if (this.glyphData.transcriptomics.available) {
@@ -115,7 +115,7 @@ export class LowDetailGlyph {
       .attr('transform', `translate(${this.width / 2},${this.height / 2})`);
     const arcOuter = d3
       .arc<PieArcDatum<number>>()
-      .innerRadius(4)
+      .innerRadius(this.radius / 4)
       .outerRadius(this.radius - 2);
 
     const arcSeg = g
@@ -127,7 +127,7 @@ export class LowDetailGlyph {
       .attr('fill', (_d, i) => this.outerColors[i])
       .attr('class', 'foldArc')
       .attr('stroke', '#404040')
-      .attr('stroke-width', 1);
+      .attr('stroke-width', this.diameter / 45);
     return svg.node() as SVGElement;
   }
 }

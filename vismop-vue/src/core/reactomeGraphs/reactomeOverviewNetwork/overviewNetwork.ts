@@ -3,7 +3,8 @@ import forceAtlas2 from 'graphology-layout-forceatlas2';
 import noverlap from 'graphology-layout-noverlap';
 import Sigma from 'sigma';
 import { graphData } from '@/core/graphTypes';
-import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
+//import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
+import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import drawHover from '@/core/customHoverRenderer';
 import { useMainStore } from '@/stores';
@@ -126,7 +127,7 @@ export default class overviewGraph {
       },
       nodeProgramClasses: {
         ...DEFAULT_SETTINGS.nodeProgramClasses,
-        image: getNodeProgramImage(),
+        image: getNodeImageProgram(),
       },
       hoverRenderer: drawHover,
     });

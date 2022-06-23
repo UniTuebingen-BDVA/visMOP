@@ -92,8 +92,8 @@ export class HighDetailGlyph {
     this.thirdCircleElement = 1.8 * (Math.PI / this.availableOmics);
     this.circlePadding = 0.1 * (Math.PI / this.availableOmics);
     this.layerWidth = this.diameter / 7;
-    this.width = this.diameter + 2 + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + 2 + (this.drawLabels ? 7 : 0);
+    this.width = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
+    this.height = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
     this.outermostRadius = this.diameter / 2;
     this.firstLayer = this.outermostRadius - this.layerWidth;
     this.secondLayer = this.firstLayer - this.layerWidth;
@@ -116,6 +116,9 @@ export class HighDetailGlyph {
     this.drawLabels = val;
     this.width = this.diameter + (this.drawLabels ? 7 : 0);
     this.height = this.diameter + (this.drawLabels ? 7 : 0);
+    this.backroundArcDat = [];
+    this.innerArcDat = [];
+    this.outerArcDat = [];
     if (this.glyphData.transcriptomics.available) {
       this.prepareOmics('transcriptomics');
     }
@@ -264,7 +267,10 @@ export class HighDetailGlyph {
       .attr('d', arcOuter)
       .attr('fill', 'none')
       .attr('stroke', '#404040')
-      .attr('stroke-width', this.drawLabels ? 0.5 : 2);
+      .attr(
+        'stroke-width',
+        this.drawLabels ? this.diameter / 45 : this.diameter / 45
+      );
 
     g.selectAll('g')
       .data(this.backroundArcDat)
@@ -273,7 +279,10 @@ export class HighDetailGlyph {
       .attr('d', arcMiddle)
       .attr('fill', 'none')
       .attr('stroke', '#404040')
-      .attr('stroke-width', this.drawLabels ? 0.5 : 2);
+      .attr(
+        'stroke-width',
+        this.drawLabels ? this.diameter / 45 : this.diameter / 45
+      );
     if (this.drawLabels) {
       const labelArcOmics = d3
         .arc<PieArcDatum<number>>()
@@ -359,9 +368,6 @@ export class HighDetailGlyph {
       this.thirdCircleElement / omicsColors.length
     );
 
-    this.backroundArcDat = [];
-    this.innerArcDat = [];
-    this.outerArcDat = [];
     this.backroundArcDat.push({
       data: 1,
       value: 1,

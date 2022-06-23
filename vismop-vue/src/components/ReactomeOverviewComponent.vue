@@ -355,11 +355,12 @@ const drawNetwork = () => {
   const generatedGlyphsHighRes = generateGlyphs(
     glyphDataVar.value,
     HighDetailGlyph,
-    96
+    128
   );
   const generatedGlyphsLowZoom = generateGlyphs(
     glyphDataVar.value,
-    LowDetailGlyph
+    LowDetailGlyph,
+    128
   );
   mainStore.setGlyphs(generatedGlyphs);
   console.log('GLYPHs', mainStore.glyphs);
