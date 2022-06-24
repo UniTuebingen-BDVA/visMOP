@@ -153,7 +153,7 @@ class Module_layout:
         new_realtiv_dist = self.getRealtiveDistancesBetweenModules(new_module_center)
         mod_pairs_ordered_by_rel_dist = self.get_mod_pair_ordered_by_rel_dist(new_realtiv_dist)
         _, distance_similarities = self.evaluateRelativDistanceSimilarity(
-                    self.mod_pairs_ordered_by_rel_dist_initial , mod_pairs_ordered_by_rel_dist)
+                    self.relative_distances , new_realtiv_dist)
         final_area_size = [get_area_size(area) for area in self.modules_area]
         total_area = sum(final_area_size)
         area_nodes_ratio = [area/node_num for area, node_num in zip(final_area_size, self.module_nodes_num)]
@@ -324,16 +324,16 @@ class Module_layout:
         
         all_distances = distance.pdist(all_vecs, 'cityblock')
         if self.module_pair_min_dist is None:
-            self.module_pair_min_dist = np.argmax(all_distances)
+            self.module_pair_min_dist = np.max(all_distances)
 
-        min_distance = all_distances[self.module_pair_min_dist]
-        relative_distances = [dist/min_distance for dist in all_distances]
+        max_distance = self.module_pair_min_dist # all_distances[self.module_pair_min_dist]
+        relative_distances = [dist/max_distance for dist in all_distances]
 
         return relative_distances
 
     def evaluateRelativDistanceSimilarity(self, original, new):
         # distance_similarities = [mp_org == mp_new for mp_org, mp_new in zip(original, new)]
-        distance_similarities = [(rd_org + 0.1) >= rd_new <= (rd_org + 0.1) for rd_org, rd_new in zip(original, new)]
+        distance_similarities = [(rd_org - 0.1) >= rd_new <= (rd_org + 0.1) for rd_org, rd_new in zip(original, new)]
 
         distance_similarities = [ds if m not in self.p_f_m[0] else True for m, ds in enumerate(distance_similarities)]
 
@@ -369,7 +369,6 @@ class Module_layout:
         5. return R
         '''
         best_C = self.evaluteCostFunction(self.modules_center) if prev_best_C is None else prev_best_C 
-        
         
         # all position where the distance to module x is calculated --> m * i + j - ((i + 2) * (i + 1)) // 2
         
