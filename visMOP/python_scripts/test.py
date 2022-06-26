@@ -27,14 +27,16 @@ import numpy as np
     # print(b)
 
 
-mu, sigma = 0, 1/3  
-s = np.random.normal(mu, sigma, 1000)
+# mu, sigma = 0, 1/3  
+# s = np.random.normal(mu, sigma, 1000)
 
-print(type(s))
+# print(type(s))
 
-import matplotlib.pyplot as plt
-count, bins, ignored = plt.hist(s, 30, density=True)
-plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
-               np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
-         linewidth=2, color='r')
-plt.savefig('normaldist.png')
+# import matplotlib.pyplot as plt
+# count, bins, ignored = plt.hist(s, 30, density=True)
+# plt.plot(bins, 1/(sigma * np.sqrt(2 * np.pi)) *
+#                np.exp( - (bins - mu)**2 / (2 * sigma**2) ),
+#          linewidth=2, color='r')
+# plt.savefig('normaldist.png')
+
+print([[pathway for pathway in module] for module in [[1,2,3],[4,5,6]]])
