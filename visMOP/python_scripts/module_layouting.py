@@ -299,7 +299,7 @@ class Module_layout:
         else:
             position_list = self.data_table_scaled_filled
 
-        optics = OPTICS(min_samples=5, n_jobs=-1, min_cluster_size=0.1)
+        optics = OPTICS(min_samples=5, n_jobs=-1)
         optics_fit = optics.fit(position_list)
         clustering_labels = optics_fit.labels_
         
@@ -481,6 +481,8 @@ class Module_layout:
                         self.relative_distances, self.getRealtiveDistancesBetweenModules(new_module_centers), dist_sim_threshold)
                 else:
                     distance_similarities = [ds if ds==0 else np.random.binomial(1, 0.8) for ds in distance_similarities ]
+            possibleLayout = True
+            
 
             prev_dist_sim = sum(distance_similarities)
             

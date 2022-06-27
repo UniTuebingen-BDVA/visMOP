@@ -118,15 +118,15 @@ export function generateGraphData(
     index += 1;
   }
   let norm_node_pos = [] as node[];
-  let hull_points = [[[0,0]]] as [[[number, number]]];
+  let hull_points: [[number[]]] = [[[]]];
   let nodes_per_cluster = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
   _.forEach(nodes_per_cluster, n => {
     let clusterHullPoints = hull(n.map(o => [o.attributes.x, o.attributes.y]), 20) as [[number, number]]; 
     hull_points.push(clusterHullPoints);
     norm_node_pos = norm_node_pos.concat(n);
+    console.log(clusterHullPoints)
   })
 
-  hull_points.shift(); 
 
   graph.clusterAreas = hull_points;
   
