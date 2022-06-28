@@ -9,7 +9,7 @@ import {
 import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 // import { vpsc } from '@/core/noverlap_vpsc'
 import { reactomeEntry } from './reactomeTypes';
-import { glyphData } from './generalTypes';
+import { glyphData } from '../generalTypes';
 import hull from "hull.js";
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -19,10 +19,12 @@ import hull from "hull.js";
 export function generateGraphData(
   nodeList: reactomeEntry[],
   glyphs: { [key: string]: string },
-  rootIds: string[],
+  glyphsHighres: { [key: string]: string },
+  glyphsLowZoom: { [key: string]: string },
   glyphData: {
     [key: string]: glyphData;
   },
+  rootIds: string[],
   moduleAreas: [number[]] = [[]]
 ): graphData {
   const graph = {
@@ -55,6 +57,9 @@ export function generateGraphData(
         type: 'image',
         modNum: modNum,
         image: glyphs[id],
+        imageLowRes: glyphs[id],
+        imageHighRes: glyphsHighres[id],
+        imageLowZoom: glyphsLowZoom[id],
         name: _.escape(name),
         hidden: false,
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
@@ -71,9 +76,13 @@ export function generateGraphData(
         x: initPosX,
         y: initPosY,
         up: { x: initPosX, y: initPosY, gamma: 0 },
+        layoutX: 0,
+        layoutY: 0,
+        rootId: entry.rootId,
         zIndex: 1,
         isRoot: entry.rootId === entry.pathwayId,
         size: entry.rootId === entry.pathwayId ? 15 : 10,
+        nonHoverSize: entry.rootId === entry.pathwayId ? 15 : 10,
         fixed: false, // fixed property on nodes excludes nodes from layouting
       } as baseNodeAttr,
     } as node;

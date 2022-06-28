@@ -9,8 +9,9 @@ import {
   baseEdgeAttr,
   upDatedPos,
 } from '@/core/graphTypes';
-import { pfsPrime } from '@/core/noverlap_pfsp';
+import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 import { useMainStore } from '@/stores';
+import hull from 'hull.js';
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -21,7 +22,8 @@ import { useMainStore } from '@/stores';
 export function generateGraphData(
   nodeList: { [key: string]: entry },
   glyphs: { [key: string]: string },
-  moduleAreas: [number[]] = [[]]
+  moduleAreas: [number[]] = [[]],
+  glyphsHighres: { [key: string]: string }
 ): graphData {
   const mainStore = useMainStore();
   const graph = {
@@ -56,6 +58,8 @@ export function generateGraphData(
             entryType: _.escape(entry.entryType),
             type: 'image',
             image: glyphs[entryKey.replace('path:', '')],
+            imageLowRes: glyphs[entryKey.replace('path:', '')],
+            imageHighRes: glyphsHighres[entryKey.replace('path:', '')],
             name: _.escape(currentNames[0]),
             color: color,
             label: `Name: ${_.escape(trueName)}`,
@@ -64,6 +68,7 @@ export function generateGraphData(
             up: { x: initPosX, y: initPosY, gamma: 0 },
             zIndex: 1,
             size: 10,
+            nonHoverSize: 10,
             fixed: false, // fixed property on nodes excludes nodes from layouting
           } as baseNodeAttr,
         } as node;
@@ -92,9 +97,15 @@ export function generateGraphData(
       }
     }
   }
-  graph.cluster_rects = moduleAreas;
-  graph.nodes = pfsPrime(graph.nodes, maxModuleNum, moduleAreas);
-  console.log('here I am', graph);
+  let norm_node_pos = [] as node[];
+  let hull_points: [[number[]]] = [[[]]];
+  let nodes_per_cluster = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
+  _.forEach(nodes_per_cluster, n => {
+    let clusterHullPoints = hull(n.map(o => [o.attributes.x, o.attributes.y]), 20) as [[number, number]]; 
+    hull_points.push(clusterHullPoints);
+    norm_node_pos = norm_node_pos.concat(n);
+    console.log(clusterHullPoints)
+  })
   return graph;
 }
 

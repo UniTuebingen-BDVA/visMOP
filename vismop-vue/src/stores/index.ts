@@ -4,6 +4,7 @@ import { defineStore } from 'pinia';
 import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
 import { reactomeEntry } from '@/core/reactomeTypes';
+import { useQuasar } from 'quasar';
 
 interface State {
   sideBarExpand: boolean;
@@ -225,6 +226,8 @@ export const useMainStore = defineStore('mainStore', {
       this.clickedNodes.push(tableEntry);
     },
     queryEgoGraps(val: number) {
+      const $q = useQuasar();
+      $q.loading.show();
       let ids: string[] = [];
       if (this.targetDatabase === 'kegg') {
         ids = this.clickedNodes.map((elem) => {
@@ -242,9 +245,13 @@ export const useMainStore = defineStore('mainStore', {
         body: JSON.stringify({ nodes: ids, threshold: val }),
       })
         .then((response) => response.json())
-        .then(
-          (content) => (this.interactionGraphData = content.interaction_graph)
-        );
+        .then((content) => {
+          this.interactionGraphData = content.interaction_graph;
+          $q.loading.show();
+        });
+    },
+    setInteractionGraphData(val: networkxNodeLink) {
+      this.interactionGraphData = val;
     },
     removeClickedNode(val: string) {
       console.log('removedNode', val);
@@ -267,6 +274,29 @@ export const useMainStore = defineStore('mainStore', {
     },
     setOverviewData(val: { [key: string]: entry }) {
       this.overviewData = val;
+    },
+
+    setOmicsTableHeaders(payload: ColType[], omicsType: string) {
+      if (omicsType == 'Transcriptomics') {
+        this.transcriptomicsTableHeaders = payload;
+      } else if (omicsType == 'Proteomics') {
+        this.proteomicsTableHeaders = payload;
+      } else if (omicsType == 'Metabolomics') {
+        this.metabolomicsTableHeaders = payload;
+      }
+    },
+
+    setOmicsTableData(
+      payload: { [x: string]: string | number }[],
+      omicsType: string
+    ) {
+      if (omicsType == 'Transcriptomics') {
+        this.transcriptomicsTableData = payload;
+      } else if (omicsType == 'Proteomics') {
+        this.proteomicsTableData = payload;
+      } else if (omicsType == 'Metabolomics') {
+        this.metabolomicsTableData = payload;
+      }
     },
     setTranscriptomicsTableHeaders(val: ColType[]) {
       this.transcriptomicsTableHeaders = val;

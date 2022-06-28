@@ -1,6 +1,6 @@
 class KeggGet:
-    """class for KeggGet
-    """
+    """class for KeggGet"""
+
     def __init__(self, keggID):
         self.keggID = keggID
         self.geneName = None

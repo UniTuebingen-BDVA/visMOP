@@ -31,10 +31,12 @@
           <q-fab icon="keyboard_arrow_down" direction="down">
             <q-fab-action
               icon="mdi-arrow-expand"
+              color="primary"
               @click="expandComponent"
             ></q-fab-action>
             <q-fab-action
               icon="mdi-arrow-collapse"
+              color="primary"
               @click="minimizeComponent"
             ></q-fab-action>
           </q-fab>
@@ -45,8 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import DetailNetwork from '../core/keggDetailView';
-import { generateGraphData } from '../core/detailGraphPreparation';
+import DetailNetwork from '../core/keggGraphs/keggDetailView';
+import { generateGraphData } from '../core/keggGraphs/keggDetailGraphPreparation';
 import {
   computed,
   onMounted,

@@ -10,8 +10,8 @@ import {
   segment,
   reactomeNode,
   graphJSON,
-} from '../core/reactomeTypes';
-import { generateGlyphVariation } from '../core/overviewGlyph';
+} from './reactomeTypes';
+import { HighDetailGlyph } from '../overviewGlyphs/highDetailGlyph';
 
 const _colorsAlternative: { [key: string]: string } = {
   // from https://github.com/reactome-pwp/diagram/blob/master/src/main/resources/org/reactome/web/diagram/profiles/diagram/profile_02.json
@@ -32,20 +32,20 @@ const _colorsAlternative: { [key: string]: string } = {
 };
 // main color table containing grays for most nodes to indicated the unavailibility of the corresponding elements in the suppliet dataset
 const colors: { [key: string]: string } = {
-  Chemical: '#999999',
-  ChemicalDrug: '#999999',
-  compartment: 'rgba(180, 180, 180, 0.5)',
+  Chemical: '#d2d2d2',
+  ChemicalDrug: '#d2d2d2',
+  compartment: 'rgba(210, 210, 210, 0.25)',
   compartmentEdge: 'rgb(180, 180, 180)',
-  Complex: '#999999',
-  Entity: '#999999',
-  EntitySet: '#999999',
-  Gene: '#999999',
-  ProcessNode: '#999999',
-  EncapsulatedNode: '#999999',
-  Protein: '#999999',
-  RNA: '#999999',
-  ComplexDrug: '#999999',
-  EntitySetDrug: '#999999',
+  Complex: '#d2d2d2',
+  Entity: '#d2d2d2',
+  EntitySet: '#d2d2d2',
+  Gene: '#d2d2d2',
+  ProcessNode: '#d2d2d2',
+  EncapsulatedNode: '#d2d2d2',
+  Protein: '#d2d2d2',
+  RNA: '#d2d2d2',
+  ComplexDrug: '#d2d2d2',
+  EntitySetDrug: '#d2d2d2',
 };
 const lineColor = '#333333';
 const fontSize = '10px';
@@ -678,14 +678,16 @@ export default class ReactomeDetailView {
         .attr('cx', size)
         .attr('cy', size)
         .attr('fill', 'white');
-      self.tooltipG.append(() =>
-        generateGlyphVariation(
+      self.tooltipG.append(() => {
+        const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
+          28,
           false
-        )
-      );
+        );
+        return currentGlyph.generateGlyphSvg();
+      });
     });
     enterG
       .append('text')
@@ -821,14 +823,16 @@ export default class ReactomeDetailView {
         .attr('cx', size)
         .attr('cy', size)
         .attr('fill', 'white');
-      self.tooltipG.append(() =>
-        generateGlyphVariation(
+      self.tooltipG.append(() => {
+        const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
+          28,
           false
-        )
-      );
+        );
+        return currentGlyph.generateGlyphSvg();
+      });
     });
   }
 
@@ -924,14 +928,16 @@ export default class ReactomeDetailView {
         .attr('cx', size)
         .attr('cy', size)
         .attr('fill', 'white');
-      self.tooltipG.append(() =>
-        generateGlyphVariation(
+      self.tooltipG.append(() => {
+        const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
+          28,
           false
-        )
-      );
+        );
+        return currentGlyph.generateGlyphSvg();
+      });
     });
 
     enterG

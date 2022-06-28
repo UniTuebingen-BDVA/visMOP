@@ -17,7 +17,12 @@
             icon="keyboard_arrow_right"
             @click="minimizeComponent"
           ></q-fab-action>
-          <q-fab-action>
+          <q-fab-action
+            color="primary"
+            icon="mdi-restore"
+            @click="resetZoom"
+          ></q-fab-action>
+          <q-fab-action color="white">
             <graph-filter
               v-model:transcriptomics="transcriptomicsFilter"
               v-model:proteomics="proteomicsFilter"
@@ -35,13 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/overviewNetwork';
+import OverviewGraph from '../core/reactomeGraphs/reactomeOverviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
-import { generateGraphData } from '../core/reactomeOverviewGraphPreparation';
-import {
-  generateGlyphDataReactome,
-  generateGlyphs,
-} from '../core/overviewGlyph';
+import { generateGraphData } from '../core/reactomeGraphs/reactomeOverviewGraphPreparation';
+import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
+import { generateGlyphs } from '../core/overviewGlyphs/generator';
 import {
   computed,
   onMounted,
@@ -51,9 +54,11 @@ import {
   watch,
   defineProps,
 } from 'vue';
-import { reactomeEntry } from '@/core/reactomeTypes';
+import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphData } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
+import { HighDetailGlyph } from '@/core/overviewGlyphs/highDetailGlyph';
+import { LowDetailGlyph } from '@/core/overviewGlyphs/lowDetailGlyph';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -337,23 +342,37 @@ const expandComponent = () => {
 const minimizeComponent = () => {
   expandOverview.value = false;
 };
+const resetZoom = () => {
+  networkGraph.value?.resetZoom();
+};
 const drawNetwork = () => {
   networkGraph.value?.killGraph();
   // const fcExtents = fcQuantiles
   glyphDataVar.value = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphDataVar.value);
   console.log('GLYPH DATA', glyphDataVar.value);
-  const generatedGlyphs = generateGlyphs(glyphDataVar.value);
+  const generatedGlyphs = generateGlyphs(glyphDataVar.value, HighDetailGlyph);
+  const generatedGlyphsHighRes = generateGlyphs(
+    glyphDataVar.value,
+    HighDetailGlyph,
+    128
+  );
+  const generatedGlyphsLowZoom = generateGlyphs(
+    glyphDataVar.value,
+    LowDetailGlyph,
+    128
+  );
   mainStore.setGlyphs(generatedGlyphs);
-  const glyphsURL = generatedGlyphs.url;
   console.log('GLYPHs', mainStore.glyphs);
   const moduleAreas = mainStore.moduleAreas;
 
   const networkData = generateGraphData(
     overviewData.value,
-    glyphsURL,
-    pathwayLayouting.value.rootIds,
+    generatedGlyphs.url,
+    generatedGlyphsHighRes.url,
+    generatedGlyphsLowZoom.url,
     glyphDataVar.value,
+    pathwayLayouting.value.rootIds,
     moduleAreas
   );
   console.log('base dat', networkData);

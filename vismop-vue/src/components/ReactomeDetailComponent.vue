@@ -31,10 +31,12 @@
           <q-fab icon="keyboard_arrow_down" direction="down">
             <q-fab-action
               icon="mdi-arrow-expand"
+              color="primary"
               @click="expandComponent"
             ></q-fab-action>
             <q-fab-action
               icon="mdi-arrow-collapse"
+              color="primary"
               @click="minimizeComponent"
             ></q-fab-action>
           </q-fab>
@@ -45,15 +47,15 @@
 </template>
 
 <script setup lang="ts">
-import ReactomeDetailView from '../core/reactomeDetailView';
+import ReactomeDetailView from '../core/reactomeGraphs/reactomeDetailView';
 import {
   graphJSON,
   layoutJSON,
   foldChangesByType,
   foldChangesByID,
   reactomeEntry,
-} from '../core/reactomeTypes';
-import { getEntryAmounts } from '../core/reactomeUtils';
+} from '../core/reactomeGraphs/reactomeTypes';
+import { getEntryAmounts } from '../core/reactomeGraphs/reactomeUtils';
 import {
   computed,
   onMounted,

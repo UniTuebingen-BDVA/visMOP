@@ -94,7 +94,8 @@ export function generateGraphData(
             initialX: initPosX,
             initialY: initPosY,
             origPos: entry.origPos,
-            size: 3,
+            size: 10,
+            nonHoverSize: 10,
             fixed: false, // fixed property on nodes excludes nodes from layouting
           } as detailNodeAttr,
         } as node;

@@ -1,7 +1,11 @@
 import assert from 'chai';
 
-import { getEntryAmounts } from '../src/core/reactomeUtils';
-import { entityNode, eventNode, graphJSON } from '../src/core/reactomeTypes';
+import { getEntryAmounts } from '../src/core/reactomeGraphs/reactomeUtils';
+import {
+  entityNode,
+  eventNode,
+  graphJSON,
+} from '../src/core/reactomeGraphs/reactomeTypes';
 import * as testGraphJson from './unitTestResources/reactomeUtils/68884_unit_test.graph.json';
 
 interface graphJSONUnformatted {
@@ -14,11 +18,11 @@ interface graphJSONUnformatted {
 
 function format_graph_json(): graphJSON {
   testGraphJson;
-  let intermediateNodeDict = {} as { [key: number]: entityNode };
-  let intermediateEdgeDict = {} as { [key: number]: eventNode };
-  let intermediateSubpathwayDict = {} as { [key: number]: eventNode };
+  const intermediateNodeDict = {} as { [key: number]: entityNode };
+  const intermediateEdgeDict = {} as { [key: number]: eventNode };
+  const intermediateSubpathwayDict = {} as { [key: number]: eventNode };
 
-  let outJSON = {} as graphJSON;
+  const outJSON = {} as graphJSON;
   outJSON.dbId = testGraphJson.dbId;
   outJSON.stId = testGraphJson.stId;
 

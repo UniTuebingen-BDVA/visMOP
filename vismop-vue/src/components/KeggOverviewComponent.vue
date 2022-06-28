@@ -22,9 +22,10 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/overviewNetwork';
-import { generateGraphData } from '../core/keggOverviewGraphPreparation';
-import { generateGlyphData, generateGlyphs } from '../core/overviewGlyph';
+import OverviewGraph from '../core/keggGraphs/keggOverviewNetwork/overviewNetwork';
+import { generateGraphData } from '../core/keggGraphs/keggOverviewGraphPreparation';
+import { generateGlyphData } from '../core/overviewGlyphs/glyphDataPreparation';
+import { generateGlyphs } from '../core/overviewGlyphs/generator';
 import {
   computed,
   onMounted,
@@ -36,6 +37,7 @@ import {
 } from 'vue';
 import { useMainStore } from '@/stores';
 import { entry } from '@/core/graphTypes';
+import { HighDetailGlyph } from '@/core/overviewGlyphs/highDetailGlyph';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -231,16 +233,17 @@ const drawNetwork = () => {
   const glyphData = generateGlyphData();
   mainStore.setGlyphData(glyphData);
   console.log('GLYPH DATA', glyphData);
-  const generatedGlyphs = generateGlyphs(glyphData);
+  const generatedGlyphs = generateGlyphs(glyphData, HighDetailGlyph);
+  const generatedGlyphsHighRes = generateGlyphs(glyphData, HighDetailGlyph, 96);
   mainStore.setGlyphs(generatedGlyphs);
-  const glyphsURL = generatedGlyphs.url;
   console.log('GLYPHs', mainStore.glyphs);
   console.log('OVERVIEW DATA', overviewData.value);
   const moduleAreas = mainStore.moduleAreas;
 
   const networkData = generateGraphData(
     overviewData.value as { [key: string]: entry },
-    glyphsURL,
+    generatedGlyphs.url,
+    generatedGlyphsHighRes.url,
     moduleAreas
   );
   console.log('base dat', networkData);

@@ -1,4 +1,4 @@
-import { graphJSON, entityNode } from '../core/reactomeTypes';
+import { graphJSON, entityNode } from './reactomeTypes';
 
 export function getEntryAmounts(entryID: number, graphJson: graphJSON) {
   const molecules: number[] = [];
