@@ -300,6 +300,7 @@ const queryReactome = () => {
       proteomics: sliderValsProteomics.value,
       metabolomics: sliderValsMetabolomics.value,
     },
+    layoutSettings: layoutSettings.value
   };
   fetch('/reactome_parsing', {
     method: 'POST',

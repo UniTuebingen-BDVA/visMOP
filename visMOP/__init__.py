@@ -894,17 +894,13 @@ def reactome_overview():
                                 dictionary mapping query to pathway ids
                                 list of Ids belonging to root nodes
     """
+
     reactome_hierarchy = cache.get("reactome_hierarchy")
-    (
-        out_data,
-        pathway_dict,
-        dropdown_data,
-        root_ids,
-    ) = reactome_hierarchy.generate_overview_data(False)
-    # user choice
-    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
     layout_limits = reactome_hierarchy.layout_settings['limits']
     layout_attributes_used = reactome_hierarchy.layout_settings['attributes']
+    # user choice
+    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
+    
     # print(layout_limits, layout_attributes_used)
    
     out_data, pathway_dict, dropdown_data, root_ids, pathways_root_names, root_subpathways, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(layout_limits, False)

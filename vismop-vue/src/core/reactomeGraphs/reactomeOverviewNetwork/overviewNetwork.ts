@@ -40,6 +40,7 @@ export default class overviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected lodRatio = 2.0;
+  protected additionalData;
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -95,6 +96,7 @@ export default class overviewGraph {
 
   constructor(containerID: string, graphData: graphData) {
     this.graph = UndirectedGraph.from(graphData);
+    this.additionalData = { clusterAreas: graphData.clusterAreas } 
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
@@ -109,7 +111,6 @@ export default class overviewGraph {
    */
   mainGraph(elemID: string): Sigma {
     const mainStore = useMainStore();
-
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
 
@@ -130,17 +131,19 @@ export default class overviewGraph {
         image: getNodeImageProgram(),
       },
       hoverRenderer: drawHover,
-    });
+      clusterVis:  'ConvexHull'
+    },
+    this.additionalData);
     console.log('Node Programs:');
     console.log(renderer.getSetting('nodeProgramClasses'));
 
     // To directly assign the positions to the nodes:
     const start = Date.now();
-    forceAtlas2.assign(this.graph, {
-      iterations: 500,
-      settings: inferredSettings,
-    });
-    noverlap.assign(this.graph);
+    // forceAtlas2.assign(this.graph, {
+    //   iterations: 500,
+    //   settings: inferredSettings,
+    // });
+    // noverlap.assign(this.graph);
     const duration = (Date.now() - start) / 1000;
     console.log(`layoutDuration: ${duration} S`);
     // const layout = new FA2Layout(graph, {settings: sensibleSettings });

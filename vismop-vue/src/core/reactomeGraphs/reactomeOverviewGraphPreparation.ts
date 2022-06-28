@@ -76,8 +76,8 @@ export function generateGraphData(
         x: initPosX,
         y: initPosY,
         up: { x: initPosX, y: initPosY, gamma: 0 },
-        layoutX: 0,
-        layoutY: 0,
+        layoutX: initPosX,
+        layoutY: initPosX,
         rootId: entry.rootId,
         zIndex: 1,
         isRoot: entry.rootId === entry.pathwayId,
@@ -138,7 +138,7 @@ export function generateGraphData(
 
 
   graph.clusterAreas = hull_points;
-  
+  console.log('rOGP', graph.clusterAreas )
   graph.nodes = norm_node_pos;
 
   return graph;

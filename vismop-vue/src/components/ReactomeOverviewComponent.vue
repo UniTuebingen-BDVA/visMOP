@@ -243,17 +243,17 @@ watch(overviewData, () => {
     outstandingDraw.value = true;
   }
 });
-watch(
-  () => props.isActive,
-  () => {
-    if (outstandingDraw.value) {
-      setTimeout(() => {
-        drawNetwork();
-      }, 1000);
-      outstandingDraw.value = false;
-    }
-  }
-);
+// watch(
+//   () => props.isActive,
+//   () => {
+//     if (outstandingDraw.value) {
+//       setTimeout(() => {
+//         drawNetwork();
+//       }, 1000);
+//       outstandingDraw.value = false;
+//     }
+//   }
+// );
 
 watch(glyphDataVar, () => {
   let transcriptomicsAvailable = false;
@@ -330,12 +330,12 @@ watch(
   }
 );
 
-onMounted(() => {
-  console.log('OVDATA', overviewData);
-  if (overviewData.value) {
-    drawNetwork();
-  }
-});
+// onMounted(() => {
+//   console.log('OVDATA', overviewData);
+//   if (overviewData.value) {
+//     drawNetwork();
+//   }
+// });
 const expandComponent = () => {
   expandOverview.value = true;
 };
