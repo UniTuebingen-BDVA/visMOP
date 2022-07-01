@@ -135,7 +135,7 @@ export function generateGraphData(
     norm_node_pos = norm_node_pos.concat(n);
     console.log(clusterHullPoints)
   })
-
+  hull_points.shift()
 
   graph.clusterAreas = hull_points;
   console.log('rOGP', graph.clusterAreas )

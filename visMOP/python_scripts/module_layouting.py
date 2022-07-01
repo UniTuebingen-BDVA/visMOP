@@ -293,11 +293,13 @@ class Module_layout:
             return list of list with one list for every cluster
         '''
         num_features = len(self.data_table_scaled_filled[0])
-        if num_features >= 2:
+        if num_features > 2:
             n_comp = min(math.ceil(num_features / 2), 10)
             positions_dict, position_list = self.get_umap_layout_pos(n_components=n_comp, n_neighbors = 15, min_dist=0)
         else:
             position_list = self.data_table_scaled_filled
+            positions_dict = {node_name: row  for row, node_name in zip(
+            position_list, list(self.data_table.index))}
 
         optics = OPTICS(min_samples=5, n_jobs=-1)
         optics_fit = optics.fit(position_list)
@@ -644,8 +646,8 @@ class Module_layout:
         #     node_positions[root] = root_pos
             
         # kann man sich vllt sparen?
-        # adjusted_to_ncd = normalize_2D_node_pos_in_range(
-        #     node_positions, [-1, 1, -1, 1])
+        # node_positions = normalize_2D_node_pos_in_range(
+        #     node_positions, [0, 1, 0, 1], True)
 
         return node_positions
     

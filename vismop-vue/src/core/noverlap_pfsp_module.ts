@@ -23,7 +23,7 @@ import { pfsPrime } from '@/core/noverlap_pfsp'
 export function pfsPrime_modules (
   allNodes: node[],
   maxModuleNum: number,
-  moduleAreas: [number[]] = [[-1, 1, -1, 1]],
+  moduleAreas: [number[]] = [[0, 1, 0, 1]],
   options: { padding: number } = { padding: 0 }
 ): [node[]] {
   // TODO: add padding
@@ -49,7 +49,7 @@ export function pfsPrime_modules (
   return updatedNodes
 }
 
-function normInArea (nodes: node[], area: number[], padding = 1) {
+function normInArea (nodes: node[], area: number[], padding = 0.1) {
   const maxMinXY = getMaxMinXY(nodes)
   area = [area[0] + padding, area[1]- padding, area[2]+ padding, area[3]- padding]
   // rand einbauen 

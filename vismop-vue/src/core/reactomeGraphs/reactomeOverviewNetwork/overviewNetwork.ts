@@ -14,6 +14,7 @@ import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import { filterElements, setAverageFilter } from './filter';
+import ClusterHulls from '@/core/convexHullsForClusters'; 
 
 export default class overviewGraph {
   // constants
@@ -39,8 +40,8 @@ export default class overviewGraph {
   protected camera;
   protected prevFrameZoom;
   protected graph;
+  protected clusterAreas;
   protected lodRatio = 2.0;
-  protected additionalData;
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -96,7 +97,7 @@ export default class overviewGraph {
 
   constructor(containerID: string, graphData: graphData) {
     this.graph = UndirectedGraph.from(graphData);
-    this.additionalData = { clusterAreas: graphData.clusterAreas } 
+    this.clusterAreas = graphData.clusterAreas;
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
@@ -110,6 +111,15 @@ export default class overviewGraph {
    * @returns {Sigma} Sigma instance
    */
   mainGraph(elemID: string): Sigma {
+    let clusterAreas: [number[]] | [[number[]]] | undefined | { x: number; y: number; }[][] = this.clusterAreas
+    if (typeof this.clusterAreas !== 'undefined'){console.log('YTPE',typeof this.clusterAreas[0][0] )}
+    if (typeof this.clusterAreas !== 'undefined' && typeof this.clusterAreas[0][0] != 'number'){
+      let clusterHullsAdjustment = new ClusterHulls(this.graph, null, 30)
+      let convexHulls = this.clusterAreas as [[number[]]]
+      clusterAreas = clusterHullsAdjustment.adjust(convexHulls)
+    }
+    let additionalData = { clusterAreas: clusterAreas } 
+    
     const mainStore = useMainStore();
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
@@ -133,7 +143,7 @@ export default class overviewGraph {
       hoverRenderer: drawHover,
       clusterVis:  'ConvexHull'
     },
-    this.additionalData);
+    additionalData);
     console.log('Node Programs:');
     console.log(renderer.getSetting('nodeProgramClasses'));
 
