@@ -110,11 +110,12 @@ def get_layout_settings(settings, omics_recieved):
     limits = []
     omics_recieved.append(True)
     for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
+        omic_limits = [float(i) for i in layout_settings['limits']]
+        limits.append(omic_limits)
         if recieved and omic != 'not related to specific omic ':
             attribute_boolean = [att in layout_settings['attributes'] for att in possible_omic_attributes]
             attributes += attribute_boolean
-            omic_limits = [float(i) for i in layout_settings['limits']]
-            limits.append(omic_limits)
+            
         elif recieved:
             attribute_boolean = [att in layout_settings['attributes'] for att in possible_no_omic_attributes]
             attributes += attribute_boolean
@@ -900,7 +901,7 @@ def reactome_overview():
     layout_attributes_used = reactome_hierarchy.layout_settings['attributes']
     # user choice
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
-    
+    print(reactome_hierarchy.layout_settings)
     # print(layout_limits, layout_attributes_used)
    
     out_data, pathway_dict, dropdown_data, root_ids, pathways_root_names, root_subpathways, statistic_data_complete, omics_recieved = reactome_hierarchy.generate_overview_data(layout_limits, False)

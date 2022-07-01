@@ -547,6 +547,7 @@ class PathwayHierarchy(dict):
         root_ids = []
         pathways_root_names = {}
         pathway_summary_stats_dict = {}
+        print(self.omics_recieved)
         for pathway in pathway_ids:
             entry = self[pathway]
             if entry.has_data:
@@ -561,6 +562,8 @@ class PathwayHierarchy(dict):
                                         'mean exp(lower) ', '% vals (lower) ', '% Reg', '% Unreg', "% p with val"]
         omics = [o for i, o in enumerate(['t ', 'p ', 'm ']) if self.omics_recieved[i]]
         stat_vals_colnames = [o+stat for o in omics for stat in stat_vals]
+        print(stat_vals_colnames)
+        print(pathway_summary_stats_dict)
         stat_vals_colnames.append('pathway size')
         return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), pathways_root_names, root_subpathways, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index', columns=stat_vals_colnames), self.omics_recieved
 
@@ -646,7 +649,6 @@ def generate_overview_pathway_entry(
     pathway_summary_data = []
     num_entries = len(set(list(entry.total_measured_genes.keys()) + list(entry.total_measured_proteins.keys())+ list(entry.total_measured_metabolites.keys())))
     values_per_omic = [entry.total_measured_genes.values(), entry.total_measured_proteins.values(), entry.total_measured_metabolites.values()]
-    
     for omic_recieved, omic_values_dict, limits in zip(omics_recieved, values_per_omic, omic_limits):
         if omic_recieved:
             omic_values = [vals['measurement'] for vals in omic_values_dict]

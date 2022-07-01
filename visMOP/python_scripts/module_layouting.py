@@ -656,6 +656,14 @@ class Module_layout:
         return self.final_node_pos
 
     def get_module_areas(self):
+        flatten_list = list(map(list, zip(*self.modules_area)))
+
+        min_x, max_x = [min(flatten_list[0]), max(flatten_list[1])]
+        min_y, max_y = [min(flatten_list[2]), max(flatten_list[3])]
+        norm_areas = []
+        for mod in self.modules_area:
+            norm_area = [normalize_val_in_range(mod[0], min_x, max_x, [0,1]), normalize_val_in_range(mod[1], min_x, max_x, [0,1]), normalize_val_in_range(mod[2], min_y, max_y, [0,1]), normalize_val_in_range(mod[3], min_y, max_y, [0,1])]
+            norm_areas.append(norm_area)
         return self.modules_area
 
 
