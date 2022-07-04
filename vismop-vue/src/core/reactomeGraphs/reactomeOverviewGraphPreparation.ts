@@ -10,7 +10,7 @@ import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 // import { vpsc } from '@/core/noverlap_vpsc'
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from '../generalTypes';
-import hull from "hull.js";
+import hull from 'hull.js';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -116,7 +116,7 @@ export function generateGraphData(
                   `${currentEdge.target}+${currentEdge.source}`
                 )
               ) {
-                graph.edges.push(currentEdge); 
+                graph.edges.push(currentEdge);
                 addedEdges.push(currentEdge.key);
               }
             }
@@ -127,18 +127,25 @@ export function generateGraphData(
     index += 1;
   }
   let norm_node_pos = [] as node[];
-  let hull_points: [[number[]]] = [[[]]];
-  let nodes_per_cluster = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
-  _.forEach(nodes_per_cluster, n => {
-    let clusterHullPoints = hull(n.map(o => [o.attributes.x, o.attributes.y]), 20) as [[number, number]]; 
+  const hull_points: [[number[]]] = [[[]]];
+  const nodes_per_cluster = pfsPrime_modules(
+    graph.nodes,
+    maxModuleNum,
+    moduleAreas
+  );
+  _.forEach(nodes_per_cluster, (n) => {
+    const clusterHullPoints = hull(
+      n.map((o) => [o.attributes.x, o.attributes.y]),
+      20
+    ) as [[number, number]];
     hull_points.push(clusterHullPoints);
     norm_node_pos = norm_node_pos.concat(n);
-    console.log(clusterHullPoints)
-  })
-  hull_points.shift()
+    console.log(clusterHullPoints);
+  });
+  hull_points.shift();
 
   graph.clusterAreas = hull_points;
-  console.log('rOGP', graph.clusterAreas )
+  console.log('rOGP', graph.clusterAreas);
   graph.nodes = norm_node_pos;
 
   return graph;
@@ -155,8 +162,8 @@ function generateForceGraphEdge(
   type: string
 ): edge {
   const edgeColors: { [key: string]: string } = {
-    hierarchy: '#999999',
-    maplink: 'rgba(0.2,0.2,0.2,1.0)',
+    hierarchy: 'rgba(60,60,60,0.2)',
+    maplink: 'rgba(60,60,60,0.2)',
   };
 
   const entry1 = sourceID;

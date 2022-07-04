@@ -14,7 +14,11 @@ import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import { filterElements, setAverageFilter } from './filter';
-import ClusterHulls from '@/core/convexHullsForClusters'; 
+import ClusterHulls from '@/core/convexHullsForClusters';
+import subgraph from 'graphology-operators/subgraph';
+import circular from 'graphology-layout/circular';
+import { assignLayout } from 'graphology-layout/utils';
+import { nodeExtent } from 'graphology-metrics/graph/extent';
 
 export default class overviewGraph {
   // constants
@@ -118,32 +122,44 @@ export default class overviewGraph {
       let convexHulls = this.clusterAreas as [[number[]]]
       clusterAreas = clusterHullsAdjustment.adjust(convexHulls)
     }
-    let additionalData = { clusterAreas: clusterAreas } 
-    
+    if (
+      typeof this.clusterAreas !== 'undefined' &&
+      typeof this.clusterAreas[0][0] != 'number'
+    ) {
+      const clusterHullsAdjustment = new ClusterHulls(this.graph, null, 30);
+      const convexHulls = this.clusterAreas as [[number[]]];
+      clusterAreas = clusterHullsAdjustment.adjust(convexHulls);
+    }
+    const additionalData = { clusterAreas: clusterAreas };
+
     const mainStore = useMainStore();
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
 
     const inferredSettings = forceAtlas2.inferSettings(this.graph);
     // construct Sigma main instance
-    const renderer = new Sigma(this.graph, elem, {
-      nodeReducer: nodeReducer.bind(this),
-      edgeReducer: edgeReducer.bind(this),
-      zIndex: true, // enabling zIndex parameter
-      renderLabels: true, // do not render labels w/o hover
-      labelRenderedSizeThreshold: 20,
-      edgeProgramClasses: {
-        ...DEFAULT_SETTINGS.edgeProgramClasses,
-        dashed: DashedEdgeProgram,
+    const renderer = new Sigma(
+      this.graph,
+      elem,
+      {
+        nodeReducer: nodeReducer.bind(this),
+        edgeReducer: edgeReducer.bind(this),
+        zIndex: true, // enabling zIndex parameter
+        renderLabels: true, // do not render labels w/o hover
+        labelRenderedSizeThreshold: 20,
+        edgeProgramClasses: {
+          ...DEFAULT_SETTINGS.edgeProgramClasses,
+          dashed: DashedEdgeProgram,
+        },
+        nodeProgramClasses: {
+          ...DEFAULT_SETTINGS.nodeProgramClasses,
+          image: getNodeImageProgram(),
+        },
+        hoverRenderer: drawHover,
+        clusterVis: 'ConvexHull',
       },
-      nodeProgramClasses: {
-        ...DEFAULT_SETTINGS.nodeProgramClasses,
-        image: getNodeImageProgram(),
-      },
-      hoverRenderer: drawHover,
-      clusterVis:  'ConvexHull'
-    },
-    additionalData);
+      additionalData
+    );
     console.log('Node Programs:');
     console.log(renderer.getSetting('nodeProgramClasses'));
 
@@ -158,6 +174,19 @@ export default class overviewGraph {
     console.log(`layoutDuration: ${duration} S`);
     // const layout = new FA2Layout(graph, {settings: sensibleSettings });
     // layout.start();
+    const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
+      return attr.isRoot;
+    });
+    const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
+    const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
+    const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
+
+    const rootPositions = circular(rootSubgraph, {
+      scale: width,
+      center: 1.0,
+    });
+    assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
+
     this.graph.forEachNode((node, attributes) => {
       attributes.layoutX = attributes.x;
       attributes.layoutY = attributes.y;

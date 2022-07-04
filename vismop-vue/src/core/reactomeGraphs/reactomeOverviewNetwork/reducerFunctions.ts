@@ -173,10 +173,10 @@ export function edgeReducer(
       }
     }
     if (this.highlighedEdgesHover.has(edge)) {
-      return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 };
+      return { ...data, color: 'rgba(255,0,0,0.7)', size: 4, zIndex: 1 };
     }
     if (this.highlighedEdgesClick.has(edge)) {
-      return { ...data, color: 'rgba(255,0,0,1.0)', size: 1, zIndex: 1 };
+      return { ...data, color: 'rgba(255,0,0,0.7)', size: 1, zIndex: 1 };
     }
 
     return data;
