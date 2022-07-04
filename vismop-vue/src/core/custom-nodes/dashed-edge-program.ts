@@ -268,8 +268,8 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix);
     gl.uniform1f(this.sqrtZoomRatioLocation, Math.sqrt(params.ratio));
     gl.uniform1f(this.correctionRatioLocation, params.correctionRatio);
-    gl.uniform1f(this.dashLengthLocation, 5 * (1 / params.ratio));
-    gl.uniform1f(this.gapLengthLocation, 5 * (1 / params.ratio));
+    gl.uniform1f(this.dashLengthLocation, 3 * (1 / params.ratio));
+    gl.uniform1f(this.gapLengthLocation, 6 * (1 / params.ratio));
     gl.uniform2f(this.viewportResolutionLocation, params.width, params.height);
     // Drawing:
     gl.drawElements(
