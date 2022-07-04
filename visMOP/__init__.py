@@ -43,7 +43,7 @@ import sys
 import random
 from visMOP.python_scripts.deDal_layouting import fill_missing_values_with_neighbor_mean, convert_each_feature_into_z_scores, double_centring, NetworkSmoothing, rotate_to_ref, get_pca_layout_pos, morph_layouts, get_umap_layout_pos
 from visMOP.python_scripts.forceDir_layouting import get_pos_in_force_dir_layout, get_networkx_with_edge_weights_all_nodes_connected
-from visMOP.python_scripts.module_layouting import Module_layout
+from visMOP.python_scripts.module_layouting import Module_layout, normalize_2D_node_pos_in_range, normalize_val_in_range
 import networkx as nx
 import copy
 from numpy.core.fromnumeric import mean
@@ -925,7 +925,16 @@ def reactome_overview():
 
     # with open('module_areas.pkl', "rb") as f:
     #     module_areas = pickle.load(f)
+    # module_node_pos = normalize_2D_node_pos_in_range(
+    #          module_node_pos, [0, 1, 0, 1], True)
+    # print(module_node_pos)
+    
+    for mod in module_areas:
+        norm_area = [normalize_val_in_range(mod[0], min_x, max_x, [0,1]), normalize_val_in_range(mod[1], min_x, max_x, [0,1]), normalize_val_in_range(mod[2], min_y, max_y, [0,1]), normalize_val_in_range(mod[3], min_y, max_y, [0,1])]
+        norm_areas.append(norm_area)
 
+    module_areas = norm_areas
+    print(module_areas)
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway['pathwayId']]
         pathway["initialPosX"] = x_y_pos[0]

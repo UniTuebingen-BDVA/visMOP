@@ -645,9 +645,8 @@ class Module_layout:
         #     root_pos = [sum(subpathway_pos)/num_subpathways if pos!=2 else most_frequent(subpathway_pos) for pos, subpathway_pos in enumerate(zip(*root_pos))]
         #     node_positions[root] = root_pos
             
-        # kann man sich vllt sparen?
-        # node_positions = normalize_2D_node_pos_in_range(
-        #     node_positions, [0, 1, 0, 1], True)
+        node_positions = normalize_2D_node_pos_in_range(
+            node_positions, [0, 1, 0, 1], True)
 
         return node_positions
     
@@ -664,7 +663,7 @@ class Module_layout:
         for mod in self.modules_area:
             norm_area = [normalize_val_in_range(mod[0], min_x, max_x, [0,1]), normalize_val_in_range(mod[1], min_x, max_x, [0,1]), normalize_val_in_range(mod[2], min_y, max_y, [0,1]), normalize_val_in_range(mod[3], min_y, max_y, [0,1])]
             norm_areas.append(norm_area)
-        return self.modules_area
+        return norm_area
 
 
 ''' OLD '''
