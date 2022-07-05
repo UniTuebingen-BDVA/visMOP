@@ -26,20 +26,6 @@ export interface edge {
   target: string;
   attributes: Attributes;
 }
-/**
- * Defines a set of node attributes
- */
-export interface baseNodeAttr extends Attributes {
-  name: string;
-  x: number;
-  y: number;
-  zIndex: number;
-  color: string;
-  size: number;
-  fixed: boolean;
-  type: string;
-  label: string;
-}
 
 export interface detailNodeAttr extends baseNodeAttr {
   origPos: { [key: string]: number[] };
@@ -56,10 +42,12 @@ export interface detailNodeAttr extends baseNodeAttr {
 
 export interface baseNodeAttr extends Attributes {
   name: string;
+  id: string;
   x: number;
   y: number;
-  modNum?: number;
-  up: upDatedPos;
+  modNum: number;
+  up?: upDatedPos;
+  isRoot: boolean;
   zIndex: number;
   color: string;
   size: number;
@@ -87,7 +75,7 @@ export interface upDatedPos {
 export interface node {
   key: string;
   index: number;
-  attributes: baseNodeAttr ;
+  attributes: baseNodeAttr;
 }
 /**
  * Defines a Graph Data object
@@ -96,7 +84,7 @@ export interface graphData {
   attributes: { [name: string]: string };
   nodes: node[];
   edges: edge[];
-  clusterAreas?: [number[]] | [[number[]]] ;
+  clusterAreas?: [number[]] | [[number[]]];
   options: unkown;
 }
 export interface networkxNodeLink {

@@ -61,6 +61,7 @@ export function generateGraphData(
         imageHighRes: glyphsHighres[id],
         imageLowZoom: glyphsLowZoom[id],
         name: _.escape(name),
+        id: id,
         hidden: false,
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
         label: `${_.escape(name)}`,

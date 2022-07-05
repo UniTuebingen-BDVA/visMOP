@@ -1,8 +1,9 @@
 import { UndirectedGraph } from 'graphology';
+import _, { random } from 'lodash';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import noverlap from 'graphology-layout-noverlap';
 import Sigma from 'sigma';
-import { graphData } from '@/core/graphTypes';
+import { baseNodeAttr, graphData } from '@/core/graphTypes';
 //import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
@@ -19,6 +20,7 @@ import subgraph from 'graphology-operators/subgraph';
 import circular from 'graphology-layout/circular';
 import { assignLayout } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
+import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 
 export default class overviewGraph {
   // constants
@@ -105,6 +107,7 @@ export default class overviewGraph {
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
+    this.addModuleOverviewNodes();
     this.refreshCurrentPathway();
   }
 
@@ -254,6 +257,56 @@ export default class overviewGraph {
     });
 
     return renderer;
+  }
+  getModuleNodeIds() {
+    const moduleNodeMapping: {
+      [key: string]: { ids: string[]; pos: number[][] };
+    } = {};
+    this.graph.forEachNode((node, attr) => {
+      if (!attr.isRoot) {
+        // short circuit eval. to generate the corresponding entry
+        !(attr.modNum in moduleNodeMapping) &&
+          (moduleNodeMapping[attr.modNum] = { ids: [], pos: [] });
+        moduleNodeMapping[attr.modNum].ids.push(attr.id);
+        moduleNodeMapping[attr.modNum].pos.push([attr.x, attr.y]);
+      }
+    });
+    return moduleNodeMapping;
+  }
+
+  addModuleOverviewNodes() {
+    const mainStore = useMainStore();
+    const moduleNodeMapping = this.getModuleNodeIds();
+    const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
+    console.log('ModuleGlyphs', glyphs);
+    for (const key in Object.keys(moduleNodeMapping)) {
+      const xPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
+      const yPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
+      const moduleNode: baseNodeAttr = {
+        name: key,
+        id: key,
+        x: xPos,
+        y: yPos,
+        layoutX: xPos,
+        layoutY: yPos,
+        //x: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0])),
+        //y: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1])),
+        modNum: parseInt(key),
+        isRoot: false,
+        zIndex: 1,
+        color: 'rgb(255,124,78)',
+        size: 18,
+        fixed: false,
+        type: 'image',
+        label: `Module: ${key}`,
+        image: glyphs[key],
+        imageLowRes: glyphs[key],
+        imageHighRes: glyphs[key],
+        imageLowZoom: glyphs[key],
+      };
+
+      this.graph.addNode(key, moduleNode);
+    }
   }
 
   public resetZoom = resetZoom;
