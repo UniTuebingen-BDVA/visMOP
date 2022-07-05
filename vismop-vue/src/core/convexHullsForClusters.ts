@@ -158,117 +158,86 @@ function vecLength(vec: number[]): number {
   return len;
 }
 
+function normalize(vec: number[]): number[] {
+  const vecLen = vecLength(vec);
+  return [vec[0] / vecLen, vec[1] / vecLen];
+}
+
 function adjustHulls(
   currentHullPoints: [number[]],
   radianThreshold: number
 ): [number[]] {
-  let idx = currentHullPoints.length - 2;
+  const pushLen = 0.04;
+  const halfPushLen = (3 * pushLen) / 4;
+  currentHullPoints.pop();
+  const outList = [];
   // var XYVals = { x: currentHullPoints.map(function (o) { return o[0]; }), y: currentHullPoints.map(function (o) { return o[1]; }) };
-  while (idx >= 0) {
-    const prevIdx = idx >= currentHullPoints.length - 2 ? 0 : idx + 1;
+  for (let idx = 0; idx < currentHullPoints.length; idx++) {
+    const prevIdx = idx == 0 ? currentHullPoints.length - 1 : idx - 1;
     const prevPoint = currentHullPoints[prevIdx];
 
     const currPoint = currentHullPoints[idx];
 
-    const nextIdx = idx == 0 ? currentHullPoints.length - 2 : idx - 1;
+    const nextIdx = idx == currentHullPoints.length - 1 ? 0 : idx + 1;
     const nextPoint = currentHullPoints[nextIdx];
 
-    const prevCurVec = [
+    const prevCurVec = normalize([
       currPoint[0] - prevPoint[0],
       currPoint[1] - prevPoint[1],
-    ];
-    const nextCurrVec = [
+    ]);
+    const nextCurrVec = normalize([
       currPoint[0] - nextPoint[0],
       currPoint[1] - nextPoint[1],
-    ];
+    ]);
 
-    const prevCurVecAngle = [
+    const prevCurVecAngle = normalize([
       prevPoint[0] - currPoint[0],
       prevPoint[1] - currPoint[1],
-    ];
-    const nextCurrVecAngle = [
+    ]);
+    const nextCurrVecAngle = normalize([
       nextPoint[0] - currPoint[0],
       nextPoint[1] - currPoint[1],
-    ];
+    ]);
 
     const dotProd =
       prevCurVecAngle[0] * nextCurrVecAngle[0] +
       prevCurVecAngle[1] * nextCurrVecAngle[1];
 
-    const radian = Math.acos(
-      dotProd / (vecLength(prevCurVecAngle) * vecLength(nextCurrVecAngle))
-    );
-    const moveVec = [
+    const radian = Math.acos(dotProd);
+    const moveVec = normalize([
       prevCurVec[0] + nextCurrVec[0],
       prevCurVec[1] + nextCurrVec[1],
-    ];
-    const moveVecLen = vecLength(moveVec);
-    const moveVecUnit = [moveVec[0] / moveVecLen, moveVec[1] / moveVecLen];
+    ]);
 
     if (radian > radianThreshold) {
       // move current point more outside
       const newPushedOutPoint = [
-        currentHullPoints[idx][0] + moveVecUnit[0] * 0.03,
-        currentHullPoints[idx][1] + moveVecUnit[1] * 0.03,
+        currPoint[0] + moveVec[0] * pushLen,
+        currPoint[1] + moveVec[1] * pushLen,
       ];
-      currentHullPoints[idx] = newPushedOutPoint;
-      idx--;
+      outList.push(newPushedOutPoint);
       console.log('if', radian);
     } else {
-      console.log(
-        radian,
-        dotProd,
-        vecLength(prevCurVec),
-        vecLength(nextCurrVec)
-      );
       const newPushedOutPoint = [
-        currentHullPoints[idx][0] + moveVecUnit[0] * 0.015,
-        currentHullPoints[idx][1] + moveVecUnit[1] * 0.015,
+        currPoint[0] + moveVec[0] * halfPushLen,
+        currPoint[1] + moveVec[1] * halfPushLen,
       ];
-
-      const prevCurVecAngleElse = [
-        prevPoint[0] - newPushedOutPoint[0],
-        prevPoint[1] - newPushedOutPoint[1],
+      // move current point more outside and split in two
+      const perpendicularClockWise = [moveVec[1], -moveVec[0]];
+      const perpendicularCounterclockWise = [-moveVec[1], moveVec[0]];
+      const newPointClockWise = [
+        newPushedOutPoint[0] + perpendicularClockWise[0] * halfPushLen,
+        newPushedOutPoint[1] + perpendicularClockWise[1] * halfPushLen,
       ];
-      const nextCurrVecAngleElse = [
-        nextPoint[0] - newPushedOutPoint[0],
-        nextPoint[1] - newPushedOutPoint[1],
+      const newPointCounterclockWise = [
+        newPushedOutPoint[0] + perpendicularCounterclockWise[0] * halfPushLen,
+        newPushedOutPoint[1] + perpendicularCounterclockWise[1] * halfPushLen,
       ];
-
-      const dotProdElseElse =
-        prevCurVecAngleElse[0] * nextCurrVecAngleElse[0] +
-        prevCurVecAngleElse[1] * nextCurrVecAngleElse[1];
-
-      const radianElse = Math.acos(
-        dotProdElseElse /
-          (vecLength(prevCurVecAngleElse) * vecLength(nextCurrVecAngleElse))
-      );
-      if (radianElse > radianThreshold) {
-        // move current point more outside
-        currentHullPoints[idx] = newPushedOutPoint;
-        idx--;
-      } else {
-        // move current point more outside and split in two
-        const perpendicularClockWise = [moveVecUnit[1], -moveVecUnit[0]];
-        const perpendicularCounterclockWise = [-moveVecUnit[1], moveVecUnit[0]];
-        const newPointClockWise = [
-          newPushedOutPoint[0] + perpendicularClockWise[0] * 0.015,
-          newPushedOutPoint[1] + perpendicularClockWise[1] * 0.015,
-        ];
-        const newPointCounterclockWise = [
-          newPushedOutPoint[0] + perpendicularCounterclockWise[0] * 0.015,
-          newPushedOutPoint[1] + perpendicularCounterclockWise[1] * 0.015,
-        ];
-        currentHullPoints.splice(
-          idx,
-          1,
-          newPointClockWise,
-          newPointCounterclockWise
-        );
-      }
+      outList.push(newPointClockWise, newPointCounterclockWise);
     }
   }
-  return currentHullPoints;
+  outList.push(outList[0]);
+  return outList;
 }
 
 export default class ClusterHulls {

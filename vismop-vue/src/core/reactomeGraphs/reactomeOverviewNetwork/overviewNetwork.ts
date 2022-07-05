@@ -115,18 +115,19 @@ export default class overviewGraph {
    * @returns {Sigma} Sigma instance
    */
   mainGraph(elemID: string): Sigma {
-    let clusterAreas: [number[]] | [[number[]]] | undefined | { x: number; y: number; }[][] = this.clusterAreas
-    if (typeof this.clusterAreas !== 'undefined'){console.log('YTPE',typeof this.clusterAreas[0][0] )}
-    if (typeof this.clusterAreas !== 'undefined' && typeof this.clusterAreas[0][0] != 'number'){
-      let clusterHullsAdjustment = new ClusterHulls(this.graph, null, 40)
-      let convexHulls = this.clusterAreas as [[number[]]]
-      clusterAreas = clusterHullsAdjustment.adjust(convexHulls)
+    let clusterAreas:
+      | [number[]]
+      | [[number[]]]
+      | undefined
+      | { x: number; y: number }[][] = this.clusterAreas;
+    if (typeof this.clusterAreas !== 'undefined') {
+      console.log('YTPE', typeof this.clusterAreas[0][0]);
     }
     if (
       typeof this.clusterAreas !== 'undefined' &&
       typeof this.clusterAreas[0][0] != 'number'
     ) {
-      const clusterHullsAdjustment = new ClusterHulls(this.graph, null, 30);
+      const clusterHullsAdjustment = new ClusterHulls(this.graph, null, 60);
       const convexHulls = this.clusterAreas as [[number[]]];
       clusterAreas = clusterHullsAdjustment.adjust(convexHulls);
     }

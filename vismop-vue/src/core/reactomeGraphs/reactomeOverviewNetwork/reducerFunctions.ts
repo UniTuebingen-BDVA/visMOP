@@ -55,7 +55,7 @@ export function nodeReducer(
         return {
           ...data,
           color: 'rgba(255,0,255,1.0)',
-          zIndex: 1,
+          zindex: 1,
           size: data.size + 5,
           image: lodImage,
         };
@@ -64,7 +64,7 @@ export function nodeReducer(
         return {
           ...data,
           color: 'rgba(255,180,255,1.0)',
-          zIndex: 1,
+          zindex: 1,
           size: data.nonHoverSize,
           image: lodImage,
         };
@@ -81,7 +81,7 @@ export function nodeReducer(
       return {
         ...data,
         color: 'rgba(255,0,255,1.0)',
-        zIndex: 1,
+        zindex: 1,
         size: data.nonHoverSize + 5,
         image: lodImage,
       };
@@ -93,7 +93,7 @@ export function nodeReducer(
       return {
         ...data,
         color: 'rgba(255,0,0,1.0)',
-        zIndex: 1,
+        zindex: 1,
         size: nodeSize,
         image: lodImage,
       };
@@ -104,7 +104,7 @@ export function nodeReducer(
       return {
         ...data,
         color: 'rgba(0,255,0,1.0)',
-        zIndex: 1,
+        zindex: 1,
         size: nodeSize,
         image: lodImage,
       };
@@ -113,7 +113,7 @@ export function nodeReducer(
       return {
         ...data,
         color: 'rgba(0,0,255,1.0)',
-        zIndex: 1,
+        zindex: 1,
         size: nodeSize,
         image: lodImage,
       };

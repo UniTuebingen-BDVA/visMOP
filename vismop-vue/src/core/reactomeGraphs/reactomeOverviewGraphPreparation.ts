@@ -79,7 +79,7 @@ export function generateGraphData(
         layoutX: initPosX,
         layoutY: initPosX,
         rootId: entry.rootId,
-        zIndex: 1,
+        zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
         size: entry.rootId === entry.pathwayId ? 12 : 7,
         nonHoverSize: entry.rootId === entry.pathwayId ? 12 : 7,
