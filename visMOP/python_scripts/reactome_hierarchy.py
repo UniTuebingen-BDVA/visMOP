@@ -522,8 +522,16 @@ class PathwayHierarchy(dict):
             if self[entry_id].is_overview or self[entry_id].is_root:
                 for elem in self[entry_id].children:
                     self._get_subtree_non_overview_recursion(elem, subtree)
-
-
+    def get_data_dict_for_entry(self, entry):
+        pathway_dict = {"entries": {"proteomics": {}, "transcriptomics": {}, "metabolomics":{}}}
+        pathway_dict["entries"]["proteomics"]["total"] = entry.total_proteins
+        pathway_dict["entries"]["transcriptomics"]["total"] = entry.total_proteins
+        pathway_dict["entries"]["metabolomics"]["total"] = entry.total_metabolites
+        return pathway_dict
+    def get_data_for_cluster_pathways(self, cl_pathways):
+        data = [[self.get_data_dict_for_entry(self[pathway_name]) for pathway_name in cl]for cl in cl_pathways]
+        # print(data)
+        return data
     def generate_overview_data(self, omic_limits, verbose):
         """ Generates data to be exported to the frontend
             Args:
@@ -547,7 +555,6 @@ class PathwayHierarchy(dict):
         root_ids = []
         pathways_root_names = {}
         pathway_summary_stats_dict = {}
-        print(self.omics_recieved)
         for pathway in pathway_ids:
             entry = self[pathway]
             if entry.has_data:
@@ -562,8 +569,6 @@ class PathwayHierarchy(dict):
                                         'mean exp(lower) ', '% vals (lower) ', '% Reg', '% Unreg', "% p with val"]
         omics = [o for i, o in enumerate(['t ', 'p ', 'm ']) if self.omics_recieved[i]]
         stat_vals_colnames = [o+stat for o in omics for stat in stat_vals]
-        print(stat_vals_colnames)
-        print(pathway_summary_stats_dict)
         stat_vals_colnames.append('pathway size')
         return out_data, query_pathway_dict, pathway_dropdown, list(set(root_ids)), pathways_root_names, root_subpathways, pd.DataFrame.from_dict(pathway_summary_stats_dict, orient='index', columns=stat_vals_colnames), self.omics_recieved
 

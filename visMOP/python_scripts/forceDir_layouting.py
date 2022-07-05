@@ -8,9 +8,9 @@ def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids):
     nodes = list(G.nodes())
     for i in range(len(nodes)):
         for j in range(i+1,len(nodes)):
-            w = 0.05 if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]] else 0
+            w = 0.2 if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]] else 0.01
             G_with_weights.add_edge(nodes[i], nodes[j], weight=w) 
-    return get_pos_in_force_dir_layout(G_with_weights, mod_num, 0.05)
+    return get_pos_in_force_dir_layout(G_with_weights, mod_num, 1)
 
 
 def get_networkx_with_edge_weights_all_nodes_connected(pathway_info_dict, stringGraph, use_brite, use_interaction):
@@ -77,7 +77,7 @@ def calculate_edge_weight(pathway1, pathway2, stringGraph, use_brite, use_intera
     return brite_score, interaction_score
 
 def get_pos_in_force_dir_layout(graph, mod_num = 0, ewi=1):
-    forceatlas2 = ForceAtlas2(edgeWeightInfluence = ewi)
+    forceatlas2 = ForceAtlas2(edgeWeightInfluence = ewi, scalingRatio=50)
     pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=None, iterations=500)
     pos_out = {k:[v[0], v[1], mod_num] for k, v in pos.items()}
     return pos_out

@@ -24,7 +24,7 @@ from multiprocessing import Process
 def most_frequent(List):
     return max(set(List), key = List.count)
 
-def get_area_size(area, get_smallest_side = False):
+def get_area_size(area, get_side_ratio_ok = False, l_max = 1):
     """ determine the area given array of min and max x and y positions
 
     Args:
@@ -35,9 +35,11 @@ def get_area_size(area, get_smallest_side = False):
     x_side = area[1]-area[0]
     y_side = area[3]-area[2]
     area_size = x_side * y_side
-    if not get_smallest_side:
+    if not get_side_ratio_ok:
         return area_size
-    return area_size, min(x_side, y_side)
+    min_side = min(x_side, y_side)
+    ratio_ok = True # normalize_val_in_range(min_side, 0, l_max, [0,1]) >= 0.16 # max(x_side, y_side)/min_side <= 4 and
+    return area_size, ratio_ok
 
 def get_sorted_list_by_list_B_sorting_order(list_to_sort, sorting_list, reverse = False):
     """ return list in order of the sorted version of another list 
@@ -141,6 +143,8 @@ class Module_layout:
         self.initial_node_pos, _ = self.get_initial_node_pos(drm)
         print("initial node positions calculated")
         self.modules, self.num_cluster, positions_dict_clustering = self.get_cluster()
+        pathway_names = list(self.data_table.index)
+        self.pathways_in_modules = self.modules
         print("Clusters identified")
         # for each module idenify all positions wher rel. distances to it are given 
         self.p_f_m = defaultdict(list)
@@ -156,8 +160,8 @@ class Module_layout:
         self.modules_center = initial_modules_center
         print("Cluster centers identified")
         self.relative_distances = self.getRealtiveDistancesBetweenModules(self.get_module_centers(positions_dict_clustering))
-
         self.add_reactome_roots_to_modules(reactome_roots)
+
         self.weights = self.getModulesWeights()
 
         print("Relative distances between modules and module weights calculated")
@@ -432,7 +436,7 @@ class Module_layout:
         iter_num = 0
         possibleLayout_found = True if num_iterations == 1000 else False 
         while iter_num < num_iterations and not possibleLayout_found:
-            new_module_centers = self.find_layout_with_correct_rel_dists()
+            new_module_centers = self.find_layout_with_best_possible_rel_dists()
             new_C = self.evaluteCostFunction(new_module_centers)
             if new_C < best_C:
                 possibleLayout_found = True
@@ -443,7 +447,7 @@ class Module_layout:
         print('best Costfunction value: ', best_C)
         return best_C
 
-    def find_layout_with_correct_rel_dists(self):
+    def find_layout_with_best_possible_rel_dists(self):
         timeout = time.time() + 60
         timeout2 = time.time() + 360
 
@@ -452,7 +456,8 @@ class Module_layout:
         distance_similarities = [0] * len(self.relative_distances)
         cur_mod_center = self.modules_center
         prev_dist_sim = 0
-        while not possibleLayout:
+        run = 0
+        while run < 2:
             new_module_centers = [self.getNewModuleCenter(
                 module_center, mn, sum(distance_similarities[p] for p in self.p_f_m[mn])) for mn, module_center in enumerate(cur_mod_center)]
             new_rel_distances = self.getRealtiveDistancesBetweenModules(
@@ -463,7 +468,6 @@ class Module_layout:
             if sum(distance_similarities_new) > sum(distance_similarities):
                 distance_similarities = distance_similarities_new
                 cur_mod_center = new_module_centers
-                print('dist sim:', sum(distance_similarities), len(distance_similarities) )
             if dist_sim_threshold < 0.3 and time.time() > timeout - 10:
                 dist_sim_threshold += 0.01
             if time.time() > timeout2 :
@@ -483,9 +487,8 @@ class Module_layout:
                         self.relative_distances, self.getRealtiveDistancesBetweenModules(new_module_centers), dist_sim_threshold)
                 else:
                     distance_similarities = [ds if ds==0 else np.random.binomial(1, 0.8) for ds in distance_similarities ]
-            possibleLayout = True
+            run += 1
             
-
             prev_dist_sim = sum(distance_similarities)
             
         return new_module_centers
@@ -538,13 +541,12 @@ class Module_layout:
             for (area, mod_num) in module_regions:
                 area_list[mod_num] = area
             
-            final_area_size = [get_area_size(area, True) for area in area_list]
+            final_area_size = [get_area_size(area, True, l_max) for area in area_list]
             total_area = sum([size for size,_ in final_area_size])
             node_num_ratio = [node_num/sum(module_node_nums) for node_num in module_node_nums]
-            area_ratio = [[area/total_area, normalize_val_in_range(min_side, 0, l_max, [0,1]) > 0.15 ] for area, min_side in final_area_size]
-            nn_a_comp = [abs(nn_r-a_r) < 0.15 and (s_ok or len(n_in_m)<20) for nn_r, [a_r, s_ok], n_in_m in zip (node_num_ratio, area_ratio, self.modules)]
+            area_ratio = [[area/total_area, side_ratio_ok] for area, side_ratio_ok in final_area_size]
+            nn_a_comp = [abs(nn_r-a_r) < 0.12 and s_ok for nn_r, [a_r, s_ok] in zip (node_num_ratio, area_ratio)]
             success = True if sum(nn_a_comp)==len(nn_a_comp) else False
-            print(i)
             
             print('node_num_ratio', node_num_ratio)
             print('area_ratio', area_ratio)
@@ -666,6 +668,8 @@ class Module_layout:
             norm_areas.append(norm_area)
         return norm_areas
 
+    def get_pathways_in_cluster(self):
+        return self.pathways_in_modules
 
 ''' OLD '''
 

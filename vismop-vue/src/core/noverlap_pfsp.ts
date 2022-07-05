@@ -82,7 +82,7 @@ export function minXY (node: node | node[], xy: string): any {
   }
   const coord = xy === 'x' ? node.attributes.x : node.attributes.y
 
-  return coord - node.attributes.size 
+  return coord - node.attributes.size / 150
 }
 
 /** biggest x belonging to the node list (the rigth border of the label box)
@@ -97,7 +97,7 @@ export function maxXY (node: node | node[], xy: string): any {
 
   const coord = xy === 'x' ? node.attributes.x : node.attributes.y
 
-  return coord - node.attributes.size 
+  return coord + node.attributes.size / 150
 }
 
 /**

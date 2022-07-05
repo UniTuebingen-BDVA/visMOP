@@ -87,7 +87,7 @@ export interface upDatedPos {
 export interface node {
   key: string;
   index: number;
-  attributes: Attributes;
+  attributes: baseNodeAttr ;
 }
 /**
  * Defines a Graph Data object

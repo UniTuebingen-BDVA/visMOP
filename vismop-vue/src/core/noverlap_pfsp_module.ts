@@ -13,6 +13,7 @@
 import _ from 'lodash';
 import { node } from '@/core/graphTypes';
 import { pfsPrime } from '@/core/noverlap_pfsp';
+import { vpsc } from '@/core/noverlap_vpsc';
 /**
  * Executes the Push Force Scan' (PFS') algorithm on this graph
  *
@@ -39,6 +40,9 @@ export function pfsPrime_modules(
       }
     }
     const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
+    // const pfsPrime_moduleNodes = vpsc(moduleNodes);
+
+    
 
     normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum]);
 

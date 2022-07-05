@@ -29,12 +29,10 @@ export function vpsc (
     nodes,
     (node) => new Rectangle(minXY(node, 'x'), maxXY(node, 'x'), minXY(node, 'y'), maxXY(node, 'y'))
   )
-
   removeOverlaps(rects)
-
-  _.forEach(nodes, (node) => {
-    node.attributes.x = rects[node.index].cx()
-    node.attributes.y = rects[node.index].cy()
+  _.forEach(nodes, (node, index) => { 
+    node.attributes.x = rects[index].cx()
+    node.attributes.y = rects[index].cy()
   })
 
   return nodes
