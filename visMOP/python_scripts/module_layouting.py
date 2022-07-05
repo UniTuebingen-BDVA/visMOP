@@ -143,8 +143,6 @@ class Module_layout:
         self.initial_node_pos, _ = self.get_initial_node_pos(drm)
         print("initial node positions calculated")
         self.modules, self.num_cluster, positions_dict_clustering = self.get_cluster()
-        pathway_names = list(self.data_table.index)
-        self.pathways_in_modules = self.modules
         print("Clusters identified")
         # for each module idenify all positions wher rel. distances to it are given 
         self.p_f_m = defaultdict(list)
@@ -203,7 +201,6 @@ class Module_layout:
         area_nodes_ratio = [area/node_num for area, node_num in zip(final_area_size, self.module_nodes_num)]
         node_num_ratio = [node_num/len(self.final_node_pos ) for node_num in self.module_nodes_num]
         area_ratio = [area/total_area for area in final_area_size]
-        print('distance_similarities: ', distance_similarities)
         # print('old rel dist centers: ', ordered_org_rel_dist)
         # print('new rel dist centers: ', list(new_realtiv_dist.values()))
         # print('rel dis comparison: ', list(distance_similarities.values()))
@@ -545,7 +542,7 @@ class Module_layout:
             total_area = sum([size for size,_ in final_area_size])
             node_num_ratio = [node_num/sum(module_node_nums) for node_num in module_node_nums]
             area_ratio = [[area/total_area, side_ratio_ok] for area, side_ratio_ok in final_area_size]
-            nn_a_comp = [abs(nn_r-a_r) < 0.12 and s_ok for nn_r, [a_r, s_ok] in zip (node_num_ratio, area_ratio)]
+            nn_a_comp = [(nn_r - 0.2* nn_r) >= a_r <= (nn_r + 0.2* nn_r) and True for nn_r, [a_r, s_ok] in zip (node_num_ratio, area_ratio)]
             success = True if sum(nn_a_comp)==len(nn_a_comp) else False
             
             print('node_num_ratio', node_num_ratio)
@@ -668,8 +665,6 @@ class Module_layout:
             norm_areas.append(norm_area)
         return norm_areas
 
-    def get_pathways_in_cluster(self):
-        return self.pathways_in_modules
 
 ''' OLD '''
 

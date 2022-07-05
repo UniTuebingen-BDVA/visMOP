@@ -522,16 +522,7 @@ class PathwayHierarchy(dict):
             if self[entry_id].is_overview or self[entry_id].is_root:
                 for elem in self[entry_id].children:
                     self._get_subtree_non_overview_recursion(elem, subtree)
-    def get_data_dict_for_entry(self, entry):
-        pathway_dict = {"entries": {"proteomics": {}, "transcriptomics": {}, "metabolomics":{}}}
-        pathway_dict["entries"]["proteomics"]["total"] = entry.total_proteins
-        pathway_dict["entries"]["transcriptomics"]["total"] = entry.total_proteins
-        pathway_dict["entries"]["metabolomics"]["total"] = entry.total_metabolites
-        return pathway_dict
-    def get_data_for_cluster_pathways(self, cl_pathways):
-        data = [[self.get_data_dict_for_entry(self[pathway_name]) for pathway_name in cl]for cl in cl_pathways]
-        # print(data)
-        return data
+
     def generate_overview_data(self, omic_limits, verbose):
         """ Generates data to be exported to the frontend
             Args:

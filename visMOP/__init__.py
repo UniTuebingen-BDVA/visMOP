@@ -74,7 +74,6 @@ cache = Cache(app)
 
 def getModuleLayout(omics_recieved, up_down_reg_limits, data_col_used, statistic_data_complete, pathway_connection_dict, reactome_roots={}, pathways_root_names={}):
     up_down_reg_means = {o: mean(limits) for o, limits in zip(['t', 'p', 'm'],up_down_reg_limits)}
-    num_vals_per_omic = sum(omics_recieved)
    
     omics_names = ['t', 'p', 'm']
     stat_value_names = ['num values', 'mean exp (high ', '% vals (higher ',
@@ -99,8 +98,7 @@ def getModuleLayout(omics_recieved, up_down_reg_limits, data_col_used, statistic
     module_layout = Module_layout(statistic_data_user, pathway_connection_dict, up_down_reg_means, reactome_roots, pathways_root_names)
     module_node_pos = module_layout.get_final_node_positions()
     module_areas = module_layout.get_module_areas()
-    pathways_in_clusters = module_layout.get_pathways_in_cluster()
-    return module_node_pos, module_areas, pathways_in_clusters
+    return module_node_pos, module_areas
 
 def get_layout_settings(settings, omics_recieved):
     possible_omic_attributes = ['Number of values', 'Mean expression above limit', '% values above limit',
@@ -640,7 +638,7 @@ def kegg_parsing():
     layout_setting_bools = get_layout_settings(layout_settings, omics_recieved)
     layout_limits = layout_setting_bools.layout_settings['limits']
     layout_attributes_used = layout_setting_bools.layout_settings['attributes']
-    module_node_pos, module_areas, pathways_in_clusters = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict)
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict)
 
     
     network_overview = generate_networkx_dict(pathway_connection_dict)
@@ -911,8 +909,8 @@ def reactome_overview():
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
     # print(pathway_connection_dict.keys())
-    module_node_pos, module_areas, pathways_in_clusters = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways, pathways_root_names)
-    cluster_data = reactome_hierarchy.get_data_for_cluster_pathways(pathways_in_clusters)
+    module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways, pathways_root_names)
+
     # a_file = open("modul_layout.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
     # a_file.close()
