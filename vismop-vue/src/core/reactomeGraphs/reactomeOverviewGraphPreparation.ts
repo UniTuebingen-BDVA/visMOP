@@ -82,6 +82,7 @@ export function generateGraphData(
         rootId: entry.rootId,
         zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
+        nodeType: entry.rootId === entry.pathwayId ? 'root' : 'regular',
         size: entry.rootId === entry.pathwayId ? 12 : 7,
         nonHoverSize: entry.rootId === entry.pathwayId ? 12 : 7,
         fixed: false, // fixed property on nodes excludes nodes from layouting

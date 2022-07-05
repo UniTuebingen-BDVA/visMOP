@@ -26,6 +26,7 @@ export default class overviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 10;
   static readonly ROOT_DEFAULT_SIZE = 15;
+  static readonly MODULE_DEFAULT_SIZE = 20;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];
@@ -47,7 +48,7 @@ export default class overviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected clusterAreas;
-  protected lodRatio = 2.0;
+  protected lodRatio = 1.5;
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -295,7 +296,9 @@ export default class overviewGraph {
         isRoot: false,
         zIndex: 1,
         color: 'rgb(255,124,78)',
-        size: 18,
+        size: 20,
+        nodeType: 'moduleNode',
+        nonHoverSize: 20,
         fixed: false,
         type: 'image',
         label: `Module: ${key}`,
@@ -303,6 +306,7 @@ export default class overviewGraph {
         imageLowRes: glyphs[key],
         imageHighRes: glyphs[key],
         imageLowZoom: glyphs[key],
+        hidden: true,
       };
 
       this.graph.addNode(key, moduleNode);

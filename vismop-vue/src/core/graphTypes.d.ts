@@ -52,6 +52,7 @@ export interface baseNodeAttr extends Attributes {
   color: string;
   size: number;
   fixed: boolean;
+  nodeType: string;
   type: string;
   label: string;
 }
