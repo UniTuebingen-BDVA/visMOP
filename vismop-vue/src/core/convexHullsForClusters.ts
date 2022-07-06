@@ -257,8 +257,8 @@ export default class ClusterHulls {
   adjust(convexHulls: [[number[]]]): [[number[]]] {
     for (let i = 0; i < convexHulls.length; i++) {
       console.log('conHull', i);
-      const finalHullNodes = adjustHulls(convexHulls[i], this.radianThreshold);
-      convexHulls[i] = finalHullNodes;
+      // const finalHullNodes = adjustHulls(convexHulls[i], this.radianThreshold);
+      // convexHulls[i] = finalHullNodes;
     }
     console.log('FINAL', convexHulls);
     return convexHulls;

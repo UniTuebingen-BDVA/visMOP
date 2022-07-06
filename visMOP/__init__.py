@@ -923,6 +923,7 @@ def reactome_overview():
 
     # with open('module_areas.pkl', "rb") as f:
     #     module_areas = pickle.load(f)
+    # print(len(module_areas))
     # module_node_pos = normalize_2D_node_pos_in_range(
     #          module_node_pos, [0, 1, 0, 1], True)
     # print(module_node_pos)
@@ -936,7 +937,7 @@ def reactome_overview():
     #     norm_areas.append(norm_area)
 
     # module_areas = norm_areas
-    # print(module_areas)
+    print(len(module_areas))
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway['pathwayId']]
         pathway["initialPosX"] = x_y_pos[0]

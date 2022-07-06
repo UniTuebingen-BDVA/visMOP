@@ -46,7 +46,7 @@ export function pfsPrime_modules(
 
     normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum]);
 
-    updatedNodes.push(pfsPrime_moduleNodes);
+    updatedNodes.push(moduleNodes);
   }
   updatedNodes.shift();
 

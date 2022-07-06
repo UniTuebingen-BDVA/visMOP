@@ -1,4 +1,5 @@
 
+import random
 import pandas as pd
 import numpy as np
 import math
@@ -38,7 +39,7 @@ def get_area_size(area, get_side_ratio_ok = False, l_max = 1):
     if not get_side_ratio_ok:
         return area_size
     min_side = min(x_side, y_side)
-    ratio_ok = True # normalize_val_in_range(min_side, 0, l_max, [0,1]) >= 0.16 # max(x_side, y_side)/min_side <= 4 and
+    ratio_ok = normalize_val_in_range(min_side, 0, l_max, [0,1]) >= 0.08 # max(x_side, y_side)/min_side <= 4 and
     return area_size, ratio_ok
 
 def get_sorted_list_by_list_B_sorting_order(list_to_sort, sorting_list, reverse = False):
@@ -126,7 +127,7 @@ class Module_layout:
         networkx_dict = generate_networkx_dict(graph_dict)
         reactome_root_ids = list(reactome_roots.keys())
         self.greatest_dist_in_initial_layout = None
-        self.dist_sim_threshold = 0.1
+        self.dist_sim_threshold = 0.2
         
         # drop reatcome root ids so that thex are not used for calculating missing values and clusters
         self.data_table = data_table.drop(reactome_root_ids)
@@ -167,6 +168,7 @@ class Module_layout:
         prev_best_cost_C = self.evaluteCostFunction(initial_modules_center)
         num_iterations = 1000
         self.modules_area, area_num_node_ratio_ok = self.getSizeOfModulesRegion()
+        runs = 0
         print("Module sizes identified")
 
         while not area_num_node_ratio_ok:
@@ -175,13 +177,15 @@ class Module_layout:
             self.modules_area, area_num_node_ratio_ok = self.getSizeOfModulesRegion()
             print("Module sizes identified ")
             num_iterations = num_iterations - 100 if num_iterations > 200 else 200
-            if best_cost_C == prev_best_cost_C and not area_num_node_ratio_ok:
+            if runs > 20 and not area_num_node_ratio_ok:
+                runs = 0
                 # start at random new position
-                print('Start new!!!') 
+                print('------------------------------------Start new!!!------------------------------------------------------------------------------------------------------') 
                 self.modules_center = np.random.uniform(0,1,(self.num_cluster,2))
                 prev_best_cost_C = None
             else:
                prev_best_cost_C = best_cost_C
+               runs += 1
 
         self.final_node_pos = self.getNodePositions(pathways_root_names)
         print("final node positions identified")
@@ -445,45 +449,21 @@ class Module_layout:
         return best_C
 
     def find_layout_with_best_possible_rel_dists(self):
-        timeout = time.time() + 60
-        timeout2 = time.time() + 360
-
-        possibleLayout = False
-        dist_sim_threshold = 0
         distance_similarities = [0] * len(self.relative_distances)
         cur_mod_center = self.modules_center
-        prev_dist_sim = 0
         run = 0
+        possibleLayout = False
         while run < 2:
             new_module_centers = [self.getNewModuleCenter(
                 module_center, mn, sum(distance_similarities[p] for p in self.p_f_m[mn])) for mn, module_center in enumerate(cur_mod_center)]
             new_rel_distances = self.getRealtiveDistancesBetweenModules(
                 new_module_centers)
             
-            possibleLayout, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
-                self.relative_distances, new_rel_distances, dist_sim_threshold)
+            _, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
+                self.relative_distances, new_rel_distances, self.dist_sim_threshold)
             if sum(distance_similarities_new) > sum(distance_similarities):
                 distance_similarities = distance_similarities_new
                 cur_mod_center = new_module_centers
-            if dist_sim_threshold < 0.3 and time.time() > timeout - 10:
-                dist_sim_threshold += 0.01
-            if time.time() > timeout2 :
-                timeout = time.time() + 60
-                timeout2 = time.time() + 360
-                dist_sim_threshold = 0.1
-                new_module_centers = np.random.uniform(0,1,(self.num_cluster, 2)) 
-                possibleLayout, distance_similarities = self.evaluateRelativDistanceSimilarity(
-                        self.relative_distances, self.getRealtiveDistancesBetweenModules(new_module_centers), dist_sim_threshold)
-            elif time.time() > timeout:
-                timeout = time.time() + 60
-                
-                print('timeout', dist_sim_threshold)
-                if prev_dist_sim != sum(distance_similarities):
-                    new_module_centers = [mc if np.random.binomial(1, sum([distance_similarities[p] for p in self.p_f_m[mn]])/len(self.p_f_m[mn])) else np.random.uniform(0,1,2) for mn,mc in enumerate(new_module_centers)]
-                    possibleLayout, distance_similarities = self.evaluateRelativDistanceSimilarity(
-                        self.relative_distances, self.getRealtiveDistancesBetweenModules(new_module_centers), dist_sim_threshold)
-                else:
-                    distance_similarities = [ds if ds==0 else np.random.binomial(1, 0.8) for ds in distance_similarities ]
             run += 1
             
             prev_dist_sim = sum(distance_similarities)
@@ -497,20 +477,20 @@ class Module_layout:
         change_pos = np.random.binomial(1, max(0.1, min(1, 0.1 + dist_bonus))) == 0
         new_center = module_center
         if change_pos:
-            # to make sure center is not at 0 /1: always substract 0.1?
             # max movement in neg/ pos x direction: m_c[0] - 0.1 / 1-m_c[0] -0.1
             for coord in [0, 1]:
-                move_in_neg_dir = np.random.binomial(1, 0.5) == 1
-                curve_half_width_neg = module_center[coord] 
-                curve_half_width_pos = 1 - module_center[coord]
-                curve_half_width = curve_half_width_neg if (move_in_neg_dir and curve_half_width_neg > 0) or curve_half_width_pos <= 0 else curve_half_width_pos
-                normal_dist_vals = np.random.normal(0, curve_half_width/3, 501)
-                shift_num_valid = False
-                while not shift_num_valid:
-                    shift_num = abs(normal_dist_vals[randint(0, 500)])
-                    shift_num_valid = shift_num != 0 and - curve_half_width <= shift_num <= curve_half_width
-                new_center[coord] = new_center[coord] - \
-                    shift_num if move_in_neg_dir else new_center[coord] + shift_num
+                # move_in_neg_dir = np.random.binomial(1, 0.5) == 1
+                # curve_half_width_neg = module_center[coord] 
+                # curve_half_width_pos = 1 - module_center[coord]
+                # curve_half_width = curve_half_width_neg if (move_in_neg_dir and curve_half_width_neg > 0) or curve_half_width_pos <= 0 else curve_half_width_pos
+                # normal_dist_vals = np.random.normal(0, curve_half_width/3, 501)
+                new_center[coord] = np.random.uniform(0.1, 0.95)
+                # shift_num_valid = False
+                # while not shift_num_valid:
+                #     shift_num = abs(normal_dist_vals[randint(0, 500)])
+                #     shift_num_valid = shift_num != 0 and - curve_half_width <= shift_num <= curve_half_width
+                # new_center[coord] = new_center[coord] - \
+                #     shift_num if move_in_neg_dir else new_center[coord] + shift_num
         return new_center
 
     def getSizeOfModulesRegion(self):
@@ -542,7 +522,7 @@ class Module_layout:
             total_area = sum([size for size,_ in final_area_size])
             node_num_ratio = [node_num/sum(module_node_nums) for node_num in module_node_nums]
             area_ratio = [[area/total_area, side_ratio_ok] for area, side_ratio_ok in final_area_size]
-            nn_a_comp = [(nn_r - 0.2* nn_r) >= a_r <= (nn_r + 0.2* nn_r) and True for nn_r, [a_r, s_ok] in zip (node_num_ratio, area_ratio)]
+            nn_a_comp = [a_r >= (nn_r - 0.8* nn_r) and s_ok for nn_r, [a_r, s_ok] in zip (node_num_ratio, area_ratio)]
             success = True if sum(nn_a_comp)==len(nn_a_comp) else False
             
             print('node_num_ratio', node_num_ratio)
@@ -551,7 +531,7 @@ class Module_layout:
 
             if success:
                 return area_list, success
-        
+        # area_list = [[mod_center[0]*l_max - math.sqrt(mod_l), mod_center[0]*l_max + math.sqrt(mod_l), mod_center[1]*l_max - math.sqrt(mod_l),mod_center[1]*l_max + math.sqrt(mod_l)] for mod_center, mod_l in zip(self.modules_center, module_node_nums)]        
 
         return area_list, success
 
@@ -583,8 +563,12 @@ class Module_layout:
         max_dist = max(abs(module_centers[mod_pair[0]][0]-module_centers[mod_pair[1]][0]),abs(module_centers[mod_pair[0]][1]-module_centers[mod_pair[1]][1]))
         # max dist is on x axis
         x_dist = module_centers[mod_1][0] - module_centers[mod_2][0]
+        y_dist = module_centers[mod_1][1] - module_centers[mod_2][1]
         area_1 = deepcopy(area_to_divide)
         area_2 = deepcopy(area_to_divide)
+        if 0.9 < abs(x_dist)/abs(y_dist) < 1.1: 
+            print('hier')
+            max_dist = abs(x_dist) if np.random.binomial(1, 0.5) else abs(y_dist)
         # change x coord
         if max_dist == abs(x_dist):
             mod_1_area_pos_to_ad, mod_2_area_pos_to_ad, min_border_pos = [1, 0, module_centers[mod_1][0]] if x_dist < 0 else [

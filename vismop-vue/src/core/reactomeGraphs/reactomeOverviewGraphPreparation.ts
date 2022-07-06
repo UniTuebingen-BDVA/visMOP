@@ -138,7 +138,7 @@ export function generateGraphData(
   _.forEach(nodes_per_cluster, (n) => {
     const clusterHullPoints = hull(
       n.map((o) => [o.attributes.x, o.attributes.y]),
-      20
+      10
     ) as [[number, number]];
     hull_points.push(clusterHullPoints);
     norm_node_pos = norm_node_pos.concat(n);
@@ -147,6 +147,8 @@ export function generateGraphData(
   hull_points.shift();
 
   graph.clusterAreas = hull_points;
+  // graph.clusterAreas = moduleAreas;
+
   console.log('rOGP', graph.clusterAreas);
   graph.nodes = norm_node_pos;
 
