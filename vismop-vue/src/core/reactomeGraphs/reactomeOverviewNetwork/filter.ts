@@ -36,7 +36,10 @@ export function filterElements(this: overviewGraph) {
       if (!filterFunction.bind(this)(attributes)) attributes.hidden = false;
     });
     this.graph.forEachNode((node, attributes) => {
-      if (filterFunction.bind(this)(attributes)) {
+      if (
+        filterFunction.bind(this)(attributes) &&
+        attributes.nodeType !== 'moduleNode'
+      ) {
         tarPositions[node] = {
           x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
           y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),

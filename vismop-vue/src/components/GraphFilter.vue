@@ -17,9 +17,8 @@
         <div class="col-8">
           <q-range
             :model-value="transcriptomicsFilter.value"
-            thumb-label
-            :min="transcriptomicsFilter.limits.min"
-            :max="transcriptomicsFilter.limits.max"
+            :min="Math.floor(transcriptomicsFilter.limits.min)"
+            :max="Math.ceil(transcriptomicsFilter.limits.max)"
             :step="0.1"
             label
             :color="
@@ -64,9 +63,8 @@
         <div class="col-8">
           <q-range
             :model-value="proteomicsFilter.value"
-            thumb-label
-            :min="proteomicsFilter.limits.min"
-            :max="proteomicsFilter.limits.max"
+            :min="Math.floor(proteomicsFilter.limits.min)"
+            :max="Math.ceil(proteomicsFilter.limits.max)"
             :step="0.1"
             label
             :color="proteomicsFilter.inside ? 'primary' : 'graphFilterSlider'"
@@ -109,9 +107,8 @@
         <div class="col-8">
           <q-range
             :model-value="metabolomicsFilter.value"
-            thumb-label
-            :min="metabolomicsFilter.limits.min"
-            :max="metabolomicsFilter.limits.max"
+            :min="Math.floor(metabolomicsFilter.limits.min)"
+            :max="Math.ceil(metabolomicsFilter.limits.max)"
             :step="0.1"
             label
             :color="metabolomicsFilter.inside ? 'primary' : 'graphFilterSlider'"

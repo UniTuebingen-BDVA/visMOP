@@ -166,8 +166,8 @@ function generateForceGraphEdge(
   type: string
 ): edge {
   const edgeColors: { [key: string]: string } = {
-    hierarchy: 'rgba(60,60,60,0.2)',
-    maplink: 'rgba(60,60,60,0.2)',
+    hierarchy: 'rgba(60,60,60,0.1)',
+    maplink: 'rgba(60,60,60,0.1)',
   };
 
   const entry1 = sourceID;

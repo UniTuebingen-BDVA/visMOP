@@ -59,8 +59,7 @@
             :max="variable.max"
             :min="variable.min"
             :step="variable.step"
-            thumb-label
-            persistent-hint
+            label
           >
           </q-range>
         </div>

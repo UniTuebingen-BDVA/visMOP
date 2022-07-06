@@ -26,7 +26,7 @@ export default class overviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 10;
   static readonly ROOT_DEFAULT_SIZE = 15;
-  static readonly MODULE_DEFAULT_SIZE = 5;
+  static readonly MODULE_DEFAULT_SIZE = 20;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];
@@ -296,9 +296,9 @@ export default class overviewGraph {
         isRoot: false,
         zIndex: 1,
         color: 'rgb(255,124,78)',
-        size: 5,
+        size: 20,
         nodeType: 'moduleNode',
-        nonHoverSize: 5,
+        nonHoverSize: 20,
         fixed: false,
         type: 'image',
         label: `Module: ${key}`,

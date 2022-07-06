@@ -35,7 +35,7 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1):
         get_smallest_side: boolean to deterine whether to return legth of smallest side
 
     """
-    MIN_RATIO = 0.06
+    MIN_RATIO = 0.05
     x_side = area[1] - area[0]
     y_side = area[3] - area[2]
     area_size = x_side * y_side
@@ -654,7 +654,7 @@ class Module_layout:
         calculate For dir for module
         get max nodes in vertical and horizontal position
         """
-        RATIO = 0.5
+        RATIO = 0.6
         module_node_nums = [len(module) for module in self.modules]
         self.module_nodes_num = module_node_nums
         l_max = 2 * math.sqrt(max(module_node_nums))
@@ -797,7 +797,7 @@ class Module_layout:
             score_min,
         ) = [[], [], [], [], 0, 0, inf]
         area_t_d_size = get_area_size(area_to_divide)
-        for abst in np.arange(0.005, max_dist - 0.005, 0.01):
+        for abst in np.arange(0.0005, max_dist - 0.0005, 0.01):
             area_1[mod_1_area_pos_to_ad] = min_border_pos + abst
             area_2[mod_2_area_pos_to_ad] = min_border_pos + abst
             mods_in_area_1 = [

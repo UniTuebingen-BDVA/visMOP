@@ -304,13 +304,13 @@ watch(glyphDataVar, () => {
   proteomicsFilter.value.disable = !proteomicsAvailable;
   metabolomicsFilter.value.disable = !metabolomicsAvailable;
 
-  transcriptomicsFilter.value.limits.max = transcriptomicsLimits.max;
+  transcriptomicsFilter.value.limits.min = transcriptomicsLimits.min;
   transcriptomicsFilter.value.limits.max = transcriptomicsLimits.max;
 
-  proteomicsFilter.value.limits.max = proteomicsLimits.max;
+  proteomicsFilter.value.limits.min = proteomicsLimits.min;
   proteomicsFilter.value.limits.max = proteomicsLimits.max;
 
-  metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
+  metabolomicsFilter.value.limits.min = metabolomicsLimits.min;
   metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
 });
 

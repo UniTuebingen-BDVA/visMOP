@@ -56,8 +56,8 @@ export function generateInteractionGraphData(
       index: index,
       attributes: {
         label: node.labelName ? node.labelName : node.key,
-        x: 0,
-        y: 0,
+        x: Math.random(),
+        y: Math.random(),
         type: 'egoNode' in node ? 'circle' : 'image',
         image: node.labelName
           ? svgURLs.saturated[node.identity]
@@ -119,7 +119,7 @@ export function generateInteractionGraph(
   console.log('TARDIV PPI', elem, elemID);
   const inferredSettings = forceAtlas2.inferSettings(graph);
   const start = Date.now();
-  // forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings })
+  forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings });
   const duration = (Date.now() - start) / 1000;
   const renderer = new Sigma(graph, elem, {
     zIndex: true,
