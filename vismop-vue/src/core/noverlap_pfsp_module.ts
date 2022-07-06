@@ -42,8 +42,6 @@ export function pfsPrime_modules(
     const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
     // const pfsPrime_moduleNodes = vpsc(moduleNodes);
 
-    
-
     normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum]);
 
     updatedNodes.push(moduleNodes);
@@ -53,7 +51,7 @@ export function pfsPrime_modules(
   return updatedNodes;
 }
 
-function normInArea(nodes: node[], area: number[], padding = 0.08) {
+function normInArea(nodes: node[], area: number[], padding = 0.45) {
   const maxMinXY = getMaxMinXY(nodes);
   area = [
     area[0] + padding,
