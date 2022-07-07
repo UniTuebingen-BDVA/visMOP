@@ -1,9 +1,20 @@
 <template>
   <q-list nav class="q-pa-sm">
-    <q-select v-model="targetDatabase" :options="targetDatabases" label="Target Database" option-label="text"
-      option-value="value" @update:model-value="setTargetDatabase"></q-select>
-    <q-select v-model="targetOrganism" :options="targetOrganisms" label="Target Organism" option-label="text"
-      option-value="value"></q-select>
+    <q-select
+      v-model="targetDatabase"
+      :options="targetDatabases"
+      label="Target Database"
+      option-label="text"
+      option-value="value"
+      @update:model-value="setTargetDatabase"
+    ></q-select>
+    <q-select
+      v-model="targetOrganism"
+      :options="targetOrganisms"
+      label="Target Organism"
+      option-label="text"
+      option-value="value"
+    ></q-select>
     Selected Omics:
     {{ chosenOmics.length }}
     <!--
@@ -25,6 +36,7 @@
         :table-headers="transcriptomicsTableHeaders"
         :table-data="transcriptomicsTableData"
         omics-type="Transcriptomics"
+        @update:slider-value="(newVal) => (sliderValsTranscriptomics = newVal)"
       ></omic-input>
 
       <q-separator />
@@ -37,6 +49,7 @@
         :table-headers="proteomicsTableHeaders"
         :table-data="proteomicsTableData"
         omics-type="Proteomics"
+        @update:slider-value="(newVal) => (sliderValsProteomics = newVal)"
       ></omic-input>
 
       <q-separator />
@@ -48,20 +61,39 @@
         :table-headers="metabolomicsTableHeaders"
         :table-data="metabolomicsTableData"
         omics-type="Metabolomics"
+        @update:slider-value="(newVal) => (sliderValsMetabolomics = newVal)"
       ></omic-input>
       <q-separator />
-      <q-expansion-item label="Layout Attributes" group="omicsSelect" header-class="bg-primary text-white"
-        expand-icon-class="text-white" icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9">
+      <q-expansion-item
+        label="Layout Attributes"
+        group="omicsSelect"
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
+        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
+      >
         <q-card>
           <q-card-section>
-            <q-select v-model="currentLayoutOmic" :options="layoutOmics" label="Omic Type"></q-select>
+            <q-select
+              v-model="currentLayoutOmic"
+              :options="layoutOmics"
+              label="Omic Type"
+            ></q-select>
             <div v-if="currentLayoutOmic != ''">
-              <q-select v-model="chosenLayoutAttributes" :options="layoutAttributes" label="Attributes" use-chips
-                clearable multiple>
-                <template v-slot:option="{ itemProps, opt, selected, toggleOption }">
+              <q-select
+                v-model="chosenLayoutAttributes"
+                :options="layoutAttributes"
+                label="Attributes"
+                use-chips
+                clearable
+                multiple
+              >
+                <template #option="{ itemProps, opt, selected, toggleOption }">
                   <q-item v-bind="itemProps">
                     <q-item-section side>
-                      <q-checkbox :model-value="selected" @update:model-value="toggleOption(opt)" />
+                      <q-checkbox
+                        :model-value="selected"
+                        @update:model-value="toggleOption(opt)"
+                      />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label v-html="opt" />
@@ -69,11 +101,28 @@
                   </q-item>
                 </template>
               </q-select>
-              <div class="row" v-if="currentLayoutOmic != 'not related to specific omic'">
-                <q-input v-model.number="omicLimitMin" type="number" step="0.1" style="max-width: 130px"
-                  class="mt-4 ml-2" label="minimal FC limit" filled />
-                <q-input v-model.number="omicLimitMax" type="number" step="0.1" style="max-width: 130px"
-                  class="mt-2 mr-2" label="maximal FC limit" filled />
+              <div
+                v-if="currentLayoutOmic != 'not related to specific omic'"
+                class="row"
+              >
+                <q-input
+                  v-model.number="omicLimitMin"
+                  type="number"
+                  step="0.1"
+                  style="max-width: 130px"
+                  class="mt-4 ml-2"
+                  label="minimal FC limit"
+                  filled
+                />
+                <q-input
+                  v-model.number="omicLimitMax"
+                  type="number"
+                  step="0.1"
+                  style="max-width: 130px"
+                  class="mt-2 mr-2"
+                  label="maximal FC limit"
+                  filled
+                />
               </div>
             </div>
           </q-card-section>
@@ -90,7 +139,7 @@ import { useMainStore } from '@/stores';
 import { useQuasar } from 'quasar';
 import { ref, Ref, computed, watch, onMounted } from 'vue';
 import OmicInput from './OmicInput.vue';
-interface layoutSettings {
+interface layoutSettingsInterface {
   'Transcriptomics ': { attributes: string[]; limits: number[] };
   'Proteomics ': { attributes: string[]; limits: number[] };
   'Metabolomics ': { attributes: string[]; limits: number[] };
@@ -237,34 +286,33 @@ watch(currentLayoutOmic, () => {
       : allOmicLayoutAttributes;
   chosenLayoutAttributes.value =
     layoutSettings.value[
-      (currentLayoutOmic.value + ' ') as keyof layoutSettings
+      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
     ].attributes;
   // console.log(typeof (layoutSettings))
   // change limits
   const limits =
     layoutSettings.value[
-      (currentLayoutOmic.value + ' ') as keyof layoutSettings
+      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
     ].limits;
   omicLimitMin.value = limits[0];
   omicLimitMax.value = limits[1];
 });
 watch(omicLimitMin, () => {
   layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettings
+    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
   ].limits[0] = omicLimitMin.value;
 });
 watch(omicLimitMax, () => {
   layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettings
+    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
   ].limits[1] = omicLimitMax.value;
 });
 watch(chosenLayoutAttributes, () => {
   // save choosen Layout attribute for omic
   layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettings
+    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
   ].attributes = chosenLayoutAttributes.value;
 });
-
 
 const dataQuery = () => {
   if (targetDatabase.value.value === 'kegg') {
@@ -300,7 +348,7 @@ const queryReactome = () => {
       proteomics: sliderValsProteomics.value,
       metabolomics: sliderValsMetabolomics.value,
     },
-    layoutSettings: layoutSettings.value
+    layoutSettings: layoutSettings.value,
   };
   fetch('/reactome_parsing', {
     method: 'POST',
