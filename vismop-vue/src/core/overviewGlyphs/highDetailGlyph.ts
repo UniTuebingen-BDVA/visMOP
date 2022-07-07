@@ -53,6 +53,7 @@ export class HighDetailGlyph {
     startAngle: number;
     endAngle: number;
     padAngle: number;
+    color: string;
   }[] = [];
   private outerColors: string[] = [];
   private innerColors: string[] = [];
@@ -265,7 +266,7 @@ export class HighDetailGlyph {
       .enter()
       .append('path')
       .attr('d', arcOuter)
-      .attr('fill', 'none')
+      .attr('fill', (d) => d.color)
       .attr('stroke', '#404040')
       .attr(
         'stroke-width',
@@ -375,6 +376,7 @@ export class HighDetailGlyph {
       startAngle: startAngleVal,
       endAngle: startAngleVal + this.thirdCircleElement,
       padAngle: 0,
+      color: omicsColors.length > 0 ? 'none' : 'white',
     });
     omicsColors.forEach((_element, idx) => {
       const pushDat = {
