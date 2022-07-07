@@ -120,12 +120,16 @@ watch(pathwayLayouting, () => {
   pathwayDropdownOptions.value = pathwayLayouting.value.pathwayList;
 });
 watch(pathwaySelection, () => {
-  const tarID = pathwaySelection.value.value;
-  getJsonFiles(tarID);
-  mainStore.focusPathwayViaDropdown(pathwaySelection.value);
+  if (pathwaySelection.value) {
+    const tarID = pathwaySelection.value.value;
+    getJsonFiles(tarID);
+    mainStore.focusPathwayViaDropdown(pathwaySelection.value);
+  }
 });
 watch(pathwayDropdown, () => {
-  pathwaySelection.value = pathwayDropdown.value;
+  if (pathwayDropdown.value) {
+    pathwaySelection.value = pathwayDropdown.value;
+  }
 });
 
 onMounted(() => {

@@ -253,7 +253,8 @@ export default class overviewGraph {
         this.highlighedNodesClick.clear();
         this.highlighedNodesClick = new Set(this.graph.neighbors(node));
         this.highlighedEdgesClick = new Set(this.graph.edges(node));
-        mainStore.focusPathwayViaOverview(node);
+        const nodeLabel = this.graph.getNodeAttribute(node, 'label');
+        mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
       }
     });
 
@@ -321,6 +322,19 @@ export default class overviewGraph {
   public refreshCurrentPathway() {
     const mainStore = useMainStore();
     this.currentPathway = mainStore.pathwayDropdown.value;
+    this.shortestPathClick = [];
+    this.shortestPathNodes = [];
+    this.shortestPathEdges = [];
+    this.highlighedEdgesClick.clear();
+    this.highlighedNodesClick.clear();
+    if (this.currentPathway) {
+      this.highlighedNodesClick = new Set(
+        this.graph.neighbors(this.currentPathway)
+      );
+      this.highlighedEdgesClick = new Set(
+        this.graph.edges(this.currentPathway)
+      );
+    }
     this.renderer.refresh();
   }
 

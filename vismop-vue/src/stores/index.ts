@@ -93,7 +93,7 @@ interface State {
     url: { [key: string]: string };
     svg: { [key: string]: SVGElement };
   };
-  moduleAreas: [number[]]
+  moduleAreas: [number[]];
 }
 
 export const useMainStore = defineStore('mainStore', {
@@ -155,8 +155,7 @@ export const useMainStore = defineStore('mainStore', {
     pathwayCompare: [],
     glyphData: {},
     glyphs: { url: {}, svg: {} },
-    moduleAreas: [[]]
-    
+    moduleAreas: [[]],
   }),
   actions: {
     addClickedNode(val: { queryID: string; name: string }) {
@@ -335,8 +334,8 @@ export const useMainStore = defineStore('mainStore', {
     setGraphData(val: graphData) {
       this.graphData = val;
     },
-    setModuleAreas (val: [number []]) {
-      this.moduleAreas = val
+    setModuleAreas(val: [number[]]) {
+      this.moduleAreas = val;
     },
     setFCS(val: {
       [x: string]: {
@@ -547,12 +546,12 @@ export const useMainStore = defineStore('mainStore', {
         rootIds: [],
       };
     },
-    focusPathwayViaOverview(val: string) {
-      const valClean = val.replace('path:', '');
+    focusPathwayViaOverview(val: { nodeID: string; label: string }) {
+      const valClean = val.nodeID.replace('path:', '');
       this.pathwayDropdown = {
-        title: valClean,
+        title: val.label,
         value: valClean,
-        text: valClean,
+        text: `${valClean}: ${val.label}`,
       };
     },
     focusPathwayViaDropdown(val: {
