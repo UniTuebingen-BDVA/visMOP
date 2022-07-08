@@ -376,7 +376,7 @@ export class HighDetailGlyph {
       startAngle: startAngleVal,
       endAngle: startAngleVal + this.thirdCircleElement,
       padAngle: 0,
-      color: omicsColors.length > 0 ? 'none' : 'white',
+      color: omicsColors.length > 0 ? 'none' : '#404040',
     });
     omicsColors.forEach((_element, idx) => {
       const pushDat = {

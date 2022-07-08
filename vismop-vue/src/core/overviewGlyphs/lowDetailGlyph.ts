@@ -85,7 +85,7 @@ export class LowDetailGlyph {
               0
             ) / this.glyphData[omicsType].foldChanges.length
           )
-        : 'rgba(255,255,255,1.0)';
+        : '#404040';
     this.outerColors.push(avgColor);
     const startAngleVal =
       this.addedElements * this.thirdCircle + this.circlePadding;
