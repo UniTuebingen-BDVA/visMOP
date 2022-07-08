@@ -74,6 +74,15 @@ export function generateGraphData(
         averageMetabolonmics: glyphData[id].metabolomics.available
           ? glyphData[id].metabolomics.meanFoldchange
           : NaN,
+        transcriptomicsNodeState: glyphData[id].transcriptomics.available
+          ? glyphData[id].transcriptomics.nodeState
+          : { regulated: 0, total: 0 },
+        proteomicsNodeState: glyphData[id].proteomics.available
+          ? glyphData[id].proteomics.nodeState
+          : { regulated: 0, total: 0 },
+        metabolomicsNodeState: glyphData[id].metabolomics.available
+          ? glyphData[id].metabolomics.nodeState
+          : { regulated: 0, total: 0 },
         x: initPosX,
         y: initPosY,
         up: { x: initPosX, y: initPosY, gamma: 0 },

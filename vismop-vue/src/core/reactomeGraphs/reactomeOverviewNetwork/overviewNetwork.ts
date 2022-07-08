@@ -56,6 +56,44 @@ export default class overviewGraph {
   protected filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   protected filterFuncProt: (x: number) => boolean = (_x: number) => true;
   protected filterFuncMeta: (x: number) => boolean = (_x: number) => true;
+  protected filterFuncSumRegulatedRelative: (x: number) => boolean = (
+    _x: number
+  ) => true;
+  protected filterFuncSumRegulatedAbsolute: (x: number) => boolean = (
+    _x: number
+  ) => true;
+
+  protected regulatedFilter: {
+    relative: filterValues;
+    absolute: filterValues;
+  } = {
+    relative: {
+      limits: {
+        min: 0,
+        max: 0,
+      },
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+    absolute: {
+      limits: {
+        min: 0,
+        max: 0,
+      },
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+  };
   protected averageFilter: {
     transcriptomics: filterValues;
     proteomics: filterValues;

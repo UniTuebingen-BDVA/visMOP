@@ -27,6 +27,7 @@
               v-model:transcriptomics="transcriptomicsFilter"
               v-model:proteomics="proteomicsFilter"
               v-model:metabolomics="metabolomicsFilter"
+              v-model:sumRegulated="sumRegulated"
             ></graph-filter>
           </q-fab-action>
         </q-fab>
@@ -45,15 +46,7 @@ import GraphFilter from './GraphFilter.vue';
 import { generateGraphData } from '../core/reactomeGraphs/reactomeOverviewGraphPreparation';
 import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../core/overviewGlyphs/generator';
-import {
-  computed,
-  onMounted,
-  PropType,
-  Ref,
-  ref,
-  watch,
-  defineProps,
-} from 'vue';
+import { computed, PropType, Ref, ref, watch, defineProps } from 'vue';
 import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphData } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
@@ -94,6 +87,23 @@ const metabolomicsUnion: Ref<string[]> = ref([]);
 const glyphDataVar: Ref<{
   [key: string]: glyphData;
 }> = ref({});
+
+const sumRegulated = ref({
+  absolute: {
+    limits: { min: 0, max: 100 },
+    value: { min: 0, max: 100 },
+    filterActive: false,
+    inside: true,
+    disable: false,
+  },
+  relative: {
+    limits: { min: 0, max: 100 },
+    value: { min: 0, max: 100 },
+    filterActive: false,
+    inside: true,
+    disable: false,
+  },
+});
 
 const transcriptomicsFilter = ref({
   limits: { min: 0, max: 5 },
@@ -271,11 +281,17 @@ watch(glyphDataVar, () => {
     min: Number.POSITIVE_INFINITY,
     max: Number.NEGATIVE_INFINITY,
   };
+  let regulatedLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
 
   for (const pathwayKey in glyphDataVar.value) {
     const currPathway = glyphDataVar.value[pathwayKey];
+    let sumRegulatedNodes = 0;
     if (currPathway.transcriptomics.available) {
       transcriptomicsAvailable = true;
+      sumRegulatedNodes += currPathway.transcriptomics.nodeState.regulated;
       if (
         currPathway.transcriptomics.meanFoldchange < transcriptomicsLimits.min
       )
@@ -287,19 +303,28 @@ watch(glyphDataVar, () => {
     }
     if (currPathway.proteomics.available) {
       proteomicsAvailable = true;
+      sumRegulatedNodes += currPathway.proteomics.nodeState.regulated;
       if (currPathway.proteomics.meanFoldchange < proteomicsLimits.min)
-        proteomicsLimits.min = currPathway.transcriptomics.meanFoldchange;
+        proteomicsLimits.min = currPathway.proteomics.meanFoldchange;
       if (currPathway.proteomics.meanFoldchange > proteomicsLimits.max)
         proteomicsLimits.max = currPathway.proteomics.meanFoldchange;
     }
     if (currPathway.metabolomics.available) {
       metabolomicsAvailable = true;
+      sumRegulatedNodes += currPathway.metabolomics.nodeState.regulated;
       if (currPathway.metabolomics.meanFoldchange < metabolomicsLimits.min)
         metabolomicsLimits.min = currPathway.metabolomics.meanFoldchange;
       if (currPathway.metabolomics.meanFoldchange > metabolomicsLimits.max)
         metabolomicsLimits.max = currPathway.metabolomics.meanFoldchange;
     }
+    if (sumRegulatedNodes < regulatedLimits.min)
+      regulatedLimits.min = sumRegulatedNodes;
+    if (sumRegulatedNodes > regulatedLimits.max)
+      regulatedLimits.max = sumRegulatedNodes;
   }
+
+  sumRegulated.value.absolute.limits.min = regulatedLimits.min;
+  sumRegulated.value.absolute.limits.max = regulatedLimits.max;
   transcriptomicsFilter.value.disable = !transcriptomicsAvailable;
   proteomicsFilter.value.disable = !proteomicsAvailable;
   metabolomicsFilter.value.disable = !metabolomicsAvailable;
@@ -319,13 +344,15 @@ watch(
     transcriptomicsFilter.value,
     proteomicsFilter.value,
     metabolomicsFilter.value,
+    sumRegulated.value,
   ],
   () => {
     console.log('change Filter');
     networkGraph?.value?.setAverageFilter(
       transcriptomicsFilter.value,
       proteomicsFilter.value,
-      metabolomicsFilter.value
+      metabolomicsFilter.value,
+      sumRegulated.value
     );
   }
 );
