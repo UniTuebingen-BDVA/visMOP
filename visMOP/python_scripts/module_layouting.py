@@ -26,6 +26,8 @@ from multiprocessing import Process
 def most_frequent(List):
     return max(set(List), key=List.count)
 
+def dist_large_engough(mod1, mod2):
+    return (abs(mod1[0]-mod2[0]) > 0.008 and abs(mod1[1]-mod2[1]) > 0.008)
 
 def get_area_size(area, get_side_ratio_ok=False, l_max=1):
     """determine the area given array of min and max x and y positions
@@ -163,6 +165,7 @@ class Module_layout:
         node_size=2,
     ):
         data_table.sort_index(inplace=True)
+        print('cols', data_table.columns)
         startTime = time.time()
         networkx_dict = generate_networkx_dict(graph_dict)
         reactome_root_ids = list(reactome_roots.keys())
@@ -176,6 +179,7 @@ class Module_layout:
 
         self.half_node_size = node_size / 2
         self.module_nodes_num = []
+        self.noise_cluster_exists = False
 
         print("Calculating module layout...")
         self.data_table_scaled_filled = StandardScaler().fit_transform(
@@ -215,7 +219,7 @@ class Module_layout:
             self.modules_center
         )
         print("Module sizes identified")
-        pool_size = 12
+        pool_size = 8
         pool = Pool(pool_size)
 
         for result in pool.imap_unordered(
@@ -416,6 +420,7 @@ class Module_layout:
         optics = OPTICS(min_samples=5, n_jobs=-1)
         optics_fit = optics.fit(position_list)
         clustering_labels = optics_fit.labels_
+        self.noise_cluster_exists = -1 in clustering_labels
 
         # for calculation of the sillouette value exclude random cluster
 
@@ -610,6 +615,14 @@ class Module_layout:
             new_rel_distances = self.getRealtiveDistancesBetweenModules(
                 new_module_centers
             )
+            # print(new_module_centers)
+            # print([[mod1 == mod2 for mod2 in new_module_centers] for mod1 in new_module_centers])
+            mod_pairs = combinations(range(len(new_module_centers)), 2)
+            # possibleLayout = sum([
+            #     abs(new_module_centers[m_p[0]][0] - new_module_centers[m_p[1]][0]) > 0.08 and
+            #     abs(new_module_centers[m_p[0]][1] - new_module_centers[m_p[1]][1]) > 0.08
+            # for m_p in mod_pairs]) == sum(1 for ignore in mod_pairs) 
+            # possibleLayout = sum([sum([mod1_num == mod2_num or dist_large_engough(mod1, mod2) for mod2_num, mod2 in enumerate(new_module_centers)]) for mod1_num, mod1 in enumerate(new_module_centers)])
 
             _, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
                 self.relative_distances, new_rel_distances, self.dist_sim_threshold
@@ -885,6 +898,7 @@ class Module_layout:
         node_positions = normalize_2D_node_pos_in_range(
             self.final_node_pos, [0, max_ext, 0, max_ext], True
         )
+
         return node_positions
 
     def get_module_areas(self):
@@ -894,7 +908,7 @@ class Module_layout:
 
         min_x, max_x = [min(flatten_list[0]), max(flatten_list[1])]
         min_y, max_y = [min(flatten_list[2]), max(flatten_list[3])]
-        norm_areas = []
+        norm_areas = [] if self.noise_cluster_exists else [[]]
         for mod in self.modules_area:
             norm_area = [
                 normalize_val_in_range(mod[0], min_x, max_x, [0, max_ext]),
@@ -903,6 +917,8 @@ class Module_layout:
                 normalize_val_in_range(mod[3], min_y, max_y, [0, max_ext]),
             ]
             norm_areas.append(norm_area)
+        
+
         return norm_areas
 
 

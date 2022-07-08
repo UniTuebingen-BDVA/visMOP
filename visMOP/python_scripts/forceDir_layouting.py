@@ -5,17 +5,18 @@ import time
 
 # with all edges
 def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids):
+    num_root_ids_per_pathway = [len(root_ids) for root_ids in pathways_root_ids]
+    min_num_root_ids_per_pathway, max_num_root_ids_per_pathway = (min(num_root_ids_per_pathway), max(num_root_ids_per_pathway)) 
     G_with_weights = nx.Graph()
     nodes = list(G.nodes())
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
-            w = (
-                0.2
-                if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]]
-                else 0.01
-            )
-            # G_with_weights.add_edge(nodes[i], nodes[j], weight=w)
-            G_with_weights.add_edge(nodes[i], nodes[j])
+            # num_similar_root = sum([1 if root_id_patway1 in pathways_root_ids[nodes[j]] else 0 for root_id_patway1 in pathways_root_ids[nodes[i]]])
+            # normalized between 1-2
+            # num_similar_root_norm = (num_similar_root - min_num_root_ids_per_pathway) / (max_num_root_ids_per_pathway - min_num_root_ids_per_pathway) +1
+            w = 2 if pathways_root_ids[nodes[j]] ==pathways_root_ids[nodes[j]] else 1
+            G_with_weights.add_edge(nodes[i], nodes[j], weight=w)
+            # G_with_weights.add_edge(nodes[i], nodes[j])
 
     return get_pos_in_force_dir_layout(G_with_weights, mod_num, 1, 20)
 

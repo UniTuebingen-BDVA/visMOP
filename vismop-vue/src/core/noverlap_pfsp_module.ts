@@ -29,7 +29,7 @@ export function pfsPrime_modules(
 ): [node[]] {
   // TODO: add padding
   const updatedNodes = [[]] as [node[]];
-
+  if (moduleAreas[0].length == 0) {moduleAreas.shift()}
   for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
     const moduleNodes = [];
     for (let index = 0; index < allNodes.length; index++) {
@@ -51,7 +51,7 @@ export function pfsPrime_modules(
   return updatedNodes;
 }
 
-function normInArea(nodes: node[], area: number[], padding = 0.45) {
+function normInArea(nodes: node[], area: number[], padding = 0.45): void {
   const maxMinXY = getMaxMinXY(nodes);
   area = [
     area[0] + padding,

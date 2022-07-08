@@ -128,6 +128,8 @@ export function generateGraphData(
     }
     index += 1;
   }
+  let withNoiseCluster = moduleAreas[0].length != 0
+
   let norm_node_pos = [] as node[];
   const hull_points: [[number[]]] = [[[]]];
   const nodes_per_cluster = pfsPrime_modules(
@@ -135,6 +137,7 @@ export function generateGraphData(
     maxModuleNum,
     moduleAreas
   );
+
   _.forEach(nodes_per_cluster, (n) => {
     const clusterHullPoints = hull(
       n.map((o) => [o.attributes.x, o.attributes.y]),
@@ -142,14 +145,11 @@ export function generateGraphData(
     ) as [[number, number]];
     hull_points.push(clusterHullPoints);
     norm_node_pos = norm_node_pos.concat(n);
-    console.log(clusterHullPoints);
   });
-  hull_points.shift();
-
+  if (withNoiseCluster){hull_points.shift();}
   graph.clusterAreas = hull_points;
   // graph.clusterAreas = moduleAreas;
 
-  console.log('rOGP', graph.clusterAreas);
   graph.nodes = norm_node_pos;
 
   return graph;

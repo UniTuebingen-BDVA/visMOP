@@ -74,7 +74,6 @@ function adjustHulls(
         currPoint[1] + moveVec[1] * pushLen,
       ];
       outList.push(newPushedOutPoint);
-      console.log('if', radian);
     } else {
       const newPushedOutPoint = [
         currPoint[0] + moveVec[0] * halfPushLen,
@@ -95,7 +94,7 @@ function adjustHulls(
     }
   }
   outList.push(outList[0]);
-  return outList;
+  return outList as [number[]];
 }
 
 export default class ClusterHulls {
@@ -114,11 +113,9 @@ export default class ClusterHulls {
   }
   adjust(convexHulls: [[number[]]]): [[number[]]] {
     for (let i = 0; i < convexHulls.length; i++) {
-      console.log('conHull', i);
       const finalHullNodes = adjustHulls(convexHulls[i], this.radianThreshold);
       convexHulls[i] = finalHullNodes;
     }
-    console.log('FINAL', convexHulls);
     return convexHulls;
   }
 }

@@ -909,6 +909,7 @@ def reactome_overview():
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
     # print(pathway_connection_dict.keys())
+    # print(pathways_root_names)
     module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways, pathways_root_names)
 
     # a_file = open("modul_layout.pkl", "wb")
@@ -923,21 +924,9 @@ def reactome_overview():
 
     # with open('module_areas.pkl', "rb") as f:
     #     module_areas = pickle.load(f)
-    # print(len(module_areas))
-    # module_node_pos = normalize_2D_node_pos_in_range(
-    #          module_node_pos, [0, 1, 0, 1], True)
-    # print(module_node_pos)
-    # flatten_list = list(map(list, zip(*module_areas)))
-
-    # min_x, max_x = [min(flatten_list[0]), max(flatten_list[1])]
-    # min_y, max_y = [min(flatten_list[2]), max(flatten_list[3])]
-    # norm_areas = []
-    # for mod in module_areas:
-    #     norm_area = [normalize_val_in_range(mod[0], min_x, max_x, [0,1]), normalize_val_in_range(mod[1], min_x, max_x, [0,1]), normalize_val_in_range(mod[2], min_y, max_y, [0,1]), normalize_val_in_range(mod[3], min_y, max_y, [0,1])]
-    #     norm_areas.append(norm_area)
-
-    # module_areas = norm_areas
-    print(len(module_areas))
+    # print(module_areas)
+   
+    print('number of Clusters', len(module_areas))
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway['pathwayId']]
         pathway["initialPosX"] = x_y_pos[0]
