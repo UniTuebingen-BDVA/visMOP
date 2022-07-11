@@ -924,7 +924,6 @@ def reactome_overview():
 
     # with open('module_areas.pkl', "rb") as f:
     #     module_areas = pickle.load(f)
-    # print(module_areas)
    
     print('number of Clusters', len(module_areas))
     for pathway in out_data:

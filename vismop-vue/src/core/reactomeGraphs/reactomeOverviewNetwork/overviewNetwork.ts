@@ -21,6 +21,8 @@ import circular from 'graphology-layout/circular';
 import { assignLayout } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
+import { getRightResultFormForRectangle } from '@/core/convexHullsForClusters'
+
 
 export default class overviewGraph {
   // constants
@@ -48,7 +50,11 @@ export default class overviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected clusterAreas;
+  protected adjustedClusterAreas;
+  protected focusClusterAreas;
   protected lodRatio = 1.5;
+  protected lastClickedClusterNode = -1
+  protected additionalData;
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -157,23 +163,23 @@ export default class overviewGraph {
    * @returns {Sigma} Sigma instance
    */
   mainGraph(elemID: string): Sigma {
-    let clusterAreas:
-      | [number[]]
-      | [[number[]]]
-      | undefined
-      | { x: number; y: number }[][] = this.clusterAreas;
-    if (typeof this.clusterAreas !== 'undefined') {
-      console.log('YTPE', typeof this.clusterAreas[0][0]);
-    }
+
     if (
       typeof this.clusterAreas !== 'undefined' &&
       typeof this.clusterAreas[0][0] != 'number'
     ) {
-      const clusterHullsAdjustment = new ClusterHulls(this.graph, null, 60);
+      const clusterHullsAdjustment = new ClusterHulls(60);
       const convexHulls = this.clusterAreas as [[number[]]];
-      clusterAreas = clusterHullsAdjustment.adjust(convexHulls);
+      let adjustementResults = clusterHullsAdjustment.adjust(convexHulls);
+      this.adjustedClusterAreas = adjustementResults[0]
+      this.focusClusterAreas = adjustementResults[1]
     }
-    const additionalData = { clusterAreas: clusterAreas };
+    else{
+      let adjustementResults = getRightResultFormForRectangle(this.clusterAreas)
+      this.adjustedClusterAreas = adjustementResults[0]
+      this.focusClusterAreas = adjustementResults[1]
+    }
+    this.additionalData = { clusterAreas: this.adjustedClusterAreas };
 
     const mainStore = useMainStore();
     // select target div and initialize graph
@@ -201,7 +207,7 @@ export default class overviewGraph {
         hoverRenderer: drawHover,
         clusterVis: 'ConvexHull',
       },
-      additionalData
+      this.additionalData
     );
     console.log('Node Programs:');
     console.log(renderer.getSetting('nodeProgramClasses'));
@@ -222,7 +228,7 @@ export default class overviewGraph {
     });
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
-    const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
+    // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
 
     const rootPositions = circular(rootSubgraph, {
       scale: width,
@@ -261,38 +267,64 @@ export default class overviewGraph {
     renderer.on('clickNode', ({ node, event }) => {
       console.log('clicking Node: ', node);
       console.log('clicking event', event);
-      if (event.original.ctrlKey) {
-        mainStore.selectPathwayCompare([node]);
-      } else if (event.original.altKey) {
-        if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
-        this.shortestPathClick.push(node);
-        if (this.shortestPathClick.length === 2) {
-          this.shortestPathNodes = bidirectional(
-            this.graph,
-            this.shortestPathClick[0],
-            this.shortestPathClick[1]
-          ) as string[];
-          if (this.shortestPathNodes?.length > 0) {
-            this.shortestPathEdges = edgePathFromNodePath(
+      if (this.graph.getNodeAttribute(node, 'nodeType') != 'moduleNode')
+      {
+        if (event.original.ctrlKey) {
+          mainStore.selectPathwayCompare([node]);
+        } else if (event.original.altKey) {
+          if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
+          this.shortestPathClick.push(node);
+          if (this.shortestPathClick.length === 2) {
+            this.shortestPathNodes = bidirectional(
               this.graph,
-              this.shortestPathNodes as string[]
-            );
-            console.log('shortest Path edges', this.shortestPathEdges);
-            mainStore.selectPathwayCompare(this.shortestPathNodes);
-          } else {
-            this.shortestPathClick = [];
+              this.shortestPathClick[0],
+              this.shortestPathClick[1]
+            ) as string[];
+            if (this.shortestPathNodes?.length > 0) {
+              this.shortestPathEdges = edgePathFromNodePath(
+                this.graph,
+                this.shortestPathNodes as string[]
+              );
+              console.log('shortest Path edges', this.shortestPathEdges);
+              mainStore.selectPathwayCompare(this.shortestPathNodes);
+            } else {
+              this.shortestPathClick = [];
+            }
           }
+        } else {
+          this.shortestPathClick = [];
+          this.shortestPathNodes = [];
+          this.shortestPathEdges = [];
+          this.highlighedEdgesClick.clear();
+          this.highlighedNodesClick.clear();
+          this.highlighedNodesClick = new Set(this.graph.neighbors(node));
+          this.highlighedEdgesClick = new Set(this.graph.edges(node));
+          const nodeLabel = this.graph.getNodeAttribute(node, 'label');
+          mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
         }
-      } else {
-        this.shortestPathClick = [];
-        this.shortestPathNodes = [];
-        this.shortestPathEdges = [];
-        this.highlighedEdgesClick.clear();
-        this.highlighedNodesClick.clear();
-        this.highlighedNodesClick = new Set(this.graph.neighbors(node));
-        this.highlighedEdgesClick = new Set(this.graph.edges(node));
-        const nodeLabel = this.graph.getNodeAttribute(node, 'label');
-        mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
+      }
+      else{
+        let defocus = this.lastClickedClusterNode == parseInt(node)
+        this.graph.forEachNode((_, attributes) => {
+          if (!defocus && (attributes.id == node || (attributes.modNum == parseInt(node) && !attributes.isRoot))) {
+
+              attributes.x = attributes.xOnClusterFocus
+              attributes.y = attributes.yOnClusterFocus
+          }
+          else if (!defocus && !attributes.isRoot){
+              attributes.x = 0 // this.graph.getNodeAttribute(attributes.rootId, 'layoutX')
+              attributes.y = 0 // this.graph.getNodeAttribute(attributes.rootId, 'layoutY')
+          }
+          else{
+            attributes.x = attributes.layoutX;
+            attributes.y = attributes.layoutY;
+          }          
+
+        })
+        this.additionalData = defocus? {clusterAreas: this.adjustedClusterAreas }: { clusterAreas: {  hullPoints:  [this.focusClusterAreas[parseInt(node)]], greyValues: [this.adjustedClusterAreas.greyValues[parseInt(node)]] }}
+        this.lastClickedClusterNode = defocus? -1: parseInt(node)
+          
+        
       }
     });
 
@@ -300,15 +332,16 @@ export default class overviewGraph {
   }
   getModuleNodeIds() {
     const moduleNodeMapping: {
-      [key: string]: { ids: string[]; pos: number[][] };
+      [key: string]: { ids: string[]; pos: number[][], posOnClusterFocus: number[][] };
     } = {};
     this.graph.forEachNode((node, attr) => {
       if (!attr.isRoot) {
         // short circuit eval. to generate the corresponding entry
         !(attr.modNum in moduleNodeMapping) &&
-          (moduleNodeMapping[attr.modNum] = { ids: [], pos: [] });
+          (moduleNodeMapping[attr.modNum] = { ids: [], pos: [], posOnClusterFocus: [] });
         moduleNodeMapping[attr.modNum].ids.push(attr.id);
         moduleNodeMapping[attr.modNum].pos.push([attr.x, attr.y]);
+        moduleNodeMapping[attr.modNum].posOnClusterFocus.push([attr.xOnClusterFocus, attr.yOnClusterFocus]);
       }
     });
     return moduleNodeMapping;
@@ -329,6 +362,8 @@ export default class overviewGraph {
         y: yPos,
         layoutX: xPos,
         layoutY: yPos,
+        xOnClusterFocus:  _.mean(moduleNodeMapping[key].posOnClusterFocus.map((elem) => elem[0])),
+        yOnClusterFocus:  _.mean(moduleNodeMapping[key].posOnClusterFocus.map((elem) => elem[1])),
         //x: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0])),
         //y: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1])),
         modNum: parseInt(key),
@@ -401,3 +436,5 @@ export default class overviewGraph {
     this.renderer.refresh();
   }
 }
+
+

@@ -41,6 +41,8 @@ export interface detailNodeAttr extends baseNodeAttr {
 }
 
 export interface baseNodeAttr extends Attributes {
+  yOnClusterFocus: number;
+  xOnClusterFocus: any;
   name: string;
   id: string;
   x: number;

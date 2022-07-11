@@ -35,7 +35,6 @@ export function generateGraphData(
     options: [],
   } as graphData;
   const addedEdges: string[] = [];
-  console.log('TESTEST', nodeList);
   let index = 0;
   let maxModuleNum = 0;
   for (const entryKey in nodeList) {
@@ -46,8 +45,6 @@ export function generateGraphData(
     const initPosY = entry.initialPosY;
     const modNum = entry.moduleNum;
     maxModuleNum = Math.max(maxModuleNum, modNum);
-    // const initPosX = Math.random() * 100
-    // const initPosY = Math.random() * 100
     const currentNode = {
       key: id,
       index: index,
@@ -88,6 +85,8 @@ export function generateGraphData(
         up: { x: initPosX, y: initPosY, gamma: 0 },
         layoutX: initPosX,
         layoutY: initPosX,
+        xOnClusterFocus: 0,
+        yOnClusterFocus: 0,
         rootId: entry.rootId,
         zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
@@ -146,15 +145,31 @@ export function generateGraphData(
     maxModuleNum,
     moduleAreas
   );
+  let max_ext = 18
 
-  _.forEach(nodes_per_cluster, (n) => {
+  _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
-      n.map((o) => [o.attributes.x, o.attributes.y]),
+      nodes.map((o) => [o.attributes.x, o.attributes.y]),
       10
     ) as [[number, number]];
     hull_points.push(clusterHullPoints);
-    norm_node_pos = norm_node_pos.concat(n);
+    norm_node_pos = norm_node_pos.concat(nodes);
+    let XYVals = { x: nodes.map(o => o.attributes.x), y: nodes.map(o => o.attributes.y)}
+    // let min_x = Math.min(...XYVals.x)
+    // let min_y = Math.min(...XYVals.y)
+    // let max_x = Math.max(...XYVals.x)
+    // let max_y = Math.max(...XYVals.y)
+    let minPos = Math.min(...XYVals.x, ...XYVals.y)
+    let maxPos = Math.max(...XYVals.x, ...XYVals.y)
+  
+
+    _.forEach(nodes, (node) => {
+    node.attributes.xOnClusterFocus = max_ext * (node.attributes.x - minPos) / (maxPos - minPos) +1
+    node.attributes.yOnClusterFocus = max_ext * (node.attributes.y - minPos) / (maxPos - minPos) +1
+
+    });
   });
+
   if (withNoiseCluster){hull_points.shift();}
   graph.clusterAreas = hull_points;
   // graph.clusterAreas = moduleAreas;

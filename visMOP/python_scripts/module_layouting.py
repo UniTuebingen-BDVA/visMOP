@@ -191,6 +191,8 @@ class Module_layout:
         self.initial_node_pos, _ = self.get_initial_node_pos(drm)
         print("initial node positions calculated")
         self.modules, self.num_cluster, positions_dict_clustering = self.get_cluster()
+        self.module_node_nums = [len(module) for module in self.modules]
+
         print("Clusters identified")
         # for each module idenify all positions wher rel. distances to it are given
         self.p_f_m = defaultdict(list)
@@ -213,8 +215,7 @@ class Module_layout:
         self.weights = self.getModulesWeights()
 
         print("Relative distances between modules and module weights calculated")
-        # self.area_num_node_ratio_ok = False
-        num_iterations = 1000
+
         self.modules_area, self.area_num_node_ratio_ok = self.getSizeOfModulesRegion(
             self.modules_center
         )
@@ -238,7 +239,7 @@ class Module_layout:
         self.final_node_pos = self.getNodePositions(pathways_root_names)
         print("final node positions identified")
         endTime = time.time()
-        self.get_stats()
+        # self.get_stats()
         # self.get_stat_plots()
         print(
             "Time for Module Layout calculation {:.3f} s".format((endTime - startTime))
@@ -247,28 +248,34 @@ class Module_layout:
     def area_num_node_ratio_optFunc(self, initial_modules_center):
         runs = 0
         area_num_node_ratio_ok = False
-        module_center = initial_modules_center
+        modules_center = initial_modules_center
         while not area_num_node_ratio_ok:
-            prev_best_cost_C = self.evaluteCostFunction(module_center)
+            prev_best_cost_C = self.evaluteCostFunction(modules_center)
             best_cost_C, module_center = self.getModulePos(
-                module_center, prev_best_cost_C
-            )
-            # print("Module Positions identified")
-            modules_area, area_num_node_ratio_ok = self.getSizeOfModulesRegion(
-                module_center
-            )
+                modules_center, prev_best_cost_C)
+            try:
+                modules_area, area_num_node_ratio_ok = self.getSizeOfModulesRegion(
+                    module_center)
+
+            except:
+                mod_pairs = combinations(range(len(modules_center)), 2)
+                mod_dists = { m_p: sum([
+                    abs(modules_center[m_p[0]][0] - modules_center[m_p[1]][0]) > 0.0001,
+                    abs(modules_center[m_p[0]][1] - modules_center[m_p[1]][1]) > 0.0001]) for m_p in mod_pairs}
+                none_correct_dists = list(sum([m_p for m_p, corr_dist in mod_dists.items() if corr_dist<2] ,()))
+                # makes sure that there is enough space too find a area for each module in divideSpaceForTwoModules()
+
+                print('no possible area divide found with number of none correct distances', none_correct_dists)
             # num_iterations = num_iterations - 100 if num_iterations > 200 else 200
             if runs > 20 and not area_num_node_ratio_ok:
                 runs = 0
                 # start at random new position
-                # print(
-                #    "------------------------------------Start new!!!------------------------------------------------------------------------------------------------------"
-                # )
                 module_center = np.random.uniform(0, 1, (self.num_cluster, 2))
                 prev_best_cost_C = None
             else:
                 prev_best_cost_C = best_cost_C
                 runs += 1
+        print('C_cost =', self.evaluteCostFunction(module_center))
         return modules_area
 
     def get_stats(self):
@@ -591,18 +598,15 @@ class Module_layout:
             new_C = self.evaluteCostFunction(new_module_centers)
             if new_C < best_C:
                 possibleLayout_found = True
-                # print("new_C", new_C)
                 internal_modules_center = new_module_centers
                 best_C = new_C
             iter_num += 1
-        # print("best Costfunction value: ", best_C)
         return best_C, internal_modules_center
 
     def find_layout_with_best_possible_rel_dists(self, modules_center):
         distance_similarities = [0] * len(self.relative_distances)
         cur_mod_center = modules_center
         run = 0
-        possibleLayout = False
         while run < 2:
             new_module_centers = [
                 self.getNewModuleCenter(
@@ -615,14 +619,6 @@ class Module_layout:
             new_rel_distances = self.getRealtiveDistancesBetweenModules(
                 new_module_centers
             )
-            # print(new_module_centers)
-            # print([[mod1 == mod2 for mod2 in new_module_centers] for mod1 in new_module_centers])
-            mod_pairs = combinations(range(len(new_module_centers)), 2)
-            # possibleLayout = sum([
-            #     abs(new_module_centers[m_p[0]][0] - new_module_centers[m_p[1]][0]) > 0.08 and
-            #     abs(new_module_centers[m_p[0]][1] - new_module_centers[m_p[1]][1]) > 0.08
-            # for m_p in mod_pairs]) == sum(1 for ignore in mod_pairs) 
-            # possibleLayout = sum([sum([mod1_num == mod2_num or dist_large_engough(mod1, mod2) for mod2_num, mod2 in enumerate(new_module_centers)]) for mod1_num, mod1 in enumerate(new_module_centers)])
 
             _, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
                 self.relative_distances, new_rel_distances, self.dist_sim_threshold
@@ -631,8 +627,6 @@ class Module_layout:
                 distance_similarities = distance_similarities_new
                 cur_mod_center = new_module_centers
             run += 1
-
-            prev_dist_sim = sum(distance_similarities)
 
         return new_module_centers
 
@@ -668,21 +662,13 @@ class Module_layout:
         get max nodes in vertical and horizontal position
         """
         RATIO = 0.6
-        module_node_nums = [len(module) for module in self.modules]
-        self.module_nodes_num = module_node_nums
-        l_max = 2 * math.sqrt(max(module_node_nums))
-        # l_max = max(module_node_nums)
+        l_max = 2 * math.sqrt(max(self.module_node_nums))
 
         new_centers = [
             [mod_center[0] * l_max, mod_center[1] * l_max]
             for mod_center in module_center
         ]
-        # max_x_y = 2*max([val for xy in new_centers for val in xy])
-        # get max distance between two modules, x or y
-        # for m_p in combinations(range(len(new_centers)), 2):
-        #     print(m_p)
-        #     print(new_centers[m_p[0]])
-        # print(max(abs(new_centers[m_p[0]][0]-new_centers[m_p[1]][0]),abs(new_centers[m_p[0]][1]-new_centers[m_p[1]][1])))
+
         module_x_y_distances = {
             max(
                 abs(new_centers[m_p[0]][0] - new_centers[m_p[1]][0]),
@@ -690,16 +676,19 @@ class Module_layout:
             ): m_p
             for m_p in combinations(range(len(new_centers)), 2)
         }
-
+        mod_id_sorted_by_num_nodes = [
+                x
+                for _, x in sorted(
+                    zip(self.module_node_nums, list(range(len(self.module_node_nums)))),
+                    reverse=True)]
+        
         module_regions = self.divideSpaceForTwoModules(
-            1,
             new_centers,
-            module_node_nums,
             module_x_y_distances,
             [0, l_max, 0, l_max],
             list(range(len(new_centers))),
-            sum(module_node_nums),
-        )
+            sum(self.module_node_nums), mod_id_sorted_by_num_nodes 
+            ) 
         area_list = [[]] * len(new_centers)
         for (area, mod_num) in module_regions:
             area_list[mod_num] = area
@@ -707,7 +696,7 @@ class Module_layout:
         final_area_size = [get_area_size(area, True, l_max) for area in area_list]
         total_area = sum([size for size, _ in final_area_size])
         node_num_ratio = [
-            node_num / sum(module_node_nums) for node_num in module_node_nums
+            node_num / sum(self.module_node_nums) for node_num in self.module_node_nums
         ]
         area_ratio = [
             [area / total_area, side_ratio_ok]
@@ -718,26 +707,20 @@ class Module_layout:
             for nn_r, [a_r, s_ok] in zip(node_num_ratio, area_ratio)
         ]
         success = True if sum(nn_a_comp) == len(nn_a_comp) else False
-
-        # print("node_num_ratio", node_num_ratio)
-        # print("area_ratio", area_ratio)
-        # print("sucess per module", nn_a_comp)
-
-        if success:
-            return area_list, success
-        # area_list = [[mod_center[0]*l_max - math.sqrt(mod_l), mod_center[0]*l_max + math.sqrt(mod_l), mod_center[1]*l_max - math.sqrt(mod_l),mod_center[1]*l_max + math.sqrt(mod_l)] for mod_center, mod_l in zip(self.modules_center, module_node_nums)]
-
+        #     if i == 0: 
+        #         res1 = [sum(nn_a_comp), len(nn_a_comp)]
+        # print(0, res1, 1, [sum(nn_a_comp), len(nn_a_comp)])
+            
         return area_list, success
 
     def divideSpaceForTwoModules(
-        self,
-        init,
+        self, 
         module_centers,
-        module_node_number,
         module_ia_x_y_distances,
         area_to_divide,
         modules_in_area,
-        total_sum_nodes_in_area,
+        total_sum_nodes_in_area, mod_id_sorted_by_num_nodes
+        
     ):
         if len(modules_in_area) == 0:
             print(
@@ -748,27 +731,20 @@ class Module_layout:
             return [[area_to_divide, modules_in_area[0]]]
 
         # get the two modules furthest away from each other
-        if init == 0:
-            found_mod_pair = False
-            while not found_mod_pair:
-                max_dist = max(module_ia_x_y_distances.keys())
-                mod_pair = module_ia_x_y_distances[max_dist]
-                found_mod_pair = set(mod_pair).issubset(modules_in_area)
-                del module_ia_x_y_distances[max_dist]
-        else:
-            mod_id_sorted_by_num_nodes = [
-                x
-                for _, x in sorted(
-                    zip(module_node_number, list(range(len(module_node_number)))),
-                    reverse=True,
-                )
-            ]  # von anfang an mitgeben
-            mod_pair = []
-            for mod in mod_id_sorted_by_num_nodes:
-                if mod in modules_in_area:
-                    mod_pair.append(mod)
-                    if len(mod_pair) == 2:
-                        break
+        
+        # found_mod_pair = False
+        # while not found_mod_pair:
+        #     max_dist = max(module_ia_x_y_distances.keys())
+        #     mod_pair = module_ia_x_y_distances[max_dist]
+        #     found_mod_pair = set(mod_pair).issubset(modules_in_area)
+        #     del module_ia_x_y_distances[max_dist]
+        # else:
+        mod_pair = []
+        for mod in mod_id_sorted_by_num_nodes:
+            if mod in modules_in_area:
+                mod_pair.append(mod)
+                if len(mod_pair) == 2:
+                    break
 
         mod_1 = mod_pair[0]
         mod_2 = mod_pair[1]
@@ -790,7 +766,7 @@ class Module_layout:
                 [1, 0, module_centers[mod_1][0]]
                 if x_dist < 0
                 else [0, 1, module_centers[mod_2][0]]
-            )  # mod 2 x_min anpassen, mod 1 x_max anpassen
+            )  
         # change y coord
         else:
             y_dist = module_centers[mod_1][1] - module_centers[mod_2][1]
@@ -810,7 +786,7 @@ class Module_layout:
             score_min,
         ) = [[], [], [], [], 0, 0, inf]
         area_t_d_size = get_area_size(area_to_divide)
-        for abst in np.arange(0.0005, max_dist - 0.0005, 0.01):
+        for abst in np.arange(0.0005, max_dist - 0.0005, 0.001):
             area_1[mod_1_area_pos_to_ad] = min_border_pos + abst
             area_2[mod_2_area_pos_to_ad] = min_border_pos + abst
             mods_in_area_1 = [
@@ -818,7 +794,7 @@ class Module_layout:
                 for mod in modules_in_area
                 if mod_center_in_area(module_centers[mod], area_1)
             ]
-            num_nodes_area_1 = sum([module_node_number[mod] for mod in mods_in_area_1])
+            num_nodes_area_1 = sum([self.module_node_nums[mod] for mod in mods_in_area_1])
             num_nodes_area_2 = total_sum_nodes_in_area - num_nodes_area_1
             # score = abs(self.get_area_size(area_1)*num_nodes_area_2/total_sum_nodes_in_area -
             #             self.get_area_size(area_2)*num_nodes_area_1/total_sum_nodes_in_area)
@@ -844,21 +820,17 @@ class Module_layout:
                 num_nodes_area_2_best = deepcopy(num_nodes_area_2)
 
         return self.divideSpaceForTwoModules(
-            init,
             module_centers,
-            module_node_number,
             deepcopy(module_ia_x_y_distances),
             area_1_best,
             mods_in_area_1_best,
-            num_nodes_area_1_best,
+            num_nodes_area_1_best, mod_id_sorted_by_num_nodes
         ) + self.divideSpaceForTwoModules(
-            init,
             module_centers,
-            module_node_number,
             deepcopy(module_ia_x_y_distances),
             area_2_best,
             mods_in_area_2_best,
-            num_nodes_area_2_best,
+            num_nodes_area_2_best, mod_id_sorted_by_num_nodes
         )
 
     def getNodePositions(self, pathways_root_names):
