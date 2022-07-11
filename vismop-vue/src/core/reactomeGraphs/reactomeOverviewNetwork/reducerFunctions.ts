@@ -16,7 +16,7 @@ export function nodeReducer(
   if (this.renderer) {
     // handle lod detail
 
-    const hidden = data.hidden;
+    const hidden = data.filterHidden || data.zoomHidden || data.moduleHidden;
     let lodCondition = false;
     let xDisplay: number | undefined = -100;
     let yDisplay: number | undefined = -100;
@@ -58,6 +58,7 @@ export function nodeReducer(
           zindex: 1,
           size: data.size + 5,
           image: lodImage,
+          hidden: hidden,
         };
       }
       if (this.shortestPathNodes.includes(node)) {
@@ -67,6 +68,7 @@ export function nodeReducer(
           zindex: 1,
           size: data.nonHoverSize,
           image: lodImage,
+          hidden: hidden,
         };
       } else {
         return {
@@ -74,6 +76,7 @@ export function nodeReducer(
           color: 'rgba(255,255,255,1.0)',
           size: data.nonHoverSize - 5,
           image: lodImage,
+          hidden: hidden,
         };
       }
     }
@@ -84,6 +87,7 @@ export function nodeReducer(
         zindex: 1,
         size: data.nonHoverSize + 5,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (
@@ -96,6 +100,7 @@ export function nodeReducer(
         zindex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (
@@ -107,6 +112,7 @@ export function nodeReducer(
         zindex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
@@ -116,6 +122,7 @@ export function nodeReducer(
         zindex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (this.highlighedNodesHover.has(node)) {
@@ -125,6 +132,7 @@ export function nodeReducer(
         zIndex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (this.highlighedNodesClick.has(node)) {
@@ -134,6 +142,7 @@ export function nodeReducer(
         zIndex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     return {

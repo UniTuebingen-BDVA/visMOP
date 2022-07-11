@@ -44,8 +44,8 @@ export function zoomLod(this: overviewGraph): void {
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
       tarPositions[node] = {
-        x: attributes.layoutX,
-        y: attributes.layoutY,
+        x: attributes.moduleFixed ? attributes.x : attributes.layoutX,
+        y: attributes.moduleFixed ? attributes.y : attributes.layoutY,
         size: attributes.isRoot
           ? overviewGraph.ROOT_DEFAULT_SIZE
           : attributes.nodeType == 'moduleNode'
@@ -63,14 +63,20 @@ export function zoomLod(this: overviewGraph): void {
       //easing: 'quadraticOut',
     });
     this.graph.forEachNode((node, attributes) => {
-      attributes.hidden = attributes.nodeType !== 'moduleNode' ? false : true;
+      attributes.zoomHidden =
+        attributes.nodeType !== 'moduleNode' ? false : !attributes.moduleFixed;
     });
   }
   if (this.prevFrameZoom < this.lodRatio && this.camera.ratio > this.lodRatio) {
     if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      if (attributes.nodeType !== 'moduleNode' && !attributes.isRoot) {
+      if (
+        attributes.nodeType !== 'moduleNode' &&
+        !attributes.isRoot &&
+        !attributes.filterHidden &&
+        !attributes.moduleFixed
+      ) {
         tarPositions[node] = {
           x: this.graph.getNodeAttribute(attributes.modNum, 'layoutX'),
           y: this.graph.getNodeAttribute(attributes.modNum, 'layoutY'),
@@ -88,8 +94,10 @@ export function zoomLod(this: overviewGraph): void {
       },
       () => {
         this.graph.forEachNode((node, attributes) => {
-          if (!attributes.isRoot) attributes.hidden = true;
-          if (attributes.nodeType == 'moduleNode') attributes.hidden = false;
+          if (!attributes.isRoot && !attributes.moduleFixed)
+            attributes.zoomHidden = true;
+          if (attributes.nodeType == 'moduleNode')
+            attributes.zoomHidden = false;
         });
       }
     );

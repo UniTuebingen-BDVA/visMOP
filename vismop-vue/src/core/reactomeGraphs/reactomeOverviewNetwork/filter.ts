@@ -73,7 +73,8 @@ export function filterElements(this: overviewGraph) {
     this.filtersChanged = false;
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      if (!filterFunction.bind(this)(attributes)) attributes.hidden = false;
+      if (!filterFunction.bind(this)(attributes))
+        attributes.filterHidden = false;
     });
     this.graph.forEachNode((node, attributes) => {
       if (
@@ -101,8 +102,8 @@ export function filterElements(this: overviewGraph) {
       () => {
         this.graph.forEachNode((node, attributes) => {
           filterFunction.bind(this)(attributes)
-            ? (attributes.hidden = true)
-            : (attributes.hidden = false);
+            ? (attributes.filterHidden = true)
+            : (attributes.filterHidden = false);
         });
       }
     );

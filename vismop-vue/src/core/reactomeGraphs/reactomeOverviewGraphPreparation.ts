@@ -60,6 +60,10 @@ export function generateGraphData(
         name: _.escape(name),
         id: id,
         hidden: false,
+        filterHidden: false,
+        zoomHidden: false,
+        moduleHidden: false,
+        moduleFixed: false,
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
         label: `${_.escape(name)}`,
         averageTranscriptomics: glyphData[id].transcriptomics.available
@@ -136,7 +140,7 @@ export function generateGraphData(
     }
     index += 1;
   }
-  let withNoiseCluster = moduleAreas[0].length != 0
+  const withNoiseCluster = moduleAreas[0].length != 0;
 
   let norm_node_pos = [] as node[];
   const hull_points: [[number[]]] = [[[]]];
@@ -145,7 +149,7 @@ export function generateGraphData(
     maxModuleNum,
     moduleAreas
   );
-  let max_ext = 18
+  const max_ext = 18;
 
   _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
@@ -154,23 +158,28 @@ export function generateGraphData(
     ) as [[number, number]];
     hull_points.push(clusterHullPoints);
     norm_node_pos = norm_node_pos.concat(nodes);
-    let XYVals = { x: nodes.map(o => o.attributes.x), y: nodes.map(o => o.attributes.y)}
+    const XYVals = {
+      x: nodes.map((o) => o.attributes.x),
+      y: nodes.map((o) => o.attributes.y),
+    };
     // let min_x = Math.min(...XYVals.x)
     // let min_y = Math.min(...XYVals.y)
     // let max_x = Math.max(...XYVals.x)
     // let max_y = Math.max(...XYVals.y)
-    let minPos = Math.min(...XYVals.x, ...XYVals.y)
-    let maxPos = Math.max(...XYVals.x, ...XYVals.y)
-  
+    const minPos = Math.min(...XYVals.x, ...XYVals.y);
+    const maxPos = Math.max(...XYVals.x, ...XYVals.y);
 
     _.forEach(nodes, (node) => {
-    node.attributes.xOnClusterFocus = max_ext * (node.attributes.x - minPos) / (maxPos - minPos) +1
-    node.attributes.yOnClusterFocus = max_ext * (node.attributes.y - minPos) / (maxPos - minPos) +1
-
+      node.attributes.xOnClusterFocus =
+        (max_ext * (node.attributes.x - minPos)) / (maxPos - minPos) + 1;
+      node.attributes.yOnClusterFocus =
+        (max_ext * (node.attributes.y - minPos)) / (maxPos - minPos) + 1;
     });
   });
 
-  if (withNoiseCluster){hull_points.shift();}
+  if (withNoiseCluster) {
+    hull_points.shift();
+  }
   graph.clusterAreas = hull_points;
   // graph.clusterAreas = moduleAreas;
 
