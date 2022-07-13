@@ -14,11 +14,11 @@ def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids):
             # num_similar_root = sum([1 if root_id_patway1 in pathways_root_ids[nodes[j]] else 0 for root_id_patway1 in pathways_root_ids[nodes[i]]])
             # normalized between 1-2
             # num_similar_root_norm = (num_similar_root - min_num_root_ids_per_pathway) / (max_num_root_ids_per_pathway - min_num_root_ids_per_pathway) +1
-            w = 2 if pathways_root_ids[nodes[j]] ==pathways_root_ids[nodes[j]] else 1
+            w = 70 if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]] else 0.4
             G_with_weights.add_edge(nodes[i], nodes[j], weight=w)
             # G_with_weights.add_edge(nodes[i], nodes[j])
 
-    return get_pos_in_force_dir_layout(G_with_weights, mod_num, 1, 20)
+    return get_pos_in_force_dir_layout(G_with_weights, mod_num, 1, 10)
 
 
 def get_networkx_with_edge_weights_all_nodes_connected(

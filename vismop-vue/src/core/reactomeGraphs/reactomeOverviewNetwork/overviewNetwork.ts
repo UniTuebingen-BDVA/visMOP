@@ -313,11 +313,12 @@ export default class overviewGraph {
           ) {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
+            console.log('n',attributes.xOnClusterFocus, attributes.yOnClusterFocus)
             attributes.moduleFixed = true;
             attributes.zoomHidden = false;
           } else if (!defocus && !attributes.isRoot) {
-            attributes.x = 0; // this.graph.getNodeAttribute(attributes.rootId, 'layoutX')
-            attributes.y = 0; // this.graph.getNodeAttribute(attributes.rootId, 'layoutY')
+            attributes.x = 0; 
+            attributes.y = 0; 
             attributes.moduleHidden = true;
           } else {
             attributes.x = attributes.layoutX;

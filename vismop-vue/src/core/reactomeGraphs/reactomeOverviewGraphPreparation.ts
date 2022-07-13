@@ -11,6 +11,7 @@ import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from '../generalTypes';
 import hull from 'hull.js';
+import { getFocusNormalizeParameter } from '@/core/convexHullsForClusters'
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -149,7 +150,7 @@ export function generateGraphData(
     maxModuleNum,
     moduleAreas
   );
-  const max_ext = 18;
+  const max_ext = 20;
 
   _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
@@ -158,22 +159,21 @@ export function generateGraphData(
     ) as [[number, number]];
     hull_points.push(clusterHullPoints);
     norm_node_pos = norm_node_pos.concat(nodes);
+
     const XYVals = {
       x: nodes.map((o) => o.attributes.x),
       y: nodes.map((o) => o.attributes.y),
     };
-    // let min_x = Math.min(...XYVals.x)
-    // let min_y = Math.min(...XYVals.y)
-    // let max_x = Math.max(...XYVals.x)
-    // let max_y = Math.max(...XYVals.y)
-    const minPos = Math.min(...XYVals.x, ...XYVals.y);
-    const maxPos = Math.max(...XYVals.x, ...XYVals.y);
+    
+    const focusNormalizeParameter = getFocusNormalizeParameter(XYVals)
 
     _.forEach(nodes, (node) => {
+      let centeredX = (node.attributes.x - focusNormalizeParameter.meanX) 
+      let centeredY = (node.attributes.y - focusNormalizeParameter.meanY) 
       node.attributes.xOnClusterFocus =
-        (max_ext * (node.attributes.x - minPos)) / (maxPos - minPos) + 1;
+        (max_ext * (centeredX - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
       node.attributes.yOnClusterFocus =
-        (max_ext * (node.attributes.y - minPos)) / (maxPos - minPos) + 1;
+        (max_ext * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
     });
   });
 
@@ -181,7 +181,6 @@ export function generateGraphData(
     hull_points.shift();
   }
   graph.clusterAreas = hull_points;
-  // graph.clusterAreas = moduleAreas;
 
   graph.nodes = norm_node_pos;
 

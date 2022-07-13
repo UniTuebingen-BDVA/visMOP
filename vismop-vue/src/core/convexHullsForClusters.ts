@@ -4,13 +4,13 @@ import _ from 'lodash';
 export function getRightResultFormForRectangle(clusterRectangles: [number[]]): [{ hullPoints: number[][], greyValues: number[] }, number[][]] {
 
   let focusClusterHulls = []
-  const max_ext = 18
+  const max_ext = 20
   let greyValues = []
   const firstNoneNoiseCluster = clusterRectangles[0].length > 1 ? 1 : 0;
   if (clusterRectangles[0].length <= 1) {
     clusterRectangles.shift();
   }
-  for (let i =0; i < clusterRectangles.length; i++) {
+  for (let i = 0; i < clusterRectangles.length; i++) {
     const greyVal = i >= firstNoneNoiseCluster ? ((i - firstNoneNoiseCluster) / (clusterRectangles.length - 1 - firstNoneNoiseCluster)) * (215 - 80) + 80 : 255;
     greyValues.push(greyVal)
 
@@ -20,7 +20,7 @@ export function getRightResultFormForRectangle(clusterRectangles: [number[]]): [
     let focusHullPoints = [] as number[]
 
     _.forEach(clusterRectangles[i], (direction) => {
-      focusHullPoints.push(max_ext * (direction - minPos) / (maxPos - minPos) + 1)
+      focusHullPoints.push(max_ext * (direction - minPos) / (maxPos - minPos))
     });
 
     focusClusterHulls.push(focusHullPoints)
@@ -116,6 +116,33 @@ function adjustHulls(
   return outList as [number[]];
 }
 
+export function getFocusNormalizeParameter(XYVals: {x: number[], y: number[]}){
+  const meanX = _.mean(XYVals.x)
+      let varX = 0
+      XYVals.x.forEach(num => {
+        varX += ((num - meanX) **2);
+      });
+      varX /= XYVals.x.length
+
+      const meanY = _.mean(XYVals.y)
+      let varY = 0
+      XYVals.y.forEach(num => {
+        varY += ((num - meanY) **2);
+      });
+      varY /= XYVals.y.length
+
+      let allCenteredXY = []
+      for (let p = 0; p < XYVals.x.length; p++) {
+        allCenteredXY.push((XYVals.x[p] - meanX)) 
+        allCenteredXY.push((XYVals.y[p] - meanY)) 
+      }
+     
+      const minCentered = Math.min(...allCenteredXY)
+      const maxCentered = Math.max(...allCenteredXY)
+      return {varX: varX, varY: varY, meanX: meanX, meanY: meanY, minCentered: minCentered, maxCentered: maxCentered }
+
+
+}
 export default class ClusterHulls {
   radianThreshold: number;
 
@@ -128,7 +155,7 @@ export default class ClusterHulls {
   adjust(convexHulls: [[number[]]]): [{ hullPoints: number[][][], greyValues: number[] }, number[][][]] {
     let convexHullsAdjusted = []
     let focusClusterHulls = []
-    const max_ext = 18
+    const max_ext = 20;
     const firstNoneNoiseCluster = convexHulls[0].length > 1 ? 1 : 0;
     if (convexHulls[0].length <= 1) {
       convexHulls.shift();
@@ -140,14 +167,18 @@ export default class ClusterHulls {
       // const greyVal = 255
       greyValues.push(greyVal)
       convexHullsAdjusted.push(finalHullNodes)
-
-      const allPos = finalHullNodes.flat()
-      const minPos = Math.min(...allPos)
-      const maxPos = Math.max(...allPos)
+      let XYVals = { x: convexHulls[i].map(o => o[0]) as number[], y: convexHulls[i].map(o => o[1]) as number[] }
+      
+      const focusNormalizeParameter = getFocusNormalizeParameter(XYVals)
+      
       let focusHullPoints = [] as number[][]
 
       _.forEach(finalHullNodes, (hullPoint) => {
-        focusHullPoints.push([max_ext * (hullPoint[0] - minPos) / (maxPos - minPos) + 1, max_ext * (hullPoint[1] - minPos) / (maxPos - minPos) + 1])
+        let centeredX = (hullPoint[0] - focusNormalizeParameter.meanX) 
+        let centeredY = (hullPoint[1] - focusNormalizeParameter.meanY) 
+        let normX = (max_ext * (centeredX - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
+        let normY = (max_ext * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
+        focusHullPoints.push([normX, normY])
       });
 
       focusClusterHulls.push(focusHullPoints)

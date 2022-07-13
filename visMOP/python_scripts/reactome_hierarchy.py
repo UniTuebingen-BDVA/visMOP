@@ -574,7 +574,7 @@ class PathwayHierarchy(dict):
                 pathways_root_names[entry.reactome_sID] = [self[entry.root_id].name]
                 # pathways_root_names[entry.reactome_sID].append(hierarchical_roots)
                 
-                print(pathways_root_names[entry.reactome_sID])
+                # print(pathways_root_names[entry.reactome_sID])
                 root_subpathways[entry.root_id].extend(pathway_dict["subtreeIds"])
                 pathway_summary_stats_dict[entry.reactome_sID] = pathway_summary_data
         stat_vals = [

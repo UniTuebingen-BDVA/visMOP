@@ -221,8 +221,7 @@ class Module_layout:
         self.modules_area, self.area_num_node_ratio_ok = self.getSizeOfModulesRegion(
             self.modules_center
         )
-        print("Module sizes identified")
-        pool_size = 1
+        pool_size = 8
         pool = Pool(pool_size)
 
         for result in pool.imap_unordered(
@@ -235,6 +234,7 @@ class Module_layout:
         pool.terminate()  # kill all remaining tasks
         # Wait for all processes to end:
         pool.join()
+        print("Module sizes identified")
 
         # while not area_num_node_ratio_ok:
 
@@ -286,7 +286,8 @@ class Module_layout:
                     "no possible area divide found with number of none correct distances",
                     none_correct_dists,
                 )
-            # num_iterations = num_iterations - 100 if num_iterations > 200 else 200
+                pass
+            
             if runs > 20 and not area_num_node_ratio_ok:
                 runs = 0
                 # start at random new position

@@ -908,16 +908,14 @@ def reactome_overview():
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
-    # print(pathway_connection_dict.keys())
-    # print(pathways_root_names)
     module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways, pathways_root_names)
 
-    # a_file = open("modul_layout.pkl", "wb")
-    # pickle.dump(module_node_pos, a_file)
-    # a_file.close()
-    # a_file = open("module_areas.pkl", "wb") 
-    # pickle.dump(module_areas, a_file)
-    # a_file.close()
+    a_file = open("modul_layout.pkl", "wb")
+    pickle.dump(module_node_pos, a_file)
+    a_file.close()
+    a_file = open("module_areas.pkl", "wb") 
+    pickle.dump(module_areas, a_file)
+    a_file.close()
 
     # with open('modul_layout.pkl', "rb") as f:
     #     module_node_pos = pickle.load(f)
