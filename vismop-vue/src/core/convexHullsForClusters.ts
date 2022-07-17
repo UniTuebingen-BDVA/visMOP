@@ -40,10 +40,10 @@ function normalize(vec: number[]): number[] {
 }
 
 
-function adjustHulls(
+function adjustHullPoints(
   currentHullPoints: [number[]],
   radianThreshold: number
-): [number[]] {
+): number[][] {
   const pushLen = 0.5;
   const halfPushLen = (3 * pushLen) / 4;
   currentHullPoints.pop();
@@ -113,7 +113,7 @@ function adjustHulls(
     }
   }
   outList.push(outList[0]);
-  return outList as [number[]];
+  return outList as number[][];
 }
 
 export function getFocusNormalizeParameter(XYVals: {x: number[], y: number[]}){
@@ -152,6 +152,24 @@ export default class ClusterHulls {
 
     this.radianThreshold = (angleThreshold * Math.PI) / 180;
   }
+  adjustOneHull(convexHullPoints: [number[]], hullNum: number, firstNoneNoiseCluster: number, max_ext: number, totalNumHulls: number){
+    const greyVal = hullNum >= firstNoneNoiseCluster ? ((hullNum - firstNoneNoiseCluster) / (totalNumHulls - 1 - firstNoneNoiseCluster)) * (215 - 80) + 80 : 255;
+    const finalHullNodes = adjustHullPoints(convexHullPoints, this.radianThreshold);
+    let XYVals = { x: convexHullPoints.map(o => o[0]) as number[], y: convexHullPoints.map(o => o[1]) as number[] }
+    const focusNormalizeParameter = getFocusNormalizeParameter(XYVals)
+    let focusHullPoints = [] as number[][]
+
+    _.forEach(finalHullNodes, (hullPoint) => {
+        let centeredX = (hullPoint[0] - focusNormalizeParameter.meanX) 
+        let centeredY = (hullPoint[1] - focusNormalizeParameter.meanY) 
+        let normX = (max_ext * (centeredX - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
+        let normY = (max_ext * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
+        focusHullPoints.push([normX, normY])
+      });
+
+    return {greyVal: greyVal, finalHullNodes: finalHullNodes, focusHullPoints: focusHullPoints, focusNormalizeParameter: focusNormalizeParameter}
+
+  }
   adjust(convexHulls: [[number[]]]): [{ hullPoints: number[][][], greyValues: number[] }, number[][][]] {
     let convexHullsAdjusted = []
     let focusClusterHulls = []
@@ -160,31 +178,15 @@ export default class ClusterHulls {
     if (convexHulls[0].length <= 1) {
       convexHulls.shift();
     }
+    let totalNumHulls = convexHulls.length
     let greyValues = []
-    for (let i = convexHulls[0].length > 1 ? 0 : 1; i < convexHulls.length; i++) {
-      const finalHullNodes = adjustHulls(convexHulls[i], this.radianThreshold);
-      const greyVal = i >= firstNoneNoiseCluster ? ((i - firstNoneNoiseCluster) / (convexHulls.length - 1 - firstNoneNoiseCluster)) * (215 - 80) + 80 : 255;
-      // const greyVal = 255
-      greyValues.push(greyVal)
-      convexHullsAdjusted.push(finalHullNodes)
-      let XYVals = { x: convexHulls[i].map(o => o[0]) as number[], y: convexHulls[i].map(o => o[1]) as number[] }
-      
-      const focusNormalizeParameter = getFocusNormalizeParameter(XYVals)
-      
-      let focusHullPoints = [] as number[][]
-
-      _.forEach(finalHullNodes, (hullPoint) => {
-        let centeredX = (hullPoint[0] - focusNormalizeParameter.meanX) 
-        let centeredY = (hullPoint[1] - focusNormalizeParameter.meanY) 
-        let normX = (max_ext * (centeredX - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
-        let normY = (max_ext * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
-        focusHullPoints.push([normX, normY])
-      });
-
-      focusClusterHulls.push(focusHullPoints)
+    for (let i = 0; i < convexHulls.length; i++) {
+      let hullAdjustment = this.adjustOneHull(convexHulls[i], i, firstNoneNoiseCluster, max_ext, totalNumHulls)
+      greyValues.push(hullAdjustment.greyVal)
+      convexHullsAdjusted.push(hullAdjustment.finalHullNodes)      
+      focusClusterHulls.push(hullAdjustment.focusHullPoints)
 
     }
-    console.log({ hullPoints: convexHullsAdjusted, greyValues: greyValues })
     return [{ hullPoints: convexHullsAdjusted, greyValues: greyValues }, focusClusterHulls];
   }
 }

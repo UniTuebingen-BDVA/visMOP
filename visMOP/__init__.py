@@ -910,12 +910,12 @@ def reactome_overview():
 
     module_node_pos, module_areas = getModuleLayout(omics_recieved, layout_limits, layout_attributes_used, statistic_data_complete, pathway_connection_dict, root_subpathways, pathways_root_names)
 
-    a_file = open("modul_layout.pkl", "wb")
-    pickle.dump(module_node_pos, a_file)
-    a_file.close()
-    a_file = open("module_areas.pkl", "wb") 
-    pickle.dump(module_areas, a_file)
-    a_file.close()
+    # a_file = open("modul_layout.pkl", "wb")
+    # pickle.dump(module_node_pos, a_file)
+    # a_file.close()
+    # a_file = open("module_areas.pkl", "wb") 
+    # pickle.dump(module_areas, a_file)
+    # a_file.close()
 
     # with open('modul_layout.pkl', "rb") as f:
     #     module_node_pos = pickle.load(f)

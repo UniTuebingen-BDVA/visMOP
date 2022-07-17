@@ -87,7 +87,7 @@ export interface graphData {
   attributes: { [name: string]: string };
   nodes: node[];
   edges: edge[];
-  clusterAreas?: [number[]] | [[number[]]];
+  clusterAreas:  {normalHullPoints: { hullPoints: number[][][], greyValues: number[] }, focusHullPoints: number[][][]},
   options: unkown;
 }
 export interface networkxNodeLink {

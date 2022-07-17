@@ -1,4 +1,5 @@
 import random
+from statistics import mean
 import pandas as pd
 import numpy as np
 import math
@@ -26,12 +27,7 @@ from multiprocessing import Process
 def most_frequent(List):
     return max(set(List), key=List.count)
 
-
-def dist_large_engough(mod1, mod2):
-    return abs(mod1[0] - mod2[0]) > 0.008 and abs(mod1[1] - mod2[1]) > 0.008
-
-
-def get_area_size(area, get_side_ratio_ok=False, l_max=1):
+def get_area_size(area, get_side_ratio_ok=False, l_max= 1, min_ratio = 0.07):
     """determine the area given array of min and max x and y positions
 
     Args:
@@ -39,7 +35,7 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1):
         get_smallest_side: boolean to deterine whether to return legth of smallest side
 
     """
-    MIN_RATIO = 0.05
+    
     x_side = area[1] - area[0]
     y_side = area[3] - area[2]
     area_size = x_side * y_side
@@ -47,7 +43,7 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1):
         return area_size
     min_side = min(x_side, y_side)
     ratio_ok = (
-        normalize_val_in_range(min_side, 0, l_max, [0, 1]) >= MIN_RATIO
+        normalize_val_in_range(min_side, 0, l_max, [0, 1]) >= min_ratio
     )  # max(x_side, y_side)/min_side <= 4 and
     return area_size, ratio_ok
 
@@ -125,32 +121,37 @@ def normalize_2D_node_pos_in_range(node_positions, x_y_ranges, with_mod_num=Fals
 
     x_vals = [val[0] for _, val in node_positions.items()]
     y_vals = [val[1] for _, val in node_positions.items()]
+    x_mean = mean(x_vals)
+    y_mean = mean(x_vals)
+    x_centered = [x - x_mean for x in x_vals]
+    y_centered = [y - y_mean for y in y_vals]
+    min_centered = min(x_centered + y_centered)
+    max_centered = max(x_centered + y_centered)
 
-    min_x, max_x, min_y, max_y = min(x_vals), max(x_vals), min(y_vals), max(y_vals)
     if with_mod_num:
         adjusted_node_positions = {
             node: [
                 normalize_val_in_range(
-                    xy[0], min_x, max_x, [x_y_ranges[0], x_y_ranges[1]]
+                    x_centered[pos], min_centered, max_centered, [x_y_ranges[0], x_y_ranges[1]]
                 ),
                 normalize_val_in_range(
-                    xy[1], min_y, max_y, [x_y_ranges[2], x_y_ranges[3]]
+                    y_centered[pos], min_centered, max_centered, [x_y_ranges[2], x_y_ranges[3]]
                 ),
                 xy[2],
             ]
-            for node, xy in node_positions.items()
+            for pos, (node, xy) in enumerate(node_positions.items())
         }
     else:
         adjusted_node_positions = {
             node: [
-                normalize_val_in_range(
-                    xy[0], min_x, max_x, [x_y_ranges[0], x_y_ranges[1]]
+               normalize_val_in_range(
+                    x_centered[pos], min_centered, max_centered, [x_y_ranges[0], x_y_ranges[1]]
                 ),
                 normalize_val_in_range(
-                    xy[1], min_y, max_y, [x_y_ranges[2], x_y_ranges[3]]
-                ),
+                    y_centered[pos], min_centered, max_centered, [x_y_ranges[2], x_y_ranges[3]]
+                )
             ]
-            for node, xy in node_positions.items()
+            for pos,(node, _) in enumerate(node_positions.items())
         }
     return adjusted_node_positions
 
@@ -173,7 +174,7 @@ class Module_layout:
         reactome_root_ids = list(reactome_roots.keys())
         self.greatest_dist_in_initial_layout = None
         self.dist_sim_threshold = 0.2
-
+        self.reactome_roots = reactome_roots
         # drop reatcome root ids so that thex are not used for calculating missing values and clusters
         self.data_table = data_table.drop(reactome_root_ids)
 
@@ -184,6 +185,7 @@ class Module_layout:
         self.noise_cluster_exists = False
 
         print("Calculating module layout...")
+        print(self.data_table)
         self.data_table_scaled_filled = StandardScaler().fit_transform(
             self.fill_missing_values_with_neighbor_mean(
                 graph_dict, up_down_reg_means, reactome_root_ids
@@ -194,6 +196,11 @@ class Module_layout:
         print("initial node positions calculated")
         self.modules, self.num_cluster, positions_dict_clustering = self.get_cluster()
         self.module_node_nums = [len(module) for module in self.modules]
+        # set AN_RATIO and MIN_SIDE_RATIO depending on number of Clusters
+        self.AN_RATIO = 0.6 if self.num_cluster > 10 else 0.5
+        self.MIN_SIDE_RATIO = 0.055 if self.num_cluster > 10 else 0.2
+        self.num_best_dist_loops = 2 if self.num_cluster > 10 else 10
+        self.num_cost_min_loops = 100 if self.num_cluster > 10 else 500
 
         print("Clusters identified")
         # for each module idenify all positions wher rel. distances to it are given
@@ -212,7 +219,7 @@ class Module_layout:
         self.relative_distances = self.getRealtiveDistancesBetweenModules(
             self.get_module_centers(positions_dict_clustering)
         )
-        self.add_reactome_roots_to_modules(reactome_roots)
+        # self.add_reactome_roots_to_modules(reactome_roots)
 
         self.weights = self.getModulesWeights()
 
@@ -235,8 +242,6 @@ class Module_layout:
         # Wait for all processes to end:
         pool.join()
         print("Module sizes identified")
-
-        # while not area_num_node_ratio_ok:
 
         self.final_node_pos = self.getNodePositions(pathways_root_names)
         print("final node positions identified")
@@ -299,50 +304,6 @@ class Module_layout:
         print("C_cost =", self.evaluteCostFunction(module_center))
         return modules_area
 
-    def get_stats(self):
-        new_module_center = self.get_module_centers(self.final_node_pos)
-        new_realtiv_dist = self.getRealtiveDistancesBetweenModules(new_module_center)
-        _, distance_similarities = self.evaluateRelativDistanceSimilarity(
-            self.relative_distances, new_realtiv_dist
-        )
-        final_area_size = [get_area_size(area) for area in self.modules_area]
-        total_area = sum(final_area_size)
-        area_nodes_ratio = [
-            area / node_num
-            for area, node_num in zip(final_area_size, self.module_nodes_num)
-        ]
-        node_num_ratio = [
-            node_num / len(self.final_node_pos) for node_num in self.module_nodes_num
-        ]
-        area_ratio = [area / total_area for area in final_area_size]
-        # print('old rel dist centers: ', ordered_org_rel_dist)
-        # print('new rel dist centers: ', list(new_realtiv_dist.values()))
-        # print('rel dis comparison: ', list(distance_similarities.values()))
-        # print('num nodes in Module: ', self.module_nodes_num)
-        # print("Node Num Ratio: ", node_num_ratio)
-        # print("Area Size Ratio: ", area_ratio)
-        # print("Area Num Nodes Ratio: ", area_nodes_ratio)
-        # print('Areas: ', self.modules_area)
-
-    def get_stat_plots(self):
-        df_imputed = pd.DataFrame(
-            self.data_table_scaled_filled,
-            columns=self.data_table.columns,
-            index=self.data_table.index,
-        )
-        num_fig_cols = math.ceil(len(self.modules) / 2)
-        # print(num_fig_cols)
-        for col in df_imputed.columns:
-            new_file_name = str(col) + "_stats.png"
-            fig, ax = plt.subplots(nrows=2, ncols=num_fig_cols)
-            fig.suptitle(col)
-            for i, cluster_nodes in enumerate(self.modules):
-                ax[i % 2, i // 2].hist(df_imputed.loc[cluster_nodes, col].values)
-                ax[i % 2, i // 2].set_title("Cluster " + str(i))
-                ax[i % 2, i // 2].set_ylabel("frequency")
-            plt.savefig(new_file_name)
-            plt.clf()
-
     # defold values per omic and pos
     def fill_missing_values_with_neighbor_mean(
         self, graph_dict, defaul_means, root_ids
@@ -383,26 +344,6 @@ class Module_layout:
 
         new_data_table = pd.DataFrame.from_dict(new_data, orient="index")
         return new_data_table
-
-    def get_pca_layout_pos(self, n_components=2):
-        """Performs PCA on scaled data returns new n-D Positions in node dict and postion list of lists
-
-        Args:
-            n_components: number PCs
-        """
-        pca = PCA(n_components=n_components, random_state=10)
-        new_pos = pca.fit_transform(self.data_table_scaled_filled)
-        new_pos_norm = normalize_value_list_in_range(new_pos, [0, 1])
-
-        explained_variation = pca.explained_variance_ratio_
-        print("Variance explained by PC1 = " + str(explained_variation[0]))
-        print("Variance explained by PC2 = " + str(explained_variation[1]))
-        pos_norm_dic_pca = {
-            node_name: row
-            for row, node_name in zip(new_pos_norm, list(self.data_table.index))
-        }
-
-        return pos_norm_dic_pca, new_pos_norm
 
     # for clustering higer n_components and n_neighbors and lower min_dist
     def get_umap_layout_pos(self, n_components=2, n_neighbors=30, min_dist=0):
@@ -592,7 +533,7 @@ class Module_layout:
 
         return C
 
-    def getModulePos(self, modules_center, prev_best_C, num_iterations=100):
+    def getModulePos(self, modules_center, prev_best_C):
         """
         1. getModulesWeights
         2. getSizeOfModulesRegion
@@ -611,13 +552,14 @@ class Module_layout:
             else prev_best_C
         )
         iter_num = 0
-        possibleLayout_found = True if num_iterations == 1000 else False
-        while iter_num < num_iterations and not possibleLayout_found:
+        possibleLayout_found = False
+        
+        while iter_num <= self.num_cost_min_loops and not possibleLayout_found:
             new_module_centers = self.find_layout_with_best_possible_rel_dists(
                 internal_modules_center
             )
             new_C = self.evaluteCostFunction(new_module_centers)
-            if new_C < best_C:
+            if new_C < best_C or (iter_num == self.num_cost_min_loops and not possibleLayout_found):
                 possibleLayout_found = True
                 internal_modules_center = new_module_centers
                 best_C = new_C
@@ -628,7 +570,8 @@ class Module_layout:
         distance_similarities = [0] * len(self.relative_distances)
         cur_mod_center = modules_center
         run = 0
-        while run < 2:
+        found_new_possible_center = False
+        while run <= self.num_best_dist_loops:
             new_module_centers = [
                 self.getNewModuleCenter(
                     module_center,
@@ -647,9 +590,11 @@ class Module_layout:
             if sum(distance_similarities_new) > sum(distance_similarities):
                 distance_similarities = distance_similarities_new
                 cur_mod_center = new_module_centers
+            elif run == self.num_best_dist_loops and not found_new_possible_center:
+                cur_mod_center = new_module_centers
             run += 1
 
-        return new_module_centers
+        return cur_mod_center
 
     def getNewModuleCenter(self, module_center, mod_num, distance_similarities_value):
         # je mehr die distancen stimmen desto weniger wahrscheinlich wird das module center erschoben
@@ -682,7 +627,7 @@ class Module_layout:
         calculate For dir for module
         get max nodes in vertical and horizontal position
         """
-        RATIO = 0.6
+        
         l_max = 2 * math.sqrt(max(self.module_node_nums))
 
         new_centers = [
@@ -717,7 +662,7 @@ class Module_layout:
         for (area, mod_num) in module_regions:
             area_list[mod_num] = area
 
-        final_area_size = [get_area_size(area, True, l_max) for area in area_list]
+        final_area_size = [get_area_size(area, True, l_max, self.MIN_SIDE_RATIO) for area in area_list]
         total_area = sum([size for size, _ in final_area_size])
         node_num_ratio = [
             node_num / sum(self.module_node_nums) for node_num in self.module_node_nums
@@ -727,7 +672,7 @@ class Module_layout:
             for area, side_ratio_ok in final_area_size
         ]
         nn_a_comp = [
-            a_r >= (nn_r - RATIO * nn_r) and s_ok
+            a_r >= (nn_r - self.AN_RATIO * nn_r) and s_ok
             for nn_r, [a_r, s_ok] in zip(node_num_ratio, area_ratio)
         ]
         success = True if sum(nn_a_comp) == len(nn_a_comp) else False
@@ -869,12 +814,13 @@ class Module_layout:
         2. return node positions
         """
         node_positions = {}
+        total_num_nodes = len(list(self.data_table.index))
         for mod_num, (module, module_area) in enumerate(
             zip(self.modules, self.modules_area)
         ):
             sub_graph = self.full_graph.subgraph(module)
             module_node_positions = get_adjusted_force_dir_node_pos(
-                sub_graph, mod_num, pathways_root_names
+                sub_graph, mod_num, pathways_root_names, total_num_nodes
             )
             adjusted_node_positions = normalize_2D_node_pos_in_range(
                 module_node_positions, module_area, True
@@ -893,11 +839,25 @@ class Module_layout:
         return node_positions
 
     def get_final_node_positions(self):
-        # print(self.final_node_pos)
         max_ext = 20
         node_positions = normalize_2D_node_pos_in_range(
             self.final_node_pos, [0, max_ext, 0, max_ext], True
         )
+        mod_dic = {
+            pathway: mod_num
+            for mod_num, module in enumerate(self.modules)
+            for pathway in module
+        }
+        for root, subpathways in self.reactome_roots.items():
+            maj_mod_num = most_frequent(
+                [
+                    mod_dic[pathway]
+                    for pathway in subpathways
+                    if pathway in mod_dic.keys()
+                ]
+            )
+            node_positions[root] = [0, 0, maj_mod_num]
+       
 
         return node_positions
 
@@ -919,6 +879,54 @@ class Module_layout:
             norm_areas.append(norm_area)
 
         return norm_areas
+
+
+
+
+    def get_stats(self):
+        new_module_center = self.get_module_centers(self.final_node_pos)
+        new_realtiv_dist = self.getRealtiveDistancesBetweenModules(new_module_center)
+        _, distance_similarities = self.evaluateRelativDistanceSimilarity(
+            self.relative_distances, new_realtiv_dist
+        )
+        final_area_size = [get_area_size(area) for area in self.modules_area]
+        total_area = sum(final_area_size)
+        area_nodes_ratio = [
+            area / node_num
+            for area, node_num in zip(final_area_size, self.module_nodes_num)
+        ]
+        node_num_ratio = [
+            node_num / len(self.final_node_pos) for node_num in self.module_nodes_num
+        ]
+        area_ratio = [area / total_area for area in final_area_size]
+        # print('old rel dist centers: ', ordered_org_rel_dist)
+        # print('new rel dist centers: ', list(new_realtiv_dist.values()))
+        # print('rel dis comparison: ', list(distance_similarities.values()))
+        # print('num nodes in Module: ', self.module_nodes_num)
+        # print("Node Num Ratio: ", node_num_ratio)
+        # print("Area Size Ratio: ", area_ratio)
+        # print("Area Num Nodes Ratio: ", area_nodes_ratio)
+        # print('Areas: ', self.modules_area)
+
+    def get_stat_plots(self):
+        df_imputed = pd.DataFrame(
+            self.data_table_scaled_filled,
+            columns=self.data_table.columns,
+            index=self.data_table.index,
+        )
+        num_fig_cols = math.ceil(len(self.modules) / 2)
+        # print(num_fig_cols)
+        for col in df_imputed.columns:
+            new_file_name = str(col) + "_stats.png"
+            fig, ax = plt.subplots(nrows=2, ncols=num_fig_cols)
+            fig.suptitle(col)
+            for i, cluster_nodes in enumerate(self.modules):
+                ax[i % 2, i // 2].hist(df_imputed.loc[cluster_nodes, col].values)
+                ax[i % 2, i // 2].set_title("Cluster " + str(i))
+                ax[i % 2, i // 2].set_ylabel("frequency")
+            plt.savefig(new_file_name)
+            plt.clf()
+
 
 
 """ OLD """
@@ -1043,3 +1051,24 @@ def getSizeOfModulesRegion_old(self):
 
     # set_areas_order_adjusted = [ for org_pos in ]
     return set_areas
+
+
+def get_pca_layout_pos(self, n_components=2):
+    """Performs PCA on scaled data returns new n-D Positions in node dict and postion list of lists
+
+    Args:
+        n_components: number PCs
+    """
+    pca = PCA(n_components=n_components, random_state=10)
+    new_pos = pca.fit_transform(self.data_table_scaled_filled)
+    new_pos_norm = normalize_value_list_in_range(new_pos, [0, 1])
+
+    explained_variation = pca.explained_variance_ratio_
+    print("Variance explained by PC1 = " + str(explained_variation[0]))
+    print("Variance explained by PC2 = " + str(explained_variation[1]))
+    pos_norm_dic_pca = {
+        node_name: row
+        for row, node_name in zip(new_pos_norm, list(self.data_table.index))
+    }
+
+    return pos_norm_dic_pca, new_pos_norm

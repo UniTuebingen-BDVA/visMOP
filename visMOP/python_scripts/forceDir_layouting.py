@@ -4,21 +4,24 @@ from fa2 import ForceAtlas2
 import time
 
 # with all edges
-def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids):
-    num_root_ids_per_pathway = [len(root_ids) for root_ids in pathways_root_ids]
-    min_num_root_ids_per_pathway, max_num_root_ids_per_pathway = (min(num_root_ids_per_pathway), max(num_root_ids_per_pathway)) 
+def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids, total_num_nodes):
+    # num_root_ids_per_pathway = [len(root_ids) for root_ids in pathways_root_ids]
+    # min_num_root_ids_per_pathway, max_num_root_ids_per_pathway = (min(num_root_ids_per_pathway), max(num_root_ids_per_pathway)) 
     G_with_weights = nx.Graph()
     nodes = list(G.nodes())
+    num_nodes = len(nodes)
+    node_ratio = num_nodes/total_num_nodes + 0.4
+    attractive_weight = (1-node_ratio) * 10
+    repulsive_force_par = node_ratio * 50
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
             # num_similar_root = sum([1 if root_id_patway1 in pathways_root_ids[nodes[j]] else 0 for root_id_patway1 in pathways_root_ids[nodes[i]]])
-            # normalized between 1-2
             # num_similar_root_norm = (num_similar_root - min_num_root_ids_per_pathway) / (max_num_root_ids_per_pathway - min_num_root_ids_per_pathway) +1
-            w = 70 if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]] else 0.4
+            w = attractive_weight if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]] else 1
             G_with_weights.add_edge(nodes[i], nodes[j], weight=w)
             # G_with_weights.add_edge(nodes[i], nodes[j])
 
-    return get_pos_in_force_dir_layout(G_with_weights, mod_num, 1, 10)
+    return get_pos_in_force_dir_layout(G_with_weights, mod_num, 2, repulsive_force_par)
 
 
 def get_networkx_with_edge_weights_all_nodes_connected(
@@ -139,8 +142,8 @@ def calculate_edge_weight(pathway1, pathway2, stringGraph, use_brite, use_intera
 
 
 def get_pos_in_force_dir_layout(graph, mod_num=0, ewi=1, repulsivForceScaler=2):
-    forceatlas2 = ForceAtlas2(edgeWeightInfluence=ewi, scalingRatio=repulsivForceScaler)
-    pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=None, iterations=500)
+    forceatlas2 = ForceAtlas2(edgeWeightInfluence=ewi, scalingRatio=repulsivForceScaler, outboundAttractionDistribution=False, verbose= False)
+    pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=None, iterations=2000)
     pos_out = {k: [v[0], v[1], mod_num] for k, v in pos.items()}
     return pos_out
 

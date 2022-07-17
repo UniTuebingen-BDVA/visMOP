@@ -15,13 +15,12 @@ import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import { filterElements, setAverageFilter } from './filter';
-import ClusterHulls from '@/core/convexHullsForClusters';
 import subgraph from 'graphology-operators/subgraph';
 import circular from 'graphology-layout/circular';
 import { assignLayout } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
-import { getRightResultFormForRectangle } from '@/core/convexHullsForClusters';
+
 
 export default class overviewGraph {
   // constants
@@ -48,12 +47,12 @@ export default class overviewGraph {
   protected camera;
   protected prevFrameZoom;
   protected graph;
-  protected clusterAreas;
+  protected clusterAreas: any;
   protected adjustedClusterAreas;
   protected focusClusterAreas;
   protected lodRatio = 1.5;
   protected lastClickedClusterNode = -1;
-  protected additionalData;
+  protected additionalData: any;
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -72,82 +71,83 @@ export default class overviewGraph {
     relative: filterValues;
     absolute: filterValues;
   } = {
-    relative: {
-      limits: {
-        min: 0,
-        max: 0,
+      relative: {
+        limits: {
+          min: 0,
+          max: 0,
+        },
+        value: {
+          min: 0,
+          max: 0,
+        },
+        filterActive: false,
+        inside: false,
+        disable: true,
       },
-      value: {
-        min: 0,
-        max: 0,
+      absolute: {
+        limits: {
+          min: 0,
+          max: 0,
+        },
+        value: {
+          min: 0,
+          max: 0,
+        },
+        filterActive: false,
+        inside: false,
+        disable: true,
       },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-    absolute: {
-      limits: {
-        min: 0,
-        max: 0,
-      },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-  };
+    };
   protected averageFilter: {
     transcriptomics: filterValues;
     proteomics: filterValues;
     metabolomics: filterValues;
   } = {
-    transcriptomics: {
-      limits: {
-        min: 0,
-        max: 0,
+      transcriptomics: {
+        limits: {
+          min: 0,
+          max: 0,
+        },
+        value: {
+          min: 0,
+          max: 0,
+        },
+        filterActive: false,
+        inside: false,
+        disable: true,
       },
-      value: {
-        min: 0,
-        max: 0,
+      proteomics: {
+        limits: {
+          min: 0,
+          max: 0,
+        },
+        value: {
+          min: 0,
+          max: 0,
+        },
+        filterActive: false,
+        inside: false,
+        disable: true,
       },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-    proteomics: {
-      limits: {
-        min: 0,
-        max: 0,
+      metabolomics: {
+        limits: {
+          min: 0,
+          max: 0,
+        },
+        value: {
+          min: 0,
+          max: 0,
+        },
+        filterActive: false,
+        inside: false,
+        disable: true,
       },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-    metabolomics: {
-      limits: {
-        min: 0,
-        max: 0,
-      },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-  };
+    };
 
   constructor(containerID: string, graphData: graphData) {
     this.graph = UndirectedGraph.from(graphData);
-    this.clusterAreas = graphData.clusterAreas;
+    this.adjustedClusterAreas = graphData.clusterAreas. normalHullPoints; 
+    this.focusClusterAreas = graphData.clusterAreas.focusHullPoints;
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
@@ -162,32 +162,40 @@ export default class overviewGraph {
    * @returns {Sigma} Sigma instance
    */
   mainGraph(elemID: string): Sigma {
-    if (
-      typeof this.clusterAreas !== 'undefined' &&
-      typeof this.clusterAreas[0][0] != 'number'
-    ) {
-      const clusterHullsAdjustment = new ClusterHulls(60);
-      const convexHulls = this.clusterAreas as [[number[]]];
-      const adjustementResults = clusterHullsAdjustment.adjust(convexHulls);
-      this.adjustedClusterAreas = adjustementResults[0];
-      this.focusClusterAreas = adjustementResults[1];
-    } else {
-      const adjustementResults = getRightResultFormForRectangle(
-        this.clusterAreas
-      );
-      this.adjustedClusterAreas = adjustementResults[0];
-      this.focusClusterAreas = adjustementResults[1];
-    }
     this.additionalData = {
       clusterAreas: this.adjustedClusterAreas,
-      testBoolean: false,
     };
 
     const mainStore = useMainStore();
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
 
-    const inferredSettings = forceAtlas2.inferSettings(this.graph);
+    // const inferredSettings = forceAtlas2.inferSettings(this.graph);
+    // // To directly assign the positions to the nodes:
+    const start = Date.now();
+  
+    // forceAtlas2.assign(this.graph, {
+    //   iterations: 500,
+    //   settings: inferredSettings,
+    // });
+    // noverlap.assign(this.graph);
+    // let all_x = [] as number[]
+    // let all_y = [] as number[]
+
+    // this.graph.forEachNode((_, attributes) => {
+    //   all_x.push(attributes.x)
+    //   all_y.push(attributes.y)
+
+    // })
+    // let min_x = Math.min(...all_x)
+    // let max_x = Math.max(...all_x)
+    // let min_y = Math.min(...all_y)
+    // let max_y = Math.max(...all_y)
+
+    // this.graph.forEachNode((_, attributes) => {
+    //   attributes.x = ( attributes.x - min_x) / (max_x-min_x) *20
+    //   attributes.y = ( attributes.y- min_y) / (max_y-min_y) *20
+    //     })
     // construct Sigma main instance
     const renderer = new Sigma(
       this.graph,
@@ -213,14 +221,6 @@ export default class overviewGraph {
     );
     console.log('Node Programs:');
     console.log(renderer.getSetting('nodeProgramClasses'));
-
-    // To directly assign the positions to the nodes:
-    const start = Date.now();
-    // forceAtlas2.assign(this.graph, {
-    //   iterations: 500,
-    //   settings: inferredSettings,
-    // });
-    // noverlap.assign(this.graph);
     const duration = (Date.now() - start) / 1000;
     console.log(`layoutDuration: ${duration} S`);
     // const layout = new FA2Layout(graph, {settings: sensibleSettings });
@@ -258,8 +258,6 @@ export default class overviewGraph {
     });
 
     renderer.on('leaveNode', ({ node }) => {
-      console.log('Leaving:', node);
-
       this.highlighedNodesHover.clear();
       this.highlighedEdgesHover.clear();
       this.highlightedCenterHover = '';
@@ -269,6 +267,7 @@ export default class overviewGraph {
     renderer.on('clickNode', ({ node, event }) => {
       console.log('clicking Node: ', node);
       console.log('clicking event', event);
+
       if (this.graph.getNodeAttribute(node, 'nodeType') != 'moduleNode') {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
@@ -308,18 +307,21 @@ export default class overviewGraph {
         this.graph.forEachNode((_, attributes) => {
           if (
             !defocus &&
-            (attributes.id == node ||
-              (attributes.modNum == parseInt(node) && !attributes.isRoot))
+            (attributes.id != node &&
+              attributes.modNum == parseInt(node) && !attributes.isRoot)
           ) {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
-            console.log('n',attributes.xOnClusterFocus, attributes.yOnClusterFocus)
             attributes.moduleFixed = true;
             attributes.zoomHidden = false;
           } else if (!defocus && !attributes.isRoot) {
-            attributes.x = 0; 
-            attributes.y = 0; 
-            attributes.moduleHidden = true;
+            attributes.x = 0;
+            attributes.y = 0;
+            if (attributes.id != node) { attributes.moduleHidden = true }
+            else{
+              attributes.moduleFixed = true;
+              attributes.zoomHidden = false;
+            }
           } else {
             attributes.x = attributes.layoutX;
             attributes.y = attributes.layoutY;
@@ -329,17 +331,16 @@ export default class overviewGraph {
         });
         this.additionalData = defocus
           ? Object.assign(this.additionalData, {
-              clusterAreas: this.adjustedClusterAreas,
-            })
+            clusterAreas: this.adjustedClusterAreas,
+          })
           : Object.assign(this.additionalData, {
-              testBoolean: true,
-              clusterAreas: {
-                hullPoints: [this.focusClusterAreas[parseInt(node)]],
-                greyValues: [
-                  this.adjustedClusterAreas.greyValues[parseInt(node)],
-                ],
-              },
-            });
+            clusterAreas: {
+              hullPoints: [this.focusClusterAreas[parseInt(node)]],
+              greyValues: [
+                this.adjustedClusterAreas.greyValues[parseInt(node)],
+              ],
+            },
+          });
         this.lastClickedClusterNode = defocus ? -1 : parseInt(node);
       }
     });

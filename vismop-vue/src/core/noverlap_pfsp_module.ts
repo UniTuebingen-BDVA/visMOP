@@ -14,6 +14,7 @@ import _ from 'lodash';
 import { node } from '@/core/graphTypes';
 import { pfsPrime } from '@/core/noverlap_pfsp';
 import { vpsc } from '@/core/noverlap_vpsc';
+import {getFocusNormalizeParameter } from '@/core/convexHullsForClusters'
 /**
  * Executes the Push Force Scan' (PFS') algorithm on this graph
  *
@@ -26,9 +27,9 @@ export function pfsPrime_modules(
   maxModuleNum: number,
   moduleAreas: [number[]] = [[0, 1, 0, 1]],
   options: { padding: number } = { padding: 0 }
-): [node[]] {
+): node[][] {
   // TODO: add padding
-  const updatedNodes = [[]] as [node[]];
+  const updatedNodes = [] as node[][];
   if (moduleAreas[0].length == 0) {moduleAreas.shift()}
   for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
     const moduleNodes = [];
@@ -39,50 +40,49 @@ export function pfsPrime_modules(
         // allNodes.splice(index, 1)
       }
     }
-    const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
-    // const pfsPrime_moduleNodes = vpsc(moduleNodes);
-    // const pfsPrime_moduleNodes = moduleNodes;
+  const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
+  // const pfsPrime_moduleNodes = vpsc(moduleNodes);
+  // const pfsPrime_moduleNodes = moduleNodes;
 
     normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum]);
 
     updatedNodes.push(moduleNodes);
   }
-  updatedNodes.shift();
+  // updatedNodes.shift();
 
   return updatedNodes;
 }
 
-function normInArea(nodes: node[], area: number[], padding = 0.45): void {
-  const maxMinXY = getMaxMinXY(nodes);
+export function normInArea(nodes: node[], area: number[], padding = 0.45): void {
+  let XYVals = { x: nodes.map(o => o.attributes.x) as number[], y: nodes.map(o => o.attributes.y) as number[] }
+  
   area = [
     area[0] + padding,
     area[1] - padding,
     area[2] + padding,
     area[3] - padding,
   ];
-  // rand einbauen
-  _.forEach(nodes, (n) => {
-    n.attributes.x =
-      area[0] +
-      ((area[1] - area[0]) * (n.attributes.x - maxMinXY[0])) /
-        (maxMinXY[1] - maxMinXY[0]);
-    n.attributes.y =
-      area[2] +
-      ((area[3] - area[2]) * (n.attributes.y - maxMinXY[2])) /
-        (maxMinXY[3] - maxMinXY[2]);
-    // delete n.up;
-  });
+
+  const focusNormalizeParameter = getFocusNormalizeParameter(XYVals)
+    _.forEach(nodes, (node) => {
+      let centeredX = (node.attributes.x - focusNormalizeParameter.meanX) 
+      let centeredY = (node.attributes.y - focusNormalizeParameter.meanY) 
+      node.attributes.x =
+      area[0] + ((area[1] - area[0]) * (centeredX - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
+      node.attributes.y =
+      area[2] +((area[3] - area[2]) * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
+    })
 }
 
-function getMaxMinXY(nodes: node[]) {
-  let maxMinXY = [Infinity, -Infinity, Infinity, -Infinity] as number[];
-  _.forEach(nodes, (n) => {
-    maxMinXY = [
-      Math.min(maxMinXY[0], n.attributes.x),
-      Math.max(maxMinXY[1], n.attributes.x),
-      Math.min(maxMinXY[2], n.attributes.y),
-      Math.max(maxMinXY[3], n.attributes.y),
-    ];
-  });
-  return maxMinXY;
-}
+// function getMaxMinXY(nodes: node[]) {
+//   let maxMinXY = [Infinity, -Infinity, Infinity, -Infinity] as number[];
+//   _.forEach(nodes, (n) => {
+//     maxMinXY = [
+//       Math.min(maxMinXY[0], n.attributes.x),
+//       Math.max(maxMinXY[1], n.attributes.x),
+//       Math.min(maxMinXY[2], n.attributes.y),
+//       Math.max(maxMinXY[3], n.attributes.y),
+//     ];
+//   });
+//   return maxMinXY;
+// }
