@@ -27,7 +27,8 @@ from multiprocessing import Process
 def most_frequent(List):
     return max(set(List), key=List.count)
 
-def get_area_size(area, get_side_ratio_ok=False, l_max= 1, min_ratio = 0.07):
+
+def get_area_size(area, get_side_ratio_ok=False, l_max=1, min_ratio=0.07):
     """determine the area given array of min and max x and y positions
 
     Args:
@@ -35,7 +36,7 @@ def get_area_size(area, get_side_ratio_ok=False, l_max= 1, min_ratio = 0.07):
         get_smallest_side: boolean to deterine whether to return legth of smallest side
 
     """
-    
+
     x_side = area[1] - area[0]
     y_side = area[3] - area[2]
     area_size = x_side * y_side
@@ -132,10 +133,16 @@ def normalize_2D_node_pos_in_range(node_positions, x_y_ranges, with_mod_num=Fals
         adjusted_node_positions = {
             node: [
                 normalize_val_in_range(
-                    x_centered[pos], min_centered, max_centered, [x_y_ranges[0], x_y_ranges[1]]
+                    x_centered[pos],
+                    min_centered,
+                    max_centered,
+                    [x_y_ranges[0], x_y_ranges[1]],
                 ),
                 normalize_val_in_range(
-                    y_centered[pos], min_centered, max_centered, [x_y_ranges[2], x_y_ranges[3]]
+                    y_centered[pos],
+                    min_centered,
+                    max_centered,
+                    [x_y_ranges[2], x_y_ranges[3]],
                 ),
                 xy[2],
             ]
@@ -144,14 +151,20 @@ def normalize_2D_node_pos_in_range(node_positions, x_y_ranges, with_mod_num=Fals
     else:
         adjusted_node_positions = {
             node: [
-               normalize_val_in_range(
-                    x_centered[pos], min_centered, max_centered, [x_y_ranges[0], x_y_ranges[1]]
+                normalize_val_in_range(
+                    x_centered[pos],
+                    min_centered,
+                    max_centered,
+                    [x_y_ranges[0], x_y_ranges[1]],
                 ),
                 normalize_val_in_range(
-                    y_centered[pos], min_centered, max_centered, [x_y_ranges[2], x_y_ranges[3]]
-                )
+                    y_centered[pos],
+                    min_centered,
+                    max_centered,
+                    [x_y_ranges[2], x_y_ranges[3]],
+                ),
             ]
-            for pos,(node, _) in enumerate(node_positions.items())
+            for pos, (node, _) in enumerate(node_positions.items())
         }
     return adjusted_node_positions
 
@@ -266,7 +279,7 @@ class Module_layout:
                     module_center
                 )
 
-            except:
+            except IndexError:
                 mod_pairs = combinations(range(len(modules_center)), 2)
                 mod_dists = {
                     m_p: sum(
@@ -292,7 +305,7 @@ class Module_layout:
                     none_correct_dists,
                 )
                 pass
-            
+
             if runs > 20 and not area_num_node_ratio_ok:
                 runs = 0
                 # start at random new position
@@ -394,6 +407,8 @@ class Module_layout:
         # for calculation of the sillouette value exclude random cluster
 
         rand_cl_pos = [i for i, x in enumerate(clustering_labels) if x == -1]
+        data_wo_outlier = position_list
+        clustering_labels_wo_outlier = clustering_labels
         if len(rand_cl_pos) != 0 and max(clustering_labels) > 1:
             data_wo_outlier = np.delete(position_list, rand_cl_pos, axis=0)
             clustering_labels_wo_outlier = [x for x in clustering_labels if x != -1]
@@ -553,13 +568,15 @@ class Module_layout:
         )
         iter_num = 0
         possibleLayout_found = False
-        
+
         while iter_num <= self.num_cost_min_loops and not possibleLayout_found:
             new_module_centers = self.find_layout_with_best_possible_rel_dists(
                 internal_modules_center
             )
             new_C = self.evaluteCostFunction(new_module_centers)
-            if new_C < best_C or (iter_num == self.num_cost_min_loops and not possibleLayout_found):
+            if new_C < best_C or (
+                iter_num == self.num_cost_min_loops and not possibleLayout_found
+            ):
                 possibleLayout_found = True
                 internal_modules_center = new_module_centers
                 best_C = new_C
@@ -627,7 +644,7 @@ class Module_layout:
         calculate For dir for module
         get max nodes in vertical and horizontal position
         """
-        
+
         l_max = 2 * math.sqrt(max(self.module_node_nums))
 
         new_centers = [
@@ -662,7 +679,9 @@ class Module_layout:
         for (area, mod_num) in module_regions:
             area_list[mod_num] = area
 
-        final_area_size = [get_area_size(area, True, l_max, self.MIN_SIDE_RATIO) for area in area_list]
+        final_area_size = [
+            get_area_size(area, True, l_max, self.MIN_SIDE_RATIO) for area in area_list
+        ]
         total_area = sum([size for size, _ in final_area_size])
         node_num_ratio = [
             node_num / sum(self.module_node_nums) for node_num in self.module_node_nums
@@ -857,7 +876,6 @@ class Module_layout:
                 ]
             )
             node_positions[root] = [0, 0, maj_mod_num]
-       
 
         return node_positions
 
@@ -879,9 +897,6 @@ class Module_layout:
             norm_areas.append(norm_area)
 
         return norm_areas
-
-
-
 
     def get_stats(self):
         new_module_center = self.get_module_centers(self.final_node_pos)
@@ -926,7 +941,6 @@ class Module_layout:
                 ax[i % 2, i // 2].set_ylabel("frequency")
             plt.savefig(new_file_name)
             plt.clf()
-
 
 
 """ OLD """
