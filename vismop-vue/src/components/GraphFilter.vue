@@ -3,7 +3,12 @@
     <div class="text-h6 text-grey-9 grey-9">Graph Filtering</div>
     <div class="graphFilterCard">
       <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-12 text-subtitle-10 text-grey-9">General</div>
+        <div class="col-12 text-subtitle1 text-grey-9">General</div>
+      </div>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">
+          Sum all omics, relative
+        </div>
       </div>
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-2">
@@ -51,6 +56,11 @@
         </div>
       </div>
       <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">
+          Sum all omics, absolute
+        </div>
+      </div>
+      <div class="row flex-center" justify="space-between" align="center">
         <div class="col-2">
           <q-checkbox
             v-model="sumRegulatedFilter.absolute.filterActive"
@@ -95,54 +105,62 @@
           />
         </div>
       </div>
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-12 text-subtitle-10 text-grey-9">Transcriptomics</div>
-      </div>
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-2">
-          <q-checkbox
-            v-model="transcriptomicsFilter.filterActive"
-            checked-icon="task_alt"
-            unchecked-icon="highlight_off"
-            :disable="transcriptomicsFilter.disable"
-          />
+      <div v-if="!transcriptomicsFilter.disable" class="graphFilterCard">
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-12 text-subtitle-1 text-grey-9">Transcriptomics</div>
         </div>
-        <div class="col-8">
-          <q-range
-            :model-value="transcriptomicsFilter.value"
-            :min="Math.floor(transcriptomicsFilter.limits.min)"
-            :max="Math.ceil(transcriptomicsFilter.limits.max)"
-            :step="0.1"
-            label
-            :color="
-              transcriptomicsFilter.inside ? 'primary' : 'graphFilterSlider'
-            "
-            :track-color="
-              transcriptomicsFilter.inside ? 'graphFilterSlider' : 'primary'
-            "
-            :disable="transcriptomicsFilter.disable"
-            @change="
-              (val) => {
-                transcriptomicsFilter.value = val;
-              }
-            "
-          >
-          </q-range>
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-12 text-caption text-grey-9">fold change average</div>
         </div>
-        <div class="col-2">
-          <q-toggle
-            v-model="transcriptomicsFilter.inside"
-            checked-icon="mdi-arrow-collapse-horizontal"
-            color="primary"
-            unchecked-icon="mdi-arrow-split-vertical"
-            :disable="transcriptomicsFilter.disable"
-          />
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-2">
+            <q-checkbox
+              v-model="transcriptomicsFilter.filterActive"
+              checked-icon="task_alt"
+              unchecked-icon="highlight_off"
+              :disable="transcriptomicsFilter.disable"
+            />
+          </div>
+          <div class="col-8">
+            <q-range
+              :model-value="transcriptomicsFilter.value"
+              :min="Math.floor(transcriptomicsFilter.limits.min)"
+              :max="Math.ceil(transcriptomicsFilter.limits.max)"
+              :step="0.1"
+              label
+              :color="
+                transcriptomicsFilter.inside ? 'primary' : 'graphFilterSlider'
+              "
+              :track-color="
+                transcriptomicsFilter.inside ? 'graphFilterSlider' : 'primary'
+              "
+              :disable="transcriptomicsFilter.disable"
+              @change="
+                (val) => {
+                  transcriptomicsFilter.value = val;
+                }
+              "
+            >
+            </q-range>
+          </div>
+          <div class="col-2">
+            <q-toggle
+              v-model="transcriptomicsFilter.inside"
+              checked-icon="mdi-arrow-collapse-horizontal"
+              color="primary"
+              unchecked-icon="mdi-arrow-split-vertical"
+              :disable="transcriptomicsFilter.disable"
+            />
+          </div>
         </div>
       </div>
     </div>
-    <div class="graphFilterCard">
+    <div v-if="!proteomicsFilter.disable" class="graphFilterCard">
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-12 text-subtitle-10 text-grey-9">Proteomics</div>
+      </div>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">fold change average</div>
       </div>
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-2">
@@ -184,9 +202,12 @@
         </div>
       </div>
     </div>
-    <div class="graphFilterCard">
+    <div v-if="!metabolomicsFilter.disable" class="graphFilterCard">
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-12 text-subtitle-10 text-grey-9">Metabolomics</div>
+      </div>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">fold change average</div>
       </div>
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-2">
