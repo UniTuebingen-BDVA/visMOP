@@ -815,6 +815,7 @@ def reactome_parsing():
     ##
     node_pathway_dict = {}
     fold_changes = {"transcriptomics": [], "proteomics": [], "metabolomics": []}
+    chebi_ids = {}
 
     ##
     # Add Proteomics Data
@@ -825,9 +826,9 @@ def reactome_parsing():
             uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
             prot_dict_global = json.loads(cache.get("prot_dict_global"))
 
-            for ID in prot_dict_global:
-                entry = prot_dict_global[ID]
-                proteomics_query_data_tuples.append((ID, entry[proteomics["value"]]))
+            for ID_number in prot_dict_global:
+                entry = prot_dict_global[ID_number]
+                proteomics_query_data_tuples.append(({'ID': ID_number, 'table_id': ID_number}, entry[proteomics["value"]]))
 
         except FileNotFoundError:
             print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
@@ -889,14 +890,14 @@ def reactome_parsing():
             for k in chebi_ids.keys():
                 for entry in chebi_ids[k]:
                     metabolomics_query_data_tuples.append(
-                        (entry, metabolomics_dict[k][metabolomics["value"]])
+                        ({'ID': entry, 'table_id': k}, metabolomics_dict[k][metabolomics["value"]])
                     )
         else:
             for ID_entry in metabolomics_IDs:
                 # TODO handle KEGGIDS
                 ID_number = str(ID_entry).replace("CHEBI:", "")
                 metabolomics_query_data_tuples.append(
-                    (ID_number, metabolomics_dict[ID_entry][metabolomics["value"]])
+                    ({'ID': ID_number, 'table_id': ID_number}, metabolomics_dict[ID_entry][metabolomics["value"]])
                 )
 
         # target organism is a little bit annoying at the moment
@@ -950,9 +951,9 @@ def reactome_parsing():
         # print("DF", transcriptomics_df)
         transcriptomics_dict = transcriptomics_df.to_dict("index")
         transcriptomics_IDs = list(transcriptomics_dict.keys())
-        for ID in transcriptomics_IDs:
+        for ID_number in transcriptomics_IDs:
             transcriptomics_query_data_tuples.append(
-                (ID, transcriptomics_dict[ID][transcriptomics["value"]])
+                ({'ID': ID_number, 'table_id': ID_number}, transcriptomics_dict[ID_number][transcriptomics["value"]])
             )
 
         # target organism is a little bit annoying at the moment
@@ -974,6 +975,8 @@ def reactome_parsing():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "gene", query_key)
 
+
+    print("node pw dict 1 ", node_pathway_dict)
     # Aggregate Data in Hierarcy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
@@ -984,6 +987,7 @@ def reactome_parsing():
     cache.set("reactome_hierarchy", reactome_hierarchy)
     dropdown_pathways = []  # TODO
     out_dat = {
+        "keggChebiTranslate": chebi_ids,
         "omicsRecieved": {
             "transcriptomics": transcriptomics["recieved"],
             "proteomics": proteomics["recieved"],
@@ -1032,6 +1036,7 @@ def reactome_overview():
     # network_overview = generate_networkx_dict(pathway_connection_dict)
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
+    print("node pw dict 2 ", pathway_dict)
 
     module_node_pos, module_areas = getModuleLayout(
         omics_recieved,

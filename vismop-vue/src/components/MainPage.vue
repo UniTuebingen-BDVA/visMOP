@@ -228,6 +228,8 @@ const metabolomicsTableHeaders = computed(
   () => mainStore.metabolomicsTableHeaders
 );
 const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
+const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate)
+
 const transcriptomicsSymbolDict = computed(
   () => mainStore.transcriptomicsSymbolDict
 );
@@ -256,7 +258,7 @@ watch(pathwayLayouting, () => {
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       row._reserved_available = pathwaysContaining
         ? pathwaysContaining.length
-        : 'No';
+        : 0;
       if (pathwaysContaining) transcriptomicsAvailable += 1;
     }
   );
@@ -283,7 +285,7 @@ watch(pathwayLayouting, () => {
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       row._reserved_available = pathwaysContaining
         ? pathwaysContaining.length
-        : 'No';
+        : 0;
       if (pathwaysContaining) proteomiocsAvailable += 1;
     }
   );
@@ -302,14 +304,29 @@ watch(pathwayLayouting, () => {
 
   metabolomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
-      metabolomicsTotal += 1;
       const symbol = row[usedSymbolCols.value.metabolomics];
-      const pathwaysContaining =
+      metabolomicsTotal += 1;
+      let pathwaysContaining : string[] = []
+      if(keggChebiTranslate.value){
+        let chebiIDs = keggChebiTranslate.value[symbol]
+        if(chebiIDs){
+          chebiIDs.forEach(element => {
+            try {
+              pathwaysContaining.push(...pathwayLayouting.value.nodePathwayDictionary[element])
+            } catch (error) {
+              
+            }
+          });
+        }
+      } else {
+        
+      pathwaysContaining =
         pathwayLayouting.value.nodePathwayDictionary[symbol];
-      row._reserved_available = pathwaysContaining
+      } 
+      row._reserved_available = pathwaysContaining.length > 0
         ? pathwaysContaining.length
-        : 'No';
-      if (pathwaysContaining) metabolomicsAvailable += 1;
+        : 0;
+      if (pathwaysContaining.length > 0) metabolomicsAvailable += 1;
     }
   );
   metabolomicsTableHeaders.value.forEach(
@@ -327,7 +344,7 @@ watch(pathwayDropdown, () => {
   transcriptomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
       let symbol = row[usedSymbolCols.value.transcriptomics];
-      const available = !(row._reserved_available === 'No');
+      const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
         if (targetDatabase.value === 'kegg') {
@@ -354,7 +371,7 @@ watch(pathwayDropdown, () => {
   proteomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
       let symbol = row[usedSymbolCols.value.proteomics];
-      const available = !(row._reserved_available === 'No');
+      const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
         if (targetDatabase.value === 'kegg') {
@@ -381,7 +398,7 @@ watch(pathwayDropdown, () => {
   metabolomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
       const symbol = row[usedSymbolCols.value.metabolomics];
-      const available = !(row._reserved_available === 'No');
+      const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
         if (targetDatabase.value === 'kegg') {
@@ -392,11 +409,28 @@ watch(pathwayDropdown, () => {
             : false;
         }
         if (targetDatabase.value === 'reactome') {
+
+          if(keggChebiTranslate.value){
+            let chebiIDs = keggChebiTranslate.value[symbol]
+            if(chebiIDs){
+              chebiIDs.forEach(element => {
+                try {
+                  includedInSelectedPathway = pathwayDropdown.value
+                  ? pathwayLayouting.value.pathwayNodeDictionary[element].includes(
+                      pathwayDropdown.value.value
+                    )
+                  : false;
+                } catch (error) {
+                  
+                }
+              })
+            }}else{
           includedInSelectedPathway = pathwayDropdown.value
             ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
                 pathwayDropdown.value.value
               )
             : false;
+            }
         }
         row._reserved_inSelected = includedInSelectedPathway ? 'Yes' : 'No';
       }
@@ -426,8 +460,8 @@ const metabolomicsSelection = (
 ) => {
   // this.metabolomicsSelectionData = val
 };
-const itemRowColor = (item: { row: { [key: string]: string } }) => {
-  return item.row._reserved_available !== 'No'
+const itemRowColor = (item: { row: { [key: string]: number | string } }) => {
+  return item.row._reserved_available !== 0
     ? item.row._reserved_inSelected === 'Yes'
       ? 'rowstyle-inPathway'
       : 'rowstyle-available'

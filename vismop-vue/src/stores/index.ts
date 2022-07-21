@@ -94,6 +94,7 @@ interface State {
     svg: { [key: string]: SVGElement };
   };
   moduleAreas: [number[]];
+  keggChebiTranslate: { [key: string]: string[] };
 }
 
 export const useMainStore = defineStore('mainStore', {
@@ -156,6 +157,7 @@ export const useMainStore = defineStore('mainStore', {
     glyphData: {},
     glyphs: { url: {}, svg: {} },
     moduleAreas: [[]],
+    keggChebiTranslate: {},
   }),
   actions: {
     addClickedNode(val: { queryID: string; name: string }) {
@@ -571,6 +573,9 @@ export const useMainStore = defineStore('mainStore', {
     removePathwayCompare(val: string) {
       const idx = this.pathwayCompare.indexOf(val);
       this.pathwayCompare.splice(idx, 1);
+    },
+    setKeggChebiTranslate(val: { [key: string]: string[] }) {
+      this.keggChebiTranslate = val;
     },
     setOmicsRecieved(val: {
       proteomics: boolean;
