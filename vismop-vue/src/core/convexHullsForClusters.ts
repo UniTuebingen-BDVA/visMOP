@@ -58,7 +58,6 @@ function adjustHullPoints(
   const outList = [];
   // var XYVals = { x: currentHullPoints.map(function (o) { return o[0]; }), y: currentHullPoints.map(function (o) { return o[1]; }) };
   for (let idx = 0; idx < currentHullPoints.length; idx++) {
-    console.log(currentHullPoints[idx]);
     const prevIdx = idx == 0 ? currentHullPoints.length - 1 : idx - 1;
     const prevPoint = currentHullPoints[prevIdx];
 
@@ -96,26 +95,11 @@ function adjustHullPoints(
     ]);
 
     if (radian > radianThreshold) {
-      let newPushedOutPoint = [] as number[];
       // move current point more outside
-      if (radian < (170 * Math.PI) / 180) {
-        newPushedOutPoint = [
-          currPoint[0] + moveVec[0] * pushLen,
-          currPoint[1] + moveVec[1] * pushLen,
-        ];
-      } else {
-        console.log('angle > 170');
-        const curPrev = normalize([
-          prevPoint[0] - currPoint[0],
-          prevPoint[1] - currPoint[1],
-        ]);
-        const perpendicularClockWise = [curPrev[1], -curPrev[0]];
-        newPushedOutPoint = [
-          currPoint[0] + perpendicularClockWise[0] * pushLen,
-          currPoint[1] + perpendicularClockWise[1] * pushLen,
-        ];
-      }
-
+      const newPushedOutPoint = [
+        currPoint[0] + moveVec[0] * pushLen,
+        currPoint[1] + moveVec[1] * pushLen,
+      ];
       outList.push(newPushedOutPoint);
     } else {
       const newPushedOutPoint = [
@@ -137,7 +121,7 @@ function adjustHullPoints(
     }
   }
   outList.push(outList[0]);
-  return outList as number[][];
+  return outList;
 }
 
 export function getFocusNormalizeParameter(XYVals: {
@@ -188,8 +172,6 @@ export default class ClusterHulls {
     max_ext: number,
     totalNumHulls: number
   ) {
-    console.log(hullNum);
-
     const greyVal =
       hullNum >= firstNoneNoiseCluster
         ? ((hullNum - firstNoneNoiseCluster) /

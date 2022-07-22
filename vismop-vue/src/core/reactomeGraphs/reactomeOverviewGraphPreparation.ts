@@ -163,10 +163,10 @@ export function generateGraphData(
   );
   const max_ext = 20;
   let clusterNum = 0;
-  const clusterHullsAdjustment = new ClusterHulls(Infinity);
-  const clusterHulls = [] as number[][][];
-  const focusClusterHulls = [] as number[][][];
-  const greyValues = [] as number[];
+  const clusterHullsAdjustment = new ClusterHulls(60);
+  let clusterHulls = [] as number[][][]
+  let focusClusterHulls = [] as number[][][]
+  let greyValues = [] as number[]
   const firstNoneNoiseCluster = nodes_per_cluster[0].length > 1 ? 1 : 0;
   if (nodes_per_cluster[0].length <= 1) {
     nodes_per_cluster.shift();

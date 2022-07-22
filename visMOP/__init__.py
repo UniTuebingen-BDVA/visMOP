@@ -975,8 +975,7 @@ def reactome_parsing():
             transcriptomics_query_data_tuples,
             tar_organism,
             "Ensembl",
-            data_path / "reactome_data/pickles/",
-        )
+            data_path / "reactome_data/pickles/")
         fold_changes["transcriptomics"] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy
         node_pathway_dict = {
