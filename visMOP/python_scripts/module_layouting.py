@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool
 
 from cmath import inf
+import scipy
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from umap import UMAP
@@ -48,7 +49,7 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1, min_ratio=0.07):
     ratio_ok = (
         normalize_val_in_range(min_side, 0, l_max, [0, 1]) >= min_ratio
     )  # max(x_side, y_side)/min_side <= 4 and
-    return area_size, min_side # ratio_ok
+    return area_size, min_side  # ratio_ok
 
 
 def get_sorted_list_by_list_B_sorting_order(list_to_sort, sorting_list, reverse=False):
@@ -210,7 +211,11 @@ class Module_layout:
         print("Scaled input data")
         self.initial_node_pos, _ = self.get_initial_node_pos(drm)
         print("initial node positions calculated")
-        self.modules, self.num_cluster, self.positions_dict_clustering = self.get_cluster()
+        (
+            self.modules,
+            self.num_cluster,
+            self.positions_dict_clustering,
+        ) = self.get_cluster()
         self.module_node_nums = [len(module) for module in self.modules]
         total_num_nodes = sum(self.module_node_nums)
         self.node_num_ratio = [
@@ -222,7 +227,6 @@ class Module_layout:
         self.num_best_dist_loops = 2 if self.num_cluster > 10 else 10
         self.num_cost_min_loops = 100 if self.num_cluster > 10 else 500
 
-        
         # for each module idenify all positions where rel. distances to it are given
         self.p_f_m = defaultdict(list)
         for i in range(self.num_cluster):
@@ -237,7 +241,7 @@ class Module_layout:
         initial_modules_center = self.get_module_centers(self.initial_node_pos)
         self.modules_center = initial_modules_center
         self.weights = self.getModulesWeights()
-        
+
         self.relative_distances = self.getRealtiveDistancesBetweenModules(
             self.get_module_centers(self.positions_dict_clustering)
         )
@@ -255,97 +259,167 @@ class Module_layout:
         )
 
     def area_num_node_ratio_Pool(self):
-        self.modules_area, initial_area_side_ratio  = self.getSizeOfModulesRegion(
-            self.modules_center)
+        self.modules_area, initial_area_side_ratio = self.getSizeOfModulesRegion(
+            self.modules_center
+        )
         nn_a_comp = [
-                    a_r >= (nn_r - self.AN_RATIO * nn_r) and min_side >= self.MIN_SIDE_T
-                    for nn_r, [a_r, min_side] in zip(self.node_num_ratio, initial_area_side_ratio)
-                ]
+            a_r >= (nn_r - self.AN_RATIO * nn_r) and min_side >= self.MIN_SIDE_T
+            for nn_r, [a_r, min_side] in zip(
+                self.node_num_ratio, initial_area_side_ratio
+            )
+        ]
         found_ideal = True if sum(nn_a_comp) == len(nn_a_comp) else False
         min_nn_ratio = [nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio]
-        init_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratio,initial_area_side_ratio) if min_nn_ratio > a_r])
-        init_diff_min_side_to_success = sum([self.MIN_SIDE_T - min_side for _, min_side in initial_area_side_ratio if self.MIN_SIDE_T > min_side])
+        init_diff_area_to_success = sum(
+            [
+                min_nn_ratio - a_r
+                for min_nn_ratio, (a_r, _) in zip(min_nn_ratio, initial_area_side_ratio)
+                if min_nn_ratio > a_r
+            ]
+        )
+        init_diff_min_side_to_success = sum(
+            [
+                self.MIN_SIDE_T - min_side
+                for _, min_side in initial_area_side_ratio
+                if self.MIN_SIDE_T > min_side
+            ]
+        )
         initial_cost = self.evaluteCostFunction(self.modules_center)
         if not found_ideal:
             pool_size = 12
             pool = Pool(pool_size)
             self.MAX_RUNS_PER_THREAD = 60
-            self.min_nn_ratios = [nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio]
+            self.min_nn_ratios = [
+                nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio
+            ]
             multiple_results = []
             found_ideal = False
-            simplified_func = partial(self.area_num_node_ratio_optFunc, diff_area_to_success = init_diff_area_to_success, diff_min_side_to_success = init_diff_min_side_to_success, modules_area = self.modules_area, initial_cost = initial_cost)
+            simplified_func = partial(
+                self.area_num_node_ratio_optFunc,
+                diff_area_to_success=init_diff_area_to_success,
+                diff_min_side_to_success=init_diff_min_side_to_success,
+                modules_area=self.modules_area,
+                initial_cost=initial_cost,
+            )
             for result in pool.imap_unordered(
-                simplified_func, [self.modules_center ] * pool_size):
+                simplified_func, [self.modules_center] * pool_size
+            ):
                 if result:  # first to succeed:
                     if result[0]:
                         print("POOL OPTI DONE ", result[0], result[3])
                         found_ideal = True
                         self.modules_area = result[3]
                         break
-                    else: 
+                    else:
                         multiple_results.append(result)
             pool.terminate()  # kill all remaining tasks
             # Wait for all processes to end:
             pool.join()
-            #success, diff_area_to_success, diff_min_side_to_success, modules_area
+            # success, diff_area_to_success, diff_min_side_to_success, modules_area
 
         if not found_ideal:
             smallest_area_diff = np.Infinity
             smalles_min_side_diff = np.Infinity
-            C_cost_best = np.Infinity  
+            C_cost_best = np.Infinity
             for result in multiple_results:
-                if (result[1] < smallest_area_diff) or ((result[1] == smallest_area_diff - result[1] <= 0.01 or (abs(result[1] - smallest_area_diff) < 0.01)) and result[2] < smalles_min_side_diff): 
-                    smallest_area_diff = result[1] 
-                    smalles_min_side_diff = result[2] 
+                if (result[1] < smallest_area_diff) or (
+                    (
+                        result[1] == smallest_area_diff - result[1] <= 0.01
+                        or (abs(result[1] - smallest_area_diff) < 0.01)
+                    )
+                    and result[2] < smalles_min_side_diff
+                ):
+                    smallest_area_diff = result[1]
+                    smalles_min_side_diff = result[2]
                     self.modules_area = result[3]
                     C_cost_best = result[4]
-            print('suboptimal solution found: ')
-            print('smallest_area_diff:', smallest_area_diff)
+            print("suboptimal solution found: ")
+            print("smallest_area_diff:", smallest_area_diff)
             print("smalles_min_side_diff: ", smalles_min_side_diff)
             print("C_cost_best: ", C_cost_best)
 
         print("Module sizes identified")
-        
 
-    def area_num_node_ratio_optFunc(self, initial_modules_center, diff_area_to_success, diff_min_side_to_success, modules_area, initial_cost):
+    def area_num_node_ratio_optFunc(
+        self,
+        initial_modules_center,
+        diff_area_to_success,
+        diff_min_side_to_success,
+        modules_area,
+        initial_cost,
+    ):
+        np.random.seed()
         runs = 0
         total_num_runs = 0
         success = False
         modules_center = initial_modules_center
         runtime_threshold_MS = 0
-        prev_best_cost_C = initial_cost 
-        min_nn_ratios= self.min_nn_ratios
+        prev_best_cost_C = initial_cost
+        min_nn_ratios = self.min_nn_ratios
         while not success and total_num_runs <= self.MAX_RUNS_PER_THREAD:
             best_cost_C, module_center = self.getModulePos(
                 modules_center, prev_best_cost_C
             )
             try:
-                new_modules_area, new_area_side_ratio = self.getSizeOfModulesRegion(module_center)
+                new_modules_area, new_area_side_ratio = self.getSizeOfModulesRegion(
+                    module_center
+                )
                 nn_a_comp = [
-                    a_r >= min_nn_ratio and min_side >= (self.MIN_SIDE_T - runtime_threshold_MS)
-                    for min_nn_ratio, (a_r, min_side) in zip(min_nn_ratios, new_area_side_ratio)]
+                    a_r >= min_nn_ratio
+                    and min_side >= (self.MIN_SIDE_T - runtime_threshold_MS)
+                    for min_nn_ratio, (a_r, min_side) in zip(
+                        min_nn_ratios, new_area_side_ratio
+                    )
+                ]
 
                 success = True if sum(nn_a_comp) == len(nn_a_comp) else False
                 if success:
                     modules_area = new_modules_area
                     diff_area_to_success = 0
-                    diff_min_side_to_success = 0 
-                elif runs > self.MAX_RUNS_PER_THREAD/3:
+                    diff_min_side_to_success = 0
+                elif runs > self.MAX_RUNS_PER_THREAD / 3:
                     runs = 0
                     # start at random new position
                     module_center = np.random.uniform(0, 1, (self.num_cluster, 2))
                     prev_best_cost_C = None
                 else:
-                    new_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratios, new_area_side_ratio) if min_nn_ratio > a_r])
-                    new_diff_min_side_to_success = sum([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
-                    if (new_diff_area_to_success < diff_area_to_success) or ((new_diff_area_to_success == diff_area_to_success or new_diff_area_to_success <= 0.01 or (abs(new_diff_area_to_success - diff_area_to_success) < 0.001)) and new_diff_min_side_to_success < diff_min_side_to_success): #  and best_cost_C < prev_best_cost_C):
-                       diff_area_to_success = new_diff_area_to_success
-                       diff_min_side_to_success = new_diff_min_side_to_success 
-                       modules_area = new_modules_area
-                       prev_best_cost_C = best_cost_C
+                    new_diff_area_to_success = sum(
+                        [
+                            min_nn_ratio - a_r
+                            for min_nn_ratio, (a_r, _) in zip(
+                                min_nn_ratios, new_area_side_ratio
+                            )
+                            if min_nn_ratio > a_r
+                        ]
+                    )
+                    new_diff_min_side_to_success = sum(
+                        [
+                            (self.MIN_SIDE_T - runtime_threshold_MS) - min_side
+                            for _, min_side in new_area_side_ratio
+                            if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side
+                        ]
+                    )
+                    if (new_diff_area_to_success < diff_area_to_success) or (
+                        (
+                            new_diff_area_to_success == diff_area_to_success
+                            or new_diff_area_to_success <= 0.01
+                            or (
+                                abs(new_diff_area_to_success - diff_area_to_success)
+                                < 0.001
+                            )
+                        )
+                        and new_diff_min_side_to_success < diff_min_side_to_success
+                    ):  #  and best_cost_C < prev_best_cost_C):
+                        diff_area_to_success = new_diff_area_to_success
+                        diff_min_side_to_success = new_diff_min_side_to_success
+                        modules_area = new_modules_area
+                        prev_best_cost_C = best_cost_C
                     runs += 1
-                if total_num_runs == self.MAX_RUNS_PER_THREAD/2:
-                    min_nn_ratios = [nn_r - (self.AN_RATIO + 0.05) * nn_r for nn_r in self.node_num_ratio]
+                if total_num_runs == self.MAX_RUNS_PER_THREAD / 2:
+                    min_nn_ratios = [
+                        nn_r - (self.AN_RATIO + 0.05) * nn_r
+                        for nn_r in self.node_num_ratio
+                    ]
                     runtime_threshold_MS = 0.01
                 total_num_runs += 1
 
@@ -375,9 +449,15 @@ class Module_layout:
                     none_correct_dists,
                 )
                 pass
-    
+
         print("C_cost =", self.evaluteCostFunction(module_center))
-        return success, diff_area_to_success, diff_min_side_to_success, modules_area, self.evaluteCostFunction(module_center)
+        return (
+            success,
+            diff_area_to_success,
+            diff_min_side_to_success,
+            modules_area,
+            self.evaluteCostFunction(module_center),
+        )
 
     # defold values per omic and pos
     def fill_missing_values_with_neighbor_mean(
@@ -433,7 +513,7 @@ class Module_layout:
             n_components=n_components,
             n_neighbors=n_neighbors,
             min_dist=min_dist,
-            #random_state=10,
+            # random_state=10,
         ).fit_transform(self.data_table_scaled_filled)
         new_pos_norm = normalize_value_list_in_range(new_pos, [0, 1])
         pos_norm_dic = {
@@ -636,7 +716,9 @@ class Module_layout:
                 internal_modules_center
             )
             new_C = self.evaluteCostFunction(new_module_centers)
-            if new_C < best_C or (iter_num == self.num_cost_min_loops and not possibleLayout_found):
+            if new_C < best_C or (
+                iter_num == self.num_cost_min_loops and not possibleLayout_found
+            ):
                 possibleLayout_found = True
                 internal_modules_center = new_module_centers
                 best_C = new_C
@@ -729,13 +811,13 @@ class Module_layout:
 
         module_regions = self.divideSpaceForTwoModules(
             new_centers,
-            #module_x_y_distances,
+            # module_x_y_distances,
             [0, l_max, 0, l_max],
             list(range(self.num_cluster)),
             sum(self.module_node_nums),
             mod_id_sorted_by_num_nodes,
         )
-        area_list = [[]] * self.num_cluster  
+        area_list = [[]] * self.num_cluster
         for (area, mod_num) in module_regions:
             area_list[mod_num] = area
 
@@ -743,10 +825,9 @@ class Module_layout:
             get_area_size(area, True, l_max, self.MIN_SIDE_T) for area in area_list
         ]
         total_area = sum([size for size, _ in final_area_size])
-        
+
         area_side_ratio = [
-            [area / total_area, min_side]
-            for area, min_side in final_area_size
+            [area / total_area, min_side] for area, min_side in final_area_size
         ]
 
         return area_list, area_side_ratio
@@ -754,7 +835,7 @@ class Module_layout:
     def divideSpaceForTwoModules(
         self,
         module_centers,
-        #module_ia_x_y_distances,
+        # module_ia_x_y_distances,
         area_to_divide,
         modules_in_area,
         total_sum_nodes_in_area,
@@ -861,14 +942,14 @@ class Module_layout:
 
         return self.divideSpaceForTwoModules(
             module_centers,
-            #deepcopy(module_ia_x_y_distances),
+            # deepcopy(module_ia_x_y_distances),
             area_1_best,
             mods_in_area_1_best,
             num_nodes_area_1_best,
             mod_id_sorted_by_num_nodes,
         ) + self.divideSpaceForTwoModules(
             module_centers,
-            #deepcopy(module_ia_x_y_distances),
+            # deepcopy(module_ia_x_y_distances),
             area_2_best,
             mods_in_area_2_best,
             num_nodes_area_2_best,
@@ -1123,7 +1204,7 @@ def get_pca_layout_pos(self, n_components=2):
     Args:
         n_components: number PCs
     """
-    pca = PCA(n_components=n_components, random_state=10)
+    pca = PCA(n_components=n_components, random_state=random.randint(0, 1000))
     new_pos = pca.fit_transform(self.data_table_scaled_filled)
     new_pos_norm = normalize_value_list_in_range(new_pos, [0, 1])
 

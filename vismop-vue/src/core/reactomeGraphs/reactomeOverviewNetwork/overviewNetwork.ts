@@ -21,12 +21,11 @@ import { assignLayout } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 
-
 export default class overviewGraph {
   // constants
-  static readonly DEFAULT_SIZE = 10;
-  static readonly ROOT_DEFAULT_SIZE = 15;
-  static readonly MODULE_DEFAULT_SIZE = 20;
+  static readonly DEFAULT_SIZE = 5;
+  static readonly ROOT_DEFAULT_SIZE = 7.5;
+  static readonly MODULE_DEFAULT_SIZE = 10;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];
@@ -71,82 +70,82 @@ export default class overviewGraph {
     relative: filterValues;
     absolute: filterValues;
   } = {
-      relative: {
-        limits: {
-          min: 0,
-          max: 0,
-        },
-        value: {
-          min: 0,
-          max: 0,
-        },
-        filterActive: false,
-        inside: false,
-        disable: true,
+    relative: {
+      limits: {
+        min: 0,
+        max: 0,
       },
-      absolute: {
-        limits: {
-          min: 0,
-          max: 0,
-        },
-        value: {
-          min: 0,
-          max: 0,
-        },
-        filterActive: false,
-        inside: false,
-        disable: true,
+      value: {
+        min: 0,
+        max: 0,
       },
-    };
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+    absolute: {
+      limits: {
+        min: 0,
+        max: 0,
+      },
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+  };
   protected averageFilter: {
     transcriptomics: filterValues;
     proteomics: filterValues;
     metabolomics: filterValues;
   } = {
-      transcriptomics: {
-        limits: {
-          min: 0,
-          max: 0,
-        },
-        value: {
-          min: 0,
-          max: 0,
-        },
-        filterActive: false,
-        inside: false,
-        disable: true,
+    transcriptomics: {
+      limits: {
+        min: 0,
+        max: 0,
       },
-      proteomics: {
-        limits: {
-          min: 0,
-          max: 0,
-        },
-        value: {
-          min: 0,
-          max: 0,
-        },
-        filterActive: false,
-        inside: false,
-        disable: true,
+      value: {
+        min: 0,
+        max: 0,
       },
-      metabolomics: {
-        limits: {
-          min: 0,
-          max: 0,
-        },
-        value: {
-          min: 0,
-          max: 0,
-        },
-        filterActive: false,
-        inside: false,
-        disable: true,
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+    proteomics: {
+      limits: {
+        min: 0,
+        max: 0,
       },
-    };
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+    metabolomics: {
+      limits: {
+        min: 0,
+        max: 0,
+      },
+      value: {
+        min: 0,
+        max: 0,
+      },
+      filterActive: false,
+      inside: false,
+      disable: true,
+    },
+  };
 
   constructor(containerID: string, graphData: graphData) {
     this.graph = UndirectedGraph.from(graphData);
-    this.adjustedClusterAreas = graphData.clusterAreas. normalHullPoints; 
+    this.adjustedClusterAreas = graphData.clusterAreas.normalHullPoints;
     this.focusClusterAreas = graphData.clusterAreas.focusHullPoints;
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
@@ -173,7 +172,7 @@ export default class overviewGraph {
     // const inferredSettings = forceAtlas2.inferSettings(this.graph);
     // // To directly assign the positions to the nodes:
     const start = Date.now();
-  
+
     // forceAtlas2.assign(this.graph, {
     //   iterations: 500,
     //   settings: inferredSettings,
@@ -308,8 +307,9 @@ export default class overviewGraph {
         this.graph.forEachNode((_, attributes) => {
           if (
             !defocus &&
-            (attributes.id != node &&
-              attributes.modNum == parseInt(node) && !attributes.isRoot)
+            attributes.id != node &&
+            attributes.modNum == parseInt(node) &&
+            !attributes.isRoot
           ) {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
@@ -318,8 +318,9 @@ export default class overviewGraph {
           } else if (!defocus && !attributes.isRoot) {
             attributes.x = 0;
             attributes.y = 0;
-            if (attributes.id != node) { attributes.moduleHidden = true }
-            else{
+            if (attributes.id != node) {
+              attributes.moduleHidden = true;
+            } else {
               attributes.moduleFixed = true;
               attributes.zoomHidden = false;
             }
@@ -330,30 +331,28 @@ export default class overviewGraph {
             attributes.moduleHidden = false;
           }
         });
-        console.log(this.adjustedClusterAreas)
-        console.log('----------------------------------------------')
+        console.log(this.adjustedClusterAreas);
+        console.log('----------------------------------------------');
 
         console.log({
           clusterAreas: {
             hullPoints: [this.focusClusterAreas[parseInt(node)]],
-            greyValues: [
-              this.adjustedClusterAreas.greyValues[parseInt(node)],
-            ],
+            greyValues: [this.adjustedClusterAreas.greyValues[parseInt(node)]],
           },
-        })
+        });
 
         this.additionalData = defocus
           ? Object.assign(this.additionalData, {
-            clusterAreas: this.adjustedClusterAreas,
-          })
+              clusterAreas: this.adjustedClusterAreas,
+            })
           : Object.assign(this.additionalData, {
-            clusterAreas: {
-              hullPoints: [this.focusClusterAreas[parseInt(node)]],
-              greyValues: [
-                this.adjustedClusterAreas.greyValues[parseInt(node)],
-              ],
-            },
-          });
+              clusterAreas: {
+                hullPoints: [this.focusClusterAreas[parseInt(node)]],
+                greyValues: [
+                  this.adjustedClusterAreas.greyValues[parseInt(node)],
+                ],
+              },
+            });
         this.lastClickedClusterNode = defocus ? -1 : parseInt(node);
       }
     });
@@ -415,9 +414,9 @@ export default class overviewGraph {
         isRoot: false,
         zIndex: 1,
         color: 'rgb(255,124,78)',
-        size: 20,
+        size: overviewGraph.MODULE_DEFAULT_SIZE,
         nodeType: 'moduleNode',
-        nonHoverSize: 20,
+        nonHoverSize: overviewGraph.MODULE_DEFAULT_SIZE,
         fixed: false,
         type: 'image',
         label: `Module: ${key}`,

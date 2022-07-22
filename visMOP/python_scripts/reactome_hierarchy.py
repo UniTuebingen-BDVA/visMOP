@@ -527,7 +527,7 @@ class PathwayHierarchy(dict):
             if self[entry_id].is_overview or self[entry_id].is_root:
                 for elem in self[entry_id].children:
                     self._get_subtree_non_overview_recursion(elem, subtree)
-    
+
     def generate_overview_data(self, omic_limits, verbose):
         """Generates data to be exported to the frontend
         Args:
@@ -573,7 +573,7 @@ class PathwayHierarchy(dict):
                 root_ids.append(entry.root_id)
                 pathways_root_names[entry.reactome_sID] = [self[entry.root_id].name]
                 # pathways_root_names[entry.reactome_sID].append(hierarchical_roots)
-                
+
                 # print(pathways_root_names[entry.reactome_sID])
                 root_subpathways[entry.root_id].extend(pathway_dict["subtreeIds"])
                 pathway_summary_stats_dict[entry.reactome_sID] = pathway_summary_data
@@ -609,10 +609,13 @@ class PathwayHierarchy(dict):
             pathway = self[maplink]
             if pathway.is_root:
                 hierarchical_roots.append(pathway.name)
-        return(hierarchical_roots)
+        return hierarchical_roots
+
+
 ###
 # Auxilliary Functions
 ###
+
 
 def generate_overview_pathway_entry(
     entry,

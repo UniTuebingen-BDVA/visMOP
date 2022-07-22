@@ -46,7 +46,7 @@ export function nodeReducer(
       this.highlightedCenterHover === node ||
       this.highlighedNodesHover.has(node) ||
       this.currentPathway === node.replace('path:', '')
-        ? data.nonHoverSize + 10
+        ? data.nonHoverSize + 4
         : data.nonHoverSize;
 
     // shortest Path
@@ -56,7 +56,7 @@ export function nodeReducer(
           ...data,
           color: 'rgba(255,0,255,1.0)',
           zindex: 1,
-          size: data.size + 5,
+          size: data.size + 2,
           image: lodImage,
           hidden: hidden,
         };
@@ -74,7 +74,7 @@ export function nodeReducer(
         return {
           ...data,
           color: 'rgba(255,255,255,1.0)',
-          size: data.nonHoverSize - 5,
+          size: data.nonHoverSize - 2,
           image: lodImage,
           hidden: hidden,
         };
@@ -85,7 +85,7 @@ export function nodeReducer(
         ...data,
         color: 'rgba(255,0,255,1.0)',
         zindex: 1,
-        size: data.nonHoverSize + 5,
+        size: data.nonHoverSize + 2,
         image: lodImage,
         hidden: hidden,
       };
@@ -182,10 +182,22 @@ export function edgeReducer(
       }
     }
     if (this.highlighedEdgesHover.has(edge)) {
-      return { ...data, color: 'rgba(255,0,0,0.7)', size: 4, zIndex: 1 };
+      return {
+        ...data,
+        color: 'rgba(255,0,0,0.7)',
+        size: 4,
+        zIndex: 1,
+        hidden: false,
+      };
     }
     if (this.highlighedEdgesClick.has(edge)) {
-      return { ...data, color: 'rgba(255,0,0,0.7)', size: 1, zIndex: 1 };
+      return {
+        ...data,
+        color: 'rgba(255,0,0,0.7)',
+        size: 1,
+        zIndex: 1,
+        hidden: false,
+      };
     }
 
     return data;

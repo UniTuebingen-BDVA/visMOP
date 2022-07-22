@@ -11,8 +11,9 @@ import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from '../generalTypes';
 import hull from 'hull.js';
-import ClusterHulls from '@/core/convexHullsForClusters'
+import ClusterHulls from '@/core/convexHullsForClusters';
 import { getRightResultFormForRectangle } from '@/core/convexHullsForClusters';
+import overviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -33,7 +34,10 @@ export function generateGraphData(
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
-    clusterAreas: {normalHullPoints: { hullPoints: [[[]]], greyValues: []}, focusHullPoints: [[[]]]},
+    clusterAreas: {
+      normalHullPoints: { hullPoints: [[[]]], greyValues: [] },
+      focusHullPoints: [[[]]],
+    },
     options: [],
   } as graphData;
   const addedEdges: string[] = [];
@@ -97,8 +101,14 @@ export function generateGraphData(
         zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
         nodeType: entry.rootId === entry.pathwayId ? 'root' : 'regular',
-        size: entry.rootId === entry.pathwayId ? 12 : 7,
-        nonHoverSize: entry.rootId === entry.pathwayId ? 12 : 7,
+        size:
+          entry.rootId === entry.pathwayId
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
+        nonHoverSize:
+          entry.rootId === entry.pathwayId
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
         fixed: false, // fixed property on nodes excludes nodes from layouting
       } as baseNodeAttr,
     } as node;
@@ -154,42 +164,54 @@ export function generateGraphData(
   const max_ext = 20;
   let clusterNum = 0;
   const clusterHullsAdjustment = new ClusterHulls(Infinity);
-  let clusterHulls = [] as number[][][]
-  let focusClusterHulls = [] as number[][][]
-  let greyValues = [] as number[]
+  const clusterHulls = [] as number[][][];
+  const focusClusterHulls = [] as number[][][];
+  const greyValues = [] as number[];
   const firstNoneNoiseCluster = nodes_per_cluster[0].length > 1 ? 1 : 0;
   if (nodes_per_cluster[0].length <= 1) {
     nodes_per_cluster.shift();
   }
-  let totalNumHulls = nodes_per_cluster.length
+  const totalNumHulls = nodes_per_cluster.length;
   _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
       nodes.map((o) => [o.attributes.x, o.attributes.y]),
       Infinity
     ) as [[number, number]];
 
-    const hullAdjustment = clusterHullsAdjustment.adjustOneHull(clusterHullPoints, clusterNum, firstNoneNoiseCluster, 20, totalNumHulls);
+    const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
+      clusterHullPoints,
+      clusterNum,
+      firstNoneNoiseCluster,
+      max_ext,
+      totalNumHulls
+    );
 
-    greyValues.push(hullAdjustment.greyVal)
-    clusterHulls.push(hullAdjustment.finalHullNodes)      
-    focusClusterHulls.push(hullAdjustment.focusHullPoints)
-    let focusNormalizeParameter = hullAdjustment.focusNormalizeParameter
-    
+    greyValues.push(hullAdjustment.greyVal);
+    clusterHulls.push(hullAdjustment.finalHullNodes);
+    focusClusterHulls.push(hullAdjustment.focusHullPoints);
+    const focusNormalizeParameter = hullAdjustment.focusNormalizeParameter;
+
     _.forEach(nodes, (node) => {
-      let centeredX = (node.attributes.x - focusNormalizeParameter.meanX) 
-      let centeredY = (node.attributes.y - focusNormalizeParameter.meanY) 
+      const centeredX = node.attributes.x - focusNormalizeParameter.meanX;
+      const centeredY = node.attributes.y - focusNormalizeParameter.meanY;
       node.attributes.xOnClusterFocus =
-        (max_ext * (centeredX - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
+        (max_ext * (centeredX - focusNormalizeParameter.minCentered)) /
+        (focusNormalizeParameter.maxCentered -
+          focusNormalizeParameter.minCentered);
       node.attributes.yOnClusterFocus =
-        (max_ext * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
+        (max_ext * (centeredY - focusNormalizeParameter.minCentered)) /
+        (focusNormalizeParameter.maxCentered -
+          focusNormalizeParameter.minCentered);
     });
     norm_node_pos = norm_node_pos.concat(nodes);
     clusterNum += 1;
-
   });
   // if one wants to use rectangle use getRightResultFormForRectangle()
 
-  graph.clusterAreas = {normalHullPoints: { hullPoints: clusterHulls, greyValues: greyValues}, focusHullPoints: focusClusterHulls};
+  graph.clusterAreas = {
+    normalHullPoints: { hullPoints: clusterHulls, greyValues: greyValues },
+    focusHullPoints: focusClusterHulls,
+  };
 
   graph.nodes = norm_node_pos;
 
@@ -207,8 +229,8 @@ function generateForceGraphEdge(
   type: string
 ): edge {
   const edgeColors: { [key: string]: string } = {
-    hierarchy: 'rgba(60,60,60,0.1)',
-    maplink: 'rgba(60,60,60,0.1)',
+    hierarchy: 'rgba(60,60,60,0.0)',
+    maplink: 'rgba(60,60,60,0.0)',
   };
 
   const entry1 = sourceID;
@@ -218,6 +240,7 @@ function generateForceGraphEdge(
     source: entry1,
     target: entry2,
     undirected: true,
+    hidden: true,
     attributes: {
       zIndex: 0,
       type: type === 'maplink' ? 'dashed' : 'line',
