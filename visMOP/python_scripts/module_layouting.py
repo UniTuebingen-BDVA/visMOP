@@ -182,7 +182,8 @@ class Module_layout:
         drm="umap",
         node_size=2,
     ):
-
+        self.pool_size = 8
+        
         data_table.sort_index(inplace=True)
         print("cols", data_table.columns)
         startTime = time.time()
@@ -221,8 +222,8 @@ class Module_layout:
             node_num / total_num_nodes for node_num in self.module_node_nums
         ]
         # set AN_RATIO and MIN_SIDE_RATIO depending on number of Clusters
-        self.AN_RATIO = 0.6 if self.num_cluster > 10 else 0.5
-        self.MIN_SIDE_T = 0.055 if self.num_cluster > 10 else 0.2
+        self.AN_RATIO = 0.4 if self.num_cluster > 10 else 0.4
+        self.MIN_SIDE_T = 0.06 if self.num_cluster > 10 else 0.2
         self.num_best_dist_loops = 2 if self.num_cluster > 10 else 10
         self.num_cost_min_loops = 100 if self.num_cluster > 10 else 500
 
@@ -285,8 +286,7 @@ class Module_layout:
         )
         initial_cost = self.evaluteCostFunction(self.modules_center)
         if not found_ideal:
-            pool_size = 8
-            pool = Pool(pool_size)
+            pool = Pool(self.pool_size)
             self.MAX_RUNS_PER_THREAD = 20
             self.min_nn_ratios = [
                 nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio
@@ -301,7 +301,7 @@ class Module_layout:
                 initial_cost=initial_cost,
             )
             for result in pool.imap_unordered(
-                simplified_func, [self.modules_center] * pool_size
+                simplified_func, [self.modules_center] * self.pool_size
             ):
                 if result:  # first to succeed:
                     if result[0]:
@@ -477,7 +477,7 @@ class Module_layout:
         return new_data_table
 
     # for clustering higer n_components and n_neighbors and lower min_dist
-    def get_umap_layout_pos(self, n_components=2, n_neighbors=30, min_dist=0):
+    def get_umap_layout_pos(self, n_components=2, n_neighbors=5, min_dist=0.1):
         """Performs UMAP on scaled data returns new normalizied in [0,1] n-D Positions in node dict and postion list of lists
 
         Args:
@@ -498,6 +498,25 @@ class Module_layout:
         }
         return pos_norm_dic, new_pos_norm
 
+    def get_cluster_for_min_sample(self, min_samples, data):
+        optics = OPTICS(min_samples=min_samples)
+        optics_fit = optics.fit(data)
+        clustering_labels = optics_fit.labels_
+        # for calculation of the sillouette value exclude random cluster
+
+        rand_cl_pos = [i for i, x in enumerate(clustering_labels) if x == -1]
+        data_for_sil = data
+        clustering_labels_for_sil = clustering_labels
+        if len(rand_cl_pos) != 0 and max(clustering_labels) > 1:
+            data_for_sil = np.delete(data, rand_cl_pos, axis=0)
+            clustering_labels_for_sil = [x for x in clustering_labels if x != -1]
+
+        ss = metrics.silhouette_score(
+            data_for_sil, clustering_labels_for_sil, metric="euclidean")
+        # print(min_samples, max(clustering_labels) + 2, ss)
+        return ss, clustering_labels
+
+
     def get_cluster(self):
         """
         get clusteres
@@ -505,10 +524,12 @@ class Module_layout:
         return list of list with one list for every cluster
         """
         num_features = len(self.data_table_scaled_filled[0])
+        num_pathways = len(self.data_table_scaled_filled)
         if num_features > 2:
             n_comp = min(math.ceil(num_features / 2), 10)
+            n_neighbors = 5 if num_pathways<100 else 10 if num_pathways<200 else 15
             positions_dict, position_list = self.get_umap_layout_pos(
-                n_components=n_comp, n_neighbors=15, min_dist=0
+                n_components=n_comp, n_neighbors=n_neighbors, min_dist=0
             )
         else:
             position_list = self.data_table_scaled_filled
@@ -516,25 +537,22 @@ class Module_layout:
                 node_name: row
                 for row, node_name in zip(position_list, list(self.data_table.index))
             }
+        pool = Pool(self.pool_size)
+        simplified_func = partial(
+                self.get_cluster_for_min_sample, data = position_list)
+        clustering_labels = None
+        ss = -1      
+        for result in pool.imap_unordered(
+            simplified_func, range(4, 16)):
+            if result:
+                if result[0] > ss:
+                    ss = result[0]
+                    clustering_labels = result[1]
+        pool.close()
+        pool.join()
 
-        optics = OPTICS(min_samples=5, n_jobs=-1)
-        optics_fit = optics.fit(position_list)
-        clustering_labels = optics_fit.labels_
         self.noise_cluster_exists = -1 in clustering_labels
-
-        # for calculation of the sillouette value exclude random cluster
-
-        rand_cl_pos = [i for i, x in enumerate(clustering_labels) if x == -1]
-        data_wo_outlier = position_list
-        clustering_labels_wo_outlier = clustering_labels
-        if len(rand_cl_pos) != 0 and max(clustering_labels) > 1:
-            data_wo_outlier = np.delete(position_list, rand_cl_pos, axis=0)
-            clustering_labels_wo_outlier = [x for x in clustering_labels if x != -1]
-            ss = metrics.silhouette_score(
-                data_wo_outlier, clustering_labels_wo_outlier, metric="euclidean"
-            )
-            print("silhouette_score", ss)
-
+        print('best silhouette_score: ', ss)
         ordered_nodes = get_sorted_list_by_list_B_sorting_order(
             self.data_table.index, clustering_labels
         )

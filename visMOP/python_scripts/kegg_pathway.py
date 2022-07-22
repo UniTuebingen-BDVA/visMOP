@@ -5,19 +5,19 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits):
     vals_higher_ul = [val for val in all_values if val > limits[1]]
     mean_val_higher_ul = sum(
         vals_higher_ul) / len(vals_higher_ul) if len(vals_higher_ul) > 0 else float('nan')
-    pc_vals_higher_ul = len(vals_higher_ul) / num_val_omic if num_val_omic!=0 else float('nan')
+    pc_vals_higher_ul = len(vals_higher_ul) / num_val_omic if num_val_omic!=0 else 0 # float('nan')
 
     # statistics for products produced in a significant smaller amount
     vals_smaller_ll = [val for val in all_values if val < limits[0]]
     mean_val_smaller_ll = sum(
         vals_smaller_ll) / len(vals_smaller_ll) if len(vals_smaller_ll) > 0 else float('nan')
-    pc_vals_smaller_ll = len(vals_smaller_ll) / num_val_omic if num_val_omic!=0 else float('nan')
+    pc_vals_smaller_ll = len(vals_smaller_ll) / num_val_omic if num_val_omic!=0 else 0 #float('nan')
 
     # procentage of products produced in a significant differnt amount
-    pcReg = sum(val > limits[1] or val < limits[0] for val in all_values) / num_val_omic if num_val_omic!=0 else float('nan')
+    pcReg = sum(val > limits[1] or val < limits[0] for val in all_values) / num_val_omic if num_val_omic!=0 else 0 #float('nan')
     
     # procentage of products not produced in a significant differnt amount
-    pcUnReg = sum(val < limits[1] and val > limits[0] for val in all_values) / num_val_omic if num_val_omic!=0 else float('nan')
+    pcUnReg = sum(val < limits[1] and val > limits[0] for val in all_values) / num_val_omic if num_val_omic!=0 else 0 ## float('nan')
 
     pc_with_val_for_omic = num_val_omic/num_entries if num_entries!=0 else 0
 
