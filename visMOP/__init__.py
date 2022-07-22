@@ -182,7 +182,6 @@ Default app routes for index and favicon
 
 @app.route("/icons/<path:filename>", methods=["GET"])
 def icons(filename):
-    print(filename, app.root_path)
     return send_from_directory(app.config["ICON_FOLDER"], filename)
 
 
@@ -827,7 +826,12 @@ def reactome_parsing():
 
             for ID_number in prot_dict_global:
                 entry = prot_dict_global[ID_number]
-                proteomics_query_data_tuples.append(({'ID': ID_number, 'table_id': ID_number}, entry[proteomics["value"]]))
+                proteomics_query_data_tuples.append(
+                    (
+                        {"ID": ID_number, "table_id": ID_number},
+                        entry[proteomics["value"]],
+                    )
+                )
 
         except FileNotFoundError:
             print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
@@ -889,14 +893,20 @@ def reactome_parsing():
             for k in chebi_ids.keys():
                 for entry in chebi_ids[k]:
                     metabolomics_query_data_tuples.append(
-                        ({'ID': entry, 'table_id': k}, metabolomics_dict[k][metabolomics["value"]])
+                        (
+                            {"ID": entry, "table_id": k},
+                            metabolomics_dict[k][metabolomics["value"]],
+                        )
                     )
         else:
             for ID_entry in metabolomics_IDs:
                 # TODO handle KEGGIDS
                 ID_number = str(ID_entry).replace("CHEBI:", "")
                 metabolomics_query_data_tuples.append(
-                    ({'ID': ID_number, 'table_id': ID_number}, metabolomics_dict[ID_entry][metabolomics["value"]])
+                    (
+                        {"ID": ID_number, "table_id": ID_number},
+                        metabolomics_dict[ID_entry][metabolomics["value"]],
+                    )
                 )
 
         # target organism is a little bit annoying at the moment
@@ -952,7 +962,10 @@ def reactome_parsing():
         transcriptomics_IDs = list(transcriptomics_dict.keys())
         for ID_number in transcriptomics_IDs:
             transcriptomics_query_data_tuples.append(
-                ({'ID': ID_number, 'table_id': ID_number}, transcriptomics_dict[ID_number][transcriptomics["value"]])
+                (
+                    {"ID": ID_number, "table_id": ID_number},
+                    transcriptomics_dict[ID_number][transcriptomics["value"]],
+                )
             )
 
         # target organism is a little bit annoying at the moment
@@ -974,8 +987,6 @@ def reactome_parsing():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "gene", query_key)
 
-
-    print("node pw dict 1 ", node_pathway_dict)
     # Aggregate Data in Hierarcy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
@@ -1035,7 +1046,6 @@ def reactome_overview():
     # network_overview = generate_networkx_dict(pathway_connection_dict)
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
-    print("node pw dict 2 ", pathway_dict)
 
     module_node_pos, module_areas = getModuleLayout(
         omics_recieved,
@@ -1083,9 +1093,12 @@ def reactome_overview():
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])
 def get_reactome_json(pathway):
     hierarchy = cache.get("reactome_hierarchy")
-    layout_json = hierarchy[pathway].layout_json_file
-    graph_json = hierarchy[pathway].graph_json_file
     pathway_entry = hierarchy[pathway]
+    if not pathway_entry.has_diagram:
+        # fixes crash when pathways has no own diagram entry, this shouldnt happen tho?!
+        pathway_entry = pathway_entry.diagram_entry
+    layout_json = pathway_entry.layout_json_file
+    graph_json = pathway_entry.graph_json_file
     inset_pathways_totals = {}
     inset_pathway_ID_transcriptomics = [
         [k, v["stableID"]] for k, v in pathway_entry.subdiagrams_measured_genes.items()
