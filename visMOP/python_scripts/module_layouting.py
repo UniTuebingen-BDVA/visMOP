@@ -263,12 +263,12 @@ class Module_layout:
                 ]
         success = True if sum(nn_a_comp) == len(nn_a_comp) else False
         min_nn_ratio = [nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio]
-        init_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratio,initial_area_side_ratio) if min_nn_ratio <= a_r])
-        init_diff_min_side_to_success = sum([min_side - self.MIN_SIDE_T for _, min_side in initial_area_side_ratio if self.MIN_SIDE_T>= min_side])
+        init_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratio,initial_area_side_ratio) if min_nn_ratio >= a_r])
+        init_diff_min_side_to_success = sum([min_side - self.MIN_SIDE_T for _, min_side in initial_area_side_ratio if self.MIN_SIDE_T<= min_side])
         initial_cost = self.evaluteCostFunction(self.modules_center)
         
         if not success:
-            pool_size = 8
+            pool_size = 12
             pool = Pool(pool_size)
             self.MAX_RUNS_PER_THREAD = 60
             self.min_nn_ratios = [nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio]
@@ -279,7 +279,7 @@ class Module_layout:
                 simplified_func, [self.modules_center ] * pool_size):
                 if result:  # first to succeed:
                     if result[0]:
-                        print("POOL OPTI DONE ", result[3])
+                        print("POOL OPTI DONE ", result[0], result[3])
                         found_ideal = True
                         self.modules_area = result[3]
                         break
@@ -295,17 +295,17 @@ class Module_layout:
             smalles_min_side_diff = np.Infinity
             C_cost_best = np.Infinity  
             for result in multiple_results:
-                if (result[1] < smallest_area_diff and result[2] < smalles_min_side_diff) or (result[1] == smallest_area_diff and result[2] == smalles_min_side_diff and result[4] < C_cost_best): 
+                if (result[1] < smallest_area_diff) or ((result[1] == smallest_area_diff - result[1] <= 0.01 or (abs(result[1] - smallest_area_diff) < 0.01)) and result[2] < smalles_min_side_diff): 
                     smallest_area_diff = result[1] 
                     smalles_min_side_diff = result[2] 
                     self.modules_area = result[3]
                     C_cost_best = result[4]
+            print('suboptimal solution found: ')
             print('smallest_area_diff:', smallest_area_diff)
             print("smalles_min_side_diff: ", smalles_min_side_diff)
             print("C_cost_best: ", C_cost_best)
 
         print("Module sizes identified")
-        print('best results')
         
 
     def area_num_node_ratio_optFunc(self, initial_modules_center, diff_area_to_success, diff_min_side_to_success, modules_area, initial_cost):
@@ -339,15 +339,14 @@ class Module_layout:
                 else:
                     new_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratios, new_area_side_ratio) if min_nn_ratio >= a_r])
                     new_diff_min_side_to_success = sum([min_side - (self.MIN_SIDE_T - runtime_threshold_MS) for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) <= min_side])
-                    if (new_diff_area_to_success < diff_area_to_success and new_diff_min_side_to_success < diff_min_side_to_success) or (new_diff_area_to_success == diff_area_to_success and new_diff_min_side_to_success == diff_min_side_to_success and best_cost_C < prev_best_cost_C):
+                    if (new_diff_area_to_success < diff_area_to_success) or ((new_diff_area_to_success == diff_area_to_success or new_diff_area_to_success <= 0.01 or (abs(new_diff_area_to_success - diff_area_to_success) < 0.001)) and new_diff_min_side_to_success < diff_min_side_to_success): #  and best_cost_C < prev_best_cost_C):
                        diff_area_to_success = new_diff_area_to_success
                        diff_min_side_to_success = new_diff_min_side_to_success 
                        modules_area = new_modules_area
                        prev_best_cost_C = best_cost_C
                     runs += 1
                 if total_num_runs == self.MAX_RUNS_PER_THREAD/2:
-                    print('lower')
-                    min_nn_ratios = [nn_r - (self.AN_RATIO + 0.1) * nn_r for nn_r in self.node_num_ratio]
+                    min_nn_ratios = [nn_r - (self.AN_RATIO + 0.05) * nn_r for nn_r in self.node_num_ratio]
                     runtime_threshold_MS = 0.01
                 total_num_runs += 1
 

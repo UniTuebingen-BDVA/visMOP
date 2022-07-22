@@ -128,7 +128,6 @@ def getModuleLayout(
                     next_col_name += str(limits) + ")"
                 complete_stat_names.append(next_col_name)
     complete_stat_names += ["pathway size"]
-    print(data_col_used)
     statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
     module_layout = Module_layout(

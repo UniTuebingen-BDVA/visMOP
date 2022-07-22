@@ -184,7 +184,6 @@ export default class ClusterHulls {
         let normY = (max_ext * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
         focusHullPoints.push([normX, normY])
       });
-      console.log(finalHullNodes)
 
     return {greyVal: greyVal, finalHullNodes: finalHullNodes, focusHullPoints: focusHullPoints, focusNormalizeParameter: focusNormalizeParameter}
 

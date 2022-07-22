@@ -12,7 +12,7 @@ def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids, total_num_nod
     num_nodes = len(nodes)
     node_ratio = num_nodes/total_num_nodes + 0.4
     attractive_weight = (1-node_ratio) * 10
-    repulsive_force_par = node_ratio * 50
+    repulsive_force_par = node_ratio * 500
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
             # num_similar_root = sum([1 if root_id_patway1 in pathways_root_ids[nodes[j]] else 0 for root_id_patway1 in pathways_root_ids[nodes[i]]])
