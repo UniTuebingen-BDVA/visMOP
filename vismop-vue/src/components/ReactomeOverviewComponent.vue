@@ -131,6 +131,8 @@ const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
+const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate)
+
 
 const combinedIntersection = computed((): string[] => {
   const combinedElements = [];
@@ -222,9 +224,20 @@ watch(
     const foundPathways: string[][] = [];
     props.metabolomicsSelection?.forEach(
       (element: { [key: string]: string }) => {
-        const symbol = element[usedSymbolCols.value.metabolomics];
-        const pathwaysContaining =
+        let pathwaysContaining : string[] = []
+                const symbol = element[usedSymbolCols.value.metabolomics];
+
+        let chebiIDs = keggChebiTranslate.value[symbol]
+        console.log("CHEBI SELECT", chebiIDs)
+            if(chebiIDs){
+              chebiIDs.forEach(element => {
+                try {pathwaysContaining.push(...pathwayLayouting.value.nodePathwayDictionary[element])}
+                catch{}
+              })
+            }else{
+        pathwaysContaining =
           pathwayLayouting.value.nodePathwayDictionary[symbol]; //[0] ???? bugcheck
+          }
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );

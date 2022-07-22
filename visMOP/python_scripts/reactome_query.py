@@ -5,7 +5,7 @@ class ReactomeQuery:
     Maps the query (i.e. experimental omics data) to reactome data
 
     Args:
-        query_data: placeholder (?) tuple of (ID, NUMBER) representing id and associated measurement value
+        query_data: placeholder (?) tuple of ({ID: QueryID, table_id: ID in table}, NUMBER) representing id and associated measurement value
 
         target_organism: full name organism (e.g. Mus_musculus, Homo_sapiens)
 
@@ -18,6 +18,7 @@ class ReactomeQuery:
     def __init__(self, query_data, target_organism, id_database, pickle_path):
         self.query_data = query_data
         self.query_results = {}
+        self.id_table_id = {elem[0]['ID']: elem[0]['table_id'] for elem in query_data }
         self.all_contained_pathways = []
         self.get_query_results(target_organism, id_database, pickle_path)
         self.calc_all_pathways()
@@ -42,10 +43,10 @@ class ReactomeQuery:
             not_found = 0
             for elem in self.query_data:
                 try:
-                    reactome_elem = reactome_data[elem[0]]
+                    reactome_elem = reactome_data[elem[0]['ID']]
                     for pathway_id in reactome_elem:
                         reactome_elem[pathway_id]['measurement'] = elem[1]
-                    self.query_results[elem[0]] = reactome_elem
+                    self.query_results[elem[0]['ID']] = reactome_elem
                 except:
                     not_found += 1
             print("{} entries from {} were not found in REACTOME DB".format(not_found, id_database))
@@ -66,9 +67,9 @@ class ReactomeQuery:
         for k,v in self.query_results.items():
             pathways = []
             for entity_k, entity in v.items():
-                pathway_ids = [elem[0] for elem in entity['pathways']]
+                pathway_ids = [elem[0]for elem in entity['pathways']]
                 pathways.extend(pathway_ids)
-            query_pathway_dict[k] = list(set(pathways))
+            query_pathway_dict[self.id_table_id[k]] = list(set(pathways))
         return query_pathway_dict
     
     def get_measurement_levels(self):

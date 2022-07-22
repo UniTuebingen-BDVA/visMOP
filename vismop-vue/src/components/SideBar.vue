@@ -363,6 +363,7 @@ const queryReactome = () => {
       mainStore.setOmicsRecieved(dataContent.omicsRecieved);
       mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
       mainStore.setFCSReactome(dataContent.fcs);
+      mainStore.setKeggChebiTranslate(dataContent.keggChebiTranslate);
     })
     .then(() => getReactomeData());
 };
