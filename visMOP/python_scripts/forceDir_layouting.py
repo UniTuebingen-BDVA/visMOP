@@ -10,8 +10,8 @@ def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids, total_num_nod
     G_with_weights = nx.Graph()
     nodes = list(G.nodes())
     num_nodes = len(nodes)
-    node_ratio = num_nodes/total_num_nodes + 0.4
-    attractive_weight = (1-node_ratio) * 10
+    node_ratio = num_nodes/total_num_nodes + 0.2
+    attractive_weight = (1-node_ratio + 0.2) * 80
     repulsive_force_par = node_ratio * 500
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
@@ -19,7 +19,6 @@ def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids, total_num_nod
             # num_similar_root_norm = (num_similar_root - min_num_root_ids_per_pathway) / (max_num_root_ids_per_pathway - min_num_root_ids_per_pathway) +1
             w = attractive_weight if pathways_root_ids[nodes[i]] == pathways_root_ids[nodes[j]] else 1
             G_with_weights.add_edge(nodes[i], nodes[j], weight=w)
-            # G_with_weights.add_edge(nodes[i], nodes[j])
 
     return get_pos_in_force_dir_layout(G_with_weights, mod_num, 2, repulsive_force_par)
 

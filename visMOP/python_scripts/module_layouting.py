@@ -261,13 +261,12 @@ class Module_layout:
                     a_r >= (nn_r - self.AN_RATIO * nn_r) and min_side >= self.MIN_SIDE_T
                     for nn_r, [a_r, min_side] in zip(self.node_num_ratio, initial_area_side_ratio)
                 ]
-        success = True if sum(nn_a_comp) == len(nn_a_comp) else False
+        found_ideal = True if sum(nn_a_comp) == len(nn_a_comp) else False
         min_nn_ratio = [nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio]
-        init_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratio,initial_area_side_ratio) if min_nn_ratio >= a_r])
-        init_diff_min_side_to_success = sum([min_side - self.MIN_SIDE_T for _, min_side in initial_area_side_ratio if self.MIN_SIDE_T<= min_side])
+        init_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratio,initial_area_side_ratio) if min_nn_ratio > a_r])
+        init_diff_min_side_to_success = sum([self.MIN_SIDE_T - min_side for _, min_side in initial_area_side_ratio if self.MIN_SIDE_T > min_side])
         initial_cost = self.evaluteCostFunction(self.modules_center)
-        
-        if not success:
+        if not found_ideal:
             pool_size = 12
             pool = Pool(pool_size)
             self.MAX_RUNS_PER_THREAD = 60
@@ -311,12 +310,12 @@ class Module_layout:
     def area_num_node_ratio_optFunc(self, initial_modules_center, diff_area_to_success, diff_min_side_to_success, modules_area, initial_cost):
         runs = 0
         total_num_runs = 0
-        area_num_node_ratio_ok = False
+        success = False
         modules_center = initial_modules_center
         runtime_threshold_MS = 0
         prev_best_cost_C = initial_cost 
         min_nn_ratios= self.min_nn_ratios
-        while not area_num_node_ratio_ok and total_num_runs <= self.MAX_RUNS_PER_THREAD:
+        while not success and total_num_runs <= self.MAX_RUNS_PER_THREAD:
             best_cost_C, module_center = self.getModulePos(
                 modules_center, prev_best_cost_C
             )
@@ -337,8 +336,8 @@ class Module_layout:
                     module_center = np.random.uniform(0, 1, (self.num_cluster, 2))
                     prev_best_cost_C = None
                 else:
-                    new_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratios, new_area_side_ratio) if min_nn_ratio >= a_r])
-                    new_diff_min_side_to_success = sum([min_side - (self.MIN_SIDE_T - runtime_threshold_MS) for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) <= min_side])
+                    new_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratios, new_area_side_ratio) if min_nn_ratio > a_r])
+                    new_diff_min_side_to_success = sum([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
                     if (new_diff_area_to_success < diff_area_to_success) or ((new_diff_area_to_success == diff_area_to_success or new_diff_area_to_success <= 0.01 or (abs(new_diff_area_to_success - diff_area_to_success) < 0.001)) and new_diff_min_side_to_success < diff_min_side_to_success): #  and best_cost_C < prev_best_cost_C):
                        diff_area_to_success = new_diff_area_to_success
                        diff_min_side_to_success = new_diff_min_side_to_success 
@@ -434,7 +433,7 @@ class Module_layout:
             n_components=n_components,
             n_neighbors=n_neighbors,
             min_dist=min_dist,
-            random_state=10,
+            #random_state=10,
         ).fit_transform(self.data_table_scaled_filled)
         new_pos_norm = normalize_value_list_in_range(new_pos, [0, 1])
         pos_norm_dic = {

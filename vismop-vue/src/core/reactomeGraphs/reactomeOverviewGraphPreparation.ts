@@ -165,7 +165,7 @@ export function generateGraphData(
   _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
       nodes.map((o) => [o.attributes.x, o.attributes.y]),
-      20
+      Infinity
     ) as [[number, number]];
 
     const hullAdjustment = clusterHullsAdjustment.adjustOneHull(clusterHullPoints, clusterNum, firstNoneNoiseCluster, 20, totalNumHulls);
