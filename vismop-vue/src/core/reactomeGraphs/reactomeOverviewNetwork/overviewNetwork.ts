@@ -215,6 +215,7 @@ export default class overviewGraph {
           image: getNodeImageProgram(),
         },
         hoverRenderer: drawHover,
+        getCameraSizeRatio: (x) => x,
         clusterVis: 'ConvexHull',
       },
       this.additionalData
@@ -329,6 +330,18 @@ export default class overviewGraph {
             attributes.moduleHidden = false;
           }
         });
+        console.log(this.adjustedClusterAreas)
+        console.log('----------------------------------------------')
+
+        console.log({
+          clusterAreas: {
+            hullPoints: [this.focusClusterAreas[parseInt(node)]],
+            greyValues: [
+              this.adjustedClusterAreas.greyValues[parseInt(node)],
+            ],
+          },
+        })
+
         this.additionalData = defocus
           ? Object.assign(this.additionalData, {
             clusterAreas: this.adjustedClusterAreas,

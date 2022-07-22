@@ -50,6 +50,7 @@ function adjustHullPoints(
   const outList = [];
   // var XYVals = { x: currentHullPoints.map(function (o) { return o[0]; }), y: currentHullPoints.map(function (o) { return o[1]; }) };
   for (let idx = 0; idx < currentHullPoints.length; idx++) {
+    console.log(currentHullPoints[idx])
     const prevIdx = idx == 0 ? currentHullPoints.length - 1 : idx - 1;
     const prevPoint = currentHullPoints[prevIdx];
 
@@ -87,11 +88,27 @@ function adjustHullPoints(
     ]);
 
     if (radian > radianThreshold) {
+      let newPushedOutPoint = [] as number[];
       // move current point more outside
-      const newPushedOutPoint = [
-        currPoint[0] + moveVec[0] * pushLen,
-        currPoint[1] + moveVec[1] * pushLen,
-      ];
+      if (radian < (170 * Math.PI) / 180){
+        newPushedOutPoint = [
+          currPoint[0] + moveVec[0] * pushLen,
+          currPoint[1] + moveVec[1] * pushLen,
+        ];
+      }
+      else{
+        console.log('angle > 170')
+        const curPrev = normalize([
+          prevPoint[0] - currPoint[0],
+          prevPoint[1] - currPoint[1],
+        ]);
+        const perpendicularClockWise = [curPrev[1], -curPrev[0]];
+        newPushedOutPoint = [
+          currPoint[0] + perpendicularClockWise[0] * pushLen,
+          currPoint[1] + perpendicularClockWise[1] * pushLen,
+        ];
+      }
+      
       outList.push(newPushedOutPoint);
     } else {
       const newPushedOutPoint = [
@@ -153,12 +170,13 @@ export default class ClusterHulls {
     this.radianThreshold = (angleThreshold * Math.PI) / 180;
   }
   adjustOneHull(convexHullPoints: [number[]], hullNum: number, firstNoneNoiseCluster: number, max_ext: number, totalNumHulls: number){
+    console.log(hullNum)
+    
     const greyVal = hullNum >= firstNoneNoiseCluster ? ((hullNum - firstNoneNoiseCluster) / (totalNumHulls - 1 - firstNoneNoiseCluster)) * (215 - 80) + 80 : 255;
     const finalHullNodes = adjustHullPoints(convexHullPoints, this.radianThreshold);
     let XYVals = { x: convexHullPoints.map(o => o[0]) as number[], y: convexHullPoints.map(o => o[1]) as number[] }
     const focusNormalizeParameter = getFocusNormalizeParameter(XYVals)
     let focusHullPoints = [] as number[][]
-
     _.forEach(finalHullNodes, (hullPoint) => {
         let centeredX = (hullPoint[0] - focusNormalizeParameter.meanX) 
         let centeredY = (hullPoint[1] - focusNormalizeParameter.meanY) 
@@ -166,6 +184,7 @@ export default class ClusterHulls {
         let normY = (max_ext * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered)
         focusHullPoints.push([normX, normY])
       });
+      console.log(finalHullNodes)
 
     return {greyVal: greyVal, finalHullNodes: finalHullNodes, focusHullPoints: focusHullPoints, focusNormalizeParameter: focusNormalizeParameter}
 

@@ -153,7 +153,7 @@ export function generateGraphData(
   );
   const max_ext = 20;
   let clusterNum = 0;
-  const clusterHullsAdjustment = new ClusterHulls(60);
+  const clusterHullsAdjustment = new ClusterHulls(Infinity);
   let clusterHulls = [] as number[][][]
   let focusClusterHulls = [] as number[][][]
   let greyValues = [] as number[]
@@ -165,7 +165,7 @@ export function generateGraphData(
   _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
       nodes.map((o) => [o.attributes.x, o.attributes.y]),
-      10
+      20
     ) as [[number, number]];
 
     const hullAdjustment = clusterHullsAdjustment.adjustOneHull(clusterHullPoints, clusterNum, firstNoneNoiseCluster, 20, totalNumHulls);
