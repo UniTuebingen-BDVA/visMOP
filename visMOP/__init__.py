@@ -153,9 +153,10 @@ def get_layout_settings(settings, omics_recieved):
         "% unregulated",
         "% with measured value",
     ]
-    possible_no_omic_attributes = ["Pathway size"]
+    possible_no_omic_attributes = ["% values measured over all omics"]
     attributes = []
     limits = []
+    print(settings.items())
     omics_recieved.append(True)
     for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
         omic_limits = [float(i) for i in layout_settings["limits"]]

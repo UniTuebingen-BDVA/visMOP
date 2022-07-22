@@ -241,7 +241,7 @@ const allOmicLayoutAttributes = [
   '% unregulated',
   '% with measured value',
 ];
-const allNoneOmicAttributes = ['Pathway size'];
+const allNoneOmicAttributes = ['% values measured over all omics'];
 const availableOmics = [
   'Transcriptomics ',
   'Proteomics ',

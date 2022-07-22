@@ -10,8 +10,8 @@ def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids, total_num_nod
     G_with_weights = nx.Graph()
     nodes = list(G.nodes())
     num_nodes = len(nodes)
-    node_ratio = num_nodes / total_num_nodes + 0.2
-    attractive_weight = (1 - node_ratio + 0.2) * 80
+    node_ratio = num_nodes / total_num_nodes + 0.35
+    attractive_weight = (1 - node_ratio + 0.05) * 80
     repulsive_force_par = node_ratio * 500
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):

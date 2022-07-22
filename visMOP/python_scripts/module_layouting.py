@@ -45,10 +45,9 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1, min_ratio=0.07):
     area_size = x_side * y_side
     if not get_side_ratio_ok:
         return area_size
-    min_side = min(x_side, y_side)
-    ratio_ok = (
-        normalize_val_in_range(min_side, 0, l_max, [0, 1]) >= min_ratio
-    )  # max(x_side, y_side)/min_side <= 4 and
+    min_side =  normalize_val_in_range(min(x_side, y_side),  0, l_max, [0, 1])
+    ratio_ok = min_side >= min_ratio
+    # max(x_side, y_side)/min_side <= 4 and
     return area_size, min_side  # ratio_ok
 
 
@@ -286,9 +285,9 @@ class Module_layout:
         )
         initial_cost = self.evaluteCostFunction(self.modules_center)
         if not found_ideal:
-            pool_size = 1
+            pool_size = 8
             pool = Pool(pool_size)
-            self.MAX_RUNS_PER_THREAD = 1
+            self.MAX_RUNS_PER_THREAD = 20
             self.min_nn_ratios = [
                 nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio
             ]
@@ -384,7 +383,7 @@ class Module_layout:
                     prev_best_cost_C = None
                 else:
                     new_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratios, new_area_side_ratio) if min_nn_ratio > a_r])
-                    print([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
+                    #print([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
                     new_diff_min_side_to_success = sum([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
                     if (new_diff_area_to_success < diff_area_to_success) or ((new_diff_area_to_success == diff_area_to_success or new_diff_area_to_success <= 0.01 or (abs(new_diff_area_to_success - diff_area_to_success) < 0.001)) and new_diff_min_side_to_success < diff_min_side_to_success): #  and best_cost_C < prev_best_cost_C):
                        diff_area_to_success = new_diff_area_to_success

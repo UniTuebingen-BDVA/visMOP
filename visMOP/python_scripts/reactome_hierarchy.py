@@ -697,27 +697,34 @@ def generate_overview_pathway_entry(
 
     # fill statistical datat for pathway
     pathway_summary_data = []
-    num_entries = len(
-        set(
-            list(entry.total_measured_genes.keys())
-            + list(entry.total_measured_proteins.keys())
-            + list(entry.total_measured_metabolites.keys())
-        )
-    )
+    # num_entries = len(
+    #     set(
+    #         list(entry.total_measured_genes.keys())
+    #         + list(entry.total_measured_proteins.keys())
+    #         + list(entry.total_measured_metabolites.keys())
+    #     )
+    # )
     values_per_omic = [
         entry.total_measured_genes.values(),
         entry.total_measured_proteins.values(),
         entry.total_measured_metabolites.values(),
     ]
-    for omic_recieved, omic_values_dict, limits in zip(
-        omics_recieved, values_per_omic, omic_limits
-    ):
+
+    num_entries_omics = [len(entry.total_proteins), len(entry.total_proteins), len(entry.total_metabolites)]
+    # perc_vals_total = sum([len(vals) /num_total for vals, num_total in zip(values_per_omic, num_entries_omics) if num_total > 0])
+    perc_vals_total = len([value for values_omic in values_per_omic for value in values_omic]) / sum (num_entries_omics)
+        
+    for omic_recieved, omic_values_dict, num_entries_omic, limits in zip(
+        omics_recieved, values_per_omic, num_entries_omics, omic_limits):
         if omic_recieved:
             omic_values = [vals["measurement"] for vals in omic_values_dict]
             pathway_summary_data += get_PathwaySummaryData_omic(
-                num_entries, omic_values, limits
+                num_entries_omic, omic_values, limits
             )
-    pathway_summary_data.append(num_entries)
+
+    # pathway_summary_data.append(len(entry.subtree_ids))
+    pathway_summary_data.append(perc_vals_total)
+
 
     for k in entry.total_measured_proteins:
         v = entry.total_measured_proteins[k]
