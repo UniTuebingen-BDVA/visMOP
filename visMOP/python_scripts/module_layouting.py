@@ -221,8 +221,9 @@ class Module_layout:
         self.node_num_ratio = [
             node_num / total_num_nodes for node_num in self.module_node_nums
         ]
+
         # set AN_RATIO and MIN_SIDE_RATIO depending on number of Clusters
-        self.AN_RATIO = 0.4 if self.num_cluster > 10 else 0.4
+        self.AN_RATIO = 0.4 if self.num_cluster > 10 else 0.2
         self.MIN_SIDE_T = 0.06 if self.num_cluster > 10 else 0.2
         self.num_best_dist_loops = 2 if self.num_cluster > 10 else 10
         self.num_cost_min_loops = 100 if self.num_cluster > 10 else 500
