@@ -164,9 +164,9 @@ export function generateGraphData(
   const max_ext = 20;
   let clusterNum = 0;
   const clusterHullsAdjustment = new ClusterHulls(60);
-  let clusterHulls = [] as number[][][]
-  let focusClusterHulls = [] as number[][][]
-  let greyValues = [] as number[]
+  let clusterHulls = [] as number[][][];
+  let focusClusterHulls = [] as number[][][];
+  let greyValues = [] as number[];
   const firstNoneNoiseCluster = nodes_per_cluster[0].length > 1 ? 1 : 0;
   if (nodes_per_cluster[0].length <= 1) {
     nodes_per_cluster.shift();
@@ -240,9 +240,9 @@ function generateForceGraphEdge(
     source: entry1,
     target: entry2,
     undirected: true,
-    hidden: true,
     attributes: {
       zIndex: 0,
+      hidden: true,
       type: type === 'maplink' ? 'dashed' : 'line',
       color: type === 'maplink' ? edgeColors.maplink : edgeColors.hierarchy,
     } as baseEdgeAttr,

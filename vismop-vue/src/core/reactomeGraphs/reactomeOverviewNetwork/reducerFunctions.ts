@@ -200,6 +200,6 @@ export function edgeReducer(
       };
     }
 
-    return data;
+    return { ...data, hidden: true };
   } else return data;
 }
