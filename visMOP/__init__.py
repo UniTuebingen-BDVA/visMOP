@@ -70,6 +70,10 @@ import pickle
 import numbers
 import secrets
 from flask_caching import Cache
+from multiprocessing import set_start_method
+
+# seems to be needed for linux not sure why i need to force the start method tho
+set_start_method('spawn', force=True)
 
 app = Flask(__name__, static_folder="../dist/assets", template_folder="../dist")
 # DATA PATHS: (1) Local, (2) tuevis
@@ -156,7 +160,7 @@ def get_layout_settings(settings, omics_recieved):
     possible_no_omic_attributes = ["% values measured over all omics"]
     attributes = []
     limits = []
-    print(settings.items())
+    #print(settings.items())
     omics_recieved.append(True)
     for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
         omic_limits = [float(i) for i in layout_settings["limits"]]

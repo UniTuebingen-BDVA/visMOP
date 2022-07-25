@@ -1,13 +1,12 @@
 from functools import partial
 import random
 from statistics import mean
-from typing_extensions import runtime
 import pandas as pd
 import numpy as np
 import math
 import networkx as nx
 import time
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from multiprocessing import Pool
 
 from cmath import inf
@@ -15,7 +14,7 @@ import scipy
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from umap import UMAP
-from sklearn.cluster import OPTICS
+from sklearn.cluster import OPTICS, KMeans
 from collections import Counter, defaultdict
 from itertools import combinations
 from scipy.spatial import distance
@@ -502,6 +501,7 @@ class Module_layout:
     def get_cluster_for_min_sample(self, min_samples, data):
         optics = OPTICS(min_samples=min_samples)
         optics_fit = optics.fit(data)
+
         clustering_labels = optics_fit.labels_
         # for calculation of the sillouette value exclude random cluster
 
@@ -513,8 +513,9 @@ class Module_layout:
             clustering_labels_for_sil = [x for x in clustering_labels if x != -1]
 
         ss = metrics.silhouette_score(
-            data_for_sil, clustering_labels_for_sil, metric="euclidean")
-        # print(min_samples, max(clustering_labels) + 2, ss)
+            data_for_sil, clustering_labels_for_sil, metric="euclidean", random_state= min_samples)
+
+        #print("Reached End of Pool func. ",min_samples, max(clustering_labels) + 2, ss)
         return ss, clustering_labels
 
 
@@ -544,7 +545,7 @@ class Module_layout:
         clustering_labels = None
         ss = -1      
         for result in pool.imap_unordered(
-            simplified_func, range(4, 16)):
+            simplified_func, range(4, 4+self.pool_size)):
             if result:
                 if result[0] > ss:
                     ss = result[0]

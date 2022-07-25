@@ -8,7 +8,7 @@ import math
 from scipy.sparse.linalg import eigs
 import umap
 import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 # substract row mean and column mean and add the global mean to each table entry
