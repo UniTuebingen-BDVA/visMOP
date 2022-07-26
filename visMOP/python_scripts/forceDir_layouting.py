@@ -10,9 +10,10 @@ def get_adjusted_force_dir_node_pos(G, mod_num, pathways_root_ids, total_num_nod
     G_with_weights = nx.Graph()
     nodes = list(G.nodes())
     num_nodes = len(nodes)
-    node_ratio = num_nodes / total_num_nodes + 0.35
-    attractive_weight = (1 - node_ratio + 0.05) * 80
-    repulsive_force_par = node_ratio * 600
+    node_ratio = num_nodes / total_num_nodes + 0.3
+    add_for_medium_cluster = 30 if node_ratio < 0.4 else 0
+    attractive_weight = (1 - node_ratio + 0.05) + add_for_medium_cluster * 80
+    repulsive_force_par = node_ratio + add_for_medium_cluster * 600
     for i in range(len(nodes)):
         for j in range(i + 1, len(nodes)):
             # num_similar_root = sum([1 if root_id_patway1 in pathways_root_ids[nodes[j]] else 0 for root_id_patway1 in pathways_root_ids[nodes[i]]])

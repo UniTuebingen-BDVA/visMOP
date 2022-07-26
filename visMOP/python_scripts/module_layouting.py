@@ -18,7 +18,6 @@ from sklearn.cluster import OPTICS, KMeans
 from collections import Counter, defaultdict
 from itertools import combinations
 from scipy.spatial import distance
-from random import randint
 from copy import deepcopy
 from sklearn import metrics
 from visMOP.python_scripts.forceDir_layouting import get_adjusted_force_dir_node_pos
@@ -224,8 +223,8 @@ class Module_layout:
         # set AN_RATIO and MIN_SIDE_RATIO depending on number of Clusters
         self.AN_RATIO = 0.4 if self.num_cluster > 10 else 0.2
         self.MIN_SIDE_T = 0.06 if self.num_cluster > 10 else 0.2
-        self.num_best_dist_loops = 2 if self.num_cluster > 10 else 10
-        self.num_cost_min_loops = 100 if self.num_cluster > 10 else 500
+        self.num_best_dist_loops = 1200 if self.num_cluster > 10 else 1500
+        self.num_cost_min_loops = 1 if self.num_cluster > 10 else 5
 
         # for each module idenify all positions where rel. distances to it are given
         self.p_f_m = defaultdict(list)
@@ -512,10 +511,10 @@ class Module_layout:
             data_for_sil = np.delete(data, rand_cl_pos, axis=0)
             clustering_labels_for_sil = [x for x in clustering_labels if x != -1]
 
-        ss = metrics.silhouette_score(
-            data_for_sil, clustering_labels_for_sil, metric="euclidean", random_state= min_samples)
-
+        ss = metrics.silhouette_score(data_for_sil, clustering_labels_for_sil, metric="euclidean")
         #print("Reached End of Pool func. ",min_samples, max(clustering_labels) + 2, ss)
+
+        # print(min_samples, max(clustering_labels) + 2, ss)
         return ss, clustering_labels
 
 
@@ -545,7 +544,7 @@ class Module_layout:
         clustering_labels = None
         ss = -1      
         for result in pool.imap_unordered(
-            simplified_func, range(4, 4+self.pool_size)):
+            simplified_func, range(4, 4 + self.pool_size)):
             if result:
                 if result[0] > ss:
                     ss = result[0]
@@ -724,28 +723,29 @@ class Module_layout:
     def find_layout_with_best_possible_rel_dists(self, modules_center):
         distance_similarities = [0] * len(self.relative_distances)
         cur_mod_center = modules_center
-        run = 0
-        found_new_possible_center = False
-        while run <= self.num_best_dist_loops:
+        run = 10
+        found_better_possible_center = False
+        found_perfect_center = False
+        while run <= self.num_best_dist_loops and not found_perfect_center:
             new_module_centers = [
                 self.getNewModuleCenter(
                     module_center,
                     mn,
-                    sum(distance_similarities[p] for p in self.p_f_m[mn]),
-                )
+                    sum(distance_similarities[p] for p in self.p_f_m[mn]))
                 for mn, module_center in enumerate(cur_mod_center)
             ]
             new_rel_distances = self.getRealtiveDistancesBetweenModules(
                 new_module_centers
             )
 
-            _, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
+            found_perfect_center, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
                 self.relative_distances, new_rel_distances, self.dist_sim_threshold
             )
             if sum(distance_similarities_new) > sum(distance_similarities):
                 distance_similarities = distance_similarities_new
                 cur_mod_center = new_module_centers
-            elif run == self.num_best_dist_loops and not found_new_possible_center:
+                found_better_possible_center = True
+            elif run == self.num_best_dist_loops and not found_better_possible_center:
                 cur_mod_center = new_module_centers
             run += 1
 
@@ -916,13 +916,13 @@ class Module_layout:
             # score = abs(self.get_area_size(area_1)*num_nodes_area_2/total_sum_nodes_in_area -
             #             self.get_area_size(area_2)*num_nodes_area_1/total_sum_nodes_in_area)
 
-            score = abs(
+            score = max(0, abs(
                 get_area_size(area_1) / area_t_d_size
                 - num_nodes_area_1 / total_sum_nodes_in_area
-            ) + abs(
+            )) + max(0, abs(
                 get_area_size(area_2) / area_t_d_size
                 - num_nodes_area_2 / total_sum_nodes_in_area
-            )
+            ))
 
             if score < score_min:
                 score_min = score
