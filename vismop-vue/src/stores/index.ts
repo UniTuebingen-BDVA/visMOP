@@ -488,7 +488,7 @@ export const useMainStore = defineStore('mainStore', {
         .scaleDiverging(d3.interpolatePRGn)
         .domain([
           quantMetabolomics[0],
-          quantProteomics[0] < 0.0 ? 0.0 : 1.0,
+          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
           quantMetabolomics[1],
         ]);
 
