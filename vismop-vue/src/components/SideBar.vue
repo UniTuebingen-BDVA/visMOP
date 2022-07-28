@@ -379,9 +379,9 @@ const getReactomeData = () => {
     .then((dataContent) => {
       console.log('PATHWAYLAYOUTING', dataContent);
       mainStore.setOverviewData(dataContent.overviewData);
-      mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
       mainStore.setModuleAreas(dataContent.moduleAreas);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
+      console.log('OVDATA', dataContent.overviewData);
     })
     .then(() => $q.loading.hide());
 };

@@ -153,56 +153,57 @@ export function generateGraphData(
     index += 1;
   }
   const withNoiseCluster = moduleAreas[0].length != 0;
-
+  if (!withNoiseCluster) {
+    moduleAreas.shift();
+  }
   let norm_node_pos = [] as node[];
-  const hull_points: [[number[]]] = [[[]]];
   const nodes_per_cluster = pfsPrime_modules(
     graph.nodes,
     maxModuleNum,
     moduleAreas
   );
   const max_ext = 20;
-  let clusterNum = 0;
   const clusterHullsAdjustment = new ClusterHulls(60);
-  let clusterHulls = [] as number[][][];
-  let focusClusterHulls = [] as number[][][];
-  let greyValues = [] as number[];
-  const firstNoneNoiseCluster = nodes_per_cluster[0].length > 1 ? 1 : 0;
-  if (nodes_per_cluster[0].length <= 1) {
-    nodes_per_cluster.shift();
-  }
-  const totalNumHulls = nodes_per_cluster.length;
+  const clusterHulls = [] as number[][][];
+  const focusClusterHulls = [] as number[][][];
+  const greyValues = [] as number[];
+  const firstNoneNoiseCluster = withNoiseCluster ? 1 : 0;
+
+  const totalNumHulls = moduleAreas.length;
+  let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
+
   _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
       nodes.map((o) => [o.attributes.x, o.attributes.y]),
       Infinity
     ) as [[number, number]];
+    if (clusterNum > -1) {
+      const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
+        clusterHullPoints,
+        clusterNum,
+        firstNoneNoiseCluster,
+        max_ext,
+        totalNumHulls
+      );
 
-    const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
-      clusterHullPoints,
-      clusterNum,
-      firstNoneNoiseCluster,
-      max_ext,
-      totalNumHulls
-    );
+      greyValues.push(hullAdjustment.greyVal);
+      clusterHulls.push(hullAdjustment.finalHullNodes);
+      focusClusterHulls.push(hullAdjustment.focusHullPoints);
+      const focusNormalizeParameter = hullAdjustment.focusNormalizeParameter;
 
-    greyValues.push(hullAdjustment.greyVal);
-    clusterHulls.push(hullAdjustment.finalHullNodes);
-    focusClusterHulls.push(hullAdjustment.focusHullPoints);
-    const focusNormalizeParameter = hullAdjustment.focusNormalizeParameter;
-
-    _.forEach(nodes, (node) => {
-      const centeredX = node.attributes.x - focusNormalizeParameter.meanX;
-      const centeredY = node.attributes.y - focusNormalizeParameter.meanY;
-      node.attributes.xOnClusterFocus =
-        (max_ext * (centeredX - focusNormalizeParameter.minCentered)) /
-        (focusNormalizeParameter.maxCentered -
-          focusNormalizeParameter.minCentered);
-      node.attributes.yOnClusterFocus =
-        (max_ext * (centeredY - focusNormalizeParameter.minCentered)) /
-        (focusNormalizeParameter.maxCentered -
-          focusNormalizeParameter.minCentered);
-    });
+      _.forEach(nodes, (node) => {
+        const centeredX = node.attributes.x - focusNormalizeParameter.meanX;
+        const centeredY = node.attributes.y - focusNormalizeParameter.meanY;
+        node.attributes.xOnClusterFocus =
+          (max_ext * (centeredX - focusNormalizeParameter.minCentered)) /
+          (focusNormalizeParameter.maxCentered -
+            focusNormalizeParameter.minCentered);
+        node.attributes.yOnClusterFocus =
+          (max_ext * (centeredY - focusNormalizeParameter.minCentered)) /
+          (focusNormalizeParameter.maxCentered -
+            focusNormalizeParameter.minCentered);
+      });
+    }
     norm_node_pos = norm_node_pos.concat(nodes);
     clusterNum += 1;
   });

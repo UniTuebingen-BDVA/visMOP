@@ -14,7 +14,7 @@ import _ from 'lodash';
 import { node } from '@/core/graphTypes';
 import { pfsPrime } from '@/core/noverlap_pfsp';
 import { vpsc } from '@/core/noverlap_vpsc';
-import {getFocusNormalizeParameter } from '@/core/convexHullsForClusters'
+import { getFocusNormalizeParameter } from '@/core/convexHullsForClusters';
 /**
  * Executes the Push Force Scan' (PFS') algorithm on this graph
  *
@@ -30,8 +30,10 @@ export function pfsPrime_modules(
 ): node[][] {
   // TODO: add padding
   const updatedNodes = [] as node[][];
-  if (moduleAreas[0].length == 0) {moduleAreas.shift()}
-  for (let curModuleNum = 0; curModuleNum <= maxModuleNum; curModuleNum++) {
+  if (moduleAreas[0].length == 0) {
+    moduleAreas.shift();
+  }
+  for (let curModuleNum = -1; curModuleNum <= maxModuleNum; curModuleNum++) {
     const moduleNodes = [];
     for (let index = 0; index < allNodes.length; index++) {
       const currentNode = allNodes[index];
@@ -40,22 +42,30 @@ export function pfsPrime_modules(
         // allNodes.splice(index, 1)
       }
     }
-  const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
-  // const pfsPrime_moduleNodes = vpsc(moduleNodes);
-  // const pfsPrime_moduleNodes = moduleNodes;
+    const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
+    // const pfsPrime_moduleNodes = vpsc(moduleNodes);
+    // const pfsPrime_moduleNodes = moduleNodes;
+    if (curModuleNum > -1) {
+      normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum]);
+    }
 
-    normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum]);
-
-    updatedNodes.push(moduleNodes);
+    updatedNodes.push(pfsPrime_moduleNodes);
   }
   // updatedNodes.shift();
 
   return updatedNodes;
 }
 
-export function normInArea(nodes: node[], area: number[], padding = 0.45): void {
-  let XYVals = { x: nodes.map(o => o.attributes.x) as number[], y: nodes.map(o => o.attributes.y) as number[] }
-  
+export function normInArea(
+  nodes: node[],
+  area: number[],
+  padding = 0.45
+): void {
+  const XYVals = {
+    x: nodes.map((o) => o.attributes.x) as number[],
+    y: nodes.map((o) => o.attributes.y) as number[],
+  };
+
   area = [
     area[0] + padding,
     area[1] - padding,
@@ -63,15 +73,23 @@ export function normInArea(nodes: node[], area: number[], padding = 0.45): void 
     area[3] - padding,
   ];
 
-  const focusNormalizeParameter = getFocusNormalizeParameter(XYVals)
-    _.forEach(nodes, (node) => {
-      let centeredX = (node.attributes.x - focusNormalizeParameter.meanX) 
-      let centeredY = (node.attributes.y - focusNormalizeParameter.meanY) 
-      node.attributes.x =
-      area[0] + ((area[1] - area[0]) * (centeredX - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
-      node.attributes.y =
-      area[2] +((area[3] - area[2]) * (centeredY - focusNormalizeParameter.minCentered)) / (focusNormalizeParameter.maxCentered - focusNormalizeParameter.minCentered);
-    })
+  const focusNormalizeParameter = getFocusNormalizeParameter(XYVals);
+  _.forEach(nodes, (node) => {
+    const centeredX = node.attributes.x - focusNormalizeParameter.meanX;
+    const centeredY = node.attributes.y - focusNormalizeParameter.meanY;
+    node.attributes.x =
+      area[0] +
+      ((area[1] - area[0]) *
+        (centeredX - focusNormalizeParameter.minCentered)) /
+        (focusNormalizeParameter.maxCentered -
+          focusNormalizeParameter.minCentered);
+    node.attributes.y =
+      area[2] +
+      ((area[3] - area[2]) *
+        (centeredY - focusNormalizeParameter.minCentered)) /
+        (focusNormalizeParameter.maxCentered -
+          focusNormalizeParameter.minCentered);
+  });
 }
 
 // function getMaxMinXY(nodes: node[]) {

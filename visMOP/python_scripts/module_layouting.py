@@ -6,7 +6,8 @@ import numpy as np
 import math
 import networkx as nx
 import time
-#import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 from multiprocessing import Pool
 
 from cmath import inf
@@ -26,7 +27,8 @@ from multiprocessing import Process
 
 
 def most_frequent(List):
-    return max(set(List), key=List.count)
+    maximum = max(set(List), key=List.count)
+    return maximum
 
 
 def get_area_size(area, get_side_ratio_ok=False, l_max=1, min_ratio=0.07):
@@ -43,7 +45,7 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1, min_ratio=0.07):
     area_size = x_side * y_side
     if not get_side_ratio_ok:
         return area_size
-    min_side =  normalize_val_in_range(min(x_side, y_side),  0, l_max, [0, 1])
+    min_side = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
     ratio_ok = min_side >= min_ratio
     # max(x_side, y_side)/min_side <= 4 and
     return area_size, min_side  # ratio_ok
@@ -181,7 +183,7 @@ class Module_layout:
         node_size=2,
     ):
         self.pool_size = 8
-        
+
         data_table.sort_index(inplace=True)
         print("cols", data_table.columns)
         startTime = time.time()
@@ -190,9 +192,9 @@ class Module_layout:
         self.greatest_dist_in_initial_layout = None
         self.dist_sim_threshold = 0.2
         self.reactome_roots = reactome_roots
+
         # drop reatcome root ids so that thex are not used for calculating missing values and clusters
         self.data_table = data_table.drop(reactome_root_ids)
-
         self.full_graph = nx.Graph(networkx_dict)
 
         self.half_node_size = node_size / 2
@@ -381,14 +383,38 @@ class Module_layout:
                     module_center = np.random.uniform(0, 1, (self.num_cluster, 2))
                     prev_best_cost_C = None
                 else:
-                    new_diff_area_to_success = sum([min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratios, new_area_side_ratio) if min_nn_ratio > a_r])
-                    #print([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
-                    new_diff_min_side_to_success = sum([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
-                    if (new_diff_area_to_success < diff_area_to_success) or ((new_diff_area_to_success == diff_area_to_success or new_diff_area_to_success <= 0.01 or (abs(new_diff_area_to_success - diff_area_to_success) < 0.001)) and new_diff_min_side_to_success < diff_min_side_to_success): #  and best_cost_C < prev_best_cost_C):
-                       diff_area_to_success = new_diff_area_to_success
-                       diff_min_side_to_success = new_diff_min_side_to_success 
-                       modules_area = new_modules_area
-                       prev_best_cost_C = best_cost_C
+                    new_diff_area_to_success = sum(
+                        [
+                            min_nn_ratio - a_r
+                            for min_nn_ratio, (a_r, _) in zip(
+                                min_nn_ratios, new_area_side_ratio
+                            )
+                            if min_nn_ratio > a_r
+                        ]
+                    )
+                    # print([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
+                    new_diff_min_side_to_success = sum(
+                        [
+                            (self.MIN_SIDE_T - runtime_threshold_MS) - min_side
+                            for _, min_side in new_area_side_ratio
+                            if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side
+                        ]
+                    )
+                    if (new_diff_area_to_success < diff_area_to_success) or (
+                        (
+                            new_diff_area_to_success == diff_area_to_success
+                            or new_diff_area_to_success <= 0.01
+                            or (
+                                abs(new_diff_area_to_success - diff_area_to_success)
+                                < 0.001
+                            )
+                        )
+                        and new_diff_min_side_to_success < diff_min_side_to_success
+                    ):  #  and best_cost_C < prev_best_cost_C):
+                        diff_area_to_success = new_diff_area_to_success
+                        diff_min_side_to_success = new_diff_min_side_to_success
+                        modules_area = new_modules_area
+                        prev_best_cost_C = best_cost_C
                     runs += 1
                 if total_num_runs == self.MAX_RUNS_PER_THREAD / 2:
                     min_nn_ratios = [
@@ -511,12 +537,13 @@ class Module_layout:
             data_for_sil = np.delete(data, rand_cl_pos, axis=0)
             clustering_labels_for_sil = [x for x in clustering_labels if x != -1]
 
-        ss = metrics.silhouette_score(data_for_sil, clustering_labels_for_sil, metric="euclidean")
-        #print("Reached End of Pool func. ",min_samples, max(clustering_labels) + 2, ss)
+        ss = metrics.silhouette_score(
+            data_for_sil, clustering_labels_for_sil, metric="euclidean"
+        )
+        # print("Reached End of Pool func. ",min_samples, max(clustering_labels) + 2, ss)
 
         # print(min_samples, max(clustering_labels) + 2, ss)
         return ss, clustering_labels
-
 
     def get_cluster(self):
         """
@@ -528,7 +555,7 @@ class Module_layout:
         num_pathways = len(self.data_table_scaled_filled)
         if num_features > 2:
             n_comp = min(math.ceil(num_features / 2), 10)
-            n_neighbors = 5 if num_pathways<100 else 10 if num_pathways<200 else 15
+            n_neighbors = 5 if num_pathways < 100 else 10 if num_pathways < 200 else 15
             positions_dict, position_list = self.get_umap_layout_pos(
                 n_components=n_comp, n_neighbors=n_neighbors, min_dist=0
             )
@@ -539,12 +566,12 @@ class Module_layout:
                 for row, node_name in zip(position_list, list(self.data_table.index))
             }
         pool = Pool(self.pool_size)
-        simplified_func = partial(
-                self.get_cluster_for_min_sample, data = position_list)
+        simplified_func = partial(self.get_cluster_for_min_sample, data=position_list)
         clustering_labels = None
-        ss = -1      
+        ss = -1
         for result in pool.imap_unordered(
-            simplified_func, range(4, 4 + self.pool_size)):
+            simplified_func, range(4, 4 + self.pool_size)
+        ):
             if result:
                 if result[0] > ss:
                     ss = result[0]
@@ -553,7 +580,7 @@ class Module_layout:
         pool.join()
 
         self.noise_cluster_exists = -1 in clustering_labels
-        print('best silhouette_score: ', ss)
+        print("best silhouette_score: ", ss)
         ordered_nodes = get_sorted_list_by_list_B_sorting_order(
             self.data_table.index, clustering_labels
         )
@@ -572,6 +599,7 @@ class Module_layout:
         }
 
         for root, subpathways in reactome_roots.items():
+
             maj_mod_num = most_frequent(
                 [
                     mod_dic[pathway]
@@ -731,14 +759,18 @@ class Module_layout:
                 self.getNewModuleCenter(
                     module_center,
                     mn,
-                    sum(distance_similarities[p] for p in self.p_f_m[mn]))
+                    sum(distance_similarities[p] for p in self.p_f_m[mn]),
+                )
                 for mn, module_center in enumerate(cur_mod_center)
             ]
             new_rel_distances = self.getRealtiveDistancesBetweenModules(
                 new_module_centers
             )
 
-            found_perfect_center, distance_similarities_new = self.evaluateRelativDistanceSimilarity(
+            (
+                found_perfect_center,
+                distance_similarities_new,
+            ) = self.evaluateRelativDistanceSimilarity(
                 self.relative_distances, new_rel_distances, self.dist_sim_threshold
             )
             if sum(distance_similarities_new) > sum(distance_similarities):
@@ -916,13 +948,19 @@ class Module_layout:
             # score = abs(self.get_area_size(area_1)*num_nodes_area_2/total_sum_nodes_in_area -
             #             self.get_area_size(area_2)*num_nodes_area_1/total_sum_nodes_in_area)
 
-            score = max(0, abs(
-                get_area_size(area_1) / area_t_d_size
-                - num_nodes_area_1 / total_sum_nodes_in_area
-            )) + max(0, abs(
-                get_area_size(area_2) / area_t_d_size
-                - num_nodes_area_2 / total_sum_nodes_in_area
-            ))
+            score = max(
+                0,
+                abs(
+                    get_area_size(area_1) / area_t_d_size
+                    - num_nodes_area_1 / total_sum_nodes_in_area
+                ),
+            ) + max(
+                0,
+                abs(
+                    get_area_size(area_2) / area_t_d_size
+                    - num_nodes_area_2 / total_sum_nodes_in_area
+                ),
+            )
 
             if score < score_min:
                 score_min = score
@@ -995,13 +1033,21 @@ class Module_layout:
             for pathway in module
         }
         for root, subpathways in self.reactome_roots.items():
-            maj_mod_num = most_frequent(
-                [
-                    mod_dic[pathway]
-                    for pathway in subpathways
-                    if pathway in mod_dic.keys()
-                ]
-            )
+            try:
+                maj_mod_num = most_frequent(
+                    [
+                        mod_dic[pathway]
+                        for pathway in subpathways
+                        if pathway in mod_dic.keys()
+                    ]
+                )
+            except:
+                print(
+                    "{} Is a Root with associated measurements NOT in subpathways".format(
+                        root
+                    )
+                )
+                maj_mod_num = -1
             node_positions[root] = [0, 0, maj_mod_num]
 
         return node_positions

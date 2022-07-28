@@ -710,12 +710,19 @@ def generate_overview_pathway_entry(
         entry.total_measured_metabolites.values(),
     ]
 
-    num_entries_omics = [len(entry.total_proteins), len(entry.total_proteins), len(entry.total_metabolites)]
+    num_entries_omics = [
+        len(entry.total_proteins),
+        len(entry.total_proteins),
+        len(entry.total_metabolites),
+    ]
     # perc_vals_total = sum([len(vals) /num_total for vals, num_total in zip(values_per_omic, num_entries_omics) if num_total > 0])
-    perc_vals_total = len([value for values_omic in values_per_omic for value in values_omic]) / sum(num_entries_omics)
-        
+    perc_vals_total = len(
+        [value for values_omic in values_per_omic for value in values_omic]
+    ) / sum(num_entries_omics)
+
     for omic_recieved, omic_values_dict, num_entries_omic, limits in zip(
-        omics_recieved, values_per_omic, num_entries_omics, omic_limits):
+        omics_recieved, values_per_omic, num_entries_omics, omic_limits
+    ):
         if omic_recieved:
             omic_values = [vals["measurement"] for vals in omic_values_dict]
             # print(num_entries_omic, omic_values, limits)

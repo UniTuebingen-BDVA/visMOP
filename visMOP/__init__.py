@@ -73,7 +73,7 @@ from flask_caching import Cache
 from multiprocessing import set_start_method
 
 # seems to be needed for linux not sure why i need to force the start method tho
-set_start_method('spawn', force=True)
+set_start_method("spawn", force=True)
 
 app = Flask(__name__, static_folder="../dist/assets", template_folder="../dist")
 # DATA PATHS: (1) Local, (2) tuevis
@@ -160,7 +160,7 @@ def get_layout_settings(settings, omics_recieved):
     possible_no_omic_attributes = ["% values measured over all omics"]
     attributes = []
     limits = []
-    #print(settings.items())
+    # print(settings.items())
     omics_recieved.append(True)
     for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
         omic_limits = [float(i) for i in layout_settings["limits"]]
@@ -874,19 +874,22 @@ def reactome_parsing():
             subset=id_col
         ).set_index(id_col)
         for k, v in slider_vals["metabolomics"].items():
-            is_empty = v["empties"] & (metabolomics_df[k] == "None")
-            is_numeric = pd.to_numeric(metabolomics_df[k], errors="coerce").notnull()
-            df_numeric = metabolomics_df.loc[is_numeric]
-            df_is_in_range = df_numeric.loc[
-                (df_numeric[k] >= v["vals"]["min"])
-                & (df_numeric[k] <= v["vals"]["max"])
-            ]
-            df_is_empty = metabolomics_df.loc[is_empty]
+            if k != id_col:
+                is_empty = v["empties"] & (metabolomics_df[k] == "None")
+                is_numeric = pd.to_numeric(
+                    metabolomics_df[k], errors="coerce"
+                ).notnull()
+                df_numeric = metabolomics_df.loc[is_numeric]
+                df_is_in_range = df_numeric.loc[
+                    (df_numeric[k] >= v["vals"]["min"])
+                    & (df_numeric[k] <= v["vals"]["max"])
+                ]
+                df_is_empty = metabolomics_df.loc[is_empty]
 
-            metabolomics_df = metabolomics_df.loc[
-                metabolomics_df.index.isin(df_is_in_range.index)
-                | metabolomics_df.index.isin(df_is_empty.index)
-            ]
+                metabolomics_df = metabolomics_df.loc[
+                    metabolomics_df.index.isin(df_is_in_range.index)
+                    | metabolomics_df.index.isin(df_is_empty.index)
+                ]
         metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_IDs = list(metabolomics_dict.keys())
 
@@ -980,7 +983,8 @@ def reactome_parsing():
             transcriptomics_query_data_tuples,
             tar_organism,
             "Ensembl",
-            data_path / "reactome_data/pickles/")
+            data_path / "reactome_data/pickles/",
+        )
         fold_changes["transcriptomics"] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy
         node_pathway_dict = {
