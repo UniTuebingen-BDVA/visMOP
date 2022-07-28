@@ -228,7 +228,7 @@ const metabolomicsTableHeaders = computed(
   () => mainStore.metabolomicsTableHeaders
 );
 const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
-const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate)
+const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
 
 const transcriptomicsSymbolDict = computed(
   () => mainStore.transcriptomicsSymbolDict
@@ -306,27 +306,36 @@ watch(pathwayLayouting, () => {
     (row: { [key: string]: string | number }) => {
       const symbol = row[usedSymbolCols.value.metabolomics];
       metabolomicsTotal += 1;
-      let pathwaysContaining : string[] = []
-      if(keggChebiTranslate.value){
-        let chebiIDs = keggChebiTranslate.value[symbol]
-        if(chebiIDs){
-          chebiIDs.forEach(element => {
+      let pathwaysContaining: string[] = [];
+      const keggChebiConvert = Object.keys(keggChebiTranslate.value).length > 0;
+
+      if (keggChebiConvert) {
+        let chebiIDs = keggChebiTranslate.value[symbol];
+        if (chebiIDs) {
+          chebiIDs.forEach((element) => {
             try {
-              pathwaysContaining.push(...pathwayLayouting.value.nodePathwayDictionary[element])
+              pathwaysContaining.push(
+                ...pathwayLayouting.value.nodePathwayDictionary[element]
+              );
             } catch (error) {
-              
+              //
             }
           });
         }
       } else {
-        
-      pathwaysContaining =
-        pathwayLayouting.value.nodePathwayDictionary[symbol];
-      } 
-      row._reserved_available = pathwaysContaining.length > 0
+        console.log(
+          'REACHED',
+          symbol,
+          pathwayLayouting.value.nodePathwayDictionary
+        );
+
+        pathwaysContaining =
+          pathwayLayouting.value.nodePathwayDictionary[symbol];
+      }
+      row._reserved_available = pathwaysContaining
         ? pathwaysContaining.length
         : 0;
-      if (pathwaysContaining.length > 0) metabolomicsAvailable += 1;
+      if (pathwaysContaining) metabolomicsAvailable += 1;
     }
   );
   metabolomicsTableHeaders.value.forEach(
@@ -409,28 +418,31 @@ watch(pathwayDropdown, () => {
             : false;
         }
         if (targetDatabase.value === 'reactome') {
-
-          if(keggChebiTranslate.value){
-            let chebiIDs = keggChebiTranslate.value[symbol]
-            if(chebiIDs){
-              chebiIDs.forEach(element => {
+          const keggChebiConvert =
+            Object.keys(keggChebiTranslate.value).length > 0;
+          if (keggChebiConvert) {
+            let chebiIDs = keggChebiTranslate.value[symbol];
+            if (chebiIDs) {
+              chebiIDs.forEach((element) => {
                 try {
                   includedInSelectedPathway = pathwayDropdown.value
-                  ? pathwayLayouting.value.pathwayNodeDictionary[element].includes(
-                      pathwayDropdown.value.value
-                    )
-                  : false;
+                    ? pathwayLayouting.value.pathwayNodeDictionary[
+                        element
+                      ].includes(pathwayDropdown.value.value)
+                    : false;
                 } catch (error) {
-                  
+                  //
                 }
-              })
-            }}else{
-          includedInSelectedPathway = pathwayDropdown.value
-            ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                pathwayDropdown.value.value
-              )
-            : false;
+              });
             }
+          } else {
+            console.log('REACHED', symbol);
+            includedInSelectedPathway = pathwayDropdown.value
+              ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
+                  pathwayDropdown.value.value
+                )
+              : false;
+          }
         }
         row._reserved_inSelected = includedInSelectedPathway ? 'Yes' : 'No';
       }
