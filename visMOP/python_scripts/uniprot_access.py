@@ -15,9 +15,10 @@ def make_protein_dict(df, colname):
     prot_dict = df.to_dict("index")
 
     # convert all gene symbols to a list
+    """     
     for key in prot_dict.copy():
-        prot_dict[key]["Gene Symbol"] = prot_dict.copy()[key]["Gene Symbol"].split(" ")
-
+        prot_dict[key][colname] = prot_dict.copy()[key][colname].split(" ")
+    """
     return prot_dict
 
 
@@ -96,9 +97,19 @@ def add_uniprot_info(dict):
                 if line.startswith("DR") and "KEGG" in line:
                     keggID = line.strip().split(";")[1].strip()
                     line = file.readline()
+                if line.startswith("GN"):
+                    line_split = line.strip().split(";")
+                    symbol_list = [line_split[0].replace("Name=", "")]
+                    try:
+                        symbol_list.extend(
+                            line_split[1].replace("Synonyms=", "").split(",")
+                        )
+                    except:
+                        pass
         try:
             dict[id]["string_id"] = string_id
             dict[id]["keggID"] = keggID
+            dict[id]["Gene Symbol"] = symbol_list
         except:
             print("ID has no String and/or no KEGG ID: ", id)
         # from textfile split lines to get location name
