@@ -211,9 +211,18 @@ const fetchOmicsTable = (fileInput: File | null) => {
     })
       .then((response) => response.json())
       .then((responseContent) => {
-        mainStore.setOmicsTableHeaders(responseContent.header, props.omicsType);
-        mainStore.setOmicsTableData(responseContent.entries, props.omicsType);
-        recievedOmicsDataInternal.value = true;
+        if (responseContent.exitState == 1) {
+          alert(responseContent.errorMsg);
+          return 1;
+        }
+        if (responseContent.exitState == 0) {
+          mainStore.setOmicsTableHeaders(
+            responseContent.header,
+            props.omicsType
+          );
+          mainStore.setOmicsTableData(responseContent.entries, props.omicsType);
+          recievedOmicsDataInternal.value = true;
+        }
       })
       .then(() => $q.loading.hide());
   } else {

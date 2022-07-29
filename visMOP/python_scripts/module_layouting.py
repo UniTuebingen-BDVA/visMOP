@@ -203,11 +203,14 @@ class Module_layout:
 
         print("Calculating module layout...")
         print(self.data_table)
-        self.data_table_scaled_filled = StandardScaler().fit_transform(
-            self.fill_missing_values_with_neighbor_mean(
-                graph_dict, up_down_reg_means, reactome_root_ids
+        try:
+            self.data_table_scaled_filled = StandardScaler().fit_transform(
+                self.fill_missing_values_with_neighbor_mean(
+                    graph_dict, up_down_reg_means, reactome_root_ids
+                )
             )
-        )
+        except ValueError as e:
+            return "Value Error! Correct Organism chosen?"
         print("Scaled input data")
         self.initial_node_pos, _ = self.get_initial_node_pos(drm)
         print("initial node positions calculated")

@@ -359,7 +359,10 @@ const queryReactome = () => {
   })
     .then((response) => response.json())
     .then((dataContent) => {
-      if (dataContent === 1) return 1;
+      if (dataContent.exitState == 1) {
+        alert(dataContent.errorMsg);
+        return 1;
+      }
       mainStore.setOmicsRecieved(dataContent.omicsRecieved);
       mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
       mainStore.setFCSReactome(dataContent.fcs);

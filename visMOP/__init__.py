@@ -24,6 +24,7 @@ from visMOP.python_scripts.data_table_parsing import (
     generate_vue_table_entries,
     generate_vue_table_header,
     create_df,
+    table_request,
 )
 from visMOP.python_scripts.create_overview import get_overview, get_overview_reactome
 from visMOP.python_scripts.uniprot_access import (
@@ -141,6 +142,9 @@ def getModuleLayout(
         reactome_roots,
         pathways_root_names,
     )
+    # handle value error
+    if module_layout == "Value Error! Correct Organism chosen?":
+        return module_layout, 1
     module_node_pos = module_layout.get_final_node_positions()
     module_areas = module_layout.get_module_areas()
     return module_node_pos, module_areas
@@ -208,25 +212,7 @@ transcriptomics table recieve
 
 @app.route("/Transcriptomics_table", methods=["POST"])
 def transcriptomics_table_recieve():
-    print("table recieve triggered")
-
-    # recieve data-blob
-    transfer_dat = request.files["dataTable"]
-    sheet_no = int(request.form["sheetNumber"])
-    # create and parse data table and prepare json
-    data_table = create_df(transfer_dat, sheet_no)
-    cache.set(
-        "transcriptomics_df_global",
-        data_table.copy(deep=True).to_json(orient="columns"),
-    )
-    entry_IDs = list(data_table.iloc[:, 0])
-    out_data = {}
-    out_data["entry_IDs"] = entry_IDs
-    out_data["header"] = generate_vue_table_header(data_table)
-    out_data["entries"] = generate_vue_table_entries(data_table)
-
-    json_data = json.dumps(out_data)
-
+    json_data = table_request(request, cache, "transcriptomics_df_global")
     return json_data
 
 
@@ -237,22 +223,8 @@ protein recieve
 
 @app.route("/Proteomics_table", methods=["POST"])
 def prot_table_recieve():
-
-    # aquire table data-blob
-    transfer_dat = request.files["dataTable"]
-    sheet_no = int(request.form["sheetNumber"])
-    print("sheet no", sheet_no)
-
-    # parse data table and prepare json
-    prot_data = create_df(transfer_dat, sheet_no)
-    cache.set("prot_table_global", prot_data.copy(deep=True).to_json(orient="columns"))
-    entry_IDs = list(prot_data.iloc[:, 0])
-    out_data = {}
-    out_data["entry_IDs"] = entry_IDs
-    out_data["header"] = generate_vue_table_header(prot_data)
-    out_data["entries"] = generate_vue_table_entries(prot_data)
-
-    return json.dumps(out_data)
+    json_data = table_request(request, cache, "prot_table_global")
+    return json_data
 
 
 """
@@ -262,25 +234,7 @@ metabolomics table recieve
 
 @app.route("/Metabolomics_table", methods=["POST"])
 def metabolomics_table_recieve():
-    print("table recieve triggered")
-
-    # recieve table data-blob
-    transfer_dat = request.files["dataTable"]
-    sheet_no = int(request.form["sheetNumber"])
-
-    # parse and create dataframe and prepare json
-    data_table = create_df(transfer_dat, sheet_no)
-    cache.set(
-        "metabolomics_df_global", data_table.copy(deep=True).to_json(orient="columns")
-    )
-    entry_IDs = list(data_table.iloc[:, 0])
-    out_data = {}
-    out_data["entry_IDs"] = entry_IDs
-    out_data["header"] = generate_vue_table_header(data_table)
-    out_data["entries"] = generate_vue_table_entries(data_table)
-
-    json_data = json.dumps(out_data)
-
+    json_data = table_request(request, cache, "metabolomics_df_global")
     return json_data
 
 
@@ -727,7 +681,8 @@ def kegg_parsing():
         statistic_data_complete,
         pathway_connection_dict,
     )
-
+    if module_node_pos == "Value Error! Correct Organism chosen?":
+        return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
     network_overview = generate_networkx_dict(pathway_connection_dict)
     pos_overview = get_spring_layout_pos(network_overview)
     init_pos_overview = add_initial_positions(pos_overview, pathway_connection_dict)
@@ -751,6 +706,7 @@ def kegg_parsing():
 
     # prepare json data
     out_dat = {
+        "exitState": 0,
         "omicsRecieved": {
             "transcriptomics": transcriptomics["recieved"],
             "proteomics": proteomics["recieved"],
@@ -1064,7 +1020,8 @@ def reactome_overview():
         root_subpathways,
         pathways_root_names,
     )
-
+    if module_node_pos == "Value Error! Correct Organism chosen?":
+        return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
     # a_file = open("modul_layout.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
     # a_file.close()
@@ -1087,6 +1044,7 @@ def reactome_overview():
 
     return json.dumps(
         {
+            "exitState": 0,
             "overviewData": out_data,
             "moduleAreas": module_areas,
             "pathwayLayouting": {
