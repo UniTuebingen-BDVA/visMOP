@@ -49,7 +49,7 @@ export default class overviewGraph {
   protected clusterAreas: any;
   protected adjustedClusterAreas;
   protected focusClusterAreas;
-  protected lodRatio = 1.5;
+  protected lodRatio = 1.15;
   protected lastClickedClusterNode = -1;
   protected additionalData: any;
   protected cancelCurrentAnimation: (() => void) | null = null;
