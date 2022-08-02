@@ -43,20 +43,22 @@ export function zoomLod(this: overviewGraph): void {
     if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      tarPositions[node] = {
-        x: attributes.moduleFixed ? attributes.x : attributes.layoutX,
-        y: attributes.moduleFixed ? attributes.y : attributes.layoutY,
-        size: attributes.isRoot
-          ? overviewGraph.ROOT_DEFAULT_SIZE
-          : attributes.nodeType == 'moduleNode'
-          ? overviewGraph.MODULE_DEFAULT_SIZE
-          : overviewGraph.DEFAULT_SIZE,
-        nonHoverSize: attributes.isRoot
-          ? overviewGraph.ROOT_DEFAULT_SIZE
-          : attributes.nodeType == 'moduleNode'
-          ? overviewGraph.MODULE_DEFAULT_SIZE
-          : overviewGraph.DEFAULT_SIZE,
-      };
+      if (
+        attributes.nodeType !== 'moduleNode' &&
+        !attributes.isRoot &&
+        !attributes.moduleFixed
+      ) {
+        tarPositions[node] = {
+          x: attributes.moduleFixed ? attributes.x : attributes.layoutX,
+          y: attributes.moduleFixed ? attributes.y : attributes.layoutY,
+          size: attributes.isRoot
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
+          nonHoverSize: attributes.isRoot
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
+        };
+      }
     });
     this.cancelCurrentAnimation = animateNodes(this.graph, tarPositions, {
       duration: 2000,

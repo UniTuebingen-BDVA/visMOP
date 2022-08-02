@@ -23,9 +23,10 @@ import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 
 export default class overviewGraph {
   // constants
-  static readonly DEFAULT_SIZE = 5;
-  static readonly ROOT_DEFAULT_SIZE = 7.5;
-  static readonly MODULE_DEFAULT_SIZE = 10;
+  static readonly DEFAULT_SIZE = 8;
+  static readonly ROOT_DEFAULT_SIZE = 20;
+  static readonly MODULE_DEFAULT_SIZE = 20;
+  static readonly FOCUS_NODE_SIZE = 15;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];
@@ -49,7 +50,7 @@ export default class overviewGraph {
   protected clusterAreas: any;
   protected adjustedClusterAreas;
   protected focusClusterAreas;
-  protected lodRatio = 1.15;
+  protected lodRatio = 1;
   protected lastClickedClusterNode = -1;
   protected additionalData: any;
   protected cancelCurrentAnimation: (() => void) | null = null;
@@ -203,7 +204,7 @@ export default class overviewGraph {
         nodeReducer: nodeReducer.bind(this),
         edgeReducer: edgeReducer.bind(this),
         zIndex: true, // enabling zIndex parameter
-        renderLabels: true, // do not render labels w/o hover
+        renderLabels: false, // do not render labels w/o hover
         labelRenderedSizeThreshold: 20,
         edgeProgramClasses: {
           ...DEFAULT_SETTINGS.edgeProgramClasses,
@@ -315,6 +316,8 @@ export default class overviewGraph {
             attributes.y = attributes.yOnClusterFocus;
             attributes.moduleFixed = true;
             attributes.zoomHidden = false;
+            attributes.size = overviewGraph.FOCUS_NODE_SIZE;
+            attributes.nonHoverSize = overviewGraph.FOCUS_NODE_SIZE;
           } else if (!defocus && !attributes.isRoot) {
             attributes.x = 0;
             attributes.y = 0;
@@ -329,6 +332,8 @@ export default class overviewGraph {
             attributes.y = attributes.layoutY;
             attributes.moduleFixed = false;
             attributes.moduleHidden = false;
+            attributes.size = overviewGraph.DEFAULT_SIZE;
+            attributes.nonHoverSize = overviewGraph.DEFAULT_SIZE;
           }
         });
         console.log(this.adjustedClusterAreas);
