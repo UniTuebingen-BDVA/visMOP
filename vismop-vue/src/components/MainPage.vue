@@ -121,8 +121,10 @@
               <interaction-graph-table> </interaction-graph-table>
             </q-tab-panel>
             <q-tab-panel name="ppiGraph">
-              <interaction-graph context-i-d="interactionGraph">
-              </interaction-graph>
+              <keep-alive>
+                <interaction-graph context-i-d="interactionGraph">
+                </interaction-graph>
+              </keep-alive>
             </q-tab-panel>
             <q-tab-panel name="pathwayCompare">
               <pathway-compare> </pathway-compare>

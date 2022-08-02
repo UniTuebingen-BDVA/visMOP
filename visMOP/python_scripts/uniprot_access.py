@@ -98,7 +98,9 @@ def add_uniprot_info(dict):
                     keggID = line.strip().split(";")[1].strip()
                     line = file.readline()
                 if line.startswith("GN"):
-                    line_split = line.strip().split(";")
+                    line_split = (
+                        line.strip().split("GN")[1].strip().strip(";").split(";")
+                    )
                     symbol_list = [line_split[0].replace("Name=", "")]
                     try:
                         symbol_list.extend(

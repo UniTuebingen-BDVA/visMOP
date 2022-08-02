@@ -160,7 +160,6 @@ function generatePieCharts(identities: number[]): {
       type: 'image/svg+xml;charset=utf-8',
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
-    console.log('pieAccessor: ', elem, elem.join(';'));
     pieCharts.saturated[elem.join(';')] = svgURL;
   });
   combinations.forEach((elem) => {
@@ -176,7 +175,6 @@ function generatePieCharts(identities: number[]): {
       type: 'image/svg+xml;charset=utf-8',
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
-    console.log('pieAccessor: ', elem, elem.join(';'));
     pieCharts.faded[elem.join(';')] = svgURL;
   });
   return pieCharts;

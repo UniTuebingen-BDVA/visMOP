@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
 import { reactomeEntry } from '@/core/reactomeTypes';
-import { useQuasar } from 'quasar';
+import { Loading } from 'quasar';
 
 interface State {
   sideBarExpand: boolean;
@@ -178,12 +178,10 @@ export const useMainStore = defineStore('mainStore', {
       });
     },
     addClickedNodeFromTable(row: { [key: string]: string }) {
-      console.log(row);
       let id = row[this.usedSymbolCols.proteomics];
       if (this.targetDatabase === 'kegg') {
         id = this.proteomicsSymbolDict[id];
       }
-      console.log(this.targetDatabase);
       const enteredKeys = this.clickedNodes.map((row) => {
         return row.id;
       });
@@ -215,7 +213,6 @@ export const useMainStore = defineStore('mainStore', {
         };
       }
       if (this.targetDatabase === 'reactome') {
-        console.log('test', this.fcsReactome);
         tableEntry = {
           id: val.queryID,
           name: `${val.name}`,
@@ -227,8 +224,7 @@ export const useMainStore = defineStore('mainStore', {
       this.clickedNodes.push(tableEntry);
     },
     queryEgoGraps(val: number) {
-      const $q = useQuasar();
-      $q.loading.show();
+      Loading.show();
       let ids: string[] = [];
       if (this.targetDatabase === 'kegg') {
         ids = this.clickedNodes.map((elem) => {
@@ -248,7 +244,7 @@ export const useMainStore = defineStore('mainStore', {
         .then((response) => response.json())
         .then((content) => {
           this.interactionGraphData = content.interaction_graph;
-          $q.loading.show();
+          Loading.hide();
         });
     },
     setInteractionGraphData(val: networkxNodeLink) {
@@ -540,7 +536,6 @@ export const useMainStore = defineStore('mainStore', {
       pathwayList: [{ text: string; value: string; title: string }];
       pathwayNodeDictionary: { [key: string]: string[] };
     }) {
-      console.log('TESTEST', val.pathwayNodeDictionary);
       this.pathwayLayouting = {
         ...val,
         nodePathwayDictionary: val.pathwayNodeDictionary,
