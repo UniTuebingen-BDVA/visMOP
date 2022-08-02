@@ -210,7 +210,7 @@ class Module_layout:
                 )
             )
         except ValueError as e:
-            return "Value Error! Correct Organism chosen?"
+            raise ValueError
         print("Scaled input data")
         self.initial_node_pos, _ = self.get_initial_node_pos(drm)
         print("initial node positions calculated")

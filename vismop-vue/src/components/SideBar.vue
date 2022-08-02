@@ -360,8 +360,8 @@ const queryReactome = () => {
     .then((response) => response.json())
     .then((dataContent) => {
       if (dataContent.exitState == 1) {
-        alert(dataContent.errorMsg);
-        return 1;
+        alert(dataContent.ErrorMsg);
+        return Promise.reject(dataContent.errorMsg);
       }
       mainStore.setOmicsRecieved(dataContent.omicsRecieved);
       mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
@@ -380,13 +380,21 @@ const getReactomeData = () => {
   })
     .then((response) => response.json())
     .then((dataContent) => {
-      console.log('PATHWAYLAYOUTING', dataContent);
+      if (dataContent.exitState == 1) {
+        return Promise.reject(dataContent.ErrorMsg);
+      }
       mainStore.setOverviewData(dataContent.overviewData);
       mainStore.setModuleAreas(dataContent.moduleAreas);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
       console.log('OVDATA', dataContent.overviewData);
     })
-    .then(() => $q.loading.hide());
+    .then(
+      () => $q.loading.hide(),
+      (reason) => {
+        $q.loading.hide();
+        alert(reason);
+      }
+    );
 };
 const generateKGMLs = () => {
   $q.loading.show();

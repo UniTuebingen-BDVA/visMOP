@@ -135,16 +135,16 @@ def getModuleLayout(
     complete_stat_names += ["pathway size"]
     statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
-    module_layout = Module_layout(
-        statistic_data_user,
-        pathway_connection_dict,
-        up_down_reg_means,
-        reactome_roots,
-        pathways_root_names,
-    )
-    # handle value error
-    if module_layout == "Value Error! Correct Organism chosen?":
-        return module_layout, 1
+    try:
+        module_layout = Module_layout(
+            statistic_data_user,
+            pathway_connection_dict,
+            up_down_reg_means,
+            reactome_roots,
+            pathways_root_names,
+        )
+    except ValueError:
+        return -1, 1
     module_node_pos = module_layout.get_final_node_positions()
     module_areas = module_layout.get_module_areas()
     return module_node_pos, module_areas
@@ -681,7 +681,7 @@ def kegg_parsing():
         statistic_data_complete,
         pathway_connection_dict,
     )
-    if module_node_pos == "Value Error! Correct Organism chosen?":
+    if module_node_pos == -1:
         return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
     network_overview = generate_networkx_dict(pathway_connection_dict)
     pos_overview = get_spring_layout_pos(network_overview)
@@ -1020,7 +1020,7 @@ def reactome_overview():
         root_subpathways,
         pathways_root_names,
     )
-    if module_node_pos == "Value Error! Correct Organism chosen?":
+    if module_node_pos == -1:
         return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
     # a_file = open("modul_layout.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
