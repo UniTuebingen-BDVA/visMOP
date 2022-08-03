@@ -153,7 +153,7 @@ const targetOrganisms = ref([
   { text: 'Mouse', value: 'mmu' },
   { text: 'Human', value: 'hsa' },
 ]);
-const targetOrganism = ref({ text: 'Mouse', value: 'mmu' });
+const targetOrganism = ref({ text: 'Human', value: 'hsa' });
 const targetDatabases = ref([
   { text: 'Reactome', value: 'reactome' },
   //{ text: 'KEGG', value: 'kegg' }, //comment in to allow usage of kegg
