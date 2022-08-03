@@ -432,7 +432,7 @@ export default class overviewGraph {
         nonHoverSize: overviewGraph.MODULE_DEFAULT_SIZE,
         fixed: false,
         type: 'image',
-        label: `Module: ${key}`,
+        label: `Cluster: ${key}`,
         image: glyphs[key],
         imageLowRes: glyphs[key],
         imageHighRes: glyphs[key],
