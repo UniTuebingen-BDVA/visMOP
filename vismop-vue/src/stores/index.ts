@@ -535,12 +535,13 @@ export const useMainStore = defineStore('mainStore', {
     setPathwayLayoutingReactome(val: {
       pathwayList: [{ text: string; value: string; title: string }];
       pathwayNodeDictionary: { [key: string]: string[] };
+      rootIds: string[];
     }) {
       this.pathwayLayouting = {
         ...val,
         nodePathwayDictionary: val.pathwayNodeDictionary,
         pathwayNodeDictionaryClean: val.pathwayNodeDictionary,
-        rootIds: [],
+        rootIds: val.rootIds,
       };
     },
     focusPathwayViaOverview(val: { nodeID: string; label: string }) {

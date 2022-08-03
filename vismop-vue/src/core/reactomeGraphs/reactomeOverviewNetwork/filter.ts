@@ -10,6 +10,7 @@ import overviewGraph from './overviewNetwork';
  */
 function filterFunction(
   this: overviewGraph,
+  node: string,
   attributes: Record<
     string,
     string | number | typeof NaN | { regulated: number; total: number }
@@ -18,6 +19,7 @@ function filterFunction(
   if (attributes.isRoot || attributes.nodeType == 'moduleNode') {
     return false;
   } else if (
+    this.filterFuncRoot(node) &&
     this.filterFuncTrans(attributes.averageTranscriptomics as number) &&
     this.filterFuncProt(attributes.averageProteomics as number) &&
     this.filterFuncMeta(attributes.averageMetabolonmics as number) &&
@@ -73,12 +75,12 @@ export function filterElements(this: overviewGraph) {
     this.filtersChanged = false;
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      if (!filterFunction.bind(this)(attributes))
+      if (!filterFunction.bind(this)(node, attributes))
         attributes.filterHidden = false;
     });
     this.graph.forEachNode((node, attributes) => {
       if (
-        filterFunction.bind(this)(attributes) &&
+        filterFunction.bind(this)(node, attributes) &&
         attributes.nodeType !== 'moduleNode'
       ) {
         tarPositions[node] = {
@@ -101,7 +103,7 @@ export function filterElements(this: overviewGraph) {
       },
       () => {
         this.graph.forEachNode((node, attributes) => {
-          filterFunction.bind(this)(attributes)
+          filterFunction.bind(this)(node, attributes)
             ? (attributes.filterHidden = true)
             : (attributes.filterHidden = false);
         });
@@ -156,4 +158,21 @@ function filterFactory(filterObj: filterValues): (X: number) => boolean {
   } else {
     return (_x: number) => true;
   }
+}
+
+export function setRootFilter(
+  this: overviewGraph,
+  rootFilter: { filterActive: boolean; rootID: string }
+) {
+  if (rootFilter.filterActive && rootFilter.rootID) {
+    console.log('ROOT FILTER');
+    const rootSubtree = this.graph.neighbors(rootFilter.rootID);
+    this.filterFuncRoot = (x: string) => {
+      return x === rootFilter.rootID || rootSubtree.includes(x);
+    };
+  } else {
+    this.filterFuncRoot = (_x: string) => true;
+  }
+  this.filtersChanged = true;
+  this.renderer.refresh();
 }

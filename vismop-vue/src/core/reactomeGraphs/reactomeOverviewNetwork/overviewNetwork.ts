@@ -14,7 +14,7 @@ import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
-import { filterElements, setAverageFilter } from './filter';
+import { filterElements, setAverageFilter, setRootFilter } from './filter';
 import subgraph from 'graphology-operators/subgraph';
 import circular from 'graphology-layout/circular';
 import { assignLayout } from 'graphology-layout/utils';
@@ -57,6 +57,7 @@ export default class overviewGraph {
 
   // filter
   protected filtersChanged = false;
+  protected filterFuncRoot: (x: string) => boolean = (_x: string) => true;
   protected filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   protected filterFuncProt: (x: number) => boolean = (_x: number) => true;
   protected filterFuncMeta: (x: number) => boolean = (_x: number) => true;
@@ -229,6 +230,13 @@ export default class overviewGraph {
     const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
       return attr.isRoot;
     });
+    rootSubgraph._nodes = new Map(
+      [...rootSubgraph._nodes].sort((a, b) => {
+        return String(a[1].attributes.label).localeCompare(
+          b[1].attributes.label
+        );
+      })
+    );
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
     // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
@@ -429,19 +437,19 @@ export default class overviewGraph {
         imageLowRes: glyphs[key],
         imageHighRes: glyphs[key],
         imageLowZoom: glyphs[key],
-        hidden: false,
+        hidden: this.camera.ratio >= this.lodRatio ? true : false,
         filterHidden: false,
-        zoomHidden: false,
+        zoomHidden: this.camera.ratio >= this.lodRatio ? true : false,
         moduleHidden: false,
         moduleFixed: false,
       };
-
       this.graph.addNode(key, moduleNode);
     }
   }
 
   public resetZoom = resetZoom;
   public setAverageFilter = setAverageFilter;
+  public setRootFilter = setRootFilter;
   /**
    * Refresehes sets current pathway to the versionen selected in the store
    */

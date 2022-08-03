@@ -7,6 +7,33 @@
       </div>
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-12 text-caption text-grey-9">
+          Filter By Reactome Topic
+        </div>
+      </div>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-2">
+          <q-checkbox
+            v-model="rootFilter.filterActive"
+            checked-icon="task_alt"
+            unchecked-icon="highlight_off"
+          />
+        </div>
+        <div class="col-10">
+          <q-select
+            v-model="rootSelection"
+            filled
+            :options="rootFilterOptionsInternal"
+            label="Reactome Topic"
+            use-input
+            input-debounce="0"
+            option-label="text"
+            option-value="value"
+            @filter="filterFunction"
+          ></q-select>
+        </div>
+      </div>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">
           Sum all omics, relative
         </div>
       </div>
@@ -253,9 +280,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits, PropType } from 'vue';
+import { useMainStore } from '@/stores/index.js';
+import { computed, defineProps, defineEmits, PropType, ref, watch } from 'vue';
 
 const props = defineProps({
+  rootFilter: {
+    type: Object as PropType<{
+      filterActive: boolean;
+      rootID: string;
+    }>,
+    required: true,
+  },
   sumRegulated: {
     type: Object as PropType<{
       absolute: {
@@ -312,7 +347,50 @@ const emit = defineEmits([
   'update:transcriptomics',
   'update:proteomics',
   'update:metabolomics',
+  'update:rootFilter',
 ]);
+const mainStore = useMainStore();
+
+const rootSelection = ref({ title: '', value: '', text: '' });
+watch(rootSelection, () => {
+  if (rootSelection.value) {
+    rootFilter.value.rootID = rootSelection.value.value;
+  }
+});
+
+const rootFilter = computed({
+  get: () => props.rootFilter,
+  set: (value) => emit('update:rootFilter', value),
+});
+
+const rootFilterOptions = computed(() => {
+  const rootIDs = mainStore.pathwayLayouting.rootIds;
+  const pathways = mainStore.pathwayLayouting.pathwayList;
+  const options: { text: string; value: string; title: string }[] = [];
+  rootIDs.forEach((v) => {
+    const text = pathways.filter((d) => {
+      return d.value === v;
+    })[0].title;
+    options.push({ title: text, value: v, text: text });
+  });
+  return options;
+});
+
+const rootFilterOptionsInternal = ref(rootFilterOptions.value);
+watch(rootFilterOptions.value, () => {
+  rootFilterOptionsInternal.value = rootFilterOptions.value;
+  console.log('rootfilter', rootFilterOptionsInternal.value, rootFilter.value);
+});
+
+const filterFunction = (val: string, update: (n: () => void) => void) => {
+  update(() => {
+    const tarValue = val.toLowerCase();
+    rootFilterOptionsInternal.value = rootFilterOptions.value.filter(
+      (v: { text: string; value: string; title: string }) =>
+        v.text.toLowerCase().indexOf(tarValue) > -1
+    );
+  });
+};
 
 const sumRegulatedFilter = computed({
   get: () => props.sumRegulated,

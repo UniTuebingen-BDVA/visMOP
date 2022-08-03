@@ -24,6 +24,7 @@
           ></q-fab-action>
           <q-fab-action color="white">
             <graph-filter
+              v-model:rootFilter="rootFilter"
               v-model:transcriptomics="transcriptomicsFilter"
               v-model:proteomics="proteomicsFilter"
               v-model:metabolomics="metabolomicsFilter"
@@ -105,6 +106,11 @@ const sumRegulated = ref({
   },
 });
 
+const rootFilter = ref({
+  filterActive: false,
+  rootID: '',
+});
+
 const transcriptomicsFilter = ref({
   limits: { min: 0, max: 5 },
   value: { min: 1, max: 2 },
@@ -131,8 +137,7 @@ const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
-const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate)
-
+const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
 
 const combinedIntersection = computed((): string[] => {
   const combinedElements = [];
@@ -224,20 +229,23 @@ watch(
     const foundPathways: string[][] = [];
     props.metabolomicsSelection?.forEach(
       (element: { [key: string]: string }) => {
-        let pathwaysContaining : string[] = []
-                const symbol = element[usedSymbolCols.value.metabolomics];
+        let pathwaysContaining: string[] = [];
+        const symbol = element[usedSymbolCols.value.metabolomics];
 
-        let chebiIDs = keggChebiTranslate.value[symbol]
-        console.log("CHEBI SELECT", chebiIDs)
-            if(chebiIDs){
-              chebiIDs.forEach(element => {
-                try {pathwaysContaining.push(...pathwayLayouting.value.nodePathwayDictionary[element])}
-                catch{}
-              })
-            }else{
-        pathwaysContaining =
-          pathwayLayouting.value.nodePathwayDictionary[symbol]; //[0] ???? bugcheck
-          }
+        let chebiIDs = keggChebiTranslate.value[symbol];
+        console.log('CHEBI SELECT', chebiIDs);
+        if (chebiIDs) {
+          chebiIDs.forEach((element) => {
+            try {
+              pathwaysContaining.push(
+                ...pathwayLayouting.value.nodePathwayDictionary[element]
+              );
+            } catch {}
+          });
+        } else {
+          pathwaysContaining =
+            pathwayLayouting.value.nodePathwayDictionary[symbol]; //[0] ???? bugcheck
+        }
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );
@@ -369,7 +377,9 @@ watch(
     );
   }
 );
-
+watch(rootFilter.value, () => {
+  networkGraph?.value?.setRootFilter(rootFilter.value);
+});
 // onMounted(() => {
 //   console.log('OVDATA', overviewData);
 //   if (overviewData.value) {
