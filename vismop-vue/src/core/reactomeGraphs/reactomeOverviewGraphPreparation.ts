@@ -72,6 +72,7 @@ export function generateGraphData(
         moduleFixed: false,
         color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
         label: `${_.escape(name)}`,
+        forceLabel: entry.rootId === entry.pathwayId ? true : false,
         averageTranscriptomics: glyphData[id].transcriptomics.available
           ? glyphData[id].transcriptomics.meanFoldchange
           : NaN,

@@ -205,8 +205,8 @@ export default class overviewGraph {
         nodeReducer: nodeReducer.bind(this),
         edgeReducer: edgeReducer.bind(this),
         zIndex: true, // enabling zIndex parameter
-        renderLabels: false, // do not render labels w/o hover
-        labelRenderedSizeThreshold: 20,
+        renderLabels: true, // do not render labels w/o hover
+        labelRenderedSizeThreshold: 999999,
         edgeProgramClasses: {
           ...DEFAULT_SETTINGS.edgeProgramClasses,
           dashed: DashedEdgeProgram,
