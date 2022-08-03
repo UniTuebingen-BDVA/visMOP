@@ -165,7 +165,6 @@ export function setRootFilter(
   rootFilter: { filterActive: boolean; rootID: string }
 ) {
   if (rootFilter.filterActive && rootFilter.rootID) {
-    console.log('ROOT FILTER');
     const rootSubtree = this.graph.neighbors(rootFilter.rootID);
     this.filterFuncRoot = (x: string) => {
       return x === rootFilter.rootID || rootSubtree.includes(x);
