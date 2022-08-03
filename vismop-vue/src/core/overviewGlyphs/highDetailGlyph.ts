@@ -143,10 +143,7 @@ export class HighDetailGlyph {
     if (this.drawLabels) {
       svg = d3
         .create('svg')
-        .attr(
-          'viewBox',
-          this.pathwayCompare ? `0 0 ${this.width} ${this.height}` : '0 0 35 35'
-        )
+        .attr('viewBox', `0 0 ${this.width} ${this.height}`)
         .attr('width', this.pathwayCompare ? '100%' : '200px')
         .attr('height', this.pathwayCompare ? '100%' : '200px');
       g = svg
