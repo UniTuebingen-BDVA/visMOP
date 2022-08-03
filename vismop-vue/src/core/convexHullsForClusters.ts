@@ -11,12 +11,13 @@ export function getRightResultFormForRectangle(
     clusterRectangles.shift();
   }
   for (let i = 0; i < clusterRectangles.length; i++) {
-    const greyVal =
-      i >= firstNoneNoiseCluster
-        ? ((i - firstNoneNoiseCluster) /
-            (clusterRectangles.length - 1 - firstNoneNoiseCluster)) *
-            (215 - 80) +
-          80
+  const greyVal =
+      hullNum >= firstNoneNoiseCluster
+      ? 150
+        // ? ((hullNum - firstNoneNoiseCluster) /
+        //     (totalNumHulls - 1 - firstNoneNoiseCluster)) *
+        //     (215 - 80) +
+        //   80
         : 255;
     greyValues.push(greyVal);
 
