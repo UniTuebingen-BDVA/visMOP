@@ -157,12 +157,13 @@ export function generateGraphData(
   if (!withNoiseCluster) {
     moduleAreas.shift();
   }
-  let norm_node_pos = [] as node[];
   const nodes_per_cluster = pfsPrime_modules(
     graph.nodes,
     maxModuleNum,
     moduleAreas
   );
+  let norm_node_pos = nodes_per_cluster[nodes_per_cluster.length -1] as node[]; // already add superpathways as they are not part of the convex hull
+  nodes_per_cluster.pop();
   const max_ext = 20;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
