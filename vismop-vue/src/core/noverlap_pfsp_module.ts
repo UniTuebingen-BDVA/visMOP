@@ -30,28 +30,30 @@ export function pfsPrime_modules(
 ): node[][] {
   // TODO: add padding
   const updatedNodes = [] as node[][];
-  if (moduleAreas[0].length == 0) {
-    moduleAreas.shift();
-  }
+  let rootNodes = [] as node[];
   for (let curModuleNum = -1; curModuleNum <= maxModuleNum; curModuleNum++) {
     const moduleNodes = [];
     for (let index = 0; index < allNodes.length; index++) {
       const currentNode = allNodes[index];
-      if (currentNode.attributes.modNum === curModuleNum) {
+      if (currentNode.attributes.modNum === curModuleNum && !currentNode.attributes.isRoot) {
         moduleNodes.push(currentNode);
-        // allNodes.splice(index, 1)
       }
+      else if (currentNode.attributes.modNum === curModuleNum && currentNode.attributes.isRoot){
+        rootNodes.push(currentNode)
+      }
+
     }
-    const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
+    // const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
     // const pfsPrime_moduleNodes = vpsc(moduleNodes);
-    // const pfsPrime_moduleNodes = moduleNodes;
+    const pfsPrime_moduleNodes = moduleNodes;
     if (curModuleNum > -1) {
       normInArea(pfsPrime_moduleNodes, moduleAreas[curModuleNum]);
     }
 
     updatedNodes.push(pfsPrime_moduleNodes);
+    
   }
-  // updatedNodes.shift();
+  updatedNodes.push(rootNodes);
 
   return updatedNodes;
 }
