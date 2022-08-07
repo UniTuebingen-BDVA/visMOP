@@ -1020,21 +1020,21 @@ def reactome_overview():
         root_subpathways,
         pathways_root_names,
     )
-    if module_node_pos == -1:
-        return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
-    # a_file = open("modul_layout.pkl", "wb")
+    
+    # a_file = open("modul_layout_bad.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
     # a_file.close()
-    # a_file = open("module_areas.pkl", "wb")
+    # a_file = open("module_areas_bad.pkl", "wb")
     # pickle.dump(module_areas, a_file)
     # a_file.close()
 
-    # with open('modul_layout.pkl', "rb") as f:
+    # with open('modul_layout_03.pkl', "rb") as f:
     #     module_node_pos = pickle.load(f)
 
-    # with open('module_areas.pkl', "rb") as f:
+    # with open('module_areas_03.pkl', "rb") as f:
     #     module_areas = pickle.load(f)
-
+    if module_node_pos == -1:
+        return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
     print("number of Clusters", len(module_areas))
     for pathway in out_data:
         x_y_pos = module_node_pos[pathway["pathwayId"]]

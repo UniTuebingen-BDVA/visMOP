@@ -173,7 +173,6 @@ export function generateGraphData(
 
   const totalNumHulls = moduleAreas.length;
   let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
-
   _.forEach(nodes_per_cluster, (nodes) => {
     const clusterHullPoints = hull(
       nodes.map((o) => [o.attributes.x, o.attributes.y]),

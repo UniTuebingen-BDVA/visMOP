@@ -1,4 +1,5 @@
 from functools import partial
+import pickle
 import random
 from statistics import mean
 import pandas as pd
@@ -31,7 +32,7 @@ def most_frequent(List):
     return maximum
 
 
-def get_area_size(area, get_side_ratio_ok=False, l_max=1, min_ratio=0.07):
+def get_area_size(area, get_side_ratio_ok=False, l_max=1):
     """determine the area given array of min and max x and y positions
 
     Args:
@@ -46,9 +47,17 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1, min_ratio=0.07):
     if not get_side_ratio_ok:
         return area_size
     min_side = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
-    ratio_ok = min_side >= min_ratio
-    # max(x_side, y_side)/min_side <= 4 and
-    return area_size, min_side  # ratio_ok
+    return area_size, min_side 
+
+def get_min_max_side(area, l_max):
+
+    x_side = area[1] - area[0]
+    y_side = area[3] - area[2]
+    
+    min_side = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
+    max_side = normalize_val_in_range(max(x_side, y_side), 0, l_max, [0, 1])
+    
+    return min_side, max_side
 
 
 def get_sorted_list_by_list_B_sorting_order(list_to_sort, sorting_list, reverse=False):
@@ -202,7 +211,6 @@ class Module_layout:
         self.noise_cluster_exists = False
 
         print("Calculating module layout...")
-        print(self.data_table)
         try:
             self.data_table_scaled_filled = StandardScaler().fit_transform(
                 self.fill_missing_values_with_neighbor_mean(
@@ -214,11 +222,14 @@ class Module_layout:
         print("Scaled input data")
         self.initial_node_pos, _ = self.get_initial_node_pos(drm)
         print("initial node positions calculated")
+        self.l_max = 0
+
         (
             self.modules,
             self.num_cluster,
             self.positions_dict_clustering,
         ) = self.get_cluster()
+        mod_length = [len(x) for x in self.modules]
         self.module_node_nums = [len(module) for module in self.modules]
         total_num_nodes = sum(self.module_node_nums)
         self.node_num_ratio = [
@@ -226,10 +237,10 @@ class Module_layout:
         ]
 
         # set AN_RATIO and MIN_SIDE_RATIO depending on number of Clusters
-        self.AN_RATIO = 0.4 if self.num_cluster > 10 else 0.2
-        self.MIN_SIDE_T = 0.06 if self.num_cluster > 10 else 0.2
-        self.num_best_dist_loops = 1200 if self.num_cluster > 10 else 1500
-        self.num_cost_min_loops = 1 if self.num_cluster > 10 else 5
+        self.AN_RATIO = 0.32 if self.num_cluster > 10 else 0.2
+        self.MIN_SIDE_T = 0.12 if self.num_cluster > 10 else 0.2
+        self.num_best_dist_loops = 500 if self.num_cluster > 10 else 1500
+        self.num_cost_min_loops = 0 if self.num_cluster > 10 else 5
 
         # for each module idenify all positions where rel. distances to it are given
         self.p_f_m = defaultdict(list)
@@ -251,6 +262,7 @@ class Module_layout:
         )
         print("Clusters identified")
         self.area_num_node_ratio_Pool()
+        print(mod_length)
         print("Relative distances between modules and module weights calculated")
 
         self.final_node_pos = self.getNodePositions(pathways_root_names)
@@ -266,6 +278,7 @@ class Module_layout:
         self.modules_area, initial_area_side_ratio = self.getSizeOfModulesRegion(
             self.modules_center
         )
+        
         nn_a_comp = [
             a_r >= (nn_r - self.AN_RATIO * nn_r) and min_side >= self.MIN_SIDE_T
             for nn_r, [a_r, min_side] in zip(
@@ -273,33 +286,20 @@ class Module_layout:
             )
         ]
         found_ideal = True if sum(nn_a_comp) == len(nn_a_comp) else False
-        min_nn_ratio = [nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio]
-        init_diff_area_to_success = sum(
-            [
-                min_nn_ratio - a_r
-                for min_nn_ratio, (a_r, _) in zip(min_nn_ratio, initial_area_side_ratio)
-                if min_nn_ratio > a_r
+        self.min_nn_ratios = [
+                nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio
             ]
-        )
-        init_diff_min_side_to_success = sum(
-            [
-                self.MIN_SIDE_T - min_side
-                for _, min_side in initial_area_side_ratio
-                if self.MIN_SIDE_T > min_side
-            ]
-        )
+        init_area_comp, num_area_w_greater_diff, init_diff_min_side_to_success, num_side_smaller = self.calc_com_values(self.min_nn_ratios, initial_area_side_ratio, 0)
         initial_cost = self.evaluteCostFunction(self.modules_center)
         if not found_ideal:
             pool = Pool(self.pool_size)
-            self.MAX_RUNS_PER_THREAD = 20
-            self.min_nn_ratios = [
-                nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio
-            ]
+            self.MAX_RUNS_PER_PROCESS = 15
             multiple_results = []
-            found_ideal = False
             simplified_func = partial(
                 self.area_num_node_ratio_optFunc,
-                diff_area_to_success=init_diff_area_to_success,
+                area_comp=init_area_comp,
+                num_area_w_greater_diff = num_area_w_greater_diff,
+                num_side_smaller = num_side_smaller,
                 diff_min_side_to_success=init_diff_min_side_to_success,
                 modules_area=self.modules_area,
                 initial_cost=initial_cost,
@@ -312,14 +312,19 @@ class Module_layout:
                         print("POOL OPTI DONE ", result[3])
                         found_ideal = True
                         self.modules_area = result[3]
+                        smallest_area_diff = result[1]
+                        smalles_min_side_diff = result[2]
+                        C_cost_best = result[4]
                         break
                     else:
                         multiple_results.append(result)
             pool.terminate()  # kill all remaining tasks
             # Wait for all processes to end:
             pool.join()
-            # success, diff_area_to_success, diff_min_side_to_success, modules_area
-
+            # success, area_comp, diff_min_side_to_success, modules_area
+        # with open('module_areas_03.pkl', "rb") as f:
+        #     self.modules_area = pickle.load(f)
+         
         if not found_ideal:
             smallest_area_diff = np.Infinity
             smalles_min_side_diff = np.Infinity
@@ -337,16 +342,32 @@ class Module_layout:
                     self.modules_area = result[3]
                     C_cost_best = result[4]
             print("suboptimal solution found: ")
-            print("smallest_area_diff:", smallest_area_diff)
-            print("smalles_min_side_diff: ", smalles_min_side_diff)
-            print("C_cost_best: ", C_cost_best)
+            print('area_side_ratio', self.modules_area)
+            print('min_side/max side', [get_min_max_side(area, self.l_max) for area in self.modules_area])
+            print('node_num_ratio', self.node_num_ratio)
+
+
+        # print("smallest_area_diff:", smallest_area_diff)
+        # print("smalles_min_side_diff: ", smalles_min_side_diff)
+        # print(self.l_max)
+        # print('area/ side ratio / min_side', [get_area_size(ma, True, self.l_max) for ma in self.modules_area])
+        # print("C_cost_best: ", C_cost_best)
 
         print("Module sizes identified")
+        print("smallest_area_diff:", init_area_comp)
+        print("smalles_min_side_diff: ", init_diff_min_side_to_success)
+        print('innitial_rel_dist', self.relative_distances)
+        print("initial_cost: ", initial_cost)
+        print('self.node_num_ratio', self.node_num_ratio)
+        print('initial_area_side_ratio', initial_area_side_ratio)
+        print('min_side', [get_area_size(ma, True, self.l_max)[1] for ma in self.modules_area])
 
     def area_num_node_ratio_optFunc(
         self,
         initial_modules_center,
-        diff_area_to_success,
+        area_comp,
+        num_area_w_greater_diff,
+        num_side_smaller,
         diff_min_side_to_success,
         modules_area,
         initial_cost,
@@ -359,7 +380,8 @@ class Module_layout:
         runtime_threshold_MS = 0
         prev_best_cost_C = initial_cost
         min_nn_ratios = self.min_nn_ratios
-        while not success and total_num_runs <= self.MAX_RUNS_PER_THREAD:
+        found_better = 0
+        while not success and total_num_runs <= self.MAX_RUNS_PER_PROCESS:
             best_cost_C, module_center = self.getModulePos(
                 modules_center, prev_best_cost_C
             )
@@ -378,48 +400,33 @@ class Module_layout:
                 success = True if sum(nn_a_comp) == len(nn_a_comp) else False
                 if success:
                     modules_area = new_modules_area
-                    diff_area_to_success = 0
+                    area_comp = 0
                     diff_min_side_to_success = 0
-                elif runs > self.MAX_RUNS_PER_THREAD / 3:
+                elif runs == self.MAX_RUNS_PER_PROCESS / 2:
                     runs = 0
                     # start at random new position
                     module_center = np.random.uniform(0, 1, (self.num_cluster, 2))
                     prev_best_cost_C = None
                 else:
-                    new_diff_area_to_success = sum(
-                        [
-                            min_nn_ratio - a_r
-                            for min_nn_ratio, (a_r, _) in zip(
-                                min_nn_ratios, new_area_side_ratio
-                            )
-                            if min_nn_ratio > a_r
-                        ]
-                    )
-                    # print([(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side])
-                    new_diff_min_side_to_success = sum(
-                        [
-                            (self.MIN_SIDE_T - runtime_threshold_MS) - min_side
-                            for _, min_side in new_area_side_ratio
-                            if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side
-                        ]
-                    )
-                    if (new_diff_area_to_success < diff_area_to_success) or (
-                        (
-                            new_diff_area_to_success == diff_area_to_success
-                            or new_diff_area_to_success <= 0.01
-                            or (
-                                abs(new_diff_area_to_success - diff_area_to_success)
-                                < 0.001
-                            )
-                        )
-                        and new_diff_min_side_to_success < diff_min_side_to_success
-                    ):  #  and best_cost_C < prev_best_cost_C):
-                        diff_area_to_success = new_diff_area_to_success
-                        diff_min_side_to_success = new_diff_min_side_to_success
-                        modules_area = new_modules_area
-                        prev_best_cost_C = best_cost_C
+                    new_area_comp, new_num_area_w_greater_diff, new_diff_min_side_to_success, new_num_side_smaller = self.calc_com_values(min_nn_ratios, new_area_side_ratio, runtime_threshold_MS)
+                    area_better = new_area_comp <= area_comp and new_num_area_w_greater_diff <= num_area_w_greater_diff
+                    area_sim = (new_diff_min_side_to_success <= diff_min_side_to_success or new_area_comp <= 0.01) and (new_num_area_w_greater_diff <= num_area_w_greater_diff)
+                    min_side_better = area_sim and new_num_side_smaller <= num_side_smaller
+                    max_side_not_whole_side = sum([not(max_s < 0.99 or max_s > 0.99 and min_s > 0.25) for min_s, max_s in [get_min_max_side(area, self.l_max) for area in new_modules_area]]) == 0
+                    if (area_better or ((abs(new_area_comp - area_comp) <= 0.01) and min_side_better)) and max_side_not_whole_side: #  and best_cost_C < prev_best_cost_C):
+                       found_better += 1
+                       area_comp = new_area_comp
+                       diff_min_side_to_success = new_diff_min_side_to_success 
+                       modules_area = new_modules_area
+                       num_area_w_greater_diff = new_num_area_w_greater_diff
+                       num_side_smaller = new_num_side_smaller
+                       prev_best_cost_C = best_cost_C
+                    # else:
+                    #     if max_side_not_whole_side and not area_better and (abs(new_area_comp - area_comp) <= 0.01) and new_num_side_smaller <= num_side_smaller:
+                    #         print(area_sim)
+
                     runs += 1
-                if total_num_runs == self.MAX_RUNS_PER_THREAD / 2:
+                if total_num_runs == self.MAX_RUNS_PER_PROCESS / 2:
                     min_nn_ratios = [
                         nn_r - (self.AN_RATIO + 0.05) * nn_r
                         for nn_r in self.node_num_ratio
@@ -455,14 +462,25 @@ class Module_layout:
                 pass
 
         print("C_cost =", self.evaluteCostFunction(module_center))
+        print("better Solutions found", found_better)
+
+        
         return (
             success,
-            diff_area_to_success,
+            area_comp,
             diff_min_side_to_success,
             modules_area,
             self.evaluteCostFunction(module_center),
         )
 
+    def calc_com_values(self, min_nn_ratios, new_area_side_ratio, runtime_threshold_MS):
+        area_diff_to_success = [min_nn_ratio - a_r for min_nn_ratio, (a_r,_) in zip(min_nn_ratios, new_area_side_ratio) if min_nn_ratio > a_r]
+        new_area_comp = sum(area_diff_to_success)
+        new_num_area_w_greater_diff = sum([diff >= 0.08  for diff in area_diff_to_success])
+        min_side_diff_to_success = [(self.MIN_SIDE_T - runtime_threshold_MS) - min_side for _, min_side in new_area_side_ratio if (self.MIN_SIDE_T - runtime_threshold_MS) > min_side]
+        new_diff_min_side_to_success = sum(min_side_diff_to_success)
+        new_num_side_smaller = sum([diff >= 0.02  for diff in min_side_diff_to_success])
+        return new_area_comp, new_num_area_w_greater_diff, new_diff_min_side_to_success, new_num_side_smaller
     # defold values per omic and pos
     def fill_missing_values_with_neighbor_mean(
         self, graph_dict, defaul_means, root_ids
@@ -567,50 +585,40 @@ class Module_layout:
             positions_dict = {
                 node_name: row
                 for row, node_name in zip(position_list, list(self.data_table.index))
-            }
-        pool = Pool(self.pool_size)
-        simplified_func = partial(self.get_cluster_for_min_sample, data=position_list)
-        clustering_labels = None
-        ss = -1
-        for result in pool.imap_unordered(
-            simplified_func, range(4, 4 + self.pool_size)
-        ):
-            if result:
-                if result[0] > ss:
-                    ss = result[0]
-                    clustering_labels = result[1]
-        pool.close()
-        pool.join()
-
+           }
+        # pool = Pool(self.pool_size)
+        # simplified_func = partial(self.get_cluster_for_min_sample, data=position_list)
+        # clustering_labels = None
+        # ss = -1
+        # for result in pool.imap_unordered(
+        #     simplified_func, range(4, 4 + self.pool_size)
+        # ):
+        #     if result:
+        #         #print('ss', result[0])
+        #         if result[0] > ss:
+        #             ss = result[0]
+        #             clustering_labels = result[1]
+        # pool.close()
+        # pool.join()
+        # a_file = open("clustering_labels_03.pkl", "wb")
+        # pickle.dump([clustering_labels, positions_dict] , a_file)
+        # a_file.close()
+        # a_file = open("pos_dic_bad_cc_4.pkl", "wb")
+        # pickle.dump(positions_dict , a_file)
+        # with open('pos_dic_bad_cc_4.pkl', "rb") as f:
+        #     positions_dict = pickle.load(f)
+        with open('clustering_labels_02.pkl', "rb") as f:
+            clustering_labels, _ = pickle.load(f)
         self.noise_cluster_exists = -1 in clustering_labels
-        print("best silhouette_score: ", ss)
+        # print("best silhouette_score: ", ss)
         ordered_nodes = get_sorted_list_by_list_B_sorting_order(
             self.data_table.index, clustering_labels
         )
         nums_in_cl = list(dict(sorted(Counter(clustering_labels).items())).values())
         split_array = [sum(nums_in_cl[: i + 1]) for i, _ in enumerate(nums_in_cl)]
         cl_list = np.split(ordered_nodes, split_array)[:-1]
-
+        
         return cl_list, max(clustering_labels) + 2, positions_dict
-
-    def add_reactome_roots_to_modules(self, reactome_roots):
-        """Add reactome roots to the cluster with the highst number of sub nodes from the root"""
-        mod_dic = {
-            pathway: mod_num
-            for mod_num, module in enumerate(self.modules)
-            for pathway in module
-        }
-
-        for root, subpathways in reactome_roots.items():
-
-            maj_mod_num = most_frequent(
-                [
-                    mod_dic[pathway]
-                    for pathway in subpathways
-                    if pathway in mod_dic.keys()
-                ]
-            )
-            self.modules[maj_mod_num] = np.append(self.modules[maj_mod_num], root)
 
     def get_initial_node_pos(self, drm):
         """Get node positions using dimensionality reduction drm
@@ -754,7 +762,7 @@ class Module_layout:
     def find_layout_with_best_possible_rel_dists(self, modules_center):
         distance_similarities = [0] * len(self.relative_distances)
         cur_mod_center = modules_center
-        run = 10
+        run = 0
         found_better_possible_center = False
         found_perfect_center = False
         while run <= self.num_best_dist_loops and not found_perfect_center:
@@ -819,6 +827,7 @@ class Module_layout:
         """
 
         l_max = 2 * math.sqrt(max(self.module_node_nums))
+        self.l_max = l_max
 
         new_centers = [
             [mod_center[0] * l_max, mod_center[1] * l_max]
@@ -853,7 +862,7 @@ class Module_layout:
             area_list[mod_num] = area
 
         final_area_size = [
-            get_area_size(area, True, l_max, self.MIN_SIDE_T) for area in area_list
+            get_area_size(area, True, l_max) for area in area_list
         ]
         total_area = sum([size for size, _ in final_area_size])
 
@@ -1002,6 +1011,8 @@ class Module_layout:
         """
         node_positions = {}
         total_num_nodes = len(list(self.data_table.index))
+        # with open('module_areas_03.pkl', "rb") as f:
+        #     self.modules_area = pickle.load(f)
         for mod_num, (module, module_area) in enumerate(
             zip(self.modules, self.modules_area)
         ):
@@ -1099,24 +1110,24 @@ class Module_layout:
         # print("Area Num Nodes Ratio: ", area_nodes_ratio)
         # print('Areas: ', self.modules_area)
 
-    def get_stat_plots(self):
-        df_imputed = pd.DataFrame(
-            self.data_table_scaled_filled,
-            columns=self.data_table.columns,
-            index=self.data_table.index,
-        )
-        num_fig_cols = math.ceil(len(self.modules) / 2)
-        # print(num_fig_cols)
-        for col in df_imputed.columns:
-            new_file_name = str(col) + "_stats.png"
-            fig, ax = plt.subplots(nrows=2, ncols=num_fig_cols)
-            fig.suptitle(col)
-            for i, cluster_nodes in enumerate(self.modules):
-                ax[i % 2, i // 2].hist(df_imputed.loc[cluster_nodes, col].values)
-                ax[i % 2, i // 2].set_title("Cluster " + str(i))
-                ax[i % 2, i // 2].set_ylabel("frequency")
-            plt.savefig(new_file_name)
-            plt.clf()
+    # def get_stat_plots(self):
+    #     df_imputed = pd.DataFrame(
+    #         self.data_table_scaled_filled,
+    #         columns=self.data_table.columns,
+    #         index=self.data_table.index,
+    #     )
+    #     num_fig_cols = math.ceil(len(self.modules) / 2)
+    #     # print(num_fig_cols)
+    #     for col in df_imputed.columns:
+    #         new_file_name = str(col) + "_stats.png"
+    #         fig, ax = plt.subplots(nrows=2, ncols=num_fig_cols)
+    #         fig.suptitle(col)
+    #         for i, cluster_nodes in enumerate(self.modules):
+    #             ax[i % 2, i // 2].hist(df_imputed.loc[cluster_nodes, col].values)
+    #             ax[i % 2, i // 2].set_title("Cluster " + str(i))
+    #             ax[i % 2, i // 2].set_ylabel("frequency")
+    #         plt.savefig(new_file_name)
+    #         plt.clf()
 
 
 """ OLD """
@@ -1262,3 +1273,23 @@ def get_pca_layout_pos(self, n_components=2):
     }
 
     return pos_norm_dic_pca, new_pos_norm
+
+
+
+def add_reactome_roots_to_modules(self, reactome_roots):
+    """Add reactome roots to the cluster with the highst number of sub nodes from the root"""
+    mod_dic = {
+        pathway: mod_num
+        for mod_num, module in enumerate(self.modules)
+        for pathway in module
+    }
+
+    for root, subpathways in reactome_roots.items():
+        maj_mod_num = most_frequent(
+            [
+                mod_dic[pathway]
+                for pathway in subpathways
+                if pathway in mod_dic.keys()
+            ]
+        )
+        self.modules[maj_mod_num] = np.append(self.modules[maj_mod_num], root)

@@ -415,7 +415,7 @@ const drawNetwork = () => {
   mainStore.setGlyphs(generatedGlyphs);
   console.log('GLYPHs', mainStore.glyphs);
   const moduleAreas = mainStore.moduleAreas;
-
+  console.log('overviewData.value', overviewData.value)
   const networkData = generateGraphData(
     overviewData.value,
     generatedGlyphs.url,
