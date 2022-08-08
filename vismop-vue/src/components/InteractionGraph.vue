@@ -64,8 +64,8 @@ watch(interactionGraphData, () => {
 });
 // methods
 const queryEgoGraphs = () => {
-  const $q = useQuasar();
-  $q.loading.show();
+  //const $q = useQuasar();
+  //$q.loading.show();
   let ids: string[] = [];
   if (targetDatabase.value === 'kegg') {
     ids = clickedNodes.value.map((elem) => {
@@ -85,7 +85,7 @@ const queryEgoGraphs = () => {
     .then((response) => response.json())
     .then((content) => {
       mainStore.setInteractionGraphData(content.interaction_graph);
-      $q.loading.hide();
+      //$q.loading.hide();
     });
   mainStore.queryEgoGraps(stringSlider.value);
 };

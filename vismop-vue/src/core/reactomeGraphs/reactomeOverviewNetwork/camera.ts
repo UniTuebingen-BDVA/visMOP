@@ -43,35 +43,49 @@ export function zoomLod(this: overviewGraph): void {
     if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      tarPositions[node] = {
-        x: attributes.layoutX,
-        y: attributes.layoutY,
-        size: attributes.isRoot
-          ? overviewGraph.ROOT_DEFAULT_SIZE
-          : overviewGraph.DEFAULT_SIZE,
-        nonHoverSize: attributes.isRoot
-          ? overviewGraph.ROOT_DEFAULT_SIZE
-          : overviewGraph.DEFAULT_SIZE,
-      };
+      if (
+        attributes.nodeType !== 'moduleNode' &&
+        !attributes.isRoot &&
+        !attributes.moduleFixed
+      ) {
+        tarPositions[node] = {
+          x: attributes.moduleFixed ? attributes.x : attributes.layoutX,
+          y: attributes.moduleFixed ? attributes.y : attributes.layoutY,
+          size: attributes.isRoot
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
+          nonHoverSize: attributes.isRoot
+            ? overviewGraph.ROOT_DEFAULT_SIZE
+            : overviewGraph.DEFAULT_SIZE,
+        };
+      }
     });
     this.cancelCurrentAnimation = animateNodes(this.graph, tarPositions, {
       duration: 2000,
       //easing: 'quadraticOut',
     });
     this.graph.forEachNode((node, attributes) => {
-      attributes.hidden = false;
+      attributes.zoomHidden =
+        attributes.nodeType !== 'moduleNode' ? false : !attributes.moduleFixed;
     });
   }
   if (this.prevFrameZoom < this.lodRatio && this.camera.ratio > this.lodRatio) {
     if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      tarPositions[node] = {
-        x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
-        y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
-        size: attributes.isRoot ? 30 : 0,
-        nonHoverSize: attributes.isRoot ? 30 : 0,
-      };
+      if (
+        attributes.nodeType !== 'moduleNode' &&
+        !attributes.isRoot &&
+        !attributes.filterHidden &&
+        !attributes.moduleFixed
+      ) {
+        tarPositions[node] = {
+          x: this.graph.getNodeAttribute(attributes.modNum, 'layoutX'),
+          y: this.graph.getNodeAttribute(attributes.modNum, 'layoutY'),
+          size: attributes.isRoot ? 30 : 0,
+          nonHoverSize: attributes.isRoot ? 30 : 0,
+        };
+      }
     });
     this.cancelCurrentAnimation = animateNodes(
       this.graph,
@@ -82,7 +96,10 @@ export function zoomLod(this: overviewGraph): void {
       },
       () => {
         this.graph.forEachNode((node, attributes) => {
-          if (!attributes.isRoot) attributes.hidden = true;
+          if (!attributes.isRoot && !attributes.moduleFixed)
+            attributes.zoomHidden = true;
+          if (attributes.nodeType == 'moduleNode')
+            attributes.zoomHidden = false;
         });
       }
     );

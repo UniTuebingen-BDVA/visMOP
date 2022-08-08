@@ -46,15 +46,18 @@ export function generateInteractionGraphData(
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
+    cluster_rects: [[]],
     options: [],
   } as graphData;
+  let index = 0;
   nodeLink.nodes.forEach((node) => {
     graph.nodes.push({
       key: node.key,
+      index: index,
       attributes: {
         label: node.labelName ? node.labelName : node.key,
-        x: 0,
-        y: 0,
+        x: Math.random(),
+        y: Math.random(),
         type: 'egoNode' in node ? 'circle' : 'image',
         image: node.labelName
           ? svgURLs.saturated[node.identity]
@@ -68,6 +71,7 @@ export function generateInteractionGraphData(
         size: node.size ? node.size : 5,
       },
     });
+    index += 1;
   });
   nodeLink.links.forEach((edge) => {
     graph.edges.push({
@@ -110,7 +114,7 @@ export function generateInteractionGraph(
   const graphData = generateInteractionGraphData(nodeLink);
   const elem = document.getElementById(elemID) as HTMLElement;
   const graph = MultiGraph.from(graphData);
-  random.assign(graph);
+  // random.assign(graph)
   console.log('NODES', graph.nodes());
   console.log('TARDIV PPI', elem, elemID);
   const inferredSettings = forceAtlas2.inferSettings(graph);
@@ -156,7 +160,6 @@ function generatePieCharts(identities: number[]): {
       type: 'image/svg+xml;charset=utf-8',
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
-    console.log('pieAccessor: ', elem, elem.join(';'));
     pieCharts.saturated[elem.join(';')] = svgURL;
   });
   combinations.forEach((elem) => {
@@ -172,7 +175,6 @@ function generatePieCharts(identities: number[]): {
       type: 'image/svg+xml;charset=utf-8',
     });
     const svgURL = window.URL.createObjectURL(svgBlob);
-    console.log('pieAccessor: ', elem, elem.join(';'));
     pieCharts.faded[elem.join(';')] = svgURL;
   });
   return pieCharts;

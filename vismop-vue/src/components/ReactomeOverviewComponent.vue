@@ -24,9 +24,11 @@
           ></q-fab-action>
           <q-fab-action color="white">
             <graph-filter
+              v-model:rootFilter="rootFilter"
               v-model:transcriptomics="transcriptomicsFilter"
               v-model:proteomics="proteomicsFilter"
               v-model:metabolomics="metabolomicsFilter"
+              v-model:sumRegulated="sumRegulated"
             ></graph-filter>
           </q-fab-action>
         </q-fab>
@@ -45,15 +47,7 @@ import GraphFilter from './GraphFilter.vue';
 import { generateGraphData } from '../core/reactomeGraphs/reactomeOverviewGraphPreparation';
 import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../core/overviewGlyphs/generator';
-import {
-  computed,
-  onMounted,
-  PropType,
-  Ref,
-  ref,
-  watch,
-  defineProps,
-} from 'vue';
+import { computed, PropType, Ref, ref, watch, defineProps } from 'vue';
 import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphData } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
@@ -95,6 +89,28 @@ const glyphDataVar: Ref<{
   [key: string]: glyphData;
 }> = ref({});
 
+const sumRegulated = ref({
+  absolute: {
+    limits: { min: 0, max: 100 },
+    value: { min: 0, max: 100 },
+    filterActive: false,
+    inside: true,
+    disable: false,
+  },
+  relative: {
+    limits: { min: 0, max: 100 },
+    value: { min: 0, max: 100 },
+    filterActive: false,
+    inside: true,
+    disable: false,
+  },
+});
+
+const rootFilter = ref({
+  filterActive: false,
+  rootID: '',
+});
+
 const transcriptomicsFilter = ref({
   limits: { min: 0, max: 5 },
   value: { min: 1, max: 2 },
@@ -121,6 +137,7 @@ const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
+const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
 
 const combinedIntersection = computed((): string[] => {
   const combinedElements = [];
@@ -212,9 +229,23 @@ watch(
     const foundPathways: string[][] = [];
     props.metabolomicsSelection?.forEach(
       (element: { [key: string]: string }) => {
+        let pathwaysContaining: string[] = [];
         const symbol = element[usedSymbolCols.value.metabolomics];
-        const pathwaysContaining =
-          pathwayLayouting.value.nodePathwayDictionary[symbol]; //[0] ???? bugcheck
+
+        let chebiIDs = keggChebiTranslate.value[symbol];
+        console.log('CHEBI SELECT', chebiIDs);
+        if (chebiIDs) {
+          chebiIDs.forEach((element) => {
+            try {
+              pathwaysContaining.push(
+                ...pathwayLayouting.value.nodePathwayDictionary[element]
+              );
+            } catch {}
+          });
+        } else {
+          pathwaysContaining =
+            pathwayLayouting.value.nodePathwayDictionary[symbol]; //[0] ???? bugcheck
+        }
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );
@@ -243,17 +274,17 @@ watch(overviewData, () => {
     outstandingDraw.value = true;
   }
 });
-watch(
-  () => props.isActive,
-  () => {
-    if (outstandingDraw.value) {
-      setTimeout(() => {
-        drawNetwork();
-      }, 1000);
-      outstandingDraw.value = false;
-    }
-  }
-);
+// watch(
+//   () => props.isActive,
+//   () => {
+//     if (outstandingDraw.value) {
+//       setTimeout(() => {
+//         drawNetwork();
+//       }, 1000);
+//       outstandingDraw.value = false;
+//     }
+//   }
+// );
 
 watch(glyphDataVar, () => {
   let transcriptomicsAvailable = false;
@@ -271,11 +302,17 @@ watch(glyphDataVar, () => {
     min: Number.POSITIVE_INFINITY,
     max: Number.NEGATIVE_INFINITY,
   };
+  let regulatedLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
 
   for (const pathwayKey in glyphDataVar.value) {
     const currPathway = glyphDataVar.value[pathwayKey];
+    let sumRegulatedNodes = 0;
     if (currPathway.transcriptomics.available) {
       transcriptomicsAvailable = true;
+      sumRegulatedNodes += currPathway.transcriptomics.nodeState.regulated;
       if (
         currPathway.transcriptomics.meanFoldchange < transcriptomicsLimits.min
       )
@@ -287,30 +324,39 @@ watch(glyphDataVar, () => {
     }
     if (currPathway.proteomics.available) {
       proteomicsAvailable = true;
+      sumRegulatedNodes += currPathway.proteomics.nodeState.regulated;
       if (currPathway.proteomics.meanFoldchange < proteomicsLimits.min)
-        proteomicsLimits.min = currPathway.transcriptomics.meanFoldchange;
+        proteomicsLimits.min = currPathway.proteomics.meanFoldchange;
       if (currPathway.proteomics.meanFoldchange > proteomicsLimits.max)
         proteomicsLimits.max = currPathway.proteomics.meanFoldchange;
     }
     if (currPathway.metabolomics.available) {
       metabolomicsAvailable = true;
+      sumRegulatedNodes += currPathway.metabolomics.nodeState.regulated;
       if (currPathway.metabolomics.meanFoldchange < metabolomicsLimits.min)
         metabolomicsLimits.min = currPathway.metabolomics.meanFoldchange;
       if (currPathway.metabolomics.meanFoldchange > metabolomicsLimits.max)
         metabolomicsLimits.max = currPathway.metabolomics.meanFoldchange;
     }
+    if (sumRegulatedNodes < regulatedLimits.min)
+      regulatedLimits.min = sumRegulatedNodes;
+    if (sumRegulatedNodes > regulatedLimits.max)
+      regulatedLimits.max = sumRegulatedNodes;
   }
+
+  sumRegulated.value.absolute.limits.min = regulatedLimits.min;
+  sumRegulated.value.absolute.limits.max = regulatedLimits.max;
   transcriptomicsFilter.value.disable = !transcriptomicsAvailable;
   proteomicsFilter.value.disable = !proteomicsAvailable;
   metabolomicsFilter.value.disable = !metabolomicsAvailable;
 
-  transcriptomicsFilter.value.limits.max = transcriptomicsLimits.max;
+  transcriptomicsFilter.value.limits.min = transcriptomicsLimits.min;
   transcriptomicsFilter.value.limits.max = transcriptomicsLimits.max;
 
-  proteomicsFilter.value.limits.max = proteomicsLimits.max;
+  proteomicsFilter.value.limits.min = proteomicsLimits.min;
   proteomicsFilter.value.limits.max = proteomicsLimits.max;
 
-  metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
+  metabolomicsFilter.value.limits.min = metabolomicsLimits.min;
   metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
 });
 
@@ -319,23 +365,27 @@ watch(
     transcriptomicsFilter.value,
     proteomicsFilter.value,
     metabolomicsFilter.value,
+    sumRegulated.value,
   ],
   () => {
     console.log('change Filter');
     networkGraph?.value?.setAverageFilter(
       transcriptomicsFilter.value,
       proteomicsFilter.value,
-      metabolomicsFilter.value
+      metabolomicsFilter.value,
+      sumRegulated.value
     );
   }
 );
-
-onMounted(() => {
-  console.log('OVDATA', overviewData);
-  if (overviewData.value) {
-    drawNetwork();
-  }
+watch(rootFilter.value, () => {
+  networkGraph?.value?.setRootFilter(rootFilter.value);
 });
+// onMounted(() => {
+//   console.log('OVDATA', overviewData);
+//   if (overviewData.value) {
+//     drawNetwork();
+//   }
+// });
 const expandComponent = () => {
   expandOverview.value = true;
 };
@@ -364,16 +414,16 @@ const drawNetwork = () => {
   );
   mainStore.setGlyphs(generatedGlyphs);
   console.log('GLYPHs', mainStore.glyphs);
-  console.log('GLYPHs HighRes', generatedGlyphsHighRes);
-  console.log('GLYPHs lowZOOM', generatedGlyphsLowZoom);
-
+  const moduleAreas = mainStore.moduleAreas;
+  console.log('overviewData.value', overviewData.value)
   const networkData = generateGraphData(
     overviewData.value,
     generatedGlyphs.url,
     generatedGlyphsHighRes.url,
     generatedGlyphsLowZoom.url,
     glyphDataVar.value,
-    pathwayLayouting.value.rootIds
+    pathwayLayouting.value.rootIds,
+    moduleAreas
   );
   console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(

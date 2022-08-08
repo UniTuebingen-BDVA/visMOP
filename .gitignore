@@ -31,3 +31,6 @@ pnpm-debug.log*
 *.sln
 *.sw?
 *.txt.gz
+*.pkl
+*.xlsx
+*.png

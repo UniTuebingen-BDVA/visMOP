@@ -16,7 +16,7 @@ export function nodeReducer(
   if (this.renderer) {
     // handle lod detail
 
-    const hidden = data.hidden;
+    const hidden = data.filterHidden || data.zoomHidden || data.moduleHidden;
     let lodCondition = false;
     let xDisplay: number | undefined = -100;
     let yDisplay: number | undefined = -100;
@@ -46,7 +46,7 @@ export function nodeReducer(
       this.highlightedCenterHover === node ||
       this.highlighedNodesHover.has(node) ||
       this.currentPathway === node.replace('path:', '')
-        ? data.nonHoverSize + 10
+        ? data.nonHoverSize + 4
         : data.nonHoverSize;
 
     // shortest Path
@@ -55,25 +55,28 @@ export function nodeReducer(
         return {
           ...data,
           color: 'rgba(255,0,255,1.0)',
-          zIndex: 1,
-          size: data.size + 5,
+          zindex: 1,
+          size: data.size + 2,
           image: lodImage,
+          hidden: hidden,
         };
       }
       if (this.shortestPathNodes.includes(node)) {
         return {
           ...data,
           color: 'rgba(255,180,255,1.0)',
-          zIndex: 1,
+          zindex: 1,
           size: data.nonHoverSize,
           image: lodImage,
+          hidden: hidden,
         };
       } else {
         return {
           ...data,
           color: 'rgba(255,255,255,1.0)',
-          size: data.nonHoverSize - 5,
+          size: data.nonHoverSize - 2,
           image: lodImage,
+          hidden: hidden,
         };
       }
     }
@@ -81,9 +84,10 @@ export function nodeReducer(
       return {
         ...data,
         color: 'rgba(255,0,255,1.0)',
-        zIndex: 1,
-        size: data.nonHoverSize + 5,
+        zindex: 1,
+        size: data.nonHoverSize + 2,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (
@@ -93,9 +97,10 @@ export function nodeReducer(
       return {
         ...data,
         color: 'rgba(255,0,0,1.0)',
-        zIndex: 1,
+        zindex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (
@@ -104,18 +109,20 @@ export function nodeReducer(
       return {
         ...data,
         color: 'rgba(0,255,0,1.0)',
-        zIndex: 1,
+        zindex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
       return {
         ...data,
         color: 'rgba(0,0,255,1.0)',
-        zIndex: 1,
+        zindex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (this.highlighedNodesHover.has(node)) {
@@ -125,6 +132,7 @@ export function nodeReducer(
         zIndex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     if (this.highlighedNodesClick.has(node)) {
@@ -134,6 +142,7 @@ export function nodeReducer(
         zIndex: 1,
         size: nodeSize,
         image: lodImage,
+        hidden: hidden,
       };
     }
     return {
@@ -173,12 +182,24 @@ export function edgeReducer(
       }
     }
     if (this.highlighedEdgesHover.has(edge)) {
-      return { ...data, color: 'rgba(255,0,0,1.0)', size: 4, zIndex: 1 };
+      return {
+        ...data,
+        color: 'rgba(255,0,0,0.7)',
+        size: 4,
+        zIndex: 1,
+        hidden: false,
+      };
     }
     if (this.highlighedEdgesClick.has(edge)) {
-      return { ...data, color: 'rgba(255,0,0,1.0)', size: 1, zIndex: 1 };
+      return {
+        ...data,
+        color: 'rgba(255,0,0,0.7)',
+        size: 1,
+        zIndex: 1,
+        hidden: false,
+      };
     }
 
-    return data;
+    return { ...data, hidden: true };
   } else return data;
 }

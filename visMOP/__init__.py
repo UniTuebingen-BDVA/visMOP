@@ -1,4 +1,5 @@
 from flask import Flask, render_template, send_from_directory, request, Response
+from visMOP.python_scripts.kegg_to_chebi import kegg_to_chebi
 from visMOP.python_scripts.networkx_layouting import (
     get_spring_layout_pos,
     add_initial_positions,
@@ -23,8 +24,9 @@ from visMOP.python_scripts.data_table_parsing import (
     generate_vue_table_entries,
     generate_vue_table_header,
     create_df,
+    table_request,
 )
-from visMOP.python_scripts.create_overview import get_overview
+from visMOP.python_scripts.create_overview import get_overview, get_overview_reactome
 from visMOP.python_scripts.uniprot_access import (
     make_protein_dict,
     get_uniprot_entry,
@@ -40,9 +42,39 @@ import pathlib
 import os
 import json
 import sys
+import random
+from visMOP.python_scripts.deDal_layouting import (
+    fill_missing_values_with_neighbor_mean,
+    convert_each_feature_into_z_scores,
+    double_centring,
+    NetworkSmoothing,
+    rotate_to_ref,
+    get_pca_layout_pos,
+    morph_layouts,
+    get_umap_layout_pos,
+)
+from visMOP.python_scripts.forceDir_layouting import (
+    get_pos_in_force_dir_layout,
+    get_networkx_with_edge_weights_all_nodes_connected,
+)
+from visMOP.python_scripts.module_layouting import (
+    Module_layout,
+    normalize_2D_node_pos_in_range,
+    normalize_val_in_range,
+)
+import networkx as nx
+import copy
+from numpy.core.fromnumeric import mean
+import time
+import pickle
+
 import numbers
 import secrets
 from flask_caching import Cache
+from multiprocessing import set_start_method
+
+# seems to be needed for linux not sure why i need to force the start method tho
+set_start_method("spawn", force=True)
 
 app = Flask(__name__, static_folder="../dist/assets", template_folder="../dist")
 # DATA PATHS: (1) Local, (2) tuevis
@@ -62,6 +94,96 @@ app.config.from_mapping(
 )
 cache = Cache(app)
 
+
+def getModuleLayout(
+    omics_recieved,
+    up_down_reg_limits,
+    data_col_used,
+    statistic_data_complete,
+    pathway_connection_dict,
+    reactome_roots={},
+    pathways_root_names={},
+):
+    up_down_reg_means = {
+        o: mean(limits) for o, limits in zip(["t", "p", "m"], up_down_reg_limits)
+    }
+
+    omics_names = ["t", "p", "m"]
+    stat_value_names = [
+        "num values",
+        "mean exp (high ",
+        "% vals (higher ",
+        "mean exp(lower ",
+        "% vals (lower ",
+        "% Reg (",
+        "% Unreg (",
+        "% p with val",
+    ]
+    # for diagramms
+    complete_stat_names = []
+    for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
+        if omic_r:
+            for pos, stat in enumerate(stat_value_names):
+                next_col_name = omic + "_" + stat
+                if pos in [1, 2]:  #
+                    next_col_name += str(limits[1]) + ")"
+                elif pos in [3, 4]:  #
+                    next_col_name += str(limits[0]) + ")"
+                elif pos in [5, 6]:  #
+                    next_col_name += str(limits) + ")"
+                complete_stat_names.append(next_col_name)
+    complete_stat_names += ["pathway size"]
+    statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
+    statistic_data_complete.columns = complete_stat_names
+    try:
+        module_layout = Module_layout(
+            statistic_data_user,
+            pathway_connection_dict,
+            up_down_reg_means,
+            reactome_roots,
+            pathways_root_names,
+        )
+    except ValueError:
+        return -1, 1
+    module_node_pos = module_layout.get_final_node_positions()
+    module_areas = module_layout.get_module_areas()
+    return module_node_pos, module_areas
+
+
+def get_layout_settings(settings, omics_recieved):
+    possible_omic_attributes = [
+        "Number of values",
+        "Mean expression above limit",
+        "% values above limit",
+        "Mean expression below limit ",
+        "% values below limit ",
+        "% regulated",
+        "% unregulated",
+        "% with measured value",
+    ]
+    possible_no_omic_attributes = ["% values measured over all omics"]
+    attributes = []
+    limits = []
+    # print(settings.items())
+    omics_recieved.append(True)
+    for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
+        omic_limits = [float(i) for i in layout_settings["limits"]]
+        limits.append(omic_limits)
+        if recieved and omic != "not related to specific omic ":
+            attribute_boolean = [
+                att in layout_settings["attributes"] for att in possible_omic_attributes
+            ]
+            attributes += attribute_boolean
+
+        elif recieved:
+            attribute_boolean = [
+                att in layout_settings["attributes"]
+                for att in possible_no_omic_attributes
+            ]
+            attributes += attribute_boolean
+    return {"attributes": attributes, "limits": limits}
+
+
 """
 Default app routes for index and favicon
 """
@@ -69,7 +191,6 @@ Default app routes for index and favicon
 
 @app.route("/icons/<path:filename>", methods=["GET"])
 def icons(filename):
-    print(filename, app.root_path)
     return send_from_directory(app.config["ICON_FOLDER"], filename)
 
 
@@ -91,25 +212,7 @@ transcriptomics table recieve
 
 @app.route("/Transcriptomics_table", methods=["POST"])
 def transcriptomics_table_recieve():
-    print("table recieve triggered")
-
-    # recieve data-blob
-    transfer_dat = request.files["dataTable"]
-    sheet_no = int(request.form["sheetNumber"])
-    # create and parse data table and prepare json
-    data_table = create_df(transfer_dat, sheet_no)
-    cache.set(
-        "transcriptomics_df_global",
-        data_table.copy(deep=True).to_json(orient="columns"),
-    )
-    entry_IDs = list(data_table.iloc[:, 0])
-    out_data = {}
-    out_data["entry_IDs"] = entry_IDs
-    out_data["header"] = generate_vue_table_header(data_table)
-    out_data["entries"] = generate_vue_table_entries(data_table)
-
-    json_data = json.dumps(out_data)
-
+    json_data = table_request(request, cache, "transcriptomics_df_global")
     return json_data
 
 
@@ -120,22 +223,8 @@ protein recieve
 
 @app.route("/Proteomics_table", methods=["POST"])
 def prot_table_recieve():
-
-    # aquire table data-blob
-    transfer_dat = request.files["dataTable"]
-    sheet_no = int(request.form["sheetNumber"])
-    print("sheet no", sheet_no)
-
-    # parse data table and prepare json
-    prot_data = create_df(transfer_dat, sheet_no)
-    cache.set("prot_table_global", prot_data.copy(deep=True).to_json(orient="columns"))
-    entry_IDs = list(prot_data.iloc[:, 0])
-    out_data = {}
-    out_data["entry_IDs"] = entry_IDs
-    out_data["header"] = generate_vue_table_header(prot_data)
-    out_data["entries"] = generate_vue_table_entries(prot_data)
-
-    return json.dumps(out_data)
+    json_data = table_request(request, cache, "prot_table_global")
+    return json_data
 
 
 """
@@ -145,25 +234,7 @@ metabolomics table recieve
 
 @app.route("/Metabolomics_table", methods=["POST"])
 def metabolomics_table_recieve():
-    print("table recieve triggered")
-
-    # recieve table data-blob
-    transfer_dat = request.files["dataTable"]
-    sheet_no = int(request.form["sheetNumber"])
-
-    # parse and create dataframe and prepare json
-    data_table = create_df(transfer_dat, sheet_no)
-    cache.set(
-        "metabolomics_df_global", data_table.copy(deep=True).to_json(orient="columns")
-    )
-    entry_IDs = list(data_table.iloc[:, 0])
-    out_data = {}
-    out_data["entry_IDs"] = entry_IDs
-    out_data["header"] = generate_vue_table_header(data_table)
-    out_data["entries"] = generate_vue_table_entries(data_table)
-
-    json_data = json.dumps(out_data)
-
+    json_data = table_request(request, cache, "metabolomics_df_global")
     return json_data
 
 
@@ -257,6 +328,7 @@ def kegg_parsing():
     proteomics = request.json["proteomics"]
     metabolomics = request.json["metabolomics"]
     slider_vals = request.json["sliderVals"]
+    layout_settings = request.json["layoutSettings"]
 
     cache.set("target_db", target_db)
 
@@ -463,7 +535,7 @@ def kegg_parsing():
         # print("keggIDs: {}".format(keggIDs))
 
     # combineKeggIDS from all sources
-    print(metabolomics_keggIDs)
+    # print(metabolomics_keggIDs)
     combined_keggIDs = list(
         set(transcriptomics_keggIDs + proteomics_keggIDs + metabolomics_keggIDs)
     )
@@ -495,9 +567,9 @@ def kegg_parsing():
     if len(unique_pathways) == 0:
         return json.dumps(1)
     # list accessor is used for test purposes only --> less data = faster
-    for pathwayID in parsed_IDs[0:]:
+    for pathwayID in parsed_IDs:
         # TODO blacklist system?!
-        if "01100" in pathwayID:
+        if "01100" in pathwayID:  # or pathwayID in outlier_list:
             print("Skipping map01100, general overview")
         else:
             parsed_pathways.append(
@@ -515,6 +587,13 @@ def kegg_parsing():
     pathway_node_dict = {
         k: v
         for k, v in (pathway.return_pathway_node_list() for pathway in parsed_pathways)
+    }
+    pathway_info_dict = {
+        "path:" + id: ontology_string_info
+        for id, ontology_string_info in (
+            pathway.return_pathway_kegg_String_info_dict()
+            for pathway in parsed_pathways
+        )
     }
 
     # generate dict with k: pathwy v: {amountGenes, amountCompounds}
@@ -554,10 +633,13 @@ def kegg_parsing():
 
     ###########################################################################
     # creates a dict with all pathway names for create_overview function
-
     pathway_titles = {}
     for i in parsed_pathways:
         pathway_titles["path:" + i.keggID] = [i.title]
+
+    pathway_connection_dict = add_initial_positions(
+        module_node_pos, pathway_connection_dict
+    )
 
     pathway_connection_dict = get_overview(
         pathway_node_dict,
@@ -566,12 +648,46 @@ def kegg_parsing():
         pathway_titles,
         parsed_pathways,
     )
+    print(
+        "-------------------------------------------------------------------------------------------"
+    )
+
+    omics_recieved = [
+        transcriptomics["recieved"],
+        proteomics["recieved"],
+        metabolomics["recieved"],
+    ]
+
+    # user choice
+    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
+    layout_limits = layout_setting_bools.layout_settings["limits"]
+    statistic_data_complete = pd.DataFrame.from_dict(
+        {
+            "path:"
+            + pathway.keggID: pathway.get_PathwaySummaryData(
+                omics_recieved, layout_limits
+            )
+            for pathway in parsed_pathways
+        },
+        orient="index",
+    )
+    layout_setting_bools = get_layout_settings(layout_settings, omics_recieved)
+    layout_limits = layout_setting_bools.layout_settings["limits"]
+    layout_attributes_used = layout_setting_bools.layout_settings["attributes"]
+    module_node_pos, module_areas = getModuleLayout(
+        omics_recieved,
+        layout_limits,
+        layout_attributes_used,
+        statistic_data_complete,
+        pathway_connection_dict,
+    )
+    if module_node_pos == -1:
+        return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
     network_overview = generate_networkx_dict(pathway_connection_dict)
     pos_overview = get_spring_layout_pos(network_overview)
     init_pos_overview = add_initial_positions(pos_overview, pathway_connection_dict)
     # print(init_pos_overview)
 
-    # add genes with available fc values to overview_dict
     """
     for i in with_init_pos.keys():
         if not with_init_pos[i]["value"] == "NoVal":
@@ -587,14 +703,17 @@ def kegg_parsing():
                             init_pos_ov[tmp_key]["available_genes"] = [with_init_pos[i]["name"][0]]
                             init_pos_ov[tmp_key]["available_genes_values"] = [with_init_pos[i]["value"]]
     """
+
     # prepare json data
     out_dat = {
+        "exitState": 0,
         "omicsRecieved": {
             "transcriptomics": transcriptomics["recieved"],
             "proteomics": proteomics["recieved"],
             "metabolomics": metabolomics["recieved"],
         },
-        "overview_data": pathway_connection_dict,
+        "overview_data": pathway_connection_dict,  # pathway_connection_dict_new, #pathway_connection_dict,
+        "moduleAreas": module_areas,
         "main_data": without_empty,
         "fcs": fold_changes,
         "transcriptomics_symbol_dict": symbol_kegg_dict_transcriptomics,
@@ -635,21 +754,27 @@ def reactome_parsing():
     proteomics = request.json["proteomics"]
     metabolomics = request.json["metabolomics"]
     slider_vals = request.json["sliderVals"]
-
+    layout_settings = request.json["layoutSettings"]
     cache.set("target_db", target_db)
 
     ##
     # Initialize Reactome Hierarchy
     ##
+    omics_recieved = [
+        transcriptomics["recieved"],
+        proteomics["recieved"],
+        metabolomics["recieved"],
+    ]
     reactome_hierarchy = PathwayHierarchy()
     reactome_hierarchy.load_data(data_path / "reactome_data", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
-
+    reactome_hierarchy.set_omics_recieved(omics_recieved)
     ##
     # Add query Data to Hierarchy
     ##
     node_pathway_dict = {}
     fold_changes = {"transcriptomics": [], "proteomics": [], "metabolomics": []}
+    chebi_ids = {}
 
     ##
     # Add Proteomics Data
@@ -660,9 +785,14 @@ def reactome_parsing():
             uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
             prot_dict_global = json.loads(cache.get("prot_dict_global"))
 
-            for ID in prot_dict_global:
-                entry = prot_dict_global[ID]
-                proteomics_query_data_tuples.append((ID, entry[proteomics["value"]]))
+            for ID_number in prot_dict_global:
+                entry = prot_dict_global[ID_number]
+                proteomics_query_data_tuples.append(
+                    (
+                        {"ID": ID_number, "table_id": ID_number},
+                        entry[proteomics["value"]],
+                    )
+                )
 
         except FileNotFoundError:
             print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
@@ -678,7 +808,10 @@ def reactome_parsing():
         )
         fold_changes["proteomics"] = protein_query.get_measurement_levels()
         # add entries to hierarchy
-        # node_pathway_dict = {**node_pathway_dict, **protein_query.get_query_pathway_dict()}
+        node_pathway_dict = {
+            **node_pathway_dict,
+            **protein_query.get_query_pathway_dict(),
+        }
         for query_key, query_result in protein_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "protein", query_key)
@@ -697,26 +830,48 @@ def reactome_parsing():
             subset=id_col
         ).set_index(id_col)
         for k, v in slider_vals["metabolomics"].items():
-            is_empty = v["empties"] & (metabolomics_df[k] == "None")
-            is_numeric = pd.to_numeric(metabolomics_df[k], errors="coerce").notnull()
-            df_numeric = metabolomics_df.loc[is_numeric]
-            df_is_in_range = df_numeric.loc[
-                (df_numeric[k] >= v["vals"]["min"])
-                & (df_numeric[k] <= v["vals"]["max"])
-            ]
-            df_is_empty = metabolomics_df.loc[is_empty]
+            if k != id_col:
+                is_empty = v["empties"] & (metabolomics_df[k] == "None")
+                is_numeric = pd.to_numeric(
+                    metabolomics_df[k], errors="coerce"
+                ).notnull()
+                df_numeric = metabolomics_df.loc[is_numeric]
+                df_is_in_range = df_numeric.loc[
+                    (df_numeric[k] >= v["vals"]["min"])
+                    & (df_numeric[k] <= v["vals"]["max"])
+                ]
+                df_is_empty = metabolomics_df.loc[is_empty]
 
-            metabolomics_df = metabolomics_df.loc[
-                metabolomics_df.index.isin(df_is_in_range.index)
-                | metabolomics_df.index.isin(df_is_empty.index)
-            ]
+                metabolomics_df = metabolomics_df.loc[
+                    metabolomics_df.index.isin(df_is_in_range.index)
+                    | metabolomics_df.index.isin(df_is_empty.index)
+                ]
         metabolomics_dict = metabolomics_df.to_dict("index")
         metabolomics_IDs = list(metabolomics_dict.keys())
-        for ID in metabolomics_IDs:
-            ID_number = str(ID).replace("CHEBI:", "")
-            metabolomics_query_data_tuples.append(
-                (ID_number, metabolomics_dict[ID][metabolomics["value"]])
-            )
+
+        if any(
+            (str(entry)[0] == "C") and (str(entry)[1] != "H")
+            for entry in metabolomics_IDs
+        ):
+            chebi_ids = kegg_to_chebi(metabolomics_IDs)
+            for k in chebi_ids.keys():
+                for entry in chebi_ids[k]:
+                    metabolomics_query_data_tuples.append(
+                        (
+                            {"ID": entry, "table_id": k},
+                            metabolomics_dict[k][metabolomics["value"]],
+                        )
+                    )
+        else:
+            for ID_entry in metabolomics_IDs:
+                # TODO handle KEGGIDS
+                ID_number = str(ID_entry).replace("CHEBI:", "")
+                metabolomics_query_data_tuples.append(
+                    (
+                        {"ID": ID_number, "table_id": ID_number},
+                        metabolomics_dict[ID_entry][metabolomics["value"]],
+                    )
+                )
 
         # target organism is a little bit annoying at the moment
         tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
@@ -729,7 +884,10 @@ def reactome_parsing():
         )
         fold_changes["metabolomics"] = metabolite_query.get_measurement_levels()
         # add entries to hierarchy
-        # node_pathway_dict = {**node_pathway_dict, **metabolite_query.get_query_pathway_dict()}
+        node_pathway_dict = {
+            **node_pathway_dict,
+            **metabolite_query.get_query_pathway_dict(),
+        }
 
         for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
@@ -766,9 +924,12 @@ def reactome_parsing():
         # print("DF", transcriptomics_df)
         transcriptomics_dict = transcriptomics_df.to_dict("index")
         transcriptomics_IDs = list(transcriptomics_dict.keys())
-        for ID in transcriptomics_IDs:
+        for ID_number in transcriptomics_IDs:
             transcriptomics_query_data_tuples.append(
-                (ID, transcriptomics_dict[ID][transcriptomics["value"]])
+                (
+                    {"ID": ID_number, "table_id": ID_number},
+                    transcriptomics_dict[ID_number][transcriptomics["value"]],
+                )
             )
 
         # target organism is a little bit annoying at the moment
@@ -782,18 +943,25 @@ def reactome_parsing():
         )
         fold_changes["transcriptomics"] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy
-        # node_pathway_dict = {**node_pathway_dict, **transcriptomics_query.get_query_pathway_dict()}
+        node_pathway_dict = {
+            **node_pathway_dict,
+            **transcriptomics_query.get_query_pathway_dict(),
+        }
         for query_key, query_result in transcriptomics_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "gene", query_key)
 
-    ##
     # Aggregate Data in Hierarcy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
+    reactome_hierarchy.set_layout_settings(
+        get_layout_settings(layout_settings, omics_recieved)
+    )
+
     cache.set("reactome_hierarchy", reactome_hierarchy)
     dropdown_pathways = []  # TODO
     out_dat = {
+        "keggChebiTranslate": chebi_ids,
         "omicsRecieved": {
             "transcriptomics": transcriptomics["recieved"],
             "proteomics": proteomics["recieved"],
@@ -819,17 +987,66 @@ def reactome_overview():
                                 dictionary mapping query to pathway ids
                                 list of Ids belonging to root nodes
     """
+
     reactome_hierarchy = cache.get("reactome_hierarchy")
+    layout_limits = reactome_hierarchy.layout_settings["limits"]
+    layout_attributes_used = reactome_hierarchy.layout_settings["attributes"]
+    # user choice
+    # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
+    print(reactome_hierarchy.layout_settings)
+    # print(layout_limits, layout_attributes_used)
+
     (
         out_data,
         pathway_dict,
         dropdown_data,
         root_ids,
-    ) = reactome_hierarchy.generate_overview_data(False)
+        pathways_root_names,
+        root_subpathways,
+        statistic_data_complete,
+        omics_recieved,
+    ) = reactome_hierarchy.generate_overview_data(layout_limits, False)
+    pathway_connection_dict = get_overview_reactome(out_data)
+    # network_overview = generate_networkx_dict(pathway_connection_dict)
+    # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
+    # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
+
+    module_node_pos, module_areas = getModuleLayout(
+        omics_recieved,
+        layout_limits,
+        layout_attributes_used,
+        statistic_data_complete,
+        pathway_connection_dict,
+        root_subpathways,
+        pathways_root_names,
+    )
+    
+    # a_file = open("modul_layout_bad.pkl", "wb")
+    # pickle.dump(module_node_pos, a_file)
+    # a_file.close()
+    # a_file = open("module_areas_bad.pkl", "wb")
+    # pickle.dump(module_areas, a_file)
+    # a_file.close()
+
+    # with open('modul_layout_03.pkl', "rb") as f:
+    #     module_node_pos = pickle.load(f)
+
+    # with open('module_areas_03.pkl', "rb") as f:
+    #     module_areas = pickle.load(f)
+    if module_node_pos == -1:
+        return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
+    print("number of Clusters", len(module_areas))
+    for pathway in out_data:
+        x_y_pos = module_node_pos[pathway["pathwayId"]]
+        pathway["initialPosX"] = x_y_pos[0]
+        pathway["initialPosY"] = x_y_pos[1]
+        pathway["moduleNum"] = x_y_pos[2]
 
     return json.dumps(
         {
+            "exitState": 0,
             "overviewData": out_data,
+            "moduleAreas": module_areas,
             "pathwayLayouting": {
                 "pathwayList": dropdown_data,
                 "pathwayNodeDictionary": pathway_dict,
@@ -842,9 +1059,12 @@ def reactome_overview():
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])
 def get_reactome_json(pathway):
     hierarchy = cache.get("reactome_hierarchy")
-    layout_json = hierarchy[pathway].layout_json_file
-    graph_json = hierarchy[pathway].graph_json_file
     pathway_entry = hierarchy[pathway]
+    if not pathway_entry.has_diagram:
+        # fixes crash when pathways has no own diagram entry, this shouldnt happen tho?!
+        pathway_entry = pathway_entry.diagram_entry
+    layout_json = pathway_entry.layout_json_file
+    graph_json = pathway_entry.graph_json_file
     inset_pathways_totals = {}
     inset_pathway_ID_transcriptomics = [
         [k, v["stableID"]] for k, v in pathway_entry.subdiagrams_measured_genes.items()
@@ -880,3 +1100,74 @@ def get_reactome_json(pathway):
 
 if __name__ == "__main__":
     app.run(host="localhost", port=8000, debug=True)
+
+
+"""OLD form Forschungsprojekt"""
+#   pd.set_option("display.max_rows", None, "display.max_columns", None)
+
+# with open('modul_layout.pkl', "rb") as f:
+#    module_node_pos = pickle.load(f)
+# a_file = open("modul_layout.pkl", "wb")
+# pickle.dump(module_node_pos, a_file)
+# a_file.close()
+# pos_dict = get_spring_layout_pos(network_overview)
+# pos_dict = normalize_all_x_y_to_ndc(pos_dict, [-1,1])
+# pd.set_option("display.max_rows", None, "display.max_columns", None)
+# with_miss_val_df = fill_missing_values_with_neighbor_mean(pathway_connection_dict, data_driven_layout_data_user, omics_recieved, up_down_reg_means, num_vals_per_omic)
+
+# pre_pos_options
+# z_score_df = pd.DataFrame(data=convert_each_feature_into_z_scores(copy.deepcopy(with_miss_val_df)), index=list(data_driven_layout_data_user.index))
+# double_centring_df = double_centring(copy.deepcopy(z_score_df))
+# network_smooting_df = NetworkSmoothing(nx.Graph(network_overview), copy.deepcopy(with_miss_val_df), None)
+
+# PCA --> without normalization
+# _, pos_dict = get_pca_layout_pos(with_miss_val_df)
+
+# PCA --> z-score normalization
+# _, pos_dict = get_pca_layout_pos(z_score_df)
+
+# PCA --> double centering normalization
+# _, pos_dict = get_pca_layout_pos(double_centring_df)
+
+# PCA --> network smooting
+# _, pos_dict = get_pca_layout_pos(network_smooting_df)
+
+
+# umap --> without normalization
+# _, pos_dict1 = get_umap_layout_pos(with_miss_val_df)
+
+# umap --> z-score normalization
+# _, pos_dict = get_umap_layout_pos(z_score_df)
+
+# umap --> double centering normalization
+# _, pos_dict3 = get_umap_layout_pos(double_centring_df)
+
+# umap --> network smooting
+# _, pos_dict4 = get_umap_layout_pos(network_smooting_df)
+
+# with open('zs_umap.pkl', "rb") as f:
+#     pos_dict = pickle.load(f)
+
+# with open('force_dir.pkl', "rb") as f:
+#     pos_dict_forc_dir = pickle.load(f)
+
+
+# force directed Layout with additional edge weight
+# print('now my force dir layout')
+# network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
+# network_with_edge_weight = get_networkx_with_edge_weights_all_nodes_connected(pathway_info_dict, stringGraph)
+
+# pos_dict_forc_dir = get_pos_in_force_dir_layout(network_with_edge_weight)
+# a_file = open("force_dir.pkl", "wb")
+# pickle.dump(pos_dict_forc_dir, a_file)
+# a_file.close()
+
+# pos_dict_forc_dir = normalize_all_x_y_to_ndc(pos_dict_forc_dir, [-1,1])
+# print('finish')
+
+# pos_dict = {node_name: [x/100 for x in random.sample(range(0, 100),2)] for node_name in list(data_driven_layout_data.index)}
+# rot_to_ref = rotate_to_ref(pos_dict_forc_dir, pos_dict)
+# morph_pos = morph_layouts(pos_dict, rot_to_ref, 0.5)
+
+# pathway_connection_dict = add_initial_positions(module_node_pos, pathway_connection_dict)
+# pathway_connection_dict = add_initial_positions(pos_dict, pathway_connection_dict)

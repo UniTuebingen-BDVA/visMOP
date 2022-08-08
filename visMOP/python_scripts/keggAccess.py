@@ -21,7 +21,6 @@ def associacte_value_keggID(datatable, symbol_col, val_col, symbol_kegg_dict):
             out_dict[symbol_kegg_dict[current_symbol]] = series[val_col]
         except:
             print("Genesymbol not found! (Probably not available on KEGG)")
-
     datatable.apply(apply_func, axis=1)
     return out_dict, val_extent, all_fcs
 
@@ -89,7 +88,8 @@ def kegg_conv(origin_IDs=None, kegg_DB=None, origin_DB=None, caching_path=None):
 
     if query_IDs:
         origin_query = "+".join(query_IDs)
-        kegg_api_url = "http://rest.kegg.jp/conv/{}/{}".format(kegg_DB, origin_query)
+        kegg_api_url = "http://rest.kegg.jp/conv/{}/{}".format(
+            kegg_DB, origin_query)
         print(kegg_api_url)
         try:
             with urllib.request.urlopen(kegg_api_url) as kegg_response:
@@ -126,7 +126,8 @@ def kegg_find(gene_symbol, organism):
         gene_symbol: string corresponding to the required gene symbol
         organisum strign corresponding to the target organism (e.g. "mmu")
     """
-    kegg_api_url = "http://rest.kegg.jp/find/{}/{}".format(organism, gene_symbol)
+    kegg_api_url = "http://rest.kegg.jp/find/{}/{}".format(
+        organism, gene_symbol)
     print("KEGG-URL, ", kegg_api_url)
     regex_pattern = re.compile(r"(?i)(\\t|\t| ){}(,|;)".format(gene_symbol))
     try:
@@ -164,7 +165,8 @@ def gene_symbols_to_keggID(gene_symbols, organism, caching_path=None):
             with open(caching_path) as in_file:
                 cache_data = json.load(in_file)
                 set_cache = set(cache_data[organism].keys())
-                query_symbols = [elem for elem in gene_symbols if elem not in set_cache]
+                query_symbols = [
+                    elem for elem in gene_symbols if elem not in set_cache]
         except:
             print("Cache was empty!!! Querying all supplied gene symbols")
             query_symbols = gene_symbols
@@ -382,6 +384,7 @@ def parse_get(get_response, keggID):
     kegg_get = KeggGet(keggID)
     lines = get_response.split("\n")
     in_pathway = False
+    in_brite = False
     for line in lines:
         line_header = line[0:12].strip()
         line_content = line[12:]
@@ -395,13 +398,88 @@ def parse_get(get_response, keggID):
             kegg_get.add_pathway(line_content.split("  ")[0])
         elif in_pathway and len(line_header) == 0:
             kegg_get.add_pathway(line_content.split("  ")[0])
+        elif line_header == "BRITE":
+            in_pathway = False
+            in_brite = True
+            prev_brite, prev_num_spaces, brite_hierarchies = filter_brite_info(
+                line_content, "", -1, kegg_get, False)
+        elif in_brite and len(line_header) == 0:
+            prev_brite, prev_num_spaces, brite_hierarchies = filter_brite_info(
+                line_content, prev_brite, prev_num_spaces, kegg_get, brite_hierarchies)
         else:
             in_pathway = False
+            if in_brite:
+                prev_brite, prev_num_spaces, brite_hierarchies = filter_brite_info(
+                    "", prev_brite, prev_num_spaces, kegg_get, brite_hierarchies)
+                in_brite = False
 
     return kegg_get
 
 
-def get_unique_pathways(list_KeggGets, kegg_target_organism="mmu"):
+""" old filter brite info
+# category1 = KO : 09100 Metabolism, 09120 Genetic Information Processing, 09130 Environmental Information Processing, 09140 Cellular Processes, 09150 Organismal Systems, 09160 Human Diseases
+# category2 = KO: more than first subcategory
+# category4 = everything outside KO + more than header category
+# category3: no under category
+
+def filter_brite_info(current_brite, prev_brite, prev_num_spaces, header_0, kegg_get):
+    curr_widthout_leading_spaces = current_brite.lstrip()
+    curr_num_leading_spaces = len(current_brite) - len(curr_widthout_leading_spaces)
+    brite_hierarchies = False
+    # find right category for prev brite
+    if len(current_brite)==0:
+        kegg_get.add_brite(prev_brite,3)
+        prev_num_spaces = -1
+        header_0 = ""
+    elif prev_num_spaces > curr_num_leading_spaces:
+        kegg_get.add_brite(prev_brite,3)
+        brite_hierarchies = False
+    elif prev_num_spaces > 0:
+        if header_0 == "KEGG Orthology (KO) [BR:mmu00001]":
+            if prev_brite != "09180 Brite Hierarchies" and prev_num_spaces==1:
+                kegg_get.add_brite(prev_brite,1)
+            elif prev_brite != "09180 Brite Hierarchies":
+                kegg_get.add_brite(prev_brite,2)
+        else:
+            kegg_get.add_brite(prev_brite,4)
+
+    if curr_num_leading_spaces==0:
+        header_0 = curr_widthout_leading_spaces
+        
+    return header_0, curr_widthout_leading_spaces, curr_num_leading_spaces 
+"""
+# Brite Hierachies
+# category1 = Superheadings
+# category2 = Subcategories
+# category3 = Protein IDs
+
+
+def filter_brite_info(current_brite, prev_brite, prev_num_spaces, kegg_get, brite_hierarchies):
+    curr_widthout_leading_spaces = current_brite.lstrip()
+    curr_num_leading_spaces = len(
+        current_brite) - len(curr_widthout_leading_spaces)
+
+    # find right category for prev brite
+    if brite_hierarchies:
+        if len(current_brite) == 0:
+            kegg_get.add_brite(prev_brite, 3)
+            prev_num_spaces = -1
+            brite_hierarchies = False
+        elif prev_num_spaces > curr_num_leading_spaces:
+            kegg_get.add_brite(prev_brite, 3)
+            brite_hierarchies = False
+        elif prev_num_spaces > 0:
+            if prev_brite != "09180 Brite Hierarchies" and prev_num_spaces==2:
+                kegg_get.add_brite(prev_brite, 1)
+            elif prev_brite != "09180 Brite Hierarchies" and prev_num_spaces==3:
+                kegg_get.add_brite(prev_brite, 2)
+    else:
+        brite_hierarchies = True if curr_widthout_leading_spaces == "09180 Brite Hierarchies" else False
+
+    return curr_widthout_leading_spaces, curr_num_leading_spaces, brite_hierarchies
+
+
+def get_unique_pathways(dict_KeggGets, kegg_target_organism='mmu'):
     """Returns a list of unique pathways
 
     Args:
@@ -411,7 +489,8 @@ def get_unique_pathways(list_KeggGets, kegg_target_organism="mmu"):
 
     """
     unique_pathways = []
-    for entry in list_KeggGets:
+    for kegg_id in dict_KeggGets:
+        entry = dict_KeggGets[kegg_id]
         current_pathways = entry.pathways
         current_pathways = [
             entry.replace("map", kegg_target_organism) for entry in current_pathways

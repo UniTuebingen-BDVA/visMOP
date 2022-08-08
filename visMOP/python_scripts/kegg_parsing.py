@@ -90,6 +90,21 @@ def parse_KGML(
             # TODO atm only the first fc is kept
             for keggID in entry_keggID_list:
                 value = False
+                try: 
+                    string_id_prot.append(keggID_to_stringID[keggID])
+                except:
+                    asdasda=0
+                try:
+                    entry_kegg_gets.append(parsed_gets[keggID])
+                    # print('success')
+                except:
+                    x=0
+                    #print('keggID:',keggID)
+                    # new_kegg_get = kegg_get(keggIDs=[keggID], caching_path=data_path / 'kegg_cache/kegg_gets.json')
+                    # if len(new_kegg_get)>0:
+                    #     new_parsed_get = parse_get(new_kegg_get[keggID],keggID)
+                    #     parsed_gets[keggID] = new_parsed_get
+                    #     entry_kegg_gets.append(new_parsed_get)
                 try:
                     # replacing probably is a workaround
                     value = value_dict[
@@ -134,6 +149,10 @@ def parse_KGML(
                 current_entry.origPos[pathway_ID] = [x, y]
             pathway.update_orig_extents(*current_entry.origPos[pathway_ID])
             pathway.add_entry(current_entry)
+            pathway.add_stringIds(string_id_prot)
+            pathway.add_kegg_info(entry_kegg_gets)
+            # print(pathway.prot_in_pathway_StringIds)
+            # print('pathway done: ', pathway.all_brite_ids, pathway.KO_level_1, pathway.KO_other_level, pathway.lowest_level, pathway.other_ontologys)
             entry_keggID_map[entry_ID] = current_entry.keggID
 
     pathway.apply_extents()

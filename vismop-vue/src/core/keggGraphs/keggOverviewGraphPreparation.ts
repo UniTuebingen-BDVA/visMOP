@@ -7,8 +7,11 @@ import {
   relation,
   baseNodeAttr,
   baseEdgeAttr,
+  upDatedPos,
 } from '@/core/graphTypes';
+import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 import { useMainStore } from '@/stores';
+import hull from 'hull.js';
 
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
@@ -19,6 +22,7 @@ import { useMainStore } from '@/stores';
 export function generateGraphData(
   nodeList: { [key: string]: entry },
   glyphs: { [key: string]: string },
+  moduleAreas: [number[]] = [[]],
   glyphsHighres: { [key: string]: string }
 ): graphData {
   const mainStore = useMainStore();
@@ -26,22 +30,28 @@ export function generateGraphData(
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
+    cluster_rects: [[]],
     options: [],
   } as graphData;
   const addedEdges: string[] = [];
+  let index = 0;
+  let maxModuleNum = 0;
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey];
     if (!entry.isempty) {
       const currentNames = entry.name;
       const keggID = entry.keggID;
       if (currentNames) {
-        const initPosX = Math.random() * 100;
-        const initPosY = Math.random() * 100;
+        const initPosX = entry.initialPosX;
+        const initPosY = entry.initialPosY;
+        const modNum = entry.moduleNum;
+        maxModuleNum = Math.max(maxModuleNum, modNum);
         const color = '#FFFFFF';
         const trueName = mainStore.pathwayLayouting.pathwayList.find(
           (elem) => elem.value === currentNames[0].replace('path:', '')
         )?.text;
         const currentNode = {
+          index: index,
           key: keggID,
           // label: "",
           attributes: {
@@ -55,6 +65,7 @@ export function generateGraphData(
             label: `Name: ${_.escape(trueName)}`,
             x: initPosX,
             y: initPosY,
+            up: { x: initPosX, y: initPosY, gamma: 0 },
             zIndex: 1,
             size: 10,
             nonHoverSize: 10,
@@ -82,9 +93,19 @@ export function generateGraphData(
             addedEdges.push(currentEdge.key);
           }
         }
+        index += 1;
       }
     }
   }
+  let norm_node_pos = [] as node[];
+  let hull_points: [[number[]]] = [[[]]];
+  let nodes_per_cluster = pfsPrime_modules(graph.nodes, maxModuleNum, moduleAreas);
+  _.forEach(nodes_per_cluster, n => {
+    let clusterHullPoints = hull(n.map(o => [o.attributes.x, o.attributes.y]), 20) as [[number, number]]; 
+    hull_points.push(clusterHullPoints);
+    norm_node_pos = norm_node_pos.concat(n);
+    console.log(clusterHullPoints)
+  })
   return graph;
 }
 

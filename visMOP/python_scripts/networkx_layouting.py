@@ -5,7 +5,7 @@ import time
 
 def relayout(graph, init_pos):
     forceatlas2 = ForceAtlas2()
-    pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=init_pos, iterations=15)
+    pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=init_pos, iterations=250)
     return pos
 
 
@@ -48,8 +48,8 @@ def get_spring_layout_pos(node_dict, init_scale=20000):
     max_x = max(x_vals)
     min_y = min(y_vals)
     max_y = max(y_vals)
-    divisor_x = abs(max_x) + abs(min_x)
-    divisor_y = abs(max_y) + abs(min_y)
+    divisor_x = max_x + min_x
+    divisor_y = max_y + min_y
 
     pos_out = {
         k: ((v[0] - min_x) / divisor_x, (v[1] - min_y) / divisor_y)
@@ -74,5 +74,7 @@ def add_initial_positions(positions, nodes):
 
         nodes[k]["initialPosX"] = v[0]
         nodes[k]["initialPosY"] = v[1]
+        nodes[k]["moduleNum"] = v[2]
+
 
     return nodes

@@ -121,8 +121,10 @@
               <interaction-graph-table> </interaction-graph-table>
             </q-tab-panel>
             <q-tab-panel name="ppiGraph">
-              <interaction-graph context-i-d="interactionGraph">
-              </interaction-graph>
+              <keep-alive>
+                <interaction-graph context-i-d="interactionGraph">
+                </interaction-graph>
+              </keep-alive>
             </q-tab-panel>
             <q-tab-panel name="pathwayCompare">
               <pathway-compare> </pathway-compare>
@@ -228,6 +230,8 @@ const metabolomicsTableHeaders = computed(
   () => mainStore.metabolomicsTableHeaders
 );
 const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
+const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
+
 const transcriptomicsSymbolDict = computed(
   () => mainStore.transcriptomicsSymbolDict
 );
@@ -256,7 +260,7 @@ watch(pathwayLayouting, () => {
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       row._reserved_available = pathwaysContaining
         ? pathwaysContaining.length
-        : 'No';
+        : 0;
       if (pathwaysContaining) transcriptomicsAvailable += 1;
     }
   );
@@ -283,7 +287,7 @@ watch(pathwayLayouting, () => {
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       row._reserved_available = pathwaysContaining
         ? pathwaysContaining.length
-        : 'No';
+        : 0;
       if (pathwaysContaining) proteomiocsAvailable += 1;
     }
   );
@@ -302,13 +306,37 @@ watch(pathwayLayouting, () => {
 
   metabolomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
-      metabolomicsTotal += 1;
       const symbol = row[usedSymbolCols.value.metabolomics];
-      const pathwaysContaining =
-        pathwayLayouting.value.nodePathwayDictionary[symbol];
+      metabolomicsTotal += 1;
+      let pathwaysContaining: string[] = [];
+      const keggChebiConvert = Object.keys(keggChebiTranslate.value).length > 0;
+
+      if (keggChebiConvert) {
+        let chebiIDs = keggChebiTranslate.value[symbol];
+        if (chebiIDs) {
+          chebiIDs.forEach((element) => {
+            try {
+              pathwaysContaining.push(
+                ...pathwayLayouting.value.nodePathwayDictionary[element]
+              );
+            } catch (error) {
+              //
+            }
+          });
+        }
+      } else {
+        console.log(
+          'REACHED',
+          symbol,
+          pathwayLayouting.value.nodePathwayDictionary
+        );
+
+        pathwaysContaining =
+          pathwayLayouting.value.nodePathwayDictionary[symbol];
+      }
       row._reserved_available = pathwaysContaining
         ? pathwaysContaining.length
-        : 'No';
+        : 0;
       if (pathwaysContaining) metabolomicsAvailable += 1;
     }
   );
@@ -327,7 +355,7 @@ watch(pathwayDropdown, () => {
   transcriptomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
       let symbol = row[usedSymbolCols.value.transcriptomics];
-      const available = !(row._reserved_available === 'No');
+      const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
         if (targetDatabase.value === 'kegg') {
@@ -354,7 +382,7 @@ watch(pathwayDropdown, () => {
   proteomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
       let symbol = row[usedSymbolCols.value.proteomics];
-      const available = !(row._reserved_available === 'No');
+      const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
         if (targetDatabase.value === 'kegg') {
@@ -381,7 +409,7 @@ watch(pathwayDropdown, () => {
   metabolomicsTableData.value.forEach(
     (row: { [key: string]: string | number }) => {
       const symbol = row[usedSymbolCols.value.metabolomics];
-      const available = !(row._reserved_available === 'No');
+      const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
         if (targetDatabase.value === 'kegg') {
@@ -392,11 +420,31 @@ watch(pathwayDropdown, () => {
             : false;
         }
         if (targetDatabase.value === 'reactome') {
-          includedInSelectedPathway = pathwayDropdown.value
-            ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                pathwayDropdown.value.value
-              )
-            : false;
+          const keggChebiConvert =
+            Object.keys(keggChebiTranslate.value).length > 0;
+          if (keggChebiConvert) {
+            let chebiIDs = keggChebiTranslate.value[symbol];
+            if (chebiIDs) {
+              chebiIDs.forEach((element) => {
+                try {
+                  includedInSelectedPathway = pathwayDropdown.value
+                    ? pathwayLayouting.value.pathwayNodeDictionary[
+                        element
+                      ].includes(pathwayDropdown.value.value)
+                    : false;
+                } catch (error) {
+                  //
+                }
+              });
+            }
+          } else {
+            console.log('REACHED', symbol);
+            includedInSelectedPathway = pathwayDropdown.value
+              ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
+                  pathwayDropdown.value.value
+                )
+              : false;
+          }
         }
         row._reserved_inSelected = includedInSelectedPathway ? 'Yes' : 'No';
       }
@@ -426,8 +474,8 @@ const metabolomicsSelection = (
 ) => {
   // this.metabolomicsSelectionData = val
 };
-const itemRowColor = (item: { row: { [key: string]: string } }) => {
-  return item.row._reserved_available !== 'No'
+const itemRowColor = (item: { row: { [key: string]: number | string } }) => {
+  return item.row._reserved_available !== 0
     ? item.row._reserved_inSelected === 'Yes'
       ? 'rowstyle-inPathway'
       : 'rowstyle-available'

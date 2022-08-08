@@ -26,20 +26,6 @@ export interface edge {
   target: string;
   attributes: Attributes;
 }
-/**
- * Defines a set of node attributes
- */
-export interface baseNodeAttr extends Attributes {
-  name: string;
-  x: number;
-  y: number;
-  zIndex: number;
-  color: string;
-  size: number;
-  fixed: boolean;
-  type: string;
-  label: string;
-}
 
 export interface detailNodeAttr extends baseNodeAttr {
   origPos: { [key: string]: number[] };
@@ -54,20 +40,54 @@ export interface detailNodeAttr extends baseNodeAttr {
   initialY: number;
 }
 
+export interface baseNodeAttr extends Attributes {
+  yOnClusterFocus: number;
+  xOnClusterFocus: any;
+  name: string;
+  id: string;
+  x: number;
+  y: number;
+  modNum: number;
+  up?: upDatedPos;
+  isRoot: boolean;
+  zIndex: number;
+  color: string;
+  size: number;
+  fixed: boolean;
+  nodeType: string;
+  type: string;
+  label: string;
+}
+
+export interface CartesianVector {
+  x: number;
+  y: number;
+}
+/**
+ * Defines a updated node position
+ */
+export interface upDatedPos {
+  x: number;
+  y: number;
+  gamma: number;
+}
+
 /**
  * Defines a node
  */
 export interface node {
   key: string;
-  attributes: Attributes;
+  index: number;
+  attributes: baseNodeAttr;
 }
 /**
  * Defines a Graph Data object
  */
 export interface graphData {
-  attributes: { name: string };
+  attributes: { [name: string]: string };
   nodes: node[];
   edges: edge[];
+  clusterAreas:  {normalHullPoints: { hullPoints: number[][][], greyValues: number[] }, focusHullPoints: number[][][]},
   options: unkown;
 }
 export interface networkxNodeLink {
@@ -89,6 +109,7 @@ export interface relation {
  * Defines an kegg entry
  */
 export interface entry {
+  moduleNum: any;
   name: string;
   entryType: string;
   keggID: string;

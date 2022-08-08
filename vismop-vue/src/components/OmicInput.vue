@@ -32,7 +32,7 @@
           :options="dropdownHeaders"
           option-label="label"
           option-value="name"
-          label="Genesymbol Col."
+          label="ID. Col."
         ></q-select>
 
         <q-separator></q-separator>
@@ -59,8 +59,7 @@
             :max="variable.max"
             :min="variable.min"
             :step="variable.step"
-            thumb-label
-            persistent-hint
+            label
           >
           </q-range>
         </div>
@@ -171,19 +170,25 @@ const slider = computed(() => {
           step: (Math.abs(min) + Math.abs(max)) / 100,
           text: element.field,
         };
-        console.log('TESTSLIDER ', outObj, element.field);
-        if (!Object.keys(slidersInternal.value).includes(element.field)) {
-          slidersInternal.value[element.field] = {
-            vals: { min: min, max: max },
-            empties: true,
-          };
-          console.log('slidersinternal', slidersInternal);
-        }
       }
     }
   });
-  console.log('outobj', outObj);
   return outObj;
+});
+
+watch(slider, () => {
+  Object.assign(slidersInternal.value, {});
+  for (const key in slider.value) {
+    if (Object.prototype.hasOwnProperty.call(slider.value, key)) {
+      const element = slider.value[key];
+      if (!Object.keys(slidersInternal.value).includes(element.text)) {
+        slidersInternal.value[element.text] = {
+          vals: { min: element.min, max: element.max },
+          empties: true,
+        };
+      }
+    }
+  }
 });
 
 watch(sheetVal, () => {
@@ -206,9 +211,18 @@ const fetchOmicsTable = (fileInput: File | null) => {
     })
       .then((response) => response.json())
       .then((responseContent) => {
-        mainStore.setOmicsTableHeaders(responseContent.header, props.omicsType);
-        mainStore.setOmicsTableData(responseContent.entries, props.omicsType);
-        recievedOmicsDataInternal.value = true;
+        if (responseContent.exitState == 1) {
+          alert(responseContent.errorMsg);
+          return 1;
+        }
+        if (responseContent.exitState == 0) {
+          mainStore.setOmicsTableHeaders(
+            responseContent.header,
+            props.omicsType
+          );
+          mainStore.setOmicsTableData(responseContent.entries, props.omicsType);
+          recievedOmicsDataInternal.value = true;
+        }
       })
       .then(() => $q.loading.hide());
   } else {

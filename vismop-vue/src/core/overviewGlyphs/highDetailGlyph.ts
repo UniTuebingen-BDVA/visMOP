@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import * as _ from 'lodash';
 import { glyphData } from '../generalTypes';
+import { noValueGrey } from './glyphConstants';
 
 /**
  * Glyph class for glyphs describing the results of omics or multiomics experiments on a per pathway basis
@@ -53,6 +54,7 @@ export class HighDetailGlyph {
     startAngle: number;
     endAngle: number;
     padAngle: number;
+    color: string;
   }[] = [];
   private outerColors: string[] = [];
   private innerColors: string[] = [];
@@ -141,10 +143,7 @@ export class HighDetailGlyph {
     if (this.drawLabels) {
       svg = d3
         .create('svg')
-        .attr(
-          'viewBox',
-          this.pathwayCompare ? `0 0 ${this.width} ${this.height}` : '0 0 35 35'
-        )
+        .attr('viewBox', `0 0 ${this.width} ${this.height}`)
         .attr('width', this.pathwayCompare ? '100%' : '200px')
         .attr('height', this.pathwayCompare ? '100%' : '200px');
       g = svg
@@ -265,7 +264,7 @@ export class HighDetailGlyph {
       .enter()
       .append('path')
       .attr('d', arcOuter)
-      .attr('fill', 'none')
+      .attr('fill', (d) => d.color)
       .attr('stroke', '#404040')
       .attr(
         'stroke-width',
@@ -375,6 +374,7 @@ export class HighDetailGlyph {
       startAngle: startAngleVal,
       endAngle: startAngleVal + this.thirdCircleElement,
       padAngle: 0,
+      color: omicsColors.length > 0 ? 'none' : noValueGrey,
     });
     omicsColors.forEach((_element, idx) => {
       const pushDat = {

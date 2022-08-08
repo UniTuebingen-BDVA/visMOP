@@ -10,18 +10,60 @@ import overviewGraph from './overviewNetwork';
  */
 function filterFunction(
   this: overviewGraph,
-  attributes: Record<string, number>
-) {
-  if (attributes.isRoot) {
+  node: string,
+  attributes: Record<
+    string,
+    string | number | typeof NaN | { regulated: number; total: number }
+  >
+): boolean {
+  if (attributes.isRoot || attributes.nodeType == 'moduleNode') {
     return false;
   } else if (
-    this.filterFuncTrans(attributes.averageTranscriptomics) &&
-    this.filterFuncProt(attributes.averageProteomics) &&
-    this.filterFuncMeta(attributes.averageMetabolonmics)
+    this.filterFuncRoot(node) &&
+    this.filterFuncTrans(attributes.averageTranscriptomics as number) &&
+    this.filterFuncProt(attributes.averageProteomics as number) &&
+    this.filterFuncMeta(attributes.averageMetabolonmics as number) &&
+    this.filterFuncSumRegulatedAbsolute(
+      getRegSum(
+        false,
+        attributes as Record<string, { regulated: number; total: number }>
+      )
+    ) &&
+    this.filterFuncSumRegulatedRelative(
+      getRegSum(
+        true,
+        attributes as Record<string, { regulated: number; total: number }>
+      )
+    )
   ) {
     return false;
   } else {
     return true;
+  }
+}
+
+function getRegSum(
+  relative: boolean,
+  attributes: Record<string, { regulated: number; total: number }>
+): number {
+  if (relative) {
+    const enumerator =
+      attributes.transcriptomicsNodeState.regulated +
+      attributes.proteomicsNodeState.regulated +
+      attributes.metabolomicsNodeState.regulated;
+
+    const divisor =
+      attributes.transcriptomicsNodeState.total +
+      attributes.proteomicsNodeState.total +
+      attributes.metabolomicsNodeState.total;
+    const val = (enumerator / divisor) * 100;
+    return val;
+  } else {
+    const val =
+      attributes.transcriptomicsNodeState.regulated +
+      attributes.proteomicsNodeState.regulated +
+      attributes.metabolomicsNodeState.regulated;
+    return val;
   }
 }
 
@@ -33,10 +75,14 @@ export function filterElements(this: overviewGraph) {
     this.filtersChanged = false;
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      if (!filterFunction.bind(this)(attributes)) attributes.hidden = false;
+      if (!filterFunction.bind(this)(node, attributes))
+        attributes.filterHidden = false;
     });
     this.graph.forEachNode((node, attributes) => {
-      if (filterFunction.bind(this)(attributes)) {
+      if (
+        filterFunction.bind(this)(node, attributes) &&
+        attributes.nodeType !== 'moduleNode'
+      ) {
         tarPositions[node] = {
           x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
           y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
@@ -57,9 +103,9 @@ export function filterElements(this: overviewGraph) {
       },
       () => {
         this.graph.forEachNode((node, attributes) => {
-          filterFunction.bind(this)(attributes)
-            ? (attributes.hidden = true)
-            : (attributes.hidden = false);
+          filterFunction.bind(this)(node, attributes)
+            ? (attributes.filterHidden = true)
+            : (attributes.filterHidden = false);
         });
       }
     );
@@ -76,57 +122,56 @@ export function setAverageFilter(
   this: overviewGraph,
   transcriptomics: filterValues,
   proteomics: filterValues,
-  metabolomics: filterValues
+  metabolomics: filterValues,
+  sumRegulated: { relative: filterValues; absolute: filterValues }
 ) {
   this.averageFilter.transcriptomics = transcriptomics;
   this.averageFilter.proteomics = proteomics;
   this.averageFilter.metabolomics = metabolomics;
+  this.regulatedFilter.relative = sumRegulated.relative;
+  this.regulatedFilter.absolute = sumRegulated.absolute;
 
-  this.filterFuncTrans = this.averageFilter.transcriptomics.filterActive
-    ? this.averageFilter.transcriptomics.inside
-      ? (x: number) => {
-          return (
-            x <= this.averageFilter.transcriptomics.value.max &&
-            x >= this.averageFilter.transcriptomics.value.min
-          );
-        }
-      : (x: number) => {
-          return (
-            x >= this.averageFilter.transcriptomics.value.max ||
-            x <= this.averageFilter.transcriptomics.value.min
-          );
-        }
-    : (_x: number) => true;
-  this.filterFuncProt = this.averageFilter.proteomics.filterActive
-    ? this.averageFilter.proteomics.inside
-      ? (x: number) => {
-          return (
-            x <= this.averageFilter.proteomics.value.max &&
-            x >= this.averageFilter.proteomics.value.min
-          );
-        }
-      : (x: number) => {
-          return (
-            x >= this.averageFilter.proteomics.value.max ||
-            x <= this.averageFilter.proteomics.value.min
-          );
-        }
-    : (_x: number) => true;
-  this.filterFuncMeta = this.averageFilter.metabolomics.filterActive
-    ? this.averageFilter.metabolomics.inside
-      ? (x: number) => {
-          return (
-            x <= this.averageFilter.metabolomics.value.max &&
-            x >= this.averageFilter.metabolomics.value.min
-          );
-        }
-      : (x: number) => {
-          return (
-            x >= this.averageFilter.metabolomics.value.max ||
-            x <= this.averageFilter.metabolomics.value.min
-          );
-        }
-    : (_x: number) => true;
+  this.filterFuncTrans = filterFactory(this.averageFilter.transcriptomics);
+  this.filterFuncProt = filterFactory(this.averageFilter.proteomics);
+  this.filterFuncMeta = filterFactory(this.averageFilter.metabolomics);
+  this.filterFuncSumRegulatedRelative = filterFactory(
+    this.regulatedFilter.relative
+  );
+  this.filterFuncSumRegulatedAbsolute = filterFactory(
+    this.regulatedFilter.absolute
+  );
+
+  this.filtersChanged = true;
+  this.renderer.refresh();
+}
+
+function filterFactory(filterObj: filterValues): (X: number) => boolean {
+  if (filterObj.filterActive) {
+    if (filterObj.inside) {
+      return (x: number) => {
+        return x <= filterObj.value.max && x >= filterObj.value.min;
+      };
+    } else
+      return (x: number) => {
+        return x >= filterObj.value.max || x <= filterObj.value.min;
+      };
+  } else {
+    return (_x: number) => true;
+  }
+}
+
+export function setRootFilter(
+  this: overviewGraph,
+  rootFilter: { filterActive: boolean; rootID: string }
+) {
+  if (rootFilter.filterActive && rootFilter.rootID) {
+    const rootSubtree = this.graph.neighbors(rootFilter.rootID);
+    this.filterFuncRoot = (x: string) => {
+      return x === rootFilter.rootID || rootSubtree.includes(x);
+    };
+  } else {
+    this.filterFuncRoot = (_x: string) => true;
+  }
   this.filtersChanged = true;
   this.renderer.refresh();
 }

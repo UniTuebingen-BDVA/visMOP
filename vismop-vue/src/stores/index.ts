@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
 import { reactomeEntry } from '@/core/reactomeTypes';
-import { useQuasar } from 'quasar';
+import { Loading } from 'quasar';
 
 interface State {
   sideBarExpand: boolean;
@@ -93,6 +93,8 @@ interface State {
     url: { [key: string]: string };
     svg: { [key: string]: SVGElement };
   };
+  moduleAreas: [number[]];
+  keggChebiTranslate: { [key: string]: string[] };
 }
 
 export const useMainStore = defineStore('mainStore', {
@@ -113,9 +115,10 @@ export const useMainStore = defineStore('mainStore', {
     metabolomicsTableData: [],
     usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
     graphData: {
-      attributes: { name: '' },
+      attributes: {},
       nodes: [],
       edges: [],
+      cluster_rects: [[]],
       options: null,
     },
     fcs: {},
@@ -130,7 +133,11 @@ export const useMainStore = defineStore('mainStore', {
       proteomics: d3.scaleDiverging(),
       metabolomics: d3.scaleDiverging(),
     },
-    interactionGraphData: null,
+    interactionGraphData: {
+      graph: { identities: [] },
+      nodes: [{}],
+      links: [{}],
+    },
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
       pathwayNodeDictionary: {},
@@ -149,6 +156,8 @@ export const useMainStore = defineStore('mainStore', {
     pathwayCompare: [],
     glyphData: {},
     glyphs: { url: {}, svg: {} },
+    moduleAreas: [[]],
+    keggChebiTranslate: {},
   }),
   actions: {
     addClickedNode(val: { queryID: string; name: string }) {
@@ -169,12 +178,10 @@ export const useMainStore = defineStore('mainStore', {
       });
     },
     addClickedNodeFromTable(row: { [key: string]: string }) {
-      console.log(row);
       let id = row[this.usedSymbolCols.proteomics];
       if (this.targetDatabase === 'kegg') {
         id = this.proteomicsSymbolDict[id];
       }
-      console.log(this.targetDatabase);
       const enteredKeys = this.clickedNodes.map((row) => {
         return row.id;
       });
@@ -206,7 +213,6 @@ export const useMainStore = defineStore('mainStore', {
         };
       }
       if (this.targetDatabase === 'reactome') {
-        console.log('test', this.fcsReactome);
         tableEntry = {
           id: val.queryID,
           name: `${val.name}`,
@@ -218,8 +224,7 @@ export const useMainStore = defineStore('mainStore', {
       this.clickedNodes.push(tableEntry);
     },
     queryEgoGraps(val: number) {
-      const $q = useQuasar();
-      $q.loading.show();
+      Loading.show();
       let ids: string[] = [];
       if (this.targetDatabase === 'kegg') {
         ids = this.clickedNodes.map((elem) => {
@@ -239,7 +244,7 @@ export const useMainStore = defineStore('mainStore', {
         .then((response) => response.json())
         .then((content) => {
           this.interactionGraphData = content.interaction_graph;
-          $q.loading.show();
+          Loading.hide();
         });
     },
     setInteractionGraphData(val: networkxNodeLink) {
@@ -326,6 +331,9 @@ export const useMainStore = defineStore('mainStore', {
     },
     setGraphData(val: graphData) {
       this.graphData = val;
+    },
+    setModuleAreas(val: [number[]]) {
+      this.moduleAreas = val;
     },
     setFCS(val: {
       [x: string]: {
@@ -476,7 +484,7 @@ export const useMainStore = defineStore('mainStore', {
         .scaleDiverging(d3.interpolatePRGn)
         .domain([
           quantMetabolomics[0],
-          quantProteomics[0] < 0.0 ? 0.0 : 1.0,
+          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
           quantMetabolomics[1],
         ]);
 
@@ -527,21 +535,21 @@ export const useMainStore = defineStore('mainStore', {
     setPathwayLayoutingReactome(val: {
       pathwayList: [{ text: string; value: string; title: string }];
       pathwayNodeDictionary: { [key: string]: string[] };
+      rootIds: string[];
     }) {
-      console.log('TESTEST', val.pathwayNodeDictionary);
       this.pathwayLayouting = {
         ...val,
         nodePathwayDictionary: val.pathwayNodeDictionary,
         pathwayNodeDictionaryClean: val.pathwayNodeDictionary,
-        rootIds: [],
+        rootIds: val.rootIds,
       };
     },
-    focusPathwayViaOverview(val: string) {
-      const valClean = val.replace('path:', '');
+    focusPathwayViaOverview(val: { nodeID: string; label: string }) {
+      const valClean = val.nodeID.replace('path:', '');
       this.pathwayDropdown = {
-        title: valClean,
+        title: val.label,
         value: valClean,
-        text: valClean,
+        text: `${valClean}: ${val.label}`,
       };
     },
     focusPathwayViaDropdown(val: {
@@ -561,6 +569,9 @@ export const useMainStore = defineStore('mainStore', {
     removePathwayCompare(val: string) {
       const idx = this.pathwayCompare.indexOf(val);
       this.pathwayCompare.splice(idx, 1);
+    },
+    setKeggChebiTranslate(val: { [key: string]: string[] }) {
+      this.keggChebiTranslate = val;
     },
     setOmicsRecieved(val: {
       proteomics: boolean;

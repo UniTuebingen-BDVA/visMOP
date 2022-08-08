@@ -8,7 +8,7 @@ import { noValueGrey } from './glyphConstants';
 /**
  * Glyph class for glyphs describing the results of omics or multiomics experiments on a per pathway basis
  */
-export class LowDetailGlyph {
+export class ModuleSummaryGlyph {
   private addedElements = 0;
   private availableOmics = 0;
   private drawLabels = false;
@@ -30,22 +30,13 @@ export class LowDetailGlyph {
   }[] = [];
   private outerColors: string[] = [];
   private colorScales;
-  pathwayCompare: boolean;
-  glyphIdx: number;
+  glyphId: string;
 
-  constructor(
-    glyphData: glyphData,
-    drawLabels: boolean,
-    glyphIdx: number,
-    diameter: number,
-    pathwayCompare = true
-  ) {
+  constructor(glyphData: glyphData, glyphId: string, diameter: number) {
     const mainStore = useMainStore();
 
     this.glyphData = glyphData;
-    this.drawLabels = drawLabels;
-    this.pathwayCompare = pathwayCompare;
-    this.glyphIdx = glyphIdx;
+    this.glyphId = glyphId;
     this.diameter = diameter;
 
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;

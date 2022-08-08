@@ -36,6 +36,7 @@
         :table-headers="transcriptomicsTableHeaders"
         :table-data="transcriptomicsTableData"
         omics-type="Transcriptomics"
+        @update:slider-value="(newVal) => (sliderValsTranscriptomics = newVal)"
       ></omic-input>
 
       <q-separator />
@@ -48,6 +49,7 @@
         :table-headers="proteomicsTableHeaders"
         :table-data="proteomicsTableData"
         omics-type="Proteomics"
+        @update:slider-value="(newVal) => (sliderValsProteomics = newVal)"
       ></omic-input>
 
       <q-separator />
@@ -59,7 +61,73 @@
         :table-headers="metabolomicsTableHeaders"
         :table-data="metabolomicsTableData"
         omics-type="Metabolomics"
+        @update:slider-value="(newVal) => (sliderValsMetabolomics = newVal)"
       ></omic-input>
+      <q-separator />
+      <q-expansion-item
+        label="Layout Attributes"
+        group="omicsSelect"
+        header-class="bg-primary text-white"
+        expand-icon-class="text-white"
+        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
+      >
+        <q-card>
+          <q-card-section>
+            <q-select
+              v-model="currentLayoutOmic"
+              :options="layoutOmics"
+              label="Omic Type"
+            ></q-select>
+            <div v-if="currentLayoutOmic != ''">
+              <q-select
+                v-model="chosenLayoutAttributes"
+                :options="layoutAttributes"
+                label="Attributes"
+                use-chips
+                clearable
+                multiple
+              >
+                <template #option="{ itemProps, opt, selected, toggleOption }">
+                  <q-item v-bind="itemProps">
+                    <q-item-section side>
+                      <q-checkbox
+                        :model-value="selected"
+                        @update:model-value="toggleOption(opt)"
+                      />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label v-html="opt" />
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+              <div
+                v-if="currentLayoutOmic != 'not related to specific omic'"
+                class="row"
+              >
+                <q-input
+                  v-model.number="omicLimitMin"
+                  type="number"
+                  step="0.1"
+                  style="max-width: 130px"
+                  class="mt-4 ml-2"
+                  label="minimal FC limit"
+                  filled
+                />
+                <q-input
+                  v-model.number="omicLimitMax"
+                  type="number"
+                  step="0.1"
+                  style="max-width: 130px"
+                  class="mt-2 mr-2"
+                  label="maximal FC limit"
+                  filled
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
     </q-list>
     <q-btn @click="dataQuery">Plot</q-btn>
   </q-list>
@@ -69,8 +137,14 @@
 import { ColType } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
 import { useQuasar } from 'quasar';
-import { ref, Ref, computed } from 'vue';
+import { ref, Ref, computed, watch, onMounted } from 'vue';
 import OmicInput from './OmicInput.vue';
+interface layoutSettingsInterface {
+  'Transcriptomics ': { attributes: string[]; limits: number[] };
+  'Proteomics ': { attributes: string[]; limits: number[] };
+  'Metabolomics ': { attributes: string[]; limits: number[] };
+  'not related to specific omic ': { attributes: string[]; limits: number[] };
+}
 const mainStore = useMainStore();
 
 const $q = useQuasar();
@@ -79,10 +153,10 @@ const targetOrganisms = ref([
   { text: 'Mouse', value: 'mmu' },
   { text: 'Human', value: 'hsa' },
 ]);
-const targetOrganism = ref({ text: 'Mouse', value: 'mmu' });
+const targetOrganism = ref({ text: 'Human', value: 'hsa' });
 const targetDatabases = ref([
   { text: 'Reactome', value: 'reactome' },
-  { text: 'KEGG', value: 'kegg' },
+  //{ text: 'KEGG', value: 'kegg' }, //comment in to allow usage of kegg
 ]);
 const targetDatabase = ref({ text: 'Reactome', value: 'reactome' });
 
@@ -157,12 +231,87 @@ const metabolomicsValueCol: Ref<ColType> = ref({
   name: '',
   align: undefined,
 });
+const allOmicLayoutAttributes = [
+  'Number of values',
+  'Mean expression above limit',
+  '% values above limit',
+  'Mean expression below limit ',
+  '% values below limit ',
+  '% regulated',
+  '% unregulated',
+  '% with measured value',
+];
+const allNoneOmicAttributes = ['% values measured over all omics'];
+const availableOmics = [
+  'Transcriptomics ',
+  'Proteomics ',
+  'Metabolomics ',
+  'not related to specific omic ',
+];
+const layoutSettings = ref({
+  'Transcriptomics ': {
+    attributes: allOmicLayoutAttributes,
+    limits: [-1.3, 1.3],
+  },
+  'Proteomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
+  'Metabolomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
+  'not related to specific omic ': {
+    attributes: allNoneOmicAttributes,
+    limits: [0, 0],
+  },
+});
+const omicLimitMin = ref(-1.3);
+const omicLimitMax = ref(1.3);
+const currentLayoutOmic = ref('');
+const layoutOmics = ref(['']);
+const chosenLayoutAttributes = ref(['']);
+const layoutAttributes = ref(['']);
 const chosenOmics = computed((): string[] => {
   const chosen = [];
   if (recievedTranscriptomicsData.value) chosen.push('Transcriptomics');
   if (recievedProteomicsData.value) chosen.push('Proteomics');
   if (recievedMetabolomicsData.value) chosen.push('Metabolomics');
   return chosen;
+});
+watch(chosenOmics, () => {
+  layoutOmics.value = chosenOmics.value.concat([
+    'not related to specific omic',
+  ]);
+});
+watch(currentLayoutOmic, () => {
+  // change dropdown list Attributes
+  layoutAttributes.value =
+    currentLayoutOmic.value === 'not related to specific omic'
+      ? allNoneOmicAttributes
+      : allOmicLayoutAttributes;
+  chosenLayoutAttributes.value =
+    layoutSettings.value[
+      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
+    ].attributes;
+  // console.log(typeof (layoutSettings))
+  // change limits
+  const limits =
+    layoutSettings.value[
+      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
+    ].limits;
+  omicLimitMin.value = limits[0];
+  omicLimitMax.value = limits[1];
+});
+watch(omicLimitMin, () => {
+  layoutSettings.value[
+    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
+  ].limits[0] = omicLimitMin.value;
+});
+watch(omicLimitMax, () => {
+  layoutSettings.value[
+    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
+  ].limits[1] = omicLimitMax.value;
+});
+watch(chosenLayoutAttributes, () => {
+  // save choosen Layout attribute for omic
+  layoutSettings.value[
+    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
+  ].attributes = chosenLayoutAttributes.value;
 });
 
 const dataQuery = () => {
@@ -199,6 +348,7 @@ const queryReactome = () => {
       proteomics: sliderValsProteomics.value,
       metabolomics: sliderValsMetabolomics.value,
     },
+    layoutSettings: layoutSettings.value,
   };
   fetch('/reactome_parsing', {
     method: 'POST',
@@ -209,10 +359,14 @@ const queryReactome = () => {
   })
     .then((response) => response.json())
     .then((dataContent) => {
-      if (dataContent === 1) return 1;
+      if (dataContent.exitState == 1) {
+        alert(dataContent.ErrorMsg);
+        return Promise.reject(dataContent.errorMsg);
+      }
       mainStore.setOmicsRecieved(dataContent.omicsRecieved);
       mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
       mainStore.setFCSReactome(dataContent.fcs);
+      mainStore.setKeggChebiTranslate(dataContent.keggChebiTranslate);
     })
     .then(() => getReactomeData());
 };
@@ -226,11 +380,21 @@ const getReactomeData = () => {
   })
     .then((response) => response.json())
     .then((dataContent) => {
-      console.log('PATHWAYLAYOUTING', dataContent);
+      if (dataContent.exitState == 1) {
+        return Promise.reject(dataContent.ErrorMsg);
+      }
       mainStore.setOverviewData(dataContent.overviewData);
+      mainStore.setModuleAreas(dataContent.moduleAreas);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
+      console.log('OVDATA', dataContent.overviewData);
     })
-    .then(() => $q.loading.hide());
+    .then(
+      () => $q.loading.hide(),
+      (reason) => {
+        $q.loading.hide();
+        alert(reason);
+      }
+    );
 };
 const generateKGMLs = () => {
   $q.loading.show();
@@ -278,6 +442,7 @@ const generateKGMLs = () => {
       mainStore.setProteomicsSymbolDict(dataContent.proteomics_symbol_dict);
       mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
       mainStore.setPathwayLayoutingKegg(dataContent.pathwayLayouting);
+      mainStore.setModuleAreas(dataContent.moduleAreas);
     })
     .then((val) => {
       if (val)

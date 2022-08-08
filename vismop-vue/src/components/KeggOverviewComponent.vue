@@ -238,10 +238,13 @@ const drawNetwork = () => {
   mainStore.setGlyphs(generatedGlyphs);
   console.log('GLYPHs', mainStore.glyphs);
   console.log('OVERVIEW DATA', overviewData.value);
+  const moduleAreas = mainStore.moduleAreas;
+
   const networkData = generateGraphData(
     overviewData.value as { [key: string]: entry },
     generatedGlyphs.url,
-    generatedGlyphsHighRes.url
+    generatedGlyphsHighRes.url,
+    moduleAreas
   );
   console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(
