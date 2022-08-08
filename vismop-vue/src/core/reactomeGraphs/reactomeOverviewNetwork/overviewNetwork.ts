@@ -20,6 +20,7 @@ import circular from 'graphology-layout/circular';
 import { assignLayout } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
+import circularLayout from '../circularLayout';
 
 export default class overviewGraph {
   // constants
@@ -241,7 +242,7 @@ export default class overviewGraph {
     const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
     // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
 
-    const rootPositions = circular(rootSubgraph, {
+    const rootPositions = circularLayout(rootSubgraph, {
       scale: width,
       center: 1.0,
     });
