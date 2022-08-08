@@ -231,13 +231,6 @@ export default class overviewGraph {
     const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
       return attr.isRoot;
     });
-    rootSubgraph._nodes = new Map(
-      [...rootSubgraph._nodes].sort((a, b) => {
-        return String(a[1].attributes.label).localeCompare(
-          b[1].attributes.label
-        );
-      })
-    );
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
     // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;

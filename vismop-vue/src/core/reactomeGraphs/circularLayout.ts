@@ -102,7 +102,15 @@ function genericCircularLayout(
   if (!assignFuncAvailable) {
     const positions: LayoutMapping = {};
 
-    graph.forEachNode(function (node) {
+    const sortedNodes = graph
+      .nodes()
+      .sort((a, b) => {
+        return String(graph.getNodeAttributes(a).label).localeCompare(
+          graph.getNodeAttributes(b).label
+        );
+      })
+      .reverse();
+    sortedNodes.forEach(function (node) {
       positions[node] = assignPosition(i++, {});
     });
 
