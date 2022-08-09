@@ -91,8 +91,8 @@ function genericCircularLayout(
       [dimension: string]: number;
     }
   ) {
-    target[x] = scale * Math.cos((i * tau) / l) + offset;
-    target[y] = scale * Math.sin((i * tau) / l) + offset;
+    target[x] = scale * Math.cos(((-i + l / 4) * tau) / l) + offset;
+    target[y] = scale * Math.sin(((-i + l / 4) * tau) / l) + offset;
 
     return target;
   }
@@ -102,14 +102,11 @@ function genericCircularLayout(
   if (!assignFuncAvailable) {
     const positions: LayoutMapping = {};
 
-    const sortedNodes = graph
-      .nodes()
-      .sort((a, b) => {
-        return String(graph.getNodeAttributes(a).label).localeCompare(
-          graph.getNodeAttributes(b).label
-        );
-      })
-      .reverse();
+    const sortedNodes = graph.nodes().sort((a, b) => {
+      return String(graph.getNodeAttributes(a).label).localeCompare(
+        graph.getNodeAttributes(b).label
+      );
+    });
     sortedNodes.forEach(function (node) {
       positions[node] = assignPosition(i++, {});
     });
@@ -132,8 +129,8 @@ interface ICircularLayout {
   assign(graph: Graph, options?: CircularLayoutOptions): void;
 }
 
-const circularLayout: ICircularLayout = Object.assign(
+const orderedCircularLayout: ICircularLayout = Object.assign(
   genericCircularLayout.bind({}, false),
   { assign: genericCircularLayout.bind({}, true) }
 );
-export default circularLayout;
+export default orderedCircularLayout;
