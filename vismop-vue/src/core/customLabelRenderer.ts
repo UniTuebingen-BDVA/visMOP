@@ -13,7 +13,31 @@
 import { Settings } from 'sigma/settings';
 import { NodeDisplayData, PartialButFor } from 'sigma/types';
 
-function drawLabel(
+function splitText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth = 100
+): string[] {
+  const internalText = text.replaceAll('\n', ' ');
+  const internalTextArray = internalText.split(' ');
+  const firstWord = internalTextArray.shift();
+  const textRows = [firstWord ? firstWord : ''];
+  let currentRow = 0;
+  internalTextArray.forEach((word) => {
+    const currRowWidth = context.measureText(textRows[currentRow]).width;
+    const currWordWidth = context.measureText(' ' + word).width;
+    if (currRowWidth + currWordWidth < maxWidth) {
+      if (textRows[currentRow].length != 0) textRows[currentRow] += ' ';
+      textRows[currentRow] += word;
+    } else {
+      currentRow += 1;
+      textRows.push(word);
+    }
+  });
+  return textRows;
+}
+
+export function drawLabel(
   context: CanvasRenderingContext2D,
   data: PartialButFor<NodeDisplayData, 'x' | 'y' | 'size' | 'label' | 'color'>,
   settings: Settings
@@ -24,7 +48,7 @@ function drawLabel(
   const size = settings.labelSize;
   const font = settings.labelFont;
   const weight = settings.labelWeight;
-  const labelText = data.label.split('\n');
+  const labelText = splitText(context, data.label);
   context.fillStyle = '#000';
   context.font = `${weight} ${size}px ${font}`;
   labelText.forEach((row, i) => {
@@ -41,7 +65,7 @@ function drawLabel(
  * - if the label box is bigger than node size => display a label box that contains the node with a shadow
  * - else node with shadow and the label box
  */
-export default function drawHover(
+export function drawHover(
   context: CanvasRenderingContext2D,
   data: PartialButFor<NodeDisplayData, 'x' | 'y' | 'size' | 'label' | 'color'>,
   settings: Settings
@@ -63,16 +87,17 @@ export default function drawHover(
 
   if (typeof data.label === 'string') {
     let textWidth = 0;
-    const splitText = data.label.split('\n');
-    splitText.forEach((row) => {
+    const labelText = splitText(context, data.label);
+
+    labelText.forEach((row) => {
       const currTextWidth = context.measureText(row).width;
       if (currTextWidth > textWidth) {
         textWidth = currTextWidth;
       }
     });
     const boxWidth = Math.round(textWidth + 9);
-    const boxHeight = Math.round(size * splitText.length + 2 * MARGIN);
-    const radious = Math.max(data.size, (size * splitText.length) / 2) + MARGIN;
+    const boxHeight = Math.round(size * labelText.length + 2 * MARGIN);
+    const radious = Math.max(data.size, (size * labelText.length) / 2) + MARGIN;
 
     const angleRadian = Math.asin(boxHeight / 2 / radious);
     const xDeltaCoord = Math.sqrt(

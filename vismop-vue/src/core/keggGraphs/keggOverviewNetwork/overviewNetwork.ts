@@ -5,7 +5,7 @@ import Sigma from 'sigma';
 import { graphData } from '@/core/graphTypes';
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
-import drawHover from '@/core/customHoverRenderer';
+import { drawHover } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';

@@ -1,13 +1,10 @@
 import { UndirectedGraph } from 'graphology';
-import _, { random } from 'lodash';
-import forceAtlas2 from 'graphology-layout-forceatlas2';
-import noverlap from 'graphology-layout-noverlap';
 import Sigma from 'sigma';
 import { baseNodeAttr, graphData } from '@/core/graphTypes';
 //import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
-import drawHover from '@/core/customHoverRenderer';
+import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
@@ -16,10 +13,11 @@ import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import { filterElements, setAverageFilter, setRootFilter } from './filter';
 import subgraph from 'graphology-operators/subgraph';
-import circular from 'graphology-layout/circular';
 import { assignLayout } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
+import orderedCircularLayout from '../orderedCircularLayout';
+import _ from 'lodash';
 
 export default class overviewGraph {
   // constants
@@ -216,6 +214,7 @@ export default class overviewGraph {
           image: getNodeImageProgram(),
         },
         hoverRenderer: drawHover,
+        labelRenderer: drawLabel,
         getCameraSizeRatio: (x) => x,
         clusterVis: 'ConvexHull',
       },
@@ -230,18 +229,11 @@ export default class overviewGraph {
     const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
       return attr.isRoot;
     });
-    rootSubgraph._nodes = new Map(
-      [...rootSubgraph._nodes].sort((a, b) => {
-        return String(a[1].attributes.label).localeCompare(
-          b[1].attributes.label
-        );
-      })
-    );
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
     // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
 
-    const rootPositions = circular(rootSubgraph, {
+    const rootPositions = orderedCircularLayout(rootSubgraph, {
       scale: width,
       center: 1.0,
     });

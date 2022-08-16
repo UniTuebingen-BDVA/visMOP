@@ -3,6 +3,34 @@ from fa2 import ForceAtlas2
 import time
 
 
+def generate_networkx_dict(global_nodes):
+    """generates a networkX-style network dictionary from a dict of nodes
+
+    Args:
+        global_nodes: dictionary of nodes
+
+    Returns:
+        out_dict: networkX-style network dictionary
+
+    """
+    out_dict = {}
+
+    for key, entry in global_nodes.items():
+        curr_node = {}
+        for out_edge in entry["outgoingEdges"]:
+            curr_node[out_edge["target"]] = {}
+
+        try:
+            for test_edge in entry["outgoingOnceRemoved"]:
+                curr_node[test_edge["target"]] = {}
+        except:
+            pass
+
+        out_dict[key] = curr_node
+
+    return out_dict
+
+
 def relayout(graph, init_pos):
     forceatlas2 = ForceAtlas2()
     pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=init_pos, iterations=250)
@@ -75,6 +103,5 @@ def add_initial_positions(positions, nodes):
         nodes[k]["initialPosX"] = v[0]
         nodes[k]["initialPosY"] = v[1]
         nodes[k]["moduleNum"] = v[2]
-
 
     return nodes

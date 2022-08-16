@@ -5,7 +5,7 @@ import SquareNodeProgram from '@/core/custom-nodes/square-node-program';
 import ColorFadeEdgeProgram from '@/core/custom-nodes/colorfade-edge-program';
 import OutlineCircleProgram from '@/core/custom-nodes/circle-outline-node-program';
 import { Attributes } from 'graphology-types';
-import drawHover from '@/core/customHoverRenderer';
+import { drawHover } from '@/core/customLabelRenderer';
 import { PlainObject } from 'sigma/types';
 import { subgraph } from 'graphology-operators';
 import { useMainStore } from '@/stores/index';
