@@ -7,13 +7,12 @@ import {
   baseEdgeAttr,
 } from '@/core/graphTypes';
 import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
-// import { vpsc } from '@/core/noverlap_vpsc'
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from '../generalTypes';
 import hull from 'hull.js';
 import ClusterHulls from '@/core/convexHullsForClusters';
-import { getRightResultFormForRectangle } from '@/core/convexHullsForClusters';
 import overviewGraph from './reactomeOverviewNetwork/overviewNetwork';
+import { overviewColors } from '../colors';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -70,7 +69,10 @@ export function generateGraphData(
         zoomHidden: false,
         moduleHidden: false,
         moduleFixed: false,
-        color: entry.rootId === entry.pathwayId ? '#FF99FF' : '#FFFFFF',
+        color:
+          entry.rootId === entry.pathwayId
+            ? overviewColors.roots
+            : overviewColors.default,
         label: `${_.escape(name)}`,
         forceLabel: entry.rootId === entry.pathwayId ? true : false,
         averageTranscriptomics: glyphData[id].transcriptomics.available
@@ -230,11 +232,6 @@ function generateForceGraphEdge(
   targetID: string,
   type: string
 ): edge {
-  const edgeColors: { [key: string]: string } = {
-    hierarchy: 'rgba(60,60,60,0.0)',
-    maplink: 'rgba(60,60,60,0.0)',
-  };
-
   const entry1 = sourceID;
   const entry2 = targetID;
   const edge = {
@@ -246,7 +243,10 @@ function generateForceGraphEdge(
       zIndex: 0,
       hidden: true,
       type: type === 'maplink' ? 'dashed' : 'line',
-      color: type === 'maplink' ? edgeColors.maplink : edgeColors.hierarchy,
+      color:
+        type === 'maplink'
+          ? overviewColors.edgeMaplink
+          : overviewColors.edgeHierarchy,
     } as baseEdgeAttr,
   } as edge;
   return edge;

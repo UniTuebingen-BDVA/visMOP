@@ -288,12 +288,6 @@ watch(pathwayLayouting, () => {
           });
         }
       } else {
-        console.log(
-          'REACHED',
-          symbol,
-          pathwayLayouting.value.nodePathwayDictionary
-        );
-
         pathwaysContaining =
           pathwayLayouting.value.nodePathwayDictionary[symbol];
       }

@@ -1,5 +1,6 @@
 import overviewGraph from './overviewNetwork';
 import { Attributes } from 'graphology-types';
+import { overviewColors } from '@/core/colors';
 
 /**
  * node reducer function applying reduction function for specific scenarios
@@ -54,7 +55,7 @@ export function nodeReducer(
       if (this.shortestPathClick.includes(node)) {
         return {
           ...data,
-          color: 'rgba(255,0,255,1.0)',
+          color: overviewColors.shortestPathClick,
           zindex: 1,
           size: data.size + 2,
           image: lodImage,
@@ -64,7 +65,7 @@ export function nodeReducer(
       if (this.shortestPathNodes.includes(node)) {
         return {
           ...data,
-          color: 'rgba(255,180,255,1.0)',
+          color: overviewColors.onShortestPath,
           zindex: 1,
           size: data.nonHoverSize,
           image: lodImage,
@@ -73,7 +74,7 @@ export function nodeReducer(
       } else {
         return {
           ...data,
-          color: 'rgba(255,255,255,1.0)',
+          color: overviewColors.default,
           size: data.nonHoverSize - 2,
           image: lodImage,
           hidden: hidden,
@@ -83,7 +84,7 @@ export function nodeReducer(
     if (this.shortestPathClick.includes(node)) {
       return {
         ...data,
-        color: 'rgba(255,0,255,1.0)',
+        color: overviewColors.shortestPathClick,
         zindex: 1,
         size: data.nonHoverSize + 2,
         image: lodImage,
@@ -96,7 +97,7 @@ export function nodeReducer(
     ) {
       return {
         ...data,
-        color: 'rgba(255,0,0,1.0)',
+        color: overviewColors.selected,
         zindex: 1,
         size: nodeSize,
         image: lodImage,
@@ -108,7 +109,7 @@ export function nodeReducer(
     ) {
       return {
         ...data,
-        color: 'rgba(0,255,0,1.0)',
+        color: overviewColors.intersection,
         zindex: 1,
         size: nodeSize,
         image: lodImage,
@@ -118,7 +119,7 @@ export function nodeReducer(
     if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
       return {
         ...data,
-        color: 'rgba(0,0,255,1.0)',
+        color: overviewColors.union,
         zindex: 1,
         size: nodeSize,
         image: lodImage,
@@ -128,7 +129,7 @@ export function nodeReducer(
     if (this.highlighedNodesHover.has(node)) {
       return {
         ...data,
-        color: 'rgba(255,200,200,1.0)',
+        color: overviewColors.highlight,
         zIndex: 1,
         size: nodeSize,
         image: lodImage,
@@ -138,7 +139,7 @@ export function nodeReducer(
     if (this.highlighedNodesClick.has(node)) {
       return {
         ...data,
-        color: 'rgba(255,200,200,1.0)',
+        color: overviewColors.highlight,
         zIndex: 1,
         size: nodeSize,
         image: lodImage,
@@ -173,7 +174,7 @@ export function edgeReducer(
       if (this.shortestPathEdges?.includes(edge)) {
         return {
           ...data,
-          color: 'rgba(255,180,255,1.0)',
+          color: overviewColors.edgeShortestPath,
           zIndex: 1,
           size: 4,
         };
@@ -184,7 +185,7 @@ export function edgeReducer(
     if (this.highlighedEdgesHover.has(edge)) {
       return {
         ...data,
-        color: 'rgba(255,0,0,0.7)',
+        color: overviewColors.edgesHighlight,
         size: 4,
         zIndex: 1,
         hidden: false,
@@ -193,7 +194,7 @@ export function edgeReducer(
     if (this.highlighedEdgesClick.has(edge)) {
       return {
         ...data,
-        color: 'rgba(255,0,0,0.7)',
+        color: overviewColors.edgesHighlight,
         size: 1,
         zIndex: 1,
         hidden: false,

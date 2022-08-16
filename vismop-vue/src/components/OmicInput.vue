@@ -15,7 +15,7 @@
           @update:model-value="fetchOmicsTable"
         ></q-file>
 
-        <q-separator></q-separator>
+        <q-separator />
 
         <q-input
           v-model="sheetVal"
@@ -25,7 +25,7 @@
           :disable="$q.loading.isActive"
         ></q-input>
 
-        <q-separator></q-separator>
+        <q-separator />
 
         <q-select
           v-model="symbolColInternal"
@@ -35,7 +35,7 @@
           label="ID. Col."
         ></q-select>
 
-        <q-separator></q-separator>
+        <q-separator />
 
         <q-select
           v-model="valueColInternal"
@@ -44,7 +44,7 @@
           option-value="name"
           label="Value Col."
         ></q-select>
-        <q-separator></q-separator>
+        <q-separator />
         Input Filter:
         <div v-for="variable in slider" :key="variable.text" class="row">
           <q-badge color="primary">

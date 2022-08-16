@@ -276,17 +276,6 @@ watch(overviewData, () => {
     outstandingDraw.value = true;
   }
 });
-// watch(
-//   () => props.isActive,
-//   () => {
-//     if (outstandingDraw.value) {
-//       setTimeout(() => {
-//         drawNetwork();
-//       }, 1000);
-//       outstandingDraw.value = false;
-//     }
-//   }
-// );
 
 watch(glyphDataVar, () => {
   let transcriptomicsAvailable = false;
@@ -382,12 +371,7 @@ watch(
 watch(rootFilter.value, () => {
   networkGraph?.value?.setRootFilter(rootFilter.value);
 });
-// onMounted(() => {
-//   console.log('OVDATA', overviewData);
-//   if (overviewData.value) {
-//     drawNetwork();
-//   }
-// });
+
 const expandComponent = () => {
   expandOverview.value = true;
 };

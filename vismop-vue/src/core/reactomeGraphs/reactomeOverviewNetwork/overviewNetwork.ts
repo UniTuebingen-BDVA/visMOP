@@ -17,6 +17,7 @@ import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
+import { overviewColors } from '@/core/colors';
 import _ from 'lodash';
 
 export default class overviewGraph {
@@ -418,7 +419,7 @@ export default class overviewGraph {
         modNum: parseInt(key),
         isRoot: false,
         zIndex: 1,
-        color: 'rgb(255,124,78)',
+        color: overviewColors.modules,
         size: overviewGraph.MODULE_DEFAULT_SIZE,
         nodeType: 'moduleNode',
         nonHoverSize: overviewGraph.MODULE_DEFAULT_SIZE,
