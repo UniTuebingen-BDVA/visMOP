@@ -155,29 +155,3 @@ def get_pos_in_force_dir_layout(graph, mod_num=0, ewi=1, repulsivForceScaler=2):
     pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=None, iterations=2000)
     pos_out = {k: [v[0], v[1], mod_num] for k, v in pos.items()}
     return pos_out
-
-
-""" OLD """
-# def get_networkx_with_edge_weights(node_dict, pathway_info_dict, stringGraph):
-#     stringGraph.filter_by_confidence(900)
-#     startTime = time.time()
-#     G = nx.Graph(node_dict)
-#     brite_scores = []
-#     interaction_scores = []
-#     for u,v,d in G.edges(data=True):
-#         brite_score, interaction_score = calculate_edge_weight(pathway_info_dict[u],pathway_info_dict[v], stringGraph)
-#         brite_scores.append(brite_score)
-#         interaction_scores.append(interaction_score)
-#     min_val_brite, min_val_interaction = min(brite_scores), min(interaction_scores)
-#     max_val_brite, max_val_interaction= max(brite_scores), max(interaction_scores)
-#     # norm_brite_score = [normalize_in_range(interaction_score,min_val_interaction, max_val_interaction,[0,10]) for brite_score in brite_scores]
-#     total_scores = [normalize_in_range(brite_score, min_val_brite, max_val_brite,[0,1]) + normalize_in_range(interaction_score,min_val_interaction, max_val_interaction,[0,1]) for brite_score, interaction_score in zip(brite_scores, interaction_scores)]
-#     min_val_total = min(total_scores)
-#     max_val_total = max(total_scores)
-#     total_scores_norm = [normalize_in_range(total_score, min_val_total, max_val_total,[0,10]) for total_score in total_scores]
-#     for pos,(u,v,d) in enumerate(G.edges(data=True)):
-#         d['weight'] = total_scores_norm[pos]
-
-#     endTime = time.time()
-#     print("calculate edge weigts took {:.3f} s".format((endTime-startTime)))
-#     return G

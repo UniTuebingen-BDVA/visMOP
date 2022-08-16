@@ -107,14 +107,6 @@ class StringGraph:
         nx.set_edge_attributes(composed_graph, intersections_edge, "identity")
         nx.set_edge_attributes(composed_graph, shared_ego_edges, "egoEgoEdge")
 
-        # print(composed_graph.nodes(data="identity"))
-        # print(len(composed_graph.nodes(data="identity")))
-        # print(len(composed_graph.nodes()))
-        # print(composed_graph.edges(data="identity"))
-        # print(len(composed_graph.edges(data="identity")))
-        # print(len(composed_graph.edges()))
-        # print(composed_graph.edges(data="egoEgoEdge"))
-
         return nx.node_link_data(
             composed_graph,
             attrs=dict(

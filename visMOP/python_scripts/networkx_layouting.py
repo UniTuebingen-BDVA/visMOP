@@ -57,19 +57,11 @@ def get_spring_layout_pos(node_dict, init_scale=20000):
     )
     time2 = time.time()
     print("NX Graphparsing took {:.3f} s".format((time2 - time1)))
-    # pos = nx.spring_layout(G, weight=None, scale=init_scale)
     forceatlas2 = ForceAtlas2()
     pos = forceatlas2.forceatlas2_networkx_layout(G, pos=None, iterations=1)
     time3 = time.time()
     print("Spring Layouting took {:.3f} s".format((time3 - time2)))
-    pos_x = {}
-    pos_y = {}
-    # for key, value in pos.items():
-    #    G.nodes[key].update({'viz':{'position':{'x' : value[0], 'y' : value[1]}}})
 
-    # nx.set_node_attributes(G, pos_x, 'X')
-    # nx.set_node_attributes(G, pos_y, 'Y')
-    ##nx.readwrite.gexf.write_gexf(G, "gexf_test.gexf")
     x_vals = [val[0] for key, val in pos.items()]
     y_vals = [val[1] for key, val in pos.items()]
     min_x = min(x_vals)

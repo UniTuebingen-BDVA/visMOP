@@ -189,7 +189,6 @@ class Module_layout:
         up_down_reg_means,
         reactome_roots,
         pathways_root_names,
-        drm="umap",
         node_size=2,
     ):
         self.pool_size = 8
@@ -221,7 +220,7 @@ class Module_layout:
         except ValueError as e:
             raise ValueError
         print("Scaled input data")
-        self.initial_node_pos, _ = self.get_initial_node_pos(drm)
+        self.initial_node_pos, _ = self.get_initial_node_pos()
         print("initial node positions calculated")
         self.l_max = 0
 
@@ -253,7 +252,6 @@ class Module_layout:
                 self.p_f_m[j].append(pos)
             self.p_f_m[i] += pos_m
 
-        # self.add_reactome_roots_to_modules(reactome_roots)
         initial_modules_center = self.get_module_centers(self.initial_node_pos)
         self.modules_center = initial_modules_center
         self.weights = self.getModulesWeights()
@@ -354,12 +352,6 @@ class Module_layout:
                 [get_min_max_side(area, self.l_max) for area in self.modules_area],
             )
             print("node_num_ratio", self.node_num_ratio)
-
-        # print("smallest_area_diff:", smallest_area_diff)
-        # print("smalles_min_side_diff: ", smalles_min_side_diff)
-        # print(self.l_max)
-        # print('area/ side ratio / min_side', [get_area_size(ma, True, self.l_max) for ma in self.modules_area])
-        # print("C_cost_best: ", C_cost_best)
 
         print("Module sizes identified")
         print("smallest_area_diff:", init_area_comp)
@@ -657,17 +649,7 @@ class Module_layout:
                     clustering_labels = result[1]
         pool.close()
         pool.join()
-        # a_file = open("clustering_labels_03.pkl", "wb")
-        # pickle.dump([clustering_labels, positions_dict] , a_file)
-        # a_file.close()
-        # a_file = open("pos_dic_bad_cc_4.pkl", "wb")
-        # pickle.dump(positions_dict , a_file)
-        # with open('pos_dic_bad_cc_4.pkl', "rb") as f:
-        #     positions_dict = pickle.load(f)
-        # with open('clustering_labels_02.pkl', "rb") as f:
-        #    clustering_labels, _ = pickle.load(f)
-        # self.noise_cluster_exists = -1 in clustering_labels
-        # print("best silhouette_score: ", ss)
+
         ordered_nodes = get_sorted_list_by_list_B_sorting_order(
             self.data_table.index, clustering_labels
         )
@@ -677,18 +659,14 @@ class Module_layout:
 
         return cl_list, max(clustering_labels) + 2, positions_dict
 
-    def get_initial_node_pos(self, drm):
+    def get_initial_node_pos(self):
         """Get node positions using dimensionality reduction drm
 
         Args:
             drm: dimensionality reduction method
 
         """
-        node_pos_dic, node_pos_list = (
-            self.get_umap_layout_pos()
-            if drm == "umap"
-            else self.get_pca_layout_pos()[0]
-        )
+        node_pos_dic, node_pos_list = self.get_umap_layout_pos()
         return node_pos_dic, node_pos_list
 
     def getModulesWeights(self):
@@ -863,18 +841,7 @@ class Module_layout:
         if change_pos:
             # max movement in neg/ pos x direction: m_c[0] - 0.1 / 1-m_c[0] -0.1
             for coord in [0, 1]:
-                # move_in_neg_dir = np.random.binomial(1, 0.5) == 1
-                # curve_half_width_neg = module_center[coord]
-                # curve_half_width_pos = 1 - module_center[coord]
-                # curve_half_width = curve_half_width_neg if (move_in_neg_dir and curve_half_width_neg > 0) or curve_half_width_pos <= 0 else curve_half_width_pos
-                # normal_dist_vals = np.random.normal(0, curve_half_width/3, 501)
                 new_center[coord] = np.random.uniform(0.1, 0.95)
-                # shift_num_valid = False
-                # while not shift_num_valid:
-                #     shift_num = abs(normal_dist_vals[randint(0, 500)])
-                #     shift_num_valid = shift_num != 0 and - curve_half_width <= shift_num <= curve_half_width
-                # new_center[coord] = new_center[coord] - \
-                #     shift_num if move_in_neg_dir else new_center[coord] + shift_num
         return new_center
 
     def getSizeOfModulesRegion(self, module_center):
@@ -891,13 +858,6 @@ class Module_layout:
             for mod_center in module_center
         ]
 
-        # module_x_y_distances = {
-        #     max(
-        #         abs(new_centers[m_p[0]][0] - new_centers[m_p[1]][0]),
-        #         abs(new_centers[m_p[0]][1] - new_centers[m_p[1]][1]),
-        #     ): m_p
-        #     for m_p in combinations(range(len(new_centers)), 2)
-        # }
         mod_id_sorted_by_num_nodes = [
             x
             for _, x in sorted(
@@ -930,7 +890,6 @@ class Module_layout:
     def divideSpaceForTwoModules(
         self,
         module_centers,
-        # module_ia_x_y_distances,
         area_to_divide,
         modules_in_area,
         total_sum_nodes_in_area,
@@ -944,15 +903,6 @@ class Module_layout:
         if len(modules_in_area) == 1:
             return [[area_to_divide, modules_in_area[0]]]
 
-        # get the two modules furthest away from each other
-
-        # found_mod_pair = False
-        # while not found_mod_pair:
-        #     max_dist = max(module_ia_x_y_distances.keys())
-        #     mod_pair = module_ia_x_y_distances[max_dist]
-        #     found_mod_pair = set(mod_pair).issubset(modules_in_area)
-        #     del module_ia_x_y_distances[max_dist]
-        # else:
         mod_pair = []
         for mod in mod_id_sorted_by_num_nodes:
             if mod in modules_in_area:
@@ -1081,14 +1031,6 @@ class Module_layout:
 
             node_positions = {**node_positions, **adjusted_node_positions}
 
-        # for root, subpathways in reactome_roots.items():
-        #     a_subpathways = [pathway for pathway in subpathways if pathway in node_positions.keys()]
-        #     root_pos = [node_positions[subpathway] for subpathway in a_subpathways]
-        #     # print(len(subpathways), len(a_subpathways))
-        #     num_subpathways = len(a_subpathways)
-        #     root_pos = [sum(subpathway_pos)/num_subpathways if pos!=2 else most_frequent(subpathway_pos) for pos, subpathway_pos in enumerate(zip(*root_pos))]
-        #     node_positions[root] = root_pos
-
         return node_positions
 
     def get_final_node_positions(self):
@@ -1139,207 +1081,3 @@ class Module_layout:
             norm_areas.append(norm_area)
 
         return norm_areas
-
-    def get_stats(self):
-        new_module_center = self.get_module_centers(self.final_node_pos)
-        new_realtiv_dist = self.getRealtiveDistancesBetweenModules(new_module_center)
-        _, distance_similarities = self.evaluateRelativDistanceSimilarity(
-            self.relative_distances, new_realtiv_dist
-        )
-        final_area_size = [get_area_size(area) for area in self.modules_area]
-        total_area = sum(final_area_size)
-        area_nodes_ratio = [
-            area / node_num
-            for area, node_num in zip(final_area_size, self.module_nodes_num)
-        ]
-        node_num_ratio = [
-            node_num / len(self.final_node_pos) for node_num in self.module_nodes_num
-        ]
-        area_ratio = [area / total_area for area in final_area_size]
-        # print('old rel dist centers: ', ordered_org_rel_dist)
-        # print('new rel dist centers: ', list(new_realtiv_dist.values()))
-        # print('rel dis comparison: ', list(distance_similarities.values()))
-        # print('num nodes in Module: ', self.module_nodes_num)
-        # print("Node Num Ratio: ", node_num_ratio)
-        # print("Area Size Ratio: ", area_ratio)
-        # print("Area Num Nodes Ratio: ", area_nodes_ratio)
-        # print('Areas: ', self.modules_area)
-
-    # def get_stat_plots(self):
-    #     df_imputed = pd.DataFrame(
-    #         self.data_table_scaled_filled,
-    #         columns=self.data_table.columns,
-    #         index=self.data_table.index,
-    #     )
-    #     num_fig_cols = math.ceil(len(self.modules) / 2)
-    #     # print(num_fig_cols)
-    #     for col in df_imputed.columns:
-    #         new_file_name = str(col) + "_stats.png"
-    #         fig, ax = plt.subplots(nrows=2, ncols=num_fig_cols)
-    #         fig.suptitle(col)
-    #         for i, cluster_nodes in enumerate(self.modules):
-    #             ax[i % 2, i // 2].hist(df_imputed.loc[cluster_nodes, col].values)
-    #             ax[i % 2, i // 2].set_title("Cluster " + str(i))
-    #             ax[i % 2, i // 2].set_ylabel("frequency")
-    #         plt.savefig(new_file_name)
-    #         plt.clf()
-
-
-""" OLD """
-
-
-def getSizeOfModulesRegion_old(self):
-    """
-    calculate For dir for module
-    get max nodes in vertical and horizontal position
-    """
-    module_node_nums = [len(module) for module in self.modules]
-    l_max = 2 * math.sqrt(max(module_node_nums))
-    """
-        # paper method
-        set_areas = [[[mod_center[0]*l_max - math.sqrt(mod_l),mod_center[0]*l_max + math.sqrt(mod_l)], [mod_center[1]*l_max - math.sqrt(mod_l),mod_center[1]*l_max + math.sqrt(mod_l)]] for mod_center, mod_l in zip(self.modules_center,module_sizes)]
-        """
-    new_centers = [mod_center[0] * l_max for mod_center in self.modules_center]
-    # sorting order ordering first by x and then by y
-    sort_order = [
-        pos
-        for pos, _ in sorted(
-            enumerate(new_centers),
-            key=lambda en_coord: (en_coord[1][0], en_coord[1][1]),
-        )
-    ]
-    new_centers_sorted = get_sorted_list_by_list_B_sorting_order(
-        new_centers, sort_order
-    )
-    module_node_nums_sorted = get_sorted_list_by_list_B_sorting_order(
-        module_node_nums, sort_order
-    )
-
-    # own technic
-    # square: [x_min, x_max,  y_min, y_max]
-    # start with module center with is nearest to 0/0
-    total_area = [0, l_max, 0, l_max]
-    set_areas = [total_area]
-    mod_borders = {}
-    for mod_wo_area_num, (mod_wo_area_center, mod_wo_area_size) in enumerate(
-        zip(new_centers_sorted[1:], module_node_nums_sorted[1:])
-    ):
-        area_of_curr_mod = [total_area]
-        new_mod_areas = []
-        for mod_with_area_num, (
-            mod_area,
-            mod_with_area_center,
-            mod_with_area_size,
-        ) in enumerate(zip(set_areas, new_centers_sorted, module_node_nums_sorted)):
-            if mod_center_in_area(mod_wo_area_center, mod_area):
-                x_diff = mod_with_area_center[0] - mod_wo_area_center[0]
-                y_diff = mod_with_area_center[1] - mod_wo_area_center[1]
-                size_ratio = 1 - (
-                    mod_with_area_size / (mod_with_area_size + mod_wo_area_size)
-                )
-                # adjust x coordinates of mod_area
-                if abs(x_diff) > abs(y_diff):
-                    mod_borders[(mod_wo_area_num, mod_with_area_num)] = "x"
-                    if x_diff > 0:
-                        border_x = mod_with_area_center[0] - x_diff * size_ratio
-                        # adjust x_min of mod_with_area
-                        mod_area[0] = (
-                            border_x if border_x > mod_area[0] else mod_area[0]
-                        )
-                        # adjust x_max of curr mod_wo_area
-                        area_of_curr_mod[1] = (
-                            border_x
-                            if border_x < area_of_curr_mod[1]
-                            else area_of_curr_mod[1]
-                        )
-                    else:
-                        # minus because X-diff is already negative
-                        border_x = mod_with_area_center[0] - x_diff * size_ratio
-                        # adjust x_max of mod_with_area
-                        mod_area[1] = (
-                            border_x if border_x < mod_area[1] else mod_area[1]
-                        )
-                        # adjust x_min of curr mod_wo_area
-                        area_of_curr_mod[0] = (
-                            border_x
-                            if border_x > area_of_curr_mod[0]
-                            else area_of_curr_mod[0]
-                        )
-
-                # adjust y coordinates of mod_area
-                else:
-                    mod_borders[(mod_wo_area_num, mod_with_area_num)] = "y"
-                    if y_diff > 0:
-                        border_y = mod_with_area_center[1] - y_diff * size_ratio
-                        # adjust y_min of mod_with_area
-                        mod_area[2] = (
-                            border_y if border_y > mod_area[2] else mod_area[2]
-                        )
-                        # adjust y_max of curr mod_wo_area
-                        area_of_curr_mod[3] = (
-                            border_y
-                            if border_y < area_of_curr_mod[3]
-                            else area_of_curr_mod[3]
-                        )
-                    else:  # plus because X-diff is already negative
-                        border_y = mod_with_area_center[1] - y_diff * size_ratio
-                        # adjust y_max of mod_with_area
-                        mod_area[3] = (
-                            border_y if border_y < mod_area[3] else mod_area[3]
-                        )
-                        # adjust y_min of curr mod_wo_area
-                        area_of_curr_mod[2] = (
-                            border_y
-                            if border_y > area_of_curr_mod[2]
-                            else area_of_curr_mod[2]
-                        )
-            new_mod_areas.append(mod_area)
-        new_mod_areas.append(area_of_curr_mod)
-
-        set_areas = new_mod_areas
-
-    mod_area_sizes = [get_area_size(area) for area in set_areas]
-    mod_num_area_ratio = [size / num for num, size in zip(set_areas, mod_area_sizes)]
-    # readjust areas by comparing number of node area ratio
-    # for optimize_iter in range(len(mod_area_sizes)*10):
-    #     mod_with_larges_ratio = np.argmax(mod_num_area_ratio)
-    #     mods_with_border =
-
-    # set_areas_order_adjusted = [ for org_pos in ]
-    return set_areas
-
-
-def get_pca_layout_pos(self, n_components=2):
-    """Performs PCA on scaled data returns new n-D Positions in node dict and postion list of lists
-
-    Args:
-        n_components: number PCs
-    """
-    pca = PCA(n_components=n_components, random_state=random.randint(0, 1000))
-    new_pos = pca.fit_transform(self.data_table_scaled_filled)
-    new_pos_norm = normalize_value_list_in_range(new_pos, [0, 1])
-
-    explained_variation = pca.explained_variance_ratio_
-    print("Variance explained by PC1 = " + str(explained_variation[0]))
-    print("Variance explained by PC2 = " + str(explained_variation[1]))
-    pos_norm_dic_pca = {
-        node_name: row
-        for row, node_name in zip(new_pos_norm, list(self.data_table.index))
-    }
-
-    return pos_norm_dic_pca, new_pos_norm
-
-
-def add_reactome_roots_to_modules(self, reactome_roots):
-    """Add reactome roots to the cluster with the highst number of sub nodes from the root"""
-    mod_dic = {
-        pathway: mod_num
-        for mod_num, module in enumerate(self.modules)
-        for pathway in module
-    }
-
-    for root, subpathways in reactome_roots.items():
-        maj_mod_num = most_frequent(
-            [mod_dic[pathway] for pathway in subpathways if pathway in mod_dic.keys()]
-        )
-        self.modules[maj_mod_num] = np.append(self.modules[maj_mod_num], root)
