@@ -1,13 +1,13 @@
 from flask import Flask, render_template, send_from_directory, request, Response
 from visMOP.python_scripts.kegg_to_chebi import kegg_to_chebi
 from visMOP.python_scripts.networkx_layouting import (
+    generate_networkx_dict,
     get_spring_layout_pos,
     add_initial_positions,
     relayout,
 )
 from visMOP.python_scripts.kegg_parsing import (
     parse_KGML,
-    generate_networkx_dict,
     drop_empty,
     add_incoming_edges,
 )
@@ -1020,7 +1020,7 @@ def reactome_overview():
         root_subpathways,
         pathways_root_names,
     )
-    
+
     # a_file = open("modul_layout_bad.pkl", "wb")
     # pickle.dump(module_node_pos, a_file)
     # a_file.close()

@@ -34,34 +34,6 @@ def drop_empty(global_nodes):
     # out_dict = {k: v for k,v in global_nodes.items() if not v['isempty']}
 
 
-def generate_networkx_dict(global_nodes):
-    """generates a networkX-style network dictionary from a dict of nodes
-
-    Args:
-        global_nodes: dictionary of nodes
-
-    Returns:
-        out_dict: networkX-style network dictionary
-
-    """
-    out_dict = {}
-
-    for key, entry in global_nodes.items():
-        curr_node = {}
-        for out_edge in entry["outgoingEdges"]:
-            curr_node[out_edge["target"]] = {}
-
-        try:
-            for test_edge in entry["outgoingOnceRemoved"]:
-                curr_node[test_edge["target"]] = {}
-        except:
-            pass
-
-        out_dict[key] = curr_node
-
-    return out_dict
-
-
 def parse_KGML(
     pathway_ID, kgml, global_entry, global_relation, global_reaction, value_dict
 ):
@@ -90,16 +62,16 @@ def parse_KGML(
             # TODO atm only the first fc is kept
             for keggID in entry_keggID_list:
                 value = False
-                try: 
+                try:
                     string_id_prot.append(keggID_to_stringID[keggID])
                 except:
-                    asdasda=0
+                    asdasda = 0
                 try:
                     entry_kegg_gets.append(parsed_gets[keggID])
                     # print('success')
                 except:
-                    x=0
-                    #print('keggID:',keggID)
+                    x = 0
+                    # print('keggID:',keggID)
                     # new_kegg_get = kegg_get(keggIDs=[keggID], caching_path=data_path / 'kegg_cache/kegg_gets.json')
                     # if len(new_kegg_get)>0:
                     #     new_parsed_get = parse_get(new_kegg_get[keggID],keggID)
