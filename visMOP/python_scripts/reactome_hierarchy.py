@@ -2,11 +2,63 @@ import json
 import pathlib
 import pandas as pd
 import pickle
-from visMOP.python_scripts.kegg_pathway import get_PathwaySummaryData_omic
 import os
 from operator import itemgetter
 from copy import deepcopy
 import collections
+
+
+def get_PathwaySummaryData_omic(num_entries, all_values, limits):
+    num_val_omic = len(all_values)
+    # statistics for products produced in a significant higher amount
+    vals_higher_ul = [val for val in all_values if val > limits[1]]
+    mean_val_higher_ul = (
+        sum(vals_higher_ul) / len(vals_higher_ul)
+        if len(vals_higher_ul) > 0
+        else float("nan")
+    )
+    pc_vals_higher_ul = (
+        len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
+    )  # float('nan')
+
+    # statistics for products produced in a significant smaller amount
+    vals_smaller_ll = [val for val in all_values if val < limits[0]]
+    mean_val_smaller_ll = (
+        sum(vals_smaller_ll) / len(vals_smaller_ll)
+        if len(vals_smaller_ll) > 0
+        else float("nan")
+    )
+    pc_vals_smaller_ll = (
+        len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
+    )  # float('nan')
+
+    # procentage of products produced in a significant differnt amount
+    pcReg = (
+        sum(val > limits[1] or val < limits[0] for val in all_values) / num_val_omic
+        if num_val_omic != 0
+        else 0
+    )  # float('nan')
+
+    # procentage of products not produced in a significant differnt amount
+    pcUnReg = (
+        sum(val < limits[1] and val > limits[0] for val in all_values) / num_val_omic
+        if num_val_omic != 0
+        else 0
+    )  ## float('nan')
+
+    pc_with_val_for_omic = num_val_omic / num_entries if num_entries != 0 else 0
+
+    pathway_summary_data = [
+        num_val_omic,
+        mean_val_higher_ul,
+        pc_vals_higher_ul,
+        mean_val_smaller_ll,
+        pc_vals_smaller_ll,
+        pcReg,
+        pcUnReg,
+        pc_with_val_for_omic,
+    ]
+    return pathway_summary_data
 
 
 class ReactomePathway:
@@ -86,7 +138,7 @@ class PathwayHierarchy(dict):
         self.layout_settings = settings
 
     def get_pathway_GO_info_dict(self):
-        return self.keggID, {
+        return self.pathwayID, {
             "numEntries": len(self.entries),
             "StringIds": self.prot_in_pathway_StringIds,
             "brite_hier_superheadings": self.brite_hier_superheadings,

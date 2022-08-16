@@ -137,18 +137,6 @@
         <q-card>
           <div class="row">
             <div class="col-12">
-              <div v-if="targetDatabase === 'kegg'">
-                <keep-alive>
-                  <kegg-overview-component
-                    context-i-d="overviewContext"
-                    :transcriptomics-selection="selectedTranscriptomics"
-                    :proteomics-selection="selectedProteomics"
-                    :metabolomics-selection="selectedMetabolomics"
-                    :is-active="activeOverview"
-                  >
-                  </kegg-overview-component>
-                </keep-alive>
-              </div>
               <div v-if="targetDatabase === 'reactome'">
                 <keep-alive>
                   <reactome-overview-component
@@ -161,19 +149,6 @@
                   </reactome-overview-component>
                 </keep-alive>
               </div>
-            </div>
-
-            <div v-if="targetDatabase === 'kegg'">
-              <keep-alive>
-                <kegg-detail-component
-                  context-i-d="detailcontext"
-                  :transcriptomics-selection="selectedTranscriptomics"
-                  :proteomics-selection="selectedProteomics"
-                  :metabolomics-selection="selectedMetabolomics"
-                  :is-active="activeOverview"
-                >
-                </kegg-detail-component>
-              </keep-alive>
             </div>
             <div v-if="targetDatabase === 'reactome'">
               <keep-alive>
@@ -194,9 +169,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import KeggDetailComponent from './KeggDetailComponent.vue';
 import ReactomeDetailComponent from './ReactomeDetailComponent.vue';
-import KeggOverviewComponent from './KeggOverviewComponent.vue';
 import InteractionGraph from './InteractionGraph.vue';
 import InteractionGraphTable from './InteractionGraphTable.vue';
 import PathwayCompare from './PathwayCompare.vue';
@@ -232,10 +205,6 @@ const metabolomicsTableHeaders = computed(
 const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
 const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
 
-const transcriptomicsSymbolDict = computed(
-  () => mainStore.transcriptomicsSymbolDict
-);
-const proteomicsSymbolDict = computed(() => mainStore.proteomicsSymbolDict);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
@@ -253,9 +222,6 @@ watch(pathwayLayouting, () => {
     (row: { [key: string]: string | number }) => {
       transcriptomicsTotal += 1;
       let symbol = row[usedSymbolCols.value.transcriptomics];
-      if (targetDatabase.value === 'kegg') {
-        symbol = transcriptomicsSymbolDict.value[symbol];
-      }
       const pathwaysContaining =
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       row._reserved_available = pathwaysContaining
@@ -280,9 +246,6 @@ watch(pathwayLayouting, () => {
     (row: { [key: string]: string | number }) => {
       proteomicsTotal += 1;
       let symbol = row[usedSymbolCols.value.proteomics];
-      if (targetDatabase.value === 'kegg') {
-        symbol = proteomicsSymbolDict.value[symbol];
-      }
       const pathwaysContaining =
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       row._reserved_available = pathwaysContaining
@@ -358,14 +321,6 @@ watch(pathwayDropdown, () => {
       const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
-        if (targetDatabase.value === 'kegg') {
-          symbol = transcriptomicsSymbolDict.value[symbol];
-          includedInSelectedPathway = pathwayDropdown.value
-            ? pathwayLayouting.value.pathwayNodeDictionaryClean[
-                pathwayDropdown.value.value
-              ].includes(symbol)
-            : false;
-        }
         if (targetDatabase.value === 'reactome') {
           includedInSelectedPathway = pathwayDropdown.value
             ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
@@ -385,14 +340,6 @@ watch(pathwayDropdown, () => {
       const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
-        if (targetDatabase.value === 'kegg') {
-          symbol = proteomicsSymbolDict.value[symbol];
-          includedInSelectedPathway = pathwayDropdown.value
-            ? pathwayLayouting.value.pathwayNodeDictionaryClean[
-                pathwayDropdown.value.value
-              ].includes(symbol)
-            : false;
-        }
         if (targetDatabase.value === 'reactome') {
           includedInSelectedPathway = pathwayDropdown.value
             ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
@@ -412,13 +359,6 @@ watch(pathwayDropdown, () => {
       const available = !(row._reserved_available === 0);
       if (available) {
         let includedInSelectedPathway = false;
-        if (targetDatabase.value === 'kegg') {
-          includedInSelectedPathway = pathwayDropdown.value
-            ? pathwayLayouting.value.pathwayNodeDictionaryClean[
-                pathwayDropdown.value.value
-              ].includes(symbol)
-            : false;
-        }
         if (targetDatabase.value === 'reactome') {
           const keggChebiConvert =
             Object.keys(keggChebiTranslate.value).length > 0;

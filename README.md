@@ -8,7 +8,7 @@ bash ./installScript.sh
 
 ### Setup Folder Structure
 
-make directories:`uniprot_files` `session_cache`, `reactome_data`, `kegg_cache`,in project root folder. And a subfolder `pickles` inside the `reactome_data` folder using the following command:
+make directories:`uniprot_files` `session_cache`, `reactome_data`,in project root folder. And a subfolder `pickles` inside the `reactome_data` folder using the following command:
 
 ```
 mkdir uniprot_files session_cache reactome_data kegg_cache reactome_data/pickles

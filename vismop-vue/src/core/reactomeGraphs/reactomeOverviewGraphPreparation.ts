@@ -162,7 +162,7 @@ export function generateGraphData(
     maxModuleNum,
     moduleAreas
   );
-  let norm_node_pos = nodes_per_cluster[nodes_per_cluster.length -1] as node[]; // already add superpathways as they are not part of the convex hull
+  let norm_node_pos = nodes_per_cluster[nodes_per_cluster.length - 1] as node[]; // already add superpathways as they are not part of the convex hull
   nodes_per_cluster.pop();
   const max_ext = 20;
   const clusterHullsAdjustment = new ClusterHulls(60);
@@ -221,7 +221,7 @@ export function generateGraphData(
 }
 
 /**
- * Parses a kegg relation into an edge representation
+ * Parses a graph relation into an edge representation
  * @param {relation} relation object
  * @returns {edge}, edge object
  */

@@ -154,10 +154,7 @@ const targetOrganisms = ref([
   { text: 'Human', value: 'hsa' },
 ]);
 const targetOrganism = ref({ text: 'Human', value: 'hsa' });
-const targetDatabases = ref([
-  { text: 'Reactome', value: 'reactome' },
-  //{ text: 'KEGG', value: 'kegg' }, //comment in to allow usage of kegg
-]);
+const targetDatabases = ref([{ text: 'Reactome', value: 'reactome' }]);
 const targetDatabase = ref({ text: 'Reactome', value: 'reactome' });
 
 const recievedTranscriptomicsData = ref(false);
@@ -315,9 +312,7 @@ watch(chosenLayoutAttributes, () => {
 });
 
 const dataQuery = () => {
-  if (targetDatabase.value.value === 'kegg') {
-    generateKGMLs();
-  } else if (targetDatabase.value.value === 'reactome') {
+  if (targetDatabase.value.value === 'reactome') {
     queryReactome();
   }
 };
@@ -395,62 +390,6 @@ const getReactomeData = () => {
         alert(reason);
       }
     );
-};
-const generateKGMLs = () => {
-  $q.loading.show();
-  const payload = {
-    targetOrganism: targetOrganism.value,
-    transcriptomics: {
-      recieved: recievedTranscriptomicsData.value,
-      symbol: transcriptomicsSymbolCol.value.field,
-      value: transcriptomicsValueCol.value.field,
-    },
-    proteomics: {
-      recieved: recievedProteomicsData.value,
-      symbol: proteomicsSymbolCol.value.field,
-      value: proteomicsValueCol.value.field,
-    },
-    metabolomics: {
-      recieved: recievedMetabolomicsData.value,
-      symbol: metabolomicsSymbolCol.value.field,
-      value: metabolomicsValueCol.value.field,
-    },
-    sliderVals: {
-      transcriptomics: sliderValsTranscriptomics.value,
-      proteomics: sliderValsProteomics.value,
-      metabolomics: sliderValsMetabolomics.value,
-    },
-  };
-  fetch('/kegg_parsing', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
-    .then((response) => response.json())
-    .then((dataContent) => {
-      if (dataContent === 1) return 1;
-      mainStore.setOmicsRecieved(dataContent.omicsRecieved);
-      mainStore.setPathayAmountDict(dataContent.pathways_amount_dict);
-      mainStore.setOverviewData(dataContent.overview_data);
-      mainStore.setGraphData(dataContent.main_data);
-      mainStore.setFCS(dataContent.fcs);
-      mainStore.setTranscriptomicsSymbolDict(
-        dataContent.transcriptomics_symbol_dict
-      );
-      mainStore.setProteomicsSymbolDict(dataContent.proteomics_symbol_dict);
-      mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
-      mainStore.setPathwayLayoutingKegg(dataContent.pathwayLayouting);
-      mainStore.setModuleAreas(dataContent.moduleAreas);
-    })
-    .then((val) => {
-      if (val)
-        alert(
-          'Empty Data Selection! Adjust data source and/or filter settings'
-        );
-      $q.loading.hide();
-    });
 };
 const setTargetDatabase = (inputVal: { text: string; value: string }) => {
   mainStore.setTargetDatabase(inputVal.value);

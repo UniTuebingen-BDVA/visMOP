@@ -13,7 +13,7 @@ import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import { filterElements, setAverageFilter, setRootFilter } from './filter';
 import subgraph from 'graphology-operators/subgraph';
-import { assignLayout } from 'graphology-layout/utils';
+import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
@@ -236,7 +236,7 @@ export default class overviewGraph {
     const rootPositions = orderedCircularLayout(rootSubgraph, {
       scale: width,
       center: 1.0,
-    });
+    }) as LayoutMapping<{ [dimension: string]: number }>;
     assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
 
     this.graph.forEachNode((node, attributes) => {

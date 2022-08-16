@@ -47,10 +47,8 @@ const stringSlider = ref(900);
 const interactionGraph: Ref<Sigma | undefined> = ref(undefined);
 
 // get from store
-const targetDatabase = computed(() => mainStore.targetDatabase);
 const interactionGraphData = computed(() => mainStore.interactionGraphData);
 const clickedNodes = computed(() => mainStore.clickedNodes);
-const proteomicsKeggIDDict = computed(() => mainStore.proteomicsKeggIDDict);
 
 // watch
 watch(interactionGraphData, () => {
@@ -67,16 +65,9 @@ const queryEgoGraphs = () => {
   //const $q = useQuasar();
   //$q.loading.show();
   let ids: string[] = [];
-  if (targetDatabase.value === 'kegg') {
-    ids = clickedNodes.value.map((elem) => {
-      return proteomicsKeggIDDict.value[elem.id];
-    });
-  }
-  if (targetDatabase.value === 'reactome') {
-    ids = clickedNodes.value.map((elem) => {
-      return elem.id;
-    });
-  }
+  ids = clickedNodes.value.map((elem) => {
+    return elem.id;
+  });
   fetch('/interaction_graph', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

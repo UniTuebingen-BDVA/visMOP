@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { defineStore } from 'pinia';
 import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
-import { reactomeEntry } from '@/core/reactomeTypes';
+import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { Loading } from 'quasar';
 
 interface State {
@@ -12,14 +12,7 @@ interface State {
   targetDatabase: string;
   transcriptomicsTableHeaders: ColType[];
   transcriptomicsTableData: { [key: string]: string | number }[];
-  /**
-   * KEY: Symbol -> VAL: KEGGID
-   */
-  transcriptomicsSymbolDict: { [key: string]: string };
-  /**
-   * KEY: KEGGID -> VAL: SYMBOL
-   */
-  transcriptomicsKeggIDDict: { [key: string]: string };
+
   proteomicsTableHeaders: ColType[];
   proteomicsTableData: { [key: string]: string | number }[];
   clickedNodes: {
@@ -29,14 +22,7 @@ interface State {
     fcProt: number;
     delete: unknown;
   }[];
-  /**
-   * KEY: Symbol -> VAL: KEGGID
-   */
-  proteomicsSymbolDict: { [key: string]: string };
-  /**
-   * KEY: KEGGID -> VAL: SYMBOL
-   */
-  proteomicsKeggIDDict: { [key: string]: string };
+
   metabolomicsTableHeaders: ColType[];
   metabolomicsTableData: { [key: string]: string | number }[];
   usedSymbolCols: {
@@ -84,7 +70,6 @@ interface State {
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
-  keggIDGenesymbolDict: { [key: string]: string };
   pathwayCompare: string[];
   glyphData: {
     [key: string]: glyphData;
@@ -104,13 +89,9 @@ export const useMainStore = defineStore('mainStore', {
     targetDatabase: 'reactome',
     transcriptomicsTableHeaders: [],
     transcriptomicsTableData: [],
-    transcriptomicsSymbolDict: {},
-    transcriptomicsKeggIDDict: {},
     proteomicsTableHeaders: [],
     proteomicsTableData: [],
     clickedNodes: [],
-    proteomicsSymbolDict: {},
-    proteomicsKeggIDDict: {},
     metabolomicsTableHeaders: [],
     metabolomicsTableData: [],
     usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
@@ -152,7 +133,6 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: false,
     },
     pathayAmountDict: {},
-    keggIDGenesymbolDict: {},
     pathwayCompare: [],
     glyphData: {},
     glyphs: { url: {}, svg: {} },
@@ -163,11 +143,11 @@ export const useMainStore = defineStore('mainStore', {
     addClickedNode(val: { queryID: string; name: string }) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       // TODO multiIDs will not work at the moment
-      const keggIDs = val.queryID.split(';');
+      const idArray = val.queryID.split(';');
       const enteredKeys = this.clickedNodes.map((row) => {
         return row.id;
       });
-      keggIDs.forEach((element) => {
+      idArray.forEach((element) => {
         try {
           if (!enteredKeys.includes(element)) {
             this.appendClickedNode(val);
@@ -178,10 +158,7 @@ export const useMainStore = defineStore('mainStore', {
       });
     },
     addClickedNodeFromTable(row: { [key: string]: string }) {
-      let id = row[this.usedSymbolCols.proteomics];
-      if (this.targetDatabase === 'kegg') {
-        id = this.proteomicsSymbolDict[id];
-      }
+      const id = row[this.usedSymbolCols.proteomics];
       const enteredKeys = this.clickedNodes.map((row) => {
         return row.id;
       });
@@ -201,17 +178,6 @@ export const useMainStore = defineStore('mainStore', {
         fcProt: -1,
         delete: val,
       };
-      if (this.targetDatabase === 'kegg') {
-        const symbolProt = this.proteomicsKeggIDDict[val.queryID];
-        const symbolTrans = this.transcriptomicsKeggIDDict[val.queryID];
-        tableEntry = {
-          id: val.queryID,
-          name: `${symbolTrans}/${symbolProt}`,
-          fcTranscript: this.fcs[val.queryID].transcriptomics,
-          fcProt: this.fcs[val.queryID].proteomics,
-          delete: val,
-        };
-      }
       if (this.targetDatabase === 'reactome') {
         tableEntry = {
           id: val.queryID,
@@ -226,11 +192,6 @@ export const useMainStore = defineStore('mainStore', {
     queryEgoGraps(val: number) {
       Loading.show();
       let ids: string[] = [];
-      if (this.targetDatabase === 'kegg') {
-        ids = this.clickedNodes.map((elem) => {
-          return this.proteomicsKeggIDDict[elem.id];
-        });
-      }
       if (this.targetDatabase === 'reactome') {
         ids = this.clickedNodes.map((elem) => {
           return elem.id;
@@ -266,9 +227,6 @@ export const useMainStore = defineStore('mainStore', {
     setTargetDatabase(val: string) {
       this.targetDatabase = val;
     },
-    setKeggIDGeneSymbolDict(val: { [x: string]: string }) {
-      this.keggIDGenesymbolDict = val;
-    },
     setOverviewData(val: { [key: string]: entry }) {
       this.overviewData = val;
     },
@@ -301,20 +259,11 @@ export const useMainStore = defineStore('mainStore', {
     setTranscriptomicsTableData(val: { [x: string]: string | number }[]) {
       this.transcriptomicsTableData = val;
     },
-    setTranscriptomicsSymbolDict(val: { [x: string]: string }) {
-      this.transcriptomicsSymbolDict = val;
-      this.transcriptomicsKeggIDDict = _.invert(val);
-    },
     setProteomicsTableHeaders(val: ColType[]) {
       this.proteomicsTableHeaders = val;
     },
     setProteomicsTableData(val: { [x: string]: string | number }[]) {
       this.proteomicsTableData = val;
-    },
-
-    setProteomicsSymbolDict(val: { [x: string]: string }) {
-      this.proteomicsSymbolDict = val;
-      this.proteomicsKeggIDDict = _.invert(val);
     },
     setMetabolomicsTableHeaders(val: ColType[]) {
       this.metabolomicsTableHeaders = val;
@@ -497,39 +446,6 @@ export const useMainStore = defineStore('mainStore', {
         transcriptomics: colorScaleTranscriptomics,
         proteomics: colorScaleProteomics,
         metabolomics: colorScaleMetabolomics,
-      };
-    },
-    setPathwayLayoutingKegg(val: {
-      pathwayList: [{ text: string; value: string; title: string }];
-      pathwayNodeDictionary: { [key: string]: string[] };
-    }) {
-      const nodePathwayDict: { [key: string]: string[] } = {};
-      const pathwayNodeDictClean: { [key: string]: string[] } = {};
-      Object.keys(val.pathwayNodeDictionary).forEach((pathwayID) => {
-        val.pathwayNodeDictionary[pathwayID].forEach((nodeIDstr) => {
-          const nodeIDs = nodeIDstr.split(';');
-          nodeIDs.forEach((nodeID) => {
-            const nodeIDreplace = nodeID.replace('cpd:', '').replace('gl:', '');
-            // for nodePathwayDict
-            if (Object.keys(nodePathwayDict).includes(nodeIDreplace)) {
-              nodePathwayDict[nodeIDreplace].push(pathwayID);
-            } else {
-              nodePathwayDict[nodeIDreplace] = [pathwayID];
-            }
-            // for pathwayNodeDictClean
-            if (Object.keys(pathwayNodeDictClean).includes(pathwayID)) {
-              pathwayNodeDictClean[pathwayID].push(nodeIDreplace);
-            } else {
-              pathwayNodeDictClean[pathwayID] = [nodeIDreplace];
-            }
-          });
-        });
-      });
-      this.pathwayLayouting = {
-        ...val,
-        nodePathwayDictionary: nodePathwayDict,
-        pathwayNodeDictionaryClean: pathwayNodeDictClean,
-        rootIds: [],
       };
     },
     setPathwayLayoutingReactome(val: {

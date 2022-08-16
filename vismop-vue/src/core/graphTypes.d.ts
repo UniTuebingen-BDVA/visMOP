@@ -87,7 +87,10 @@ export interface graphData {
   attributes: { [name: string]: string };
   nodes: node[];
   edges: edge[];
-  clusterAreas:  {normalHullPoints: { hullPoints: number[][][], greyValues: number[] }, focusHullPoints: number[][][]},
+  clusterAreas: {
+    normalHullPoints: { hullPoints: number[][][]; greyValues: number[] };
+    focusHullPoints: number[][][];
+  };
   options: unkown;
 }
 export interface networkxNodeLink {
@@ -96,7 +99,7 @@ export interface networkxNodeLink {
   links: [{ [key: string]: string }];
 }
 /**
- * Defines a kegg relation
+ * Defines a graph relation
  */
 export interface relation {
   relationID: string;
@@ -106,13 +109,14 @@ export interface relation {
   edgeType: string;
 }
 /**
- * Defines an kegg entry
+ * Defines an graph entry
  */
 export interface entry {
+  // seems Deprecated
   moduleNum: any;
   name: string;
   entryType: string;
-  keggID: string;
+  entryID: string;
   isempty: boolean;
   initialPosX: number;
   initialPosY: number;
