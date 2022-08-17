@@ -615,7 +615,6 @@ class PathwayHierarchy(dict):
                     entry,
                     pathway,
                     query_pathway_dict,
-                    True,
                     verbose,
                     omic_limits,
                     self.omics_recieved,
@@ -673,7 +672,6 @@ def generate_overview_pathway_entry(
     entry,
     pathway_Id,
     query_pathway_dict,
-    draw_in_overview,
     verbose,
     omic_limits,
     omics_recieved,
@@ -683,7 +681,6 @@ def generate_overview_pathway_entry(
         entry: entry object
         pathway_Id: if of pathway
         query_pathway_dict: dictionary associating query id to pathways in which query is appearing
-        draw_in_overview: ????
         verbose: boolean if total proteins should be enumerated or if only number should be used
 
 

@@ -6,22 +6,22 @@ Basic Types
 
 import { glyphData } from '../core/generalTypes';
 
-interface form {
+type form = {
   name: string;
   toplevelId: number[];
-}
+};
 
-interface measure {
+type measure = {
   queryId: string;
   value: number;
   name: string;
   forms: { [key: string]: form };
-}
-interface omicsEntry {
+};
+type omicsEntry = {
   measured: { [key: string]: measure };
   total: number;
-}
-interface reactomeEntry {
+};
+type reactomeEntry = {
   entries: {
     proteomics: omicsEntry;
     transcriptomics: omicsEntry;
@@ -46,32 +46,32 @@ interface reactomeEntry {
     transcriptomics: { [key: number]: { stableID: string; nodes: string[] } };
     metabolomics: { [key: number]: { stableID: string; nodes: string[] } };
   };
-}
+};
 
-interface graphNode {
+type graphNode = {
   schemaClass: string;
   dbId: number;
   stId: string;
   speciesID: number;
   displayName: string;
-}
+};
 
-interface entityNode extends graphNode {
+type entityNode = graphNode & {
   identifier: string;
   parents: number[];
   children: number[];
   geneNames: string[];
   diagramIds: number[];
-}
+};
 
-interface subpathwayNode {
+type subpathwayNode = {
   dbId: number;
   stId: string;
   events: number[];
   displayName: string;
-}
+};
 
-interface eventNode extends graphNode {
+type eventNode = graphNode & {
   catalysts: number[];
   inhibitors: number[];
   activators: number[];
@@ -81,25 +81,25 @@ interface eventNode extends graphNode {
   preceding: number[];
   following: number[];
   requirements: number[];
-}
+};
 
-export interface coordinate {
+type coordinate = {
   x: number;
   y: number;
-}
+};
 
-export interface coordinateBound extends coordinate {
+type coordinateBound = coordinate & {
   width: number;
   height: number;
-}
+};
 
-export interface color {
+type color = {
   r: number;
   b: number;
   g: number;
-}
+};
 
-export interface shape {
+type shape = {
   r: number;
   b: coordinate;
   a: coordinate;
@@ -108,14 +108,14 @@ export interface shape {
   r1: number;
   empty: boolean;
   type: string;
-}
+};
 
-export interface segment {
+type segment = {
   from: coordinate;
   to: coordinate;
-}
+};
 
-export interface connector {
+type connector = {
   edgeId: number;
   segments: segment[];
   endShape: shape;
@@ -123,26 +123,26 @@ export interface connector {
   isDisease: boolean;
   isFadeOut: boolean;
   type: string;
-}
+};
 
-export interface reactomeNodeAttachment {
+type reactomeNodeAttachment = {
   reactomeId: number;
   label: string;
   description: string;
   shape: shape;
-}
+};
 
-export interface reactionPart {
+type reactionPart = {
   stoichiometry: number;
   points: coordinate[];
   id: number;
-}
+};
 
 /*
 Core Node and Edge Classes
 */
 
-export interface reactomeDiagramObject {
+type reactomeDiagramObject = {
   reactomeId: number;
   schemaClass: string;
   renderableClass: string;
@@ -155,9 +155,9 @@ export interface reactomeDiagramObject {
   maxY: number;
   id: number;
   displayName: string;
-}
+};
 
-export interface reactomeNodeCommon {
+type reactomeNodeCommon = {
   prop: coordinateBound;
   innerProp: coordinateBound;
   identifier: { resource: string; id: string };
@@ -167,9 +167,9 @@ export interface reactomeNodeCommon {
   fgColor: color;
   isCrossed: boolean;
   needDashedBorder: boolean;
-}
+};
 
-export interface reactomeEdgeCommon {
+type reactomeEdgeCommon = {
   segments: segment[];
   endShape: shape;
   catalysts: reactionPart[];
@@ -182,64 +182,56 @@ export interface reactomeEdgeCommon {
   reactionShape: shape;
   inputs: reactionPart[];
   outputs: reactionPart[];
-}
+};
 
 /*
 More Specific Node and Edge classes
 */
 
-export interface reactomeNode
-  extends reactomeDiagramObject,
-    reactomeNodeCommon {
-  nodeAttachments: reactomeNodeAttachment[];
-  interactorsSummary: {
-    pressed: boolean;
-    shape: shape;
-    hit: boolean;
-    type: string;
-    number: number;
+type reactomeNode = reactomeDiagramObject &
+  reactomeNodeCommon & {
+    nodeAttachments: reactomeNodeAttachment[];
+    interactorsSummary: {
+      pressed: boolean;
+      shape: shape;
+      hit: boolean;
+      type: string;
+      number: number;
+    };
+    trivial: boolean;
+    connectors: connector[];
   };
-  trivial: boolean;
-  connectors: connector[];
-}
 
-export interface reactomeNote
-  extends reactomeNodeCommon,
-    reactomeDiagramObject {}
+type reactomeNote = reactomeNodeCommon & reactomeDiagramObject;
 
-export interface reactomeEdge
-  extends reactomeEdgeCommon,
-    reactomeDiagramObject {}
+type reactomeEdge = reactomeEdgeCommon & reactomeDiagramObject;
 
-export interface reactomeLink
-  extends reactomeEdgeCommon,
-    reactomeDiagramObject {}
+type reactomeLink = reactomeEdgeCommon & reactomeDiagramObject;
 
-export interface reactomeCompartment
-  extends reactomeNodeCommon,
-    reactomeDiagramObject {
-  compontentIds: number[];
-}
+type reactomeCompartment = reactomeNodeCommon &
+  reactomeDiagramObject & {
+    compontentIds: number[];
+  };
 
-export interface reactomeShadow extends reactomeDiagramObject {
+type reactomeShadow = reactomeDiagramObject & {
   prop: coordinateBound;
   points: coordinate[];
   colour: string;
-}
+};
 
 /*
 Main JSON File definitions
 */
 
-export interface graphJSON {
+type graphJSON = {
   nodes: { [key: number]: entityNode };
   edges: { [key: number]: eventNode };
   subpathways: { [key: number]: eventNode };
   dbId: number;
   stId: string;
-}
+};
 
-export interface layoutJSON {
+type layoutJSON = {
   nodes: reactomeNode[];
   isDisease: boolean;
   minX: number;
@@ -256,18 +248,18 @@ export interface layoutJSON {
   cPicture: string;
   forNormalDraw: boolean;
   displayName: string;
-}
+};
 
 /*
 Misc. classes needed for detail View.
 */
 
-export interface foldChangesByType {
+type foldChangesByType = {
   proteomics: { [key: number]: number };
   transcriptomics: { [key: number]: number };
   metabolomics: { [key: number]: number };
-}
+};
 
-export interface foldChangesByID {
+type foldChangesByID = {
   [key: number]: glyphData;
-}
+};

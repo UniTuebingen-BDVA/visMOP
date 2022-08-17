@@ -16,3 +16,7 @@ export const overviewColors = {
   onShortestPath: 'rgba(255,180,255,1.0)',
   edgeShortestPath: 'rgba(255,180,255,1.0)',
 };
+
+export const glyphsNoValueGrey = 'rgb(150,150,150)';
+
+export const defaultInteractionGraphEdgeColor = 'rgb(75,75,75)';

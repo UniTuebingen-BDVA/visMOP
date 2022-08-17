@@ -3,17 +3,18 @@ import sys
 import pathlib
 
 
-def generate_pickles(file_path, mapping_file):
+def generate_pickles(file_path, mapping_file_name):
     """generate pickle mapping objects from mapping files. This is function should be run when updating the reactome data
 
     Args:
-        mapping_file: path to mapping file
+        file_path: path to pickles
+        mapping_file_name: mapping file name
 
     """
     data_path = pathlib.Path(file_path)
     database_2_reactome = {}
     # mapping_file e.g. 'UniProt2Reactome_PE_Pathway.txt' for uniprot
-    with open(data_path / mapping_file, encoding="utf8") as fh:
+    with open(data_path / mapping_file_name, encoding="utf8") as fh:
         for line in fh:
             line_split = line.strip().split("\t")
             uniprot_ID = line_split[0]
@@ -46,7 +47,7 @@ def generate_pickles(file_path, mapping_file):
         with open(
             data_path
             / "pickles"
-            / "{}_{}.pickle".format(key, mapping_file.split("_")[0]),
+            / "{}_{}.pickle".format(key, mapping_file_name.split("_")[0]),
             "wb",
         ) as handle:
             pickle.dump(

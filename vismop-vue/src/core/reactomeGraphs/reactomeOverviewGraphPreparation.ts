@@ -1,10 +1,9 @@
 import * as _ from 'lodash';
 import {
-  node,
   edge,
-  graphData,
-  baseNodeAttr,
   baseEdgeAttr,
+  overviewNode,
+  overviewGraphData,
 } from '@/core/graphTypes';
 import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
 import { reactomeEntry } from './reactomeTypes';
@@ -28,8 +27,8 @@ export function generateGraphData(
   },
   rootIds: string[],
   moduleAreas: [number[]] = [[]]
-): graphData {
-  const graph = {
+): overviewGraphData {
+  const graph: overviewGraphData = {
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
@@ -38,7 +37,7 @@ export function generateGraphData(
       focusHullPoints: [[[]]],
     },
     options: [],
-  } as graphData;
+  };
   const addedEdges: string[] = [];
   let index = 0;
   let maxModuleNum = 0;
@@ -50,7 +49,7 @@ export function generateGraphData(
     const initPosY = entry.initialPosY;
     const modNum = entry.moduleNum;
     maxModuleNum = Math.max(maxModuleNum, modNum);
-    const currentNode = {
+    const currentNode: overviewNode = {
       key: id,
       index: index,
       // label: "",
@@ -113,8 +112,8 @@ export function generateGraphData(
             ? overviewGraph.ROOT_DEFAULT_SIZE
             : overviewGraph.DEFAULT_SIZE,
         fixed: false, // fixed property on nodes excludes nodes from layouting
-      } as baseNodeAttr,
-    } as node;
+      },
+    };
     graph.nodes.push(currentNode);
     const currentEdge = generateForceGraphEdge(
       entry.rootId,
@@ -164,7 +163,8 @@ export function generateGraphData(
     maxModuleNum,
     moduleAreas
   );
-  let norm_node_pos = nodes_per_cluster[nodes_per_cluster.length - 1] as node[]; // already add superpathways as they are not part of the convex hull
+  let norm_node_pos: overviewNode[] =
+    nodes_per_cluster[nodes_per_cluster.length - 1]; // already add superpathways as they are not part of the convex hull
   nodes_per_cluster.pop();
   const max_ext = 20;
   const clusterHullsAdjustment = new ClusterHulls(60);

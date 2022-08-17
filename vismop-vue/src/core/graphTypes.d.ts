@@ -2,34 +2,33 @@ import { Attributes } from 'graphology-types';
 /**
  * Defines a set of edge attributes
  */
-export interface fadeEdgeAttr extends Attributes {
+type fadeEdgeAttr = Attributes & {
   sourceColor: string;
   targetColor: string;
   zIndex: number;
   fadeColor: string;
   nonFadeColor: string;
   type: string;
-}
+};
 
-export interface baseEdgeAttr extends Attributes {
+type baseEdgeAttr = Attributes & {
   type: string;
   zIndex: number;
   color: string;
-}
+};
 
 /**
  * Defines an edge
  */
-export interface edge {
+type edge = {
   key: string;
   source: string;
   target: string;
   attributes: Attributes;
-}
+};
 
-export interface detailNodeAttr extends baseNodeAttr {
+type detailNodeAttr = baseNodeAttr & {
   origPos: { [key: string]: number[] };
-
   secondaryColor: string;
   outlineColor: string;
   nonFadeColor: string;
@@ -38,82 +37,106 @@ export interface detailNodeAttr extends baseNodeAttr {
   fadeColorSecondary: string;
   initialX: number;
   initialY: number;
-}
+};
 
-export interface baseNodeAttr extends Attributes {
-  yOnClusterFocus: number;
-  xOnClusterFocus: any;
+type baseNodeAttr = Attributes & {
   name: string;
   id: string;
   x: number;
   y: number;
-  modNum: number;
-  up?: upDatedPos;
-  isRoot: boolean;
   zIndex: number;
   color: string;
   size: number;
   fixed: boolean;
-  nodeType: string;
   type: string;
   label: string;
-}
+};
 
-export interface CartesianVector {
+type overviewNodeAttr = baseNodeAttr & {
+  yOnClusterFocus: number;
+  xOnClusterFocus: number;
+  modNum: number;
+  up: upDatedPos;
+  isRoot: boolean;
+  nodeType: string;
+};
+
+type CartesianVector = {
   x: number;
   y: number;
-}
+};
 /**
  * Defines a updated node position
  */
-export interface upDatedPos {
+type upDatedPos = {
   x: number;
   y: number;
   gamma: number;
-}
+};
 
 /**
  * Defines a node
  */
-export interface node {
+type node = {
   key: string;
   index: number;
   attributes: baseNodeAttr;
-}
+};
+
+type overviewNode = node & {
+  attributes: overviewNodeAttr;
+};
+
 /**
  * Defines a Graph Data object
  */
-export interface graphData {
+type graphData = {
   attributes: { [name: string]: string };
   nodes: node[];
   edges: edge[];
+
+  options: unkown;
+};
+
+/**
+ * Defines overview Graph Data
+ */
+type overviewGraphData = graphData & {
+  nodes: overviewNode[];
   clusterAreas: {
     normalHullPoints: { hullPoints: number[][][]; greyValues: number[] };
     focusHullPoints: number[][][];
   };
-  options: unkown;
-}
-export interface networkxNodeLink {
+};
+
+type networkxNode = {
+  labelName: string;
+  key: string;
+  egoNode: string;
+  size: number;
+  identity: string;
+};
+type networkxNodeLink = {
   graph: { identities: number[] };
-  nodes: [{ [key: string]: string }];
+  nodes: networkxNode[];
   links: [{ [key: string]: string }];
-}
+};
 /**
  * Defines a graph relation
  */
-export interface relation {
+type relation = {
   relationID: string;
   source: string;
   target: string;
   relationType: string;
   edgeType: string;
-}
+};
 /**
  * Defines an graph entry
  */
-export interface entry {
+type entry = {
   // seems Deprecated
-  moduleNum: any;
+  moduleNum: number;
   name: string;
   entryType: string;
   entryID: string;
@@ -127,4 +150,4 @@ export interface entry {
   metabolomicsValue: number | string;
   label: string;
   origPos: { [key: string]: number[] };
-}
+};

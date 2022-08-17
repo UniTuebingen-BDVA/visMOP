@@ -3,7 +3,6 @@ import { graphData, networkxNodeLink } from '@/core/graphTypes';
 import Sigma from 'sigma';
 import { MultiGraph } from 'graphology';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
-import random from 'graphology-layout/random';
 import ColorFadeEdgeProgram from '@/core/custom-nodes/colorfade-edge-program';
 import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import * as d3 from 'd3';
@@ -55,6 +54,8 @@ export function generateInteractionGraphData(
       key: node.key,
       index: index,
       attributes: {
+        id: node.key,
+        name: node.labelName ? node.labelName : node.key,
         label: node.labelName ? node.labelName : node.key,
         x: Math.random(),
         y: Math.random(),
@@ -69,6 +70,8 @@ export function generateInteractionGraphData(
               : colors[parseInt(node.egoNode) % colors.length]
             : 'rgba(255,255,255,0.0)',
         size: node.size ? node.size : 5,
+        fixed: false,
+        zIndex: 1,
       },
     });
     index += 1;
@@ -103,8 +106,8 @@ export function generateInteractionGraphData(
 }
 /**
  *
- * @param {String} elemID target html container for sigma renderer
- * @param nodeLink Node link Data from networkx serialized as json
+ * @param {String} elemID: target html container for sigma renderer
+ * @param {networkxNodeLink} nodeLink: Node link Data from networkx serialized as json
  * @returns {Sigma} sigma renderer
  */
 export function generateInteractionGraph(

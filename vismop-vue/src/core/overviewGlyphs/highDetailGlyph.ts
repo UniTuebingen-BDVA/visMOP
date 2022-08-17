@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import * as _ from 'lodash';
 import { glyphData } from '../generalTypes';
-import { noValueGrey } from './glyphConstants';
+import { glyphsNoValueGrey } from '@/core/colors';
 
 /**
  * Glyph class for glyphs describing the results of omics or multiomics experiments on a per pathway basis
@@ -374,7 +374,7 @@ export class HighDetailGlyph {
       startAngle: startAngleVal,
       endAngle: startAngleVal + this.thirdCircleElement,
       padAngle: 0,
-      color: omicsColors.length > 0 ? 'none' : noValueGrey,
+      color: omicsColors.length > 0 ? 'none' : glyphsNoValueGrey,
     });
     omicsColors.forEach((_element, idx) => {
       const pushDat = {
