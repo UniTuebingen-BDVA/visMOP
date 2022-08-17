@@ -98,15 +98,26 @@ type graphData = {
   options: unkown;
 };
 
+type hullPoints = number[][][];
+
+type additionalData = {
+  clusterAreas: {
+    hullPoints: hullPoints;
+    greyValues: number[];
+  };
+};
+
+type clusterData = {
+  normalHullPoints: hullPoints;
+  focusHullPoints: hullPoints;
+  greyValues: number[];
+};
 /**
  * Defines overview Graph Data
  */
 type overviewGraphData = graphData & {
+  clusterData: clusterData;
   nodes: overviewNode[];
-  clusterAreas: {
-    normalHullPoints: { hullPoints: number[][][]; greyValues: number[] };
-    focusHullPoints: number[][][];
-  };
 };
 
 type networkxNode = {

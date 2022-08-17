@@ -110,7 +110,7 @@ export class ModuleSummaryGlyph {
       .innerRadius(this.radius / 4)
       .outerRadius(this.radius - 2);
 
-    const arcSeg = g
+    const _arcSeg = g
       .selectAll('g')
       .data(this.outerArcDat)
       .enter()

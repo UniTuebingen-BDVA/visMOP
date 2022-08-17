@@ -8,6 +8,7 @@ import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
+import { defaultInteractionGraphEdgeColor } from './colors';
 const satColors = [
   'rgba(228,26,28,1.0)',
   'rgba(55,126,184,1.0)',
@@ -88,7 +89,7 @@ export function generateInteractionGraphData(
         size: edge.egoEgoEdge ? 3 : 1,
         // type: edge.edgeType ? 'line' : 'dashed',
         // color: edge.edgeType ? 'rgb(75,75,75)' : 'rgb(255,75,75)',
-        color: edge.color ? edge.color : 'rgb(75,75,75)',
+        color: edge.color ? edge.color : defaultInteractionGraphEdgeColor,
         sourceColor: edge.egoEgoEdge
           ? satColors[parseInt(edge.egoEgoEdge[0]) % satColors.length]
           : 'egoEdge' in edge

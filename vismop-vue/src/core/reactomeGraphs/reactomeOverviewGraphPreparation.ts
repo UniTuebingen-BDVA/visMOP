@@ -32,9 +32,10 @@ export function generateGraphData(
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
-    clusterAreas: {
-      normalHullPoints: { hullPoints: [[[]]], greyValues: [] },
+    clusterData: {
+      normalHullPoints: [[[]]],
       focusHullPoints: [[[]]],
+      greyValues: [],
     },
     options: [],
   };
@@ -127,7 +128,7 @@ export function generateGraphData(
       graph.edges.push(currentEdge);
       addedEdges.push(currentEdge.key);
     }
-    for (const [maplink, value] of Object.entries(entry.maplinks)) {
+    for (const [maplink] of Object.entries(entry.maplinks)) {
       if (!rootIds.includes(entry.pathwayId)) {
         for (const entryKey in nodeList) {
           const loopEntry = nodeList[entryKey];
@@ -212,10 +213,9 @@ export function generateGraphData(
   });
   // if one wants to use rectangle use getRightResultFormForRectangle()
 
-  graph.clusterAreas = {
-    normalHullPoints: { hullPoints: clusterHulls, greyValues: greyValues },
-    focusHullPoints: focusClusterHulls,
-  };
+  graph.clusterData.normalHullPoints = clusterHulls;
+  graph.clusterData.focusHullPoints = focusClusterHulls;
+  graph.clusterData.greyValues = greyValues;
 
   graph.nodes = norm_node_pos;
 

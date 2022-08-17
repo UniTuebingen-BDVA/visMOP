@@ -2,6 +2,10 @@ import { useMainStore } from '@/stores';
 import { glyphData, omicsData } from '../generalTypes';
 import { reactomeEntry } from '../reactomeGraphs/reactomeTypes';
 
+/**
+ * Uses Omics Data from main pinia store and generates the data needed to draw the overview glyphs
+ * @returns
+ */
 export function generateGlyphDataReactome(): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {};
   const mainStore = useMainStore();

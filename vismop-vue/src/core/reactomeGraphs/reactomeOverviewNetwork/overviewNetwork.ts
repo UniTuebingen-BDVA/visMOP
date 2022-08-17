@@ -1,6 +1,10 @@
 import { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
-import { baseNodeAttr, graphData } from '@/core/graphTypes';
+import {
+  additionalData,
+  overviewGraphData,
+  overviewNodeAttr,
+} from '@/core/graphTypes';
 //import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
@@ -46,12 +50,10 @@ export default class overviewGraph {
   protected camera;
   protected prevFrameZoom;
   protected graph;
-  protected clusterAreas: any;
-  protected adjustedClusterAreas;
-  protected focusClusterAreas;
+  protected clusterData;
   protected lodRatio = 1;
   protected lastClickedClusterNode = -1;
-  protected additionalData: any;
+  protected additionalData!: additionalData;
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -144,10 +146,9 @@ export default class overviewGraph {
     },
   };
 
-  constructor(containerID: string, graphData: graphData) {
+  constructor(containerID: string, graphData: overviewGraphData) {
     this.graph = UndirectedGraph.from(graphData);
-    this.adjustedClusterAreas = graphData.clusterAreas.normalHullPoints;
-    this.focusClusterAreas = graphData.clusterAreas.focusHullPoints;
+    this.clusterData = graphData.clusterData;
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
@@ -158,44 +159,19 @@ export default class overviewGraph {
   /**
    * Initializes the omics graph
    * @param {string} elemID
-   * @param {graphData} graphData
    * @returns {Sigma} Sigma instance
    */
   mainGraph(elemID: string): Sigma {
     this.additionalData = {
-      clusterAreas: this.adjustedClusterAreas,
+      clusterAreas: {
+        hullPoints: this.clusterData.normalHullPoints,
+        greyValues: this.clusterData.greyValues,
+      },
     };
 
     const mainStore = useMainStore();
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
-
-    // const inferredSettings = forceAtlas2.inferSettings(this.graph);
-    // // To directly assign the positions to the nodes:
-    const start = Date.now();
-
-    // forceAtlas2.assign(this.graph, {
-    //   iterations: 500,
-    //   settings: inferredSettings,
-    // });
-    // noverlap.assign(this.graph);
-    // let all_x = [] as number[]
-    // let all_y = [] as number[]
-
-    // this.graph.forEachNode((_, attributes) => {
-    //   all_x.push(attributes.x)
-    //   all_y.push(attributes.y)
-
-    // })
-    // let min_x = Math.min(...all_x)
-    // let max_x = Math.max(...all_x)
-    // let min_y = Math.min(...all_y)
-    // let max_y = Math.max(...all_y)
-
-    // this.graph.forEachNode((_, attributes) => {
-    //   attributes.x = ( attributes.x - min_x) / (max_x-min_x) *20
-    //   attributes.y = ( attributes.y- min_y) / (max_y-min_y) *20
-    //     })
     // construct Sigma main instance
     const renderer = new Sigma(
       this.graph,
@@ -221,12 +197,6 @@ export default class overviewGraph {
       },
       this.additionalData
     );
-    console.log('Node Programs:');
-    console.log(renderer.getSetting('nodeProgramClasses'));
-    const duration = (Date.now() - start) / 1000;
-    console.log(`layoutDuration: ${duration} S`);
-    // const layout = new FA2Layout(graph, {settings: sensibleSettings });
-    // layout.start();
     const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
       return attr.isRoot;
     });
@@ -259,7 +229,7 @@ export default class overviewGraph {
       filterElements.bind(this)();
     });
 
-    renderer.on('leaveNode', ({ node }) => {
+    renderer.on('leaveNode', () => {
       this.highlighedNodesHover.clear();
       this.highlighedEdgesHover.clear();
       this.highlightedCenterHover = '';
@@ -337,26 +307,18 @@ export default class overviewGraph {
             attributes.nonHoverSize = overviewGraph.DEFAULT_SIZE;
           }
         });
-        console.log(this.adjustedClusterAreas);
-        console.log('----------------------------------------------');
-
-        console.log({
-          clusterAreas: {
-            hullPoints: [this.focusClusterAreas[parseInt(node)]],
-            greyValues: [this.adjustedClusterAreas.greyValues[parseInt(node)]],
-          },
-        });
 
         this.additionalData = defocus
           ? Object.assign(this.additionalData, {
-              clusterAreas: this.adjustedClusterAreas,
+              clusterAreas: {
+                hullPoints: this.clusterData.normalHullPoints,
+                greyValues: this.clusterData.greyValues,
+              },
             })
           : Object.assign(this.additionalData, {
               clusterAreas: {
-                hullPoints: [this.focusClusterAreas[parseInt(node)]],
-                greyValues: [
-                  this.adjustedClusterAreas.greyValues[parseInt(node)],
-                ],
+                hullPoints: [this.clusterData.focusHullPoints[parseInt(node)]],
+                greyValues: [this.clusterData.greyValues[parseInt(node)]],
               },
             });
         this.lastClickedClusterNode = defocus ? -1 : parseInt(node);
@@ -401,7 +363,7 @@ export default class overviewGraph {
     for (const key in Object.keys(moduleNodeMapping)) {
       const xPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
       const yPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
-      const moduleNode: baseNodeAttr = {
+      const moduleNode: overviewNodeAttr = {
         name: key,
         id: key,
         x: xPos,
@@ -424,6 +386,7 @@ export default class overviewGraph {
         nodeType: 'moduleNode',
         nonHoverSize: overviewGraph.MODULE_DEFAULT_SIZE,
         fixed: false,
+        up: { x: xPos, y: yPos, gamma: 0 },
         type: 'image',
         label: `Cluster: ${key}`,
         image: glyphs[key],
@@ -444,7 +407,7 @@ export default class overviewGraph {
   public setAverageFilter = setAverageFilter;
   public setRootFilter = setRootFilter;
   /**
-   * Refresehes sets current pathway to the versionen selected in the store
+   * Refresehes sets current pathway to the version selected in the store
    */
   public refreshCurrentPathway() {
     const mainStore = useMainStore();

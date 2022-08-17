@@ -1,7 +1,5 @@
 import _ from 'lodash';
 import { glyphData, omicsData } from '../generalTypes';
-import { HighDetailGlyph } from './highDetailGlyph';
-import { LowDetailGlyph } from './lowDetailGlyph';
 import { ModuleSummaryGlyph } from './moduleSummaryGlyph';
 
 /**
@@ -18,7 +16,6 @@ export function generateGlyphs(
   [key: string]: string;
 } {
   const outObjURL: { [key: string]: string } = {};
-  const outObjSVG: { [key: string]: SVGElement } = {};
   const moduleGlyphData = generateModuleGlyphData(inputData, moduleNodeMapping);
   for (const key in moduleGlyphData) {
     if (Object.prototype.hasOwnProperty.call(moduleGlyphData, key)) {

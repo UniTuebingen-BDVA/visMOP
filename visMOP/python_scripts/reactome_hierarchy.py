@@ -268,7 +268,7 @@ class PathwayHierarchy(dict):
                     self._find_diagram_recursion(parent, final_entries, steps + 1)
             else:
                 if not arrived_at_diagram:
-                    print("did not find diagram for: ", key)
+                    print("did not find diagram for: ", entry_id)
 
     def aggregate_pathways(self):
         """Aggregates data from low level nodes to higher level nodes
