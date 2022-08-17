@@ -1,10 +1,10 @@
 export const overviewColors = {
-  selected: 'rgba(215,59,86,1.0)',
-  modules: 'rgba(204,74,182, 1.0)',
-  roots: 'rgba(191,193,59,1.0)',
-  union: 'rgba(126,90,215,1.0)',
-  intersection: 'rgba(102,205,91,1.0)',
-  highlight: 'rgba(214,106,42,1.0)',
+  selected: 'rgba(211,81,108,1.0)',
+  modules: 'rgba(184,86,202, 1.0)',
+  roots: 'rgba(204,125,59,1.0)',
+  union: 'rgba(118,130,208, 1.0)',
+  intersection: 'rgba(114,171,81,1.0)',
+  highlight: 'rgba(250,145,166,1.0)',
 
   default: 'rgba(255,255,255)',
 
