@@ -26,10 +26,10 @@ import _ from 'lodash';
 
 export default class overviewGraph {
   // constants
-  static readonly DEFAULT_SIZE = 8;
-  static readonly ROOT_DEFAULT_SIZE = 20;
-  static readonly MODULE_DEFAULT_SIZE = 20;
-  static readonly FOCUS_NODE_SIZE = 15;
+  static readonly DEFAULT_SIZE = 6;
+  static readonly ROOT_DEFAULT_SIZE = 15;
+  static readonly MODULE_DEFAULT_SIZE = 15;
+  static readonly FOCUS_NODE_SIZE = 10;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];

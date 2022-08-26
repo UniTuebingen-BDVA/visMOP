@@ -102,7 +102,7 @@ function adjustHullPoints(
       ];
       outList.push(newPushedOutPoint);
     } else {
-      console.log('else')
+      console.log('else');
       const newPushedOutPoint = [
         currPoint[0] + moveVec[0] * halfPushLen,
         currPoint[1] + moveVec[1] * halfPushLen,
@@ -175,12 +175,12 @@ export default class ClusterHulls {
   ) {
     const greyVal =
       hullNum >= firstNoneNoiseCluster
-      ? 150
-        // ? ((hullNum - firstNoneNoiseCluster) /
-        //     (totalNumHulls - 1 - firstNoneNoiseCluster)) *
-        //     (215 - 80) +
-        //   80
-        : 255;
+        ? 150
+        : // ? ((hullNum - firstNoneNoiseCluster) /
+          //     (totalNumHulls - 1 - firstNoneNoiseCluster)) *
+          //     (215 - 80) +
+          //   80
+          255;
     const finalHullNodes = adjustHullPoints(
       convexHullPoints,
       this.radianThreshold

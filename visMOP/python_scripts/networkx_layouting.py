@@ -13,29 +13,24 @@ def generate_networkx_dict(global_nodes):
         out_dict: networkX-style network dictionary
 
     """
-    out_dict = {}
+    adjacency_dict = {}
+    attribute_dict = {}
 
     for key, entry in global_nodes.items():
-        curr_node = {}
+        adj_node = {}
+        attr_node = {"size": 20}
         for out_edge in entry["outgoingEdges"]:
-            curr_node[out_edge["target"]] = {}
+            adj_node[out_edge["target"]] = {}
 
         try:
             for test_edge in entry["outgoingOnceRemoved"]:
-                curr_node[test_edge["target"]] = {}
+                adj_node[test_edge["target"]] = {}
         except:
             pass
+        attribute_dict[key] = attr_node
+        adjacency_dict[key] = adj_node
 
-        out_dict[key] = curr_node
-
-    return out_dict
-
-
-def relayout(graph, init_pos):
-    forceatlas2 = ForceAtlas2()
-    pos = forceatlas2.forceatlas2_networkx_layout(graph, pos=init_pos, iterations=250)
-    return pos
-
+    return adjacency_dict, attribute_dict
 
 def get_spring_layout_pos(node_dict, init_scale=20000):
     """calculates spring layout from NetworkX as a initials starting point for live-layouting

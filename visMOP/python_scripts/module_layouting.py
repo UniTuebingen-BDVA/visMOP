@@ -196,7 +196,9 @@ class Module_layout:
         data_table.sort_index(inplace=True)
         print("cols", data_table.columns)
         startTime = time.time()
-        networkx_dict = generate_networkx_dict(graph_dict)
+        networkx_adjacency_dict, networkx_attribute_dict = generate_networkx_dict(
+            graph_dict
+        )
         reactome_root_ids = list(reactome_roots.keys())
         self.greatest_dist_in_initial_layout = None
         self.dist_sim_threshold = 0.2
@@ -204,7 +206,8 @@ class Module_layout:
 
         # drop reatcome root ids so that thex are not used for calculating missing values and clusters
         self.data_table = data_table.drop(reactome_root_ids)
-        self.full_graph = nx.Graph(networkx_dict)
+        self.full_graph = nx.Graph(networkx_adjacency_dict)
+        nx.set_node_attributes(self.full_graph, networkx_attribute_dict)
 
         self.half_node_size = node_size / 2
         self.module_nodes_num = []
@@ -274,27 +277,36 @@ class Module_layout:
         )
 
     def area_num_node_ratio_Pool(self):
-        self.modules_area, initial_area_side_ratio = self.getSizeOfModulesRegion(
-            self.modules_center
-        )
-
-        nn_a_comp = [
-            a_r >= (nn_r - self.AN_RATIO * nn_r) and min_side >= self.MIN_SIDE_T
-            for nn_r, [a_r, min_side] in zip(
-                self.node_num_ratio, initial_area_side_ratio
-            )
-        ]
-        found_ideal = True if sum(nn_a_comp) == len(nn_a_comp) else False
         self.min_nn_ratios = [
             nn_r - self.AN_RATIO * nn_r for nn_r in self.node_num_ratio
         ]
-        (
-            init_area_comp,
-            num_area_w_greater_diff,
-            init_diff_min_side_to_success,
-            num_side_smaller,
-        ) = self.calc_com_values(self.min_nn_ratios, initial_area_side_ratio, 0)
-        initial_cost = self.evaluteCostFunction(self.modules_center)
+        try:
+            np.random.seed()
+            self.modules_area, initial_area_side_ratio = self.getSizeOfModulesRegion(
+                self.modules_center
+            )
+
+            nn_a_comp = [
+                a_r >= (nn_r - self.AN_RATIO * nn_r) and min_side >= self.MIN_SIDE_T
+                for nn_r, [a_r, min_side] in zip(
+                    self.node_num_ratio, initial_area_side_ratio
+                )
+            ]
+            found_ideal = True if sum(nn_a_comp) == len(nn_a_comp) else False
+            (
+                init_area_comp,
+                num_area_w_greater_diff,
+                init_min_side_comp,
+                num_side_smaller,
+            ) = self.calc_com_values(self.min_nn_ratios, initial_area_side_ratio, 0)
+            initial_cost = self.evaluteCostFunction(self.modules_center)
+        except:
+            found_ideal = False
+            init_area_comp, init_min_side_comp, initial_cost = inf, inf, inf
+            num_area_w_greater_diff, num_side_smaller = (
+                self.num_cluster,
+                self.num_cluster,
+            )
         if not found_ideal:
             pool = Pool(self.pool_size)
             self.MAX_RUNS_PER_PROCESS = 15
@@ -304,7 +316,7 @@ class Module_layout:
                 area_comp=init_area_comp,
                 num_area_w_greater_diff=num_area_w_greater_diff,
                 num_side_smaller=num_side_smaller,
-                diff_min_side_to_success=init_diff_min_side_to_success,
+                diff_min_side_to_success=init_min_side_comp,
                 modules_area=self.modules_area,
                 initial_cost=initial_cost,
             )
@@ -355,7 +367,7 @@ class Module_layout:
 
         print("Module sizes identified")
         print("smallest_area_diff:", init_area_comp)
-        print("smalles_min_side_diff: ", init_diff_min_side_to_success)
+        print("smalles_min_side_diff: ", init_min_side_comp)
         print("innitial_rel_dist", self.relative_distances)
         print("initial_cost: ", initial_cost)
         print("self.node_num_ratio", self.node_num_ratio)
@@ -617,7 +629,7 @@ class Module_layout:
 
     def get_cluster(self):
         """
-        get clusteres
+        get clusters
         sort nodes, so that nodes in same Clusteres are together
         return list of list with one list for every cluster
         """
@@ -649,6 +661,7 @@ class Module_layout:
                     clustering_labels = result[1]
         pool.close()
         pool.join()
+        self.noise_cluster_exists = -1 in clustering_labels
 
         ordered_nodes = get_sorted_list_by_list_B_sorting_order(
             self.data_table.index, clustering_labels
@@ -850,7 +863,7 @@ class Module_layout:
         get max nodes in vertical and horizontal position
         """
 
-        l_max = 2 * math.sqrt(max(self.module_node_nums))
+        l_max = 20 * math.sqrt(max(self.module_node_nums))
         self.l_max = l_max
 
         new_centers = [
@@ -1022,8 +1035,14 @@ class Module_layout:
             zip(self.modules, self.modules_area)
         ):
             sub_graph = self.full_graph.subgraph(module)
+            print("module", module_area)
             module_node_positions = get_adjusted_force_dir_node_pos(
-                sub_graph, mod_num, pathways_root_names, total_num_nodes
+                sub_graph,
+                mod_num,
+                pathways_root_names,
+                total_num_nodes,
+                self.l_max,
+                module_area,
             )
             adjusted_node_positions = normalize_2D_node_pos_in_range(
                 module_node_positions, module_area, True

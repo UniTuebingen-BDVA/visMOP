@@ -48,9 +48,9 @@ export function pfsPrime_modules(
         rootNodes.push(currentNode);
       }
     }
-    const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
+    //const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
     // const pfsPrime_moduleNodes = vpsc(moduleNodes);
-    // const pfsPrime_moduleNodes = moduleNodes;
+    const pfsPrime_moduleNodes = moduleNodes;
     if (curModuleNum > -1) {
       normInArea(
         pfsPrime_moduleNodes,
