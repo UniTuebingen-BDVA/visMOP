@@ -5,11 +5,11 @@ import {
   overviewNode,
   overviewGraphData,
 } from '@/core/graphTypes';
-import { pfsPrime_modules } from '@/core/noverlap_pfsp_module';
+import { pfsPrime_modules } from '@/core/layouting/noverlap_pfsp_module';
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from '../generalTypes';
 import hull from 'hull.js';
-import ClusterHulls from '@/core/convexHullsForClusters';
+import ClusterHulls from '@/core/layouting/convexHullsForClusters';
 import overviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
 /**

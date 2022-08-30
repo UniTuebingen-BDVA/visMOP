@@ -12,8 +12,8 @@
 
 import _ from 'lodash';
 import { overviewNode } from '@/core/graphTypes';
-import { pfsPrime } from '@/core/noverlap_pfsp';
-import { getFocusNormalizeParameter } from '@/core/convexHullsForClusters';
+import { pfsPrime } from '@/core/layouting/noverlap_pfsp';
+import { getFocusNormalizeParameter } from '@/core/layouting/convexHullsForClusters';
 /**
  * Executes the Push Force Scan' (PFS') algorithm on this graph
  *

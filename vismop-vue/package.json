@@ -19,6 +19,8 @@
     "@vue/compat": "^3.2.37",
     "core-js": "^3.22.8",
     "d3": "^7.4.4",
+    "d3-voronoi-map": "^2.1.1",
+    "gl-matrix": "^3.4.3",
     "graphology": "^0.24.1",
     "graphology-layout": "^0.6.0",
     "graphology-layout-forceatlas2": "^0.9.1",
