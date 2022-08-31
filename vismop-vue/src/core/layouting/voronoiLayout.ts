@@ -1,6 +1,6 @@
 import { voronoiMapSimulation } from 'd3-voronoi-map';
 import { vec2 } from 'gl-matrix';
-import { Polygon } from './Polygon';
+import { ConvexPolygon } from './ConvexPolygon';
 
 /**
  * Given an arrays of Clusters, generate a weighted voronoi diagram bounded by a circle with radius and return them as polygon type data
@@ -11,9 +11,9 @@ import { Polygon } from './Polygon';
 function generateVoronoiCells(
   radius: number,
   clusterData: clusterData
-): Polygon[] {
+): ConvexPolygon[] {
   // // https://github.com/Kcnarf/d3-voronoi-map
-  const outData: Polygon[] = [];
+  const outData: ConvexPolygon[] = [];
   const voronoiPolys = generateVoronoiPolygons(clusterData, radius);
   for (let index = 0; index < voronoiPolys.length; index++) {
     outData.push(generatePolygonObj(voronoiPolys[index]));
@@ -56,10 +56,10 @@ function generateVoronoiPolygons(clusterData: clusterData, radius: number) {
  * @param poly
  * @returns
  */
-function generatePolygonObj(poly: [number, number][]): Polygon {
-  const currentPolygon = new Polygon();
+function generatePolygonObj(poly: [number, number][]): ConvexPolygon {
+  const currentPolygon = new ConvexPolygon();
   poly.forEach((element) => {
-    currentPolygon.addVertex(vec2.fromValues(element[0], element[1]));
+    currentPolygon.addVertex(element[0], element[1]);
   });
   return currentPolygon;
 }
