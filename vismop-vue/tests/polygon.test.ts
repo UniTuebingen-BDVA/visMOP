@@ -59,6 +59,86 @@ describe('Test Square Example of Polygon class', () => {
     //V3 y
     assert.assert.closeTo(basicPoly.transformedVertices[3][1], 0.5, 0.0001);
   });
+  it(' check if point on edge is working', () => {
+    // outside
+    const queryPoint1 = vec2.fromValues(2, 0.25);
+    const pointOnEdge10 = basicPoly.closestPointOnEdge(0, queryPoint1);
+    assert.assert.closeTo(pointOnEdge10[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge10[1], 0, 0.0001);
+    const pointOnEdge11 = basicPoly.closestPointOnEdge(1, queryPoint1);
+    assert.assert.closeTo(pointOnEdge11[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge11[1], 0.25, 0.0001);
+    const pointOnEdge12 = basicPoly.closestPointOnEdge(2, queryPoint1);
+    assert.assert.closeTo(pointOnEdge12[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge12[1], 1, 0.0001);
+    const pointOnEdge13 = basicPoly.closestPointOnEdge(3, queryPoint1);
+    assert.assert.closeTo(pointOnEdge13[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnEdge13[1], 0.25, 0.0001);
+
+    // on polygon
+    const queryPoint2 = vec2.fromValues(1, 1);
+    const pointOnEdge20 = basicPoly.closestPointOnEdge(0, queryPoint2);
+    assert.assert.closeTo(pointOnEdge20[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge20[1], 0, 0.0001);
+    const pointOnEdge21 = basicPoly.closestPointOnEdge(1, queryPoint2);
+    assert.assert.closeTo(pointOnEdge21[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge21[1], 1, 0.0001);
+    const pointOnEdge22 = basicPoly.closestPointOnEdge(2, queryPoint2);
+    assert.assert.closeTo(pointOnEdge22[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge22[1], 1, 0.0001);
+    const pointOnEdge23 = basicPoly.closestPointOnEdge(3, queryPoint2);
+    assert.assert.closeTo(pointOnEdge23[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnEdge23[1], 1, 0.0001);
+
+    // inside polygon
+    const queryPoint3 = vec2.fromValues(0.5, 0.25);
+    const pointOnEdge30 = basicPoly.closestPointOnEdge(0, queryPoint3);
+    assert.assert.closeTo(pointOnEdge30[0], 0.5, 0.0001);
+    assert.assert.closeTo(pointOnEdge30[1], 0, 0.0001);
+    const pointOnEdge31 = basicPoly.closestPointOnEdge(1, queryPoint3);
+    assert.assert.closeTo(pointOnEdge31[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge31[1], 0.25, 0.0001);
+    const pointOnEdge32 = basicPoly.closestPointOnEdge(2, queryPoint3);
+    assert.assert.closeTo(pointOnEdge32[0], 0.5, 0.0001);
+    assert.assert.closeTo(pointOnEdge32[1], 1, 0.0001);
+    const pointOnEdge33 = basicPoly.closestPointOnEdge(3, queryPoint3);
+    assert.assert.closeTo(pointOnEdge33[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnEdge33[1], 0.25, 0.0001);
+
+    // outside negative values
+    const queryPoint4 = vec2.fromValues(-2, 0.25);
+    const pointOnEdge40 = basicPoly.closestPointOnEdge(0, queryPoint4);
+    assert.assert.closeTo(pointOnEdge40[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnEdge40[1], 0, 0.0001);
+    const pointOnEdge41 = basicPoly.closestPointOnEdge(1, queryPoint4);
+    assert.assert.closeTo(pointOnEdge41[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnEdge41[1], 0.25, 0.0001);
+    const pointOnEdge42 = basicPoly.closestPointOnEdge(2, queryPoint4);
+    assert.assert.closeTo(pointOnEdge42[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnEdge42[1], 1, 0.0001);
+    const pointOnEdge43 = basicPoly.closestPointOnEdge(3, queryPoint4);
+    assert.assert.closeTo(pointOnEdge43[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnEdge43[1], 0.25, 0.0001);
+  });
+  it(' check if point on poly is working', () => {
+    // outside
+    const queryPoint1 = vec2.fromValues(2, 0.25);
+    const pointOnPoly1 = basicPoly.closestPointOnPoly(queryPoint1);
+    assert.assert.closeTo(pointOnPoly1[0], 1, 0.0001);
+    assert.assert.closeTo(pointOnPoly1[1], 0.25, 0.0001);
+
+    // inside
+    const queryPoint2 = vec2.fromValues(0.2, 0.25);
+    const pointOnPoly2 = basicPoly.closestPointOnPoly(queryPoint2);
+    assert.assert.closeTo(pointOnPoly2[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnPoly2[1], 0.25, 0.0001);
+
+    // outside negative val
+    const queryPoint3 = vec2.fromValues(-2, 0.25);
+    const pointOnPoly3 = basicPoly.closestPointOnPoly(queryPoint3);
+    assert.assert.closeTo(pointOnPoly3[0], 0, 0.0001);
+    assert.assert.closeTo(pointOnPoly3[1], 0.25, 0.0001);
+  });
   it(' check if point in polygon function is working', () => {
     // without supplying the vertices argument non-transformed verts are used.
     // inside
@@ -225,6 +305,7 @@ describe('Test More Complex Example of Polygon class', () => {
       false
     );
   });
+
   it(' check if non optimal boundingBox is working', () => {
     const boundingBox = basicPoly.calculateCurrentBoundingBox();
     assert.assert.deepStrictEqual(boundingBox.getArea(), 10);

@@ -1,6 +1,7 @@
 import { voronoiMapSimulation } from 'd3-voronoi-map';
 import { vec2 } from 'gl-matrix';
 import { ConvexPolygon } from './ConvexPolygon';
+import { cluster, clusterData } from './voronoiTypes';
 
 /**
  * Given an arrays of Clusters, generate a weighted voronoi diagram bounded by a circle with radius and return them as polygon type data
@@ -10,11 +11,11 @@ import { ConvexPolygon } from './ConvexPolygon';
  */
 function generateVoronoiCells(
   radius: number,
-  clusterData: clusterData
+  inputData: clusterData
 ): ConvexPolygon[] {
   // // https://github.com/Kcnarf/d3-voronoi-map
   const outData: ConvexPolygon[] = [];
-  const voronoiPolys = generateVoronoiPolygons(clusterData, radius);
+  const voronoiPolys = generateVoronoiPolygons(inputData, radius);
   for (let index = 0; index < voronoiPolys.length; index++) {
     outData.push(generatePolygonObj(voronoiPolys[index]));
   }
@@ -27,17 +28,20 @@ function generateVoronoiCells(
  * @param radius radius of bounding circle
  * @returns Array of Polygons each containing an array of coordinates
  */
-function generateVoronoiPolygons(clusterData: clusterData, radius: number) {
+function generateVoronoiPolygons(inputData: clusterData, radius: number) {
   const circle = [];
-
+  // one has to take care that the initial cluster centers are completely inside the circle, otherwise they will get movbed around very weirdly
   for (let val = 0; val < 2 * Math.PI; val += Math.PI / 30) {
     const x = radius * Math.cos(val);
     const y = radius * Math.sin(val);
     circle.push([x, y]);
   }
-  const simulation = voronoiMapSimulation(clusterData)
+  const simulation = voronoiMapSimulation(inputData)
     .weight(function (d: cluster) {
       return d.weight;
+    })
+    .initialPosition((d: cluster, _i, _arr, _sim) => {
+      return [d.initX, d.initY];
     })
     .clip(circle)
     .stop();
@@ -62,17 +66,4 @@ function generatePolygonObj(poly: [number, number][]): ConvexPolygon {
     currentPolygon.addVertex(element[0], element[1]);
   });
   return currentPolygon;
-}
-/**
- * Generates an approximation of the largest inscribed Rectangle of a given convex polygon
- */
-export function inscribedRectangle(polygon: polygon): rectangle {
-  return {
-    data: [
-      { x: 0, y: 0 },
-      { x: 0, y: 0 },
-      { x: 0, y: 0 },
-      { x: 0, y: 0 },
-    ],
-  };
 }

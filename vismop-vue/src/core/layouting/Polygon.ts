@@ -95,4 +95,57 @@ export class Polygon {
     }
     return true;
   }
+
+  public closestPointOnPoly(point: vec2, vertices = this.vertices) {
+    const pointsOnEdges: vec2[] = [];
+    for (let index = 0; index < this.edgeAmt(); index++) {
+      pointsOnEdges.push(this.closestPointOnEdge(index, point, vertices));
+    }
+    let minDistance = Number.POSITIVE_INFINITY;
+    let minIndex = 0;
+    for (let index = 0; index < pointsOnEdges.length; index++) {
+      const element = pointsOnEdges[index];
+      const dist = vec2.dist(point, element);
+      if (dist < minDistance) {
+        minDistance = dist;
+        minIndex = index;
+      }
+    }
+    return pointsOnEdges[minIndex];
+  }
+
+  public closestPointOnEdge(
+    edgeIdx: number,
+    point: vec2,
+    vertices = this.vertices
+  ) {
+    // https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
+    const edge = this.getEdge(edgeIdx, vertices);
+    // v1 edge start to query point
+    const v1 = vec2.subtract(vec2.create(), point, edge[0]);
+    // v2 is edgestart to end
+    const v2 = vec2.subtract(vec2.create(), edge[1], edge[0]);
+
+    const dotV1Edge = vec2.dot(v1, v2);
+    const dotEdgeRatio = dotV1Edge / vec2.len(v2);
+
+    //if ratio is higher than 1 it means were outside towards edge end
+    if (dotEdgeRatio > 1) {
+      return vec2.fromValues(edge[1][0], edge[1][1]);
+    }
+    //if its below 0 it is outside on towards edge start
+    if (dotEdgeRatio < 0) {
+      return vec2.fromValues(edge[0][0], edge[0][1]);
+    }
+    // otherwise its on the edge
+    return vec2.add(
+      vec2.create(),
+      edge[0],
+      vec2.multiply(
+        vec2.create(),
+        v2,
+        vec2.fromValues(dotEdgeRatio, dotEdgeRatio)
+      )
+    );
+  }
 }
