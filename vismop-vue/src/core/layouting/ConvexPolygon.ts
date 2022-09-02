@@ -6,21 +6,8 @@ export class ConvexPolygon extends Polygon {
 
   // applies current transformation to vertex arrays
   public applyTransformation() {
-    const appliedVerts: vec2[] = [];
-    this.transformedVertices.forEach((vert) => {
-      appliedVerts.push(vec2.clone(vert));
-    });
-    this.vertices = appliedVerts;
-    this.boundingBox = new Polygon();
+    super.applyTransformation();
     this.calculateOptimalBoundingBox();
-  }
-
-  public clearTransformation() {
-    const clearedVerts: vec2[] = [];
-    this.vertices.forEach((vert) => {
-      clearedVerts.push(vec2.clone(vert));
-    });
-    this.transformedVertices = clearedVerts;
   }
 
   public calculateOptimalBoundingBox() {
@@ -51,23 +38,6 @@ export class ConvexPolygon extends Polygon {
       this.calculateOptimalBoundingBox();
     }
     return this.boundingBox;
-  }
-
-  public pointInPolygon(point: vec2, vertices = this.vertices) {
-    //https://towardsdatascience.com/is-the-point-inside-the-polygon-574b86472119
-    let sideOfEdge = 0;
-    for (let index = 0; index < this.edgeAmt(); index++) {
-      const edge = this.getEdge(index, vertices);
-      let onSideOfCurrentEdge =
-        (point[1] - edge[0][1]) * (edge[1][0] - edge[0][0]) -
-        (point[0] - edge[0][0]) * (edge[1][1] - edge[0][1]);
-      if (Math.abs(onSideOfCurrentEdge) <= 0.00001) onSideOfCurrentEdge = 0; // somwhat random epsilon
-      if (sideOfEdge * onSideOfCurrentEdge < 0) {
-        return false;
-      }
-      if (onSideOfCurrentEdge != 0) sideOfEdge = onSideOfCurrentEdge;
-    }
-    return true;
   }
 
   public calculateCurrentBoundingBox() {

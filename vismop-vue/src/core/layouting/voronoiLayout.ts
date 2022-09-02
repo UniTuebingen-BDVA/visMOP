@@ -12,12 +12,15 @@ import { cluster, clusterData } from './voronoiTypes';
 function generateVoronoiCells(
   radius: number,
   inputData: clusterData
-): ConvexPolygon[] {
+): { [key: number]: ConvexPolygon } {
   // // https://github.com/Kcnarf/d3-voronoi-map
-  const outData: ConvexPolygon[] = [];
+  const outData: { [key: number]: ConvexPolygon } = {};
   const voronoiPolys = generateVoronoiPolygons(inputData, radius);
   for (let index = 0; index < voronoiPolys.length; index++) {
-    outData.push(generatePolygonObj(voronoiPolys[index]));
+    const polygonObj = generatePolygonObj(voronoiPolys[index]);
+    polygonObj.scalePolygon(0.9);
+    polygonObj.applyTransformation();
+    outData[voronoiPolys[index].site.originalObject.index] = polygonObj;
   }
   return outData;
 }
@@ -40,7 +43,7 @@ function generateVoronoiPolygons(inputData: clusterData, radius: number) {
     .weight(function (d: cluster) {
       return d.weight;
     })
-    .initialPosition((d: cluster, _i, _arr, _sim) => {
+    .initialPosition((d: cluster) => {
       return [d.initX, d.initY];
     })
     .clip(circle)
@@ -52,7 +55,9 @@ function generateVoronoiPolygons(inputData: clusterData, radius: number) {
     state = simulation.state();
   }
 
-  return state.polygons as [number, number][][];
+  return state.polygons as Array<
+    [number, number][] & { site: { originalObject: { index: number } } }
+  >;
 }
 
 /**

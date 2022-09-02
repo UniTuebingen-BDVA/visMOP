@@ -6,6 +6,7 @@ export class Polygon {
   protected recalculateCenter = true;
   protected center: vec2 = vec2.create();
   protected area = Number.POSITIVE_INFINITY;
+  public unappliedTansformations = false;
 
   // adds vertex ad pos x, y to the polygon
   public addVertex(x: number, y: number) {
@@ -25,8 +26,16 @@ export class Polygon {
       appliedVerts.push(vec2.clone(vert));
     });
     this.vertices = appliedVerts;
+    this.unappliedTansformations = false;
   }
 
+  public clearTransformation() {
+    const clearedVerts: vec2[] = [];
+    this.vertices.forEach((vert) => {
+      clearedVerts.push(vec2.clone(vert));
+    });
+    this.transformedVertices = clearedVerts;
+  }
   // returns the amount of edges
   public edgeAmt() {
     return this.vertices.length;
@@ -78,7 +87,19 @@ export class Polygon {
     this.transformedVertices.forEach((vec) =>
       vec2.rotate(vec, vec, this.center, rad)
     );
+    this.unappliedTansformations = true;
   }
+
+  public scalePolygon(factor: number) {
+    const center = this.getCenter();
+    this.transformedVertices.forEach((element) => {
+      vec2.subtract(element, element, center);
+      vec2.multiply(element, element, vec2.fromValues(factor, factor));
+      vec2.add(element, element, center);
+    });
+    this.unappliedTansformations = true;
+  }
+
   public pointInPolygon(point: vec2, vertices = this.vertices) {
     //https://towardsdatascience.com/is-the-point-inside-the-polygon-574b86472119
     let sideOfEdge = 0;
@@ -94,6 +115,10 @@ export class Polygon {
       if (onSideOfCurrentEdge != 0) sideOfEdge = onSideOfCurrentEdge;
     }
     return true;
+  }
+
+  public pointInPolygonCoords(x: number, y: number, vertices = this.vertices) {
+    this.pointInPolygon(vec2.fromValues(x, y), vertices);
   }
 
   public closestPointOnPoly(point: vec2, vertices = this.vertices) {
@@ -112,6 +137,14 @@ export class Polygon {
       }
     }
     return pointsOnEdges[minIndex];
+  }
+
+  public closestPointOnPolyCoords(
+    x: number,
+    y: number,
+    vertices = this.vertices
+  ) {
+    this.closestPointOnPoly(vec2.fromValues(x, y), vertices);
   }
 
   public closestPointOnEdge(

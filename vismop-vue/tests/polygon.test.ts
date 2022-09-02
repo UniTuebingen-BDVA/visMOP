@@ -1,7 +1,6 @@
 import assert from 'chai';
 import { ConvexPolygon } from '../src/core/layouting/ConvexPolygon';
 import { vec2 } from 'gl-matrix';
-import { bindAll } from 'lodash';
 
 describe('Test Square Example of Polygon class', () => {
   const basicPoly = new ConvexPolygon();
@@ -58,6 +57,30 @@ describe('Test Square Example of Polygon class', () => {
     );
     //V3 y
     assert.assert.closeTo(basicPoly.transformedVertices[3][1], 0.5, 0.0001);
+    basicPoly.clearTransformation();
+  });
+  it(' scaling by 0.9', () => {
+    basicPoly.scalePolygon(0.9);
+    //V0 x
+    assert.assert.closeTo(basicPoly.transformedVertices[0][0], 0.05, 0.0001);
+    //V0 y
+    assert.assert.closeTo(basicPoly.transformedVertices[0][1], 0.05, 0.0001);
+
+    //V1 x
+    assert.assert.closeTo(basicPoly.transformedVertices[1][0], 0.95, 0.0001);
+    //V1 y
+    assert.assert.closeTo(basicPoly.transformedVertices[1][1], 0.05, 0.0001);
+
+    //V2 x
+    assert.assert.closeTo(basicPoly.transformedVertices[2][0], 0.95, 0.0001);
+    //V2 y
+    assert.assert.closeTo(basicPoly.transformedVertices[2][1], 0.95, 0.0001);
+
+    //V3 x
+    assert.assert.closeTo(basicPoly.transformedVertices[3][0], 0.05, 0.0001);
+    //V3 y
+    assert.assert.closeTo(basicPoly.transformedVertices[3][1], 0.95, 0.0001);
+    basicPoly.clearTransformation();
   });
   it(' check if point on edge is working', () => {
     // outside
@@ -161,7 +184,8 @@ describe('Test Square Example of Polygon class', () => {
       basicPoly.pointInPolygon(vec2.fromValues(-10, -10)),
       false
     );
-
+    //rotate by 45°
+    basicPoly.rotatePolygon(Math.PI / 4);
     // on transformedVerts
     // inside
     assert.assert.deepStrictEqual(
@@ -195,6 +219,7 @@ describe('Test Square Example of Polygon class', () => {
       ),
       false
     );
+    basicPoly.clearTransformation();
   });
 });
 
@@ -247,6 +272,8 @@ describe('Test More Complex Example of Polygon class', () => {
     assert.assert.closeTo(basicPoly.transformedVertices[5][0], 2.5, 0.0001);
     //V5 y
     assert.assert.closeTo(basicPoly.transformedVertices[5][1], -1.5, 0.0001);
+
+    basicPoly.clearTransformation();
   });
   it(' check if point in polygon function is working', () => {
     // without supplying the vertices argument non-transformed verts are used.
@@ -270,6 +297,7 @@ describe('Test More Complex Example of Polygon class', () => {
       basicPoly.pointInPolygon(vec2.fromValues(-10, -10)),
       false
     );
+    basicPoly.rotatePolygon(Math.PI / 2);
 
     // on transformedVerts
     // inside
@@ -304,13 +332,12 @@ describe('Test More Complex Example of Polygon class', () => {
       ),
       false
     );
+    basicPoly.clearTransformation();
   });
-
   it(' check if non optimal boundingBox is working', () => {
     const boundingBox = basicPoly.calculateCurrentBoundingBox();
     assert.assert.deepStrictEqual(boundingBox.getArea(), 10);
   });
-
   it(' check if optimal boundingBox is working', () => {
     basicPoly.clearTransformation();
     basicPoly.rotatePolygon(Math.PI / 4);
