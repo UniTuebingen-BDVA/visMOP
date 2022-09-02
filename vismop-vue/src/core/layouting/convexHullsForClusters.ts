@@ -49,7 +49,7 @@ function normalize(vec: number[]): number[] {
 }
 
 function adjustHullPoints(
-  currentHullPoints: [number[]],
+  currentHullPoints: [number, number][],
   radianThreshold: number
 ): number[][] {
   const pushLen = 0.5;
@@ -167,7 +167,7 @@ export default class ClusterHulls {
     this.radianThreshold = (angleThreshold * Math.PI) / 180;
   }
   adjustOneHull(
-    convexHullPoints: [number[]],
+    convexHullPoints: [number, number][],
     hullNum: number,
     firstNoneNoiseCluster: number,
     max_ext: number,
@@ -213,7 +213,7 @@ export default class ClusterHulls {
     };
   }
   adjust(
-    convexHulls: [[number[]]]
+    convexHulls: [number, number][][]
   ): [{ hullPoints: number[][][]; greyValues: number[] }, number[][][]] {
     const convexHullsAdjusted = [];
     const focusClusterHulls = [];

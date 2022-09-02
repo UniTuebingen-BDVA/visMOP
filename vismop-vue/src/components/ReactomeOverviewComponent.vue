@@ -53,6 +53,10 @@ import { glyphData } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
 import { HighDetailGlyph } from '@/core/overviewGlyphs/highDetailGlyph';
 import { LowDetailGlyph } from '@/core/overviewGlyphs/lowDetailGlyph';
+import {
+  generateVoronoiCells,
+  nodePolygonMapping,
+} from '@/core/layouting/voronoiLayout';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -400,9 +404,21 @@ const drawNetwork = () => {
   );
   mainStore.setGlyphs(generatedGlyphs);
   console.log('GLYPHs', mainStore.glyphs);
-  const moduleAreas = mainStore.moduleAreas;
-  console.log('moduleAreas', moduleAreas);
+  //const moduleAreas = mainStore.moduleAreas;
+  //console.log('moduleAreas', moduleAreas);
   console.log('overviewData.value', overviewData.value);
+  //get module areas here!!!
+  const clusterWeights = mainStore.modules.map((elem) => elem.length);
+  const polygons = generateVoronoiCells(
+    10,
+    clusterWeights,
+    mainStore.moduleCenters
+  );
+  const positionMapping = nodePolygonMapping(mainStore.modules, polygons);
+  const polygonsArrays: [number, number][][] = [];
+  for (let index = 0; index < Object.keys(polygons).length; index++) {
+    polygonsArrays.push(polygons[index].verticesToArray(true));
+  }
   const networkData = generateGraphData(
     overviewData.value,
     generatedGlyphs.url,
@@ -410,7 +426,9 @@ const drawNetwork = () => {
     generatedGlyphsLowZoom.url,
     glyphDataVar.value,
     pathwayLayouting.value.rootIds,
-    moduleAreas
+    [[1, 1, 1, 1]],
+    polygonsArrays,
+    positionMapping
   );
   console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(

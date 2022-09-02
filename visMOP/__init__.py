@@ -1,3 +1,4 @@
+from random import randint, random
 from flask import Flask, render_template, send_from_directory, request
 from visMOP.python_scripts.utils import kegg_to_chebi
 from visMOP.python_scripts.data_table_parsing import (
@@ -98,10 +99,14 @@ def getModuleLayout(
             pathways_root_names,
         )
     except ValueError:
-        return -1, 1
-    module_node_pos = module_layout.get_final_node_positions()
-    module_areas = module_layout.get_module_areas()
-    return module_node_pos, module_areas
+        return -1, -1, 1
+    # module_node_pos = module_layout.initial_node_pos
+    # outcommented for test of voronoi layout
+    # module_node_pos = module_layout.get_final_node_positions()
+    # module_areas = module_layout.get_module_areas()
+    # module_areas = []
+    # return module_node_pos, module_areas
+    return module_layout.modules, module_layout.modules_center
 
 
 def get_layout_settings(settings, omics_recieved):
@@ -543,7 +548,8 @@ def reactome_overview():
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
-    module_node_pos, module_areas = getModuleLayout(
+    # module_node_pos, module_areas = getModuleLayout(
+    modules, module_centers = getModuleLayout(
         omics_recieved,
         layout_limits,
         layout_attributes_used,
@@ -565,20 +571,22 @@ def reactome_overview():
 
     # with open('module_areas_03.pkl', "rb") as f:
     #     module_areas = pickle.load(f)
-    if module_node_pos == -1:
+    if modules == -1:
         return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
-    print("number of Clusters", len(module_areas))
+    # print("number of Clusters", len(module_areas))
     for pathway in out_data:
-        x_y_pos = module_node_pos[pathway["pathwayId"]]
-        pathway["initialPosX"] = x_y_pos[0]
-        pathway["initialPosY"] = x_y_pos[1]
-        pathway["moduleNum"] = x_y_pos[2]
-
+        # x_y_pos = module_node_pos[pathway["pathwayId"]]
+        pathway["initialPosX"] = random()  # x_y_pos[0]
+        pathway["initialPosY"] = random()  # x_y_pos[1]
+        pathway["moduleNum"] = randint(0, len(modules) - 1)  # x_y_pos[2]
+    modules = [elem.tolist() for elem in modules]
     return json.dumps(
         {
             "exitState": 0,
             "overviewData": out_data,
-            "moduleAreas": module_areas,
+            "modules": modules,
+            "moduleCenters": module_centers,
+            # "moduleAreas": module_areas,
             "pathwayLayouting": {
                 "pathwayList": dropdown_data,
                 "pathwayNodeDictionary": pathway_dict,

@@ -211,6 +211,7 @@ class Module_layout:
 
         self.half_node_size = node_size / 2
         self.module_nodes_num = []
+        self.modules_area = []
         self.noise_cluster_exists = False
 
         print("Calculating module layout...")
@@ -263,11 +264,12 @@ class Module_layout:
             self.get_module_centers(self.positions_dict_clustering)
         )
         print("Clusters identified")
-        self.area_num_node_ratio_Pool()
+        # outcommented for test of voronoi layout
+        # self.area_num_node_ratio_Pool()
         print(mod_length)
         print("Relative distances between modules and module weights calculated")
-
-        self.final_node_pos = self.getNodePositions(pathways_root_names)
+        # outcommented for test of voronoi layout
+        # self.final_node_pos = self.getNodePositions(pathways_root_names)
         print("final node positions identified")
         endTime = time.time()
         # self.get_stats()

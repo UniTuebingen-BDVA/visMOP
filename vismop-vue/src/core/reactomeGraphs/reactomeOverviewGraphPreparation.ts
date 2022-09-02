@@ -26,7 +26,16 @@ export function generateGraphData(
     [key: string]: glyphData;
   },
   rootIds: string[],
-  moduleAreas: [number[]] = [[]]
+  moduleAreas: [number[]] = [[]],
+  voronoiTest: [number, number][][],
+  positionMapping: {
+    [key: string]: {
+      id: string;
+      xInit: number;
+      yInit: number;
+      clusterIDx: number;
+    };
+  }
 ): overviewGraphData {
   const graph: overviewGraphData = {
     attributes: { name: 'BaseNetwork' },
@@ -45,10 +54,10 @@ export function generateGraphData(
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey];
     const name = entry.pathwayName;
-    const id = entry.pathwayId;
-    const initPosX = entry.initialPosX;
-    const initPosY = entry.initialPosY;
-    const modNum = entry.moduleNum;
+    const id = entry.pathwayId ? entry.pathwayId : 'noID';
+    const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
+    const initPosY = positionMapping[id] ? positionMapping[id].yInit : 0;
+    const modNum = positionMapping[id] ? positionMapping[id].clusterIDx : 0;
     maxModuleNum = Math.max(maxModuleNum, modNum);
     const currentNode: overviewNode = {
       key: id,
@@ -155,6 +164,7 @@ export function generateGraphData(
     }
     index += 1;
   }
+  /*
   const withNoiseCluster = moduleAreas[0].length != 0;
   if (!withNoiseCluster) {
     moduleAreas.shift();
@@ -164,28 +174,33 @@ export function generateGraphData(
     maxModuleNum,
     moduleAreas
   );
+  
   let norm_node_pos: overviewNode[] =
     nodes_per_cluster[nodes_per_cluster.length - 1]; // already add superpathways as they are not part of the convex hull
   nodes_per_cluster.pop();
+  */
   const max_ext = 20;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
   const greyValues = [] as number[];
-  const firstNoneNoiseCluster = withNoiseCluster ? 1 : 0;
+  //const firstNoneNoiseCluster = withNoiseCluster ? 1 : 0;
 
   const totalNumHulls = moduleAreas.length;
-  let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
-  _.forEach(nodes_per_cluster, (nodes) => {
+  //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
+  let clusterNum = 0;
+  _.forEach(voronoiTest, (nodes) => {
+    /*
     const clusterHullPoints = hull(
       nodes.map((o) => [o.attributes.x, o.attributes.y]),
       Infinity
     ) as [[number, number]];
+    */
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
-        clusterHullPoints,
+        nodes,
         clusterNum,
-        firstNoneNoiseCluster,
+        0,
         max_ext,
         totalNumHulls
       );
@@ -195,7 +210,7 @@ export function generateGraphData(
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
       const focusNormalizeParameter = hullAdjustment.focusNormalizeParameter;
 
-      _.forEach(nodes, (node) => {
+      /*_.forEach(nodes, (node) => {
         const centeredX = node.attributes.x - focusNormalizeParameter.meanX;
         const centeredY = node.attributes.y - focusNormalizeParameter.meanY;
         node.attributes.xOnClusterFocus =
@@ -206,9 +221,10 @@ export function generateGraphData(
           (max_ext * (centeredY - focusNormalizeParameter.minCentered)) /
           (focusNormalizeParameter.maxCentered -
             focusNormalizeParameter.minCentered);
-      });
+      });*/
     }
-    norm_node_pos = norm_node_pos.concat(nodes);
+    //norm_node_pos = norm_node_pos.concat(nodes);
+
     clusterNum += 1;
   });
   // if one wants to use rectangle use getRightResultFormForRectangle()
@@ -217,7 +233,7 @@ export function generateGraphData(
   graph.clusterData.focusHullPoints = focusClusterHulls;
   graph.clusterData.greyValues = greyValues;
 
-  graph.nodes = norm_node_pos;
+  //graph.nodes = norm_node_pos;
 
   return graph;
 }

@@ -379,7 +379,10 @@ const getReactomeData = () => {
         return Promise.reject(dataContent.ErrorMsg);
       }
       mainStore.setOverviewData(dataContent.overviewData);
-      mainStore.setModuleAreas(dataContent.moduleAreas);
+      //for voronoiTest
+      //mainStore.setModuleAreas(dataContent.moduleAreas);
+      mainStore.setModules(dataContent.modules);
+      mainStore.setModuleCenters(dataContent.moduleCenters);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
       console.log('OVDATA', dataContent.overviewData);
     })

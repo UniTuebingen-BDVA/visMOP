@@ -79,6 +79,8 @@ interface State {
     svg: { [key: string]: SVGElement };
   };
   moduleAreas: [number[]];
+  modules: string[][];
+  moduleCenters: [number, number][];
   keggChebiTranslate: { [key: string]: string[] };
 }
 
@@ -137,6 +139,8 @@ export const useMainStore = defineStore('mainStore', {
     glyphData: {},
     glyphs: { url: {}, svg: {} },
     moduleAreas: [[]],
+    modules: [],
+    moduleCenters: [],
     keggChebiTranslate: {},
   }),
   actions: {
@@ -283,6 +287,12 @@ export const useMainStore = defineStore('mainStore', {
     },
     setModuleAreas(val: [number[]]) {
       this.moduleAreas = val;
+    },
+    setModules(val: string[][]) {
+      this.modules = val;
+    },
+    setModuleCenters(val: [number, number][]) {
+      this.moduleCenters = val;
     },
     setFCS(val: {
       [x: string]: {

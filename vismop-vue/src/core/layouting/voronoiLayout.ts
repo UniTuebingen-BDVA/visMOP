@@ -1,6 +1,6 @@
 import { voronoiMapSimulation } from 'd3-voronoi-map';
-import { vec2 } from 'gl-matrix';
 import { ConvexPolygon } from './ConvexPolygon';
+import { Polygon } from './Polygon';
 import { cluster, clusterData } from './voronoiTypes';
 
 /**
@@ -9,20 +9,72 @@ import { cluster, clusterData } from './voronoiTypes';
  * @param clusterData
  * @returnso an Array of Polygons
  */
-function generateVoronoiCells(
+export function generateVoronoiCells(
   radius: number,
-  inputData: clusterData
+  weights: number[],
+  centers: [number, number][]
 ): { [key: number]: ConvexPolygon } {
   // // https://github.com/Kcnarf/d3-voronoi-map
   const outData: { [key: number]: ConvexPolygon } = {};
+  const inputData = [];
+  for (let index = 0; index < weights.length; index++) {
+    const weight = weights[index];
+    const center = centers[index];
+    const inputDatum = {
+      id: index,
+      weight: weight,
+      initX: center[0],
+      initY: center[1],
+    };
+    inputData.push(inputDatum);
+  }
   const voronoiPolys = generateVoronoiPolygons(inputData, radius);
   for (let index = 0; index < voronoiPolys.length; index++) {
     const polygonObj = generatePolygonObj(voronoiPolys[index]);
-    polygonObj.scalePolygon(0.9);
+    polygonObj.scalePolygon(0.7);
     polygonObj.applyTransformation();
     outData[voronoiPolys[index].site.originalObject.index] = polygonObj;
   }
   return outData;
+}
+
+export function nodePolygonMapping(
+  clusters: string[][],
+  polygons: {
+    [key: number]: ConvexPolygon;
+  }
+): {
+  [key: string]: {
+    id: string;
+    xInit: number;
+    yInit: number;
+    clusterIDx: number;
+  };
+} {
+  const mapping: {
+    [key: string]: {
+      id: string;
+      xInit: number;
+      yInit: number;
+      clusterIDx: number;
+    };
+  } = {};
+  for (let idxOuter = 0; idxOuter < clusters.length; idxOuter++) {
+    const currentCluster = clusters[idxOuter];
+    const randomPoints = polygons[idxOuter].samplePointsInPoly(
+      currentCluster.length
+    );
+    for (let idxInner = 0; idxInner < randomPoints.length; idxInner++) {
+      const point = randomPoints[idxInner];
+      mapping[currentCluster[idxInner]] = {
+        id: currentCluster[idxInner],
+        xInit: point[0],
+        yInit: point[1],
+        clusterIDx: idxOuter,
+      };
+    }
+  }
+  return mapping;
 }
 
 /**
@@ -70,5 +122,6 @@ function generatePolygonObj(poly: [number, number][]): ConvexPolygon {
   poly.forEach((element) => {
     currentPolygon.addVertex(element[0], element[1]);
   });
+  currentPolygon.calculateOptimalBoundingBox();
   return currentPolygon;
 }

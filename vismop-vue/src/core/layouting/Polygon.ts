@@ -147,6 +147,36 @@ export class Polygon {
     this.closestPointOnPoly(vec2.fromValues(x, y), vertices);
   }
 
+  public samplePointsInPoly(pointsAmt: number): vec2[] {
+    if (this.unappliedTansformations) this.applyTransformation();
+    const randomPoints: vec2[] = [];
+    const edge = this.getEdge(0, this.transformedVertices);
+    const normalized = vec2.normalize(
+      vec2.create(),
+      vec2.subtract(vec2.create(), edge[1], edge[0])
+    );
+    const rotateToXRad = Math.acos(normalized[0]);
+    this.rotatePolygon(rotateToXRad);
+    let xMin = Number.POSITIVE_INFINITY;
+    let xMax = Number.NEGATIVE_INFINITY;
+    let yMin = Number.POSITIVE_INFINITY;
+    let yMax = Number.NEGATIVE_INFINITY;
+    this.transformedVertices.forEach((vert) => {
+      if (vert[0] < xMin) xMin = vert[0];
+      if (vert[0] > xMax) xMax = vert[0];
+      if (vert[1] < yMin) yMin = vert[1];
+      if (vert[1] > yMax) yMax = vert[1];
+    });
+    for (let index = 0; index < pointsAmt; index++) {
+      const randX = Math.random() * (xMax - xMin) + xMin;
+      const randY = Math.random() * (yMax - yMin) + yMin;
+      const point = vec2.fromValues(randX, randY);
+      vec2.rotate(point, point, this.getCenter(), -rotateToXRad);
+      randomPoints.push(point);
+    }
+    return randomPoints;
+  }
+
   public closestPointOnEdge(
     edgeIdx: number,
     point: vec2,
@@ -180,5 +210,16 @@ export class Polygon {
         vec2.fromValues(dotEdgeRatio, dotEdgeRatio)
       )
     );
+  }
+
+  public verticesToArray(duplicatefirstElem = false) {
+    const outVerts: [number, number][] = [];
+    this.vertices.forEach((elem) => {
+      outVerts.push([elem[0], elem[1]]);
+    });
+    if (duplicatefirstElem) {
+      outVerts.push([this.vertices[0][0], this.vertices[0][1]]);
+    }
+    return outVerts;
   }
 }

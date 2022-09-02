@@ -31,6 +31,7 @@ export class ConvexPolygon extends Polygon {
         this.boundingBox = currentBoundingBox;
       }
     }
+    this.clearTransformation();
   }
 
   public getBoundingBox() {
