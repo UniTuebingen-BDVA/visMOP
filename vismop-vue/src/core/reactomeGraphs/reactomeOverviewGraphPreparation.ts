@@ -12,6 +12,7 @@ import hull from 'hull.js';
 import ClusterHulls from '@/core/layouting/convexHullsForClusters';
 import overviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
+import { useMainStore } from '@/stores';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -184,11 +185,16 @@ export function generateGraphData(
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
   const greyValues = [] as number[];
-  //const firstNoneNoiseCluster = withNoiseCluster ? 1 : 0;
-
-  const totalNumHulls = moduleAreas.length;
+  const firstNoneNoiseCluster = useMainStore().noiseClusterExists ? 1 : 0;
+  // const totalNumHulls = moduleAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
+  let focusNormalizeParameterPerCl = [] as {varX: number,
+    varY: number,
+    meanX: number,
+    meanY: number,
+    minCentered: number,
+    maxCentered: number,}[]
   _.forEach(voronoiTest, (nodes) => {
     /*
     const clusterHullPoints = hull(
@@ -199,35 +205,42 @@ export function generateGraphData(
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
         nodes,
-        clusterNum,
-        0,
-        max_ext,
-        totalNumHulls
+        max_ext
       );
-
-      greyValues.push(hullAdjustment.greyVal);
+      let greyValue = clusterNum >= firstNoneNoiseCluster ? 150: 250
+      greyValues.push(greyValue);
       clusterHulls.push(hullAdjustment.finalHullNodes);
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
-      const focusNormalizeParameter = hullAdjustment.focusNormalizeParameter;
+      focusNormalizeParameterPerCl.push(hullAdjustment.focusNormalizeParameter);
 
-      /*_.forEach(nodes, (node) => {
-        const centeredX = node.attributes.x - focusNormalizeParameter.meanX;
-        const centeredY = node.attributes.y - focusNormalizeParameter.meanY;
-        node.attributes.xOnClusterFocus =
-          (max_ext * (centeredX - focusNormalizeParameter.minCentered)) /
-          (focusNormalizeParameter.maxCentered -
-            focusNormalizeParameter.minCentered);
-        node.attributes.yOnClusterFocus =
-          (max_ext * (centeredY - focusNormalizeParameter.minCentered)) /
-          (focusNormalizeParameter.maxCentered -
-            focusNormalizeParameter.minCentered);
-      });*/
     }
     //norm_node_pos = norm_node_pos.concat(nodes);
 
     clusterNum += 1;
   });
   // if one wants to use rectangle use getRightResultFormForRectangle()
+
+  _.forEach(graph.nodes, (node) => {
+    let curr_cl = 0
+    for (let cl = 0; cl < clusterNum; cl++) {
+      if(useMainStore().modules[cl].includes(node.key)){
+      curr_cl = cl;
+      break
+      }
+    }
+    let curFocusNormPara = focusNormalizeParameterPerCl[curr_cl]
+    const centeredX = node.attributes.x - curFocusNormPara.meanX;
+    const centeredY = node.attributes.y - curFocusNormPara.meanY;
+    node.attributes.xOnClusterFocus =
+      (max_ext * (centeredX - curFocusNormPara.minCentered)) /
+      (curFocusNormPara.maxCentered -
+        curFocusNormPara.minCentered);
+    node.attributes.yOnClusterFocus =
+      (max_ext * (centeredY - curFocusNormPara.minCentered)) /
+      (curFocusNormPara.maxCentered -
+        curFocusNormPara.minCentered);
+    
+  });
 
   graph.clusterData.normalHullPoints = clusterHulls;
   graph.clusterData.focusHullPoints = focusClusterHulls;

@@ -168,19 +168,9 @@ export default class ClusterHulls {
   }
   adjustOneHull(
     convexHullPoints: [number, number][],
-    hullNum: number,
-    firstNoneNoiseCluster: number,
-    max_ext: number,
-    totalNumHulls: number
+    max_ext: number
   ) {
-    const greyVal =
-      hullNum >= firstNoneNoiseCluster
-        ? 150
-        : // ? ((hullNum - firstNoneNoiseCluster) /
-          //     (totalNumHulls - 1 - firstNoneNoiseCluster)) *
-          //     (215 - 80) +
-          //   80
-          255;
+    
     const finalHullNodes = adjustHullPoints(
       convexHullPoints,
       this.radianThreshold
@@ -206,39 +196,9 @@ export default class ClusterHulls {
     });
 
     return {
-      greyVal: greyVal,
       finalHullNodes: finalHullNodes,
       focusHullPoints: focusHullPoints,
       focusNormalizeParameter: focusNormalizeParameter,
     };
-  }
-  adjust(
-    convexHulls: [number, number][][]
-  ): [{ hullPoints: number[][][]; greyValues: number[] }, number[][][]] {
-    const convexHullsAdjusted = [];
-    const focusClusterHulls = [];
-    const max_ext = 20;
-    const firstNoneNoiseCluster = convexHulls[0].length > 1 ? 1 : 0;
-    if (convexHulls[0].length <= 1) {
-      convexHulls.shift();
-    }
-    const totalNumHulls = convexHulls.length;
-    const greyValues = [];
-    for (let i = 0; i < convexHulls.length; i++) {
-      const hullAdjustment = this.adjustOneHull(
-        convexHulls[i],
-        i,
-        firstNoneNoiseCluster,
-        max_ext,
-        totalNumHulls
-      );
-      greyValues.push(hullAdjustment.greyVal);
-      convexHullsAdjusted.push(hullAdjustment.finalHullNodes);
-      focusClusterHulls.push(hullAdjustment.focusHullPoints);
-    }
-    return [
-      { hullPoints: convexHullsAdjusted, greyValues: greyValues },
-      focusClusterHulls,
-    ];
   }
 }

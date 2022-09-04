@@ -382,6 +382,7 @@ const getReactomeData = () => {
       //for voronoiTest
       //mainStore.setModuleAreas(dataContent.moduleAreas);
       mainStore.setModules(dataContent.modules);
+      mainStore.setNoiseClusterExists(dataContent.noiseClusterExists);
       mainStore.setModuleCenters(dataContent.moduleCenters);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
       console.log('OVDATA', dataContent.overviewData);

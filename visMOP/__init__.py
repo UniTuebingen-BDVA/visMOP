@@ -99,14 +99,14 @@ def getModuleLayout(
             pathways_root_names,
         )
     except ValueError:
-        return -1, -1, 1
+        return -1, -1
     # module_node_pos = module_layout.initial_node_pos
     # outcommented for test of voronoi layout
     # module_node_pos = module_layout.get_final_node_positions()
     # module_areas = module_layout.get_module_areas()
     # module_areas = []
     # return module_node_pos, module_areas
-    return module_layout.modules, module_layout.modules_center
+    return module_layout.modules , module_layout.modules_center, module_layout.noise_cluster_exists
 
 
 def get_layout_settings(settings, omics_recieved):
@@ -549,7 +549,7 @@ def reactome_overview():
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
     # module_node_pos, module_areas = getModuleLayout(
-    modules, module_centers = getModuleLayout(
+    modules, module_centers, noiseClusterExists = getModuleLayout(
         omics_recieved,
         layout_limits,
         layout_attributes_used,
@@ -559,18 +559,6 @@ def reactome_overview():
         pathways_root_names,
     )
 
-    # a_file = open("modul_layout_bad.pkl", "wb")
-    # pickle.dump(module_node_pos, a_file)
-    # a_file.close()
-    # a_file = open("module_areas_bad.pkl", "wb")
-    # pickle.dump(module_areas, a_file)
-    # a_file.close()
-
-    # with open('modul_layout_03.pkl', "rb") as f:
-    #     module_node_pos = pickle.load(f)
-
-    # with open('module_areas_03.pkl', "rb") as f:
-    #     module_areas = pickle.load(f)
     if modules == -1:
         return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
     # print("number of Clusters", len(module_areas))
@@ -586,6 +574,7 @@ def reactome_overview():
             "overviewData": out_data,
             "modules": modules,
             "moduleCenters": module_centers,
+            "noiseClusterExists": noiseClusterExists,
             # "moduleAreas": module_areas,
             "pathwayLayouting": {
                 "pathwayList": dropdown_data,

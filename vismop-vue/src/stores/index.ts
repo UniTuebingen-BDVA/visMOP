@@ -80,6 +80,7 @@ interface State {
   };
   moduleAreas: [number[]];
   modules: string[][];
+  noiseClusterExists : boolean;
   moduleCenters: [number, number][];
   keggChebiTranslate: { [key: string]: string[] };
 }
@@ -140,6 +141,7 @@ export const useMainStore = defineStore('mainStore', {
     glyphs: { url: {}, svg: {} },
     moduleAreas: [[]],
     modules: [],
+    noiseClusterExists: false,
     moduleCenters: [],
     keggChebiTranslate: {},
   }),
@@ -290,6 +292,9 @@ export const useMainStore = defineStore('mainStore', {
     },
     setModules(val: string[][]) {
       this.modules = val;
+    },
+    setNoiseClusterExists(val: boolean){
+      this.noiseClusterExists = val;
     },
     setModuleCenters(val: [number, number][]) {
       this.moduleCenters = val;
