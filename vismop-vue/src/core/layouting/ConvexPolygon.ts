@@ -2,15 +2,15 @@ import { vec2 } from 'gl-matrix';
 import { Polygon } from './Polygon';
 export class ConvexPolygon extends Polygon {
   // vertices are considered counterclockwise
-  public boundingBox: Polygon = new Polygon();
+  boundingBox: Polygon = new Polygon();
 
   // applies current transformation to vertex arrays
-  public applyTransformation() {
+  applyTransformation() {
     super.applyTransformation();
     this.calculateOptimalBoundingBox();
   }
 
-  public calculateOptimalBoundingBox() {
+  calculateOptimalBoundingBox() {
     // https://github.com/Glissando/Rotating-Calipers
 
     this.clearTransformation();
@@ -34,14 +34,14 @@ export class ConvexPolygon extends Polygon {
     this.clearTransformation();
   }
 
-  public getBoundingBox() {
+  getBoundingBox() {
     if (this.boundingBox.getArea() == Number.POSITIVE_INFINITY) {
       this.calculateOptimalBoundingBox();
     }
     return this.boundingBox;
   }
 
-  public calculateCurrentBoundingBox() {
+  calculateCurrentBoundingBox() {
     let xMin = Number.POSITIVE_INFINITY;
     let xMax = Number.NEGATIVE_INFINITY;
     let yMin = Number.POSITIVE_INFINITY;

@@ -60,7 +60,11 @@ export interface ForceAtlas2SynchronousLayoutParameters<
 }
 
 interface IForceAtlas2Layout {
-  (graph: Graph, iterations: number): LayoutMapping;
+  (
+    graph: Graph,
+    iterations: number,
+    boundingPoly: ConvexPolygon
+  ): LayoutMapping;
   <
     NodeAttributes extends Attributes = Attributes,
     EdgeAttributes extends Attributes = Attributes

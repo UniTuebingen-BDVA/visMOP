@@ -21,8 +21,10 @@ import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
 import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
+import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
 import _ from 'lodash';
+import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 
 export default class overviewGraph {
   // constants
@@ -145,10 +147,16 @@ export default class overviewGraph {
       disable: true,
     },
   };
+  polygons: { [key: number]: ConvexPolygon };
 
-  constructor(containerID: string, graphData: overviewGraphData) {
+  constructor(
+    containerID: string,
+    graphData: overviewGraphData,
+    polygons: { [key: number]: ConvexPolygon }
+  ) {
     this.graph = UndirectedGraph.from(graphData);
     this.clusterData = graphData.clusterData;
+    this.polygons = polygons;
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
@@ -205,10 +213,27 @@ export default class overviewGraph {
     // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
 
     const rootPositions = orderedCircularLayout(rootSubgraph, {
-      scale: width,
-      center: 1.0,
+      scale: width / 1.5,
+      center: 1.25,
     }) as LayoutMapping<{ [dimension: string]: number }>;
     assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
+
+    Object.keys(this.polygons).forEach((element) => {
+      const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
+        return attr.modNum == parseInt(element);
+      });
+      const currentPositions = fa2(
+        currentSubgraph,
+        {
+          iterations: 150,
+          settings: {
+            adjustSizes: true,
+          },
+        },
+        this.polygons[parseInt(element)]
+      );
+      assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
+    });
 
     this.graph.forEachNode((node, attributes) => {
       attributes.layoutX = attributes.x;

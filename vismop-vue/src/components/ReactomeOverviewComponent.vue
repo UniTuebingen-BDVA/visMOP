@@ -414,6 +414,10 @@ const drawNetwork = () => {
     clusterWeights,
     mainStore.moduleCenters
   );
+  console.log(
+    'Rando Test',
+    polygons[parseInt(Object.keys(polygons)[2])].pointInPolygonCoords(10, 10)
+  );
   const positionMapping = nodePolygonMapping(mainStore.modules, polygons);
   const polygonsArrays: [number, number][][] = [];
   for (let index = 0; index < Object.keys(polygons).length; index++) {
@@ -433,7 +437,8 @@ const drawNetwork = () => {
   console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(
     props.contextID ? props.contextID : '',
-    networkData
+    networkData,
+    polygons
   );
 };
 </script>

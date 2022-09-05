@@ -1,26 +1,26 @@
 import { vec2 } from 'gl-matrix';
 export class Polygon {
   // vertices are considered counterclockwise
-  public vertices: vec2[] = [];
-  public transformedVertices: vec2[] = [];
+  vertices: vec2[] = [];
+  transformedVertices: vec2[] = [];
   protected recalculateCenter = true;
   protected center: vec2 = vec2.create();
   protected area = Number.POSITIVE_INFINITY;
-  public unappliedTansformations = false;
+  unappliedTansformations = false;
 
   // adds vertex ad pos x, y to the polygon
-  public addVertex(x: number, y: number) {
+  addVertex(x: number, y: number) {
     const vertex = vec2.fromValues(x, y);
     this.vertices.push(vertex);
     this.transformedVertices.push(vec2.clone(vertex));
   }
-  public addVertices(vertices: [number, number][]) {
+  addVertices(vertices: [number, number][]) {
     vertices.forEach((vert) => {
       this.addVertex(...vert);
     });
   }
   // applies current transformation to vertex arrays
-  public applyTransformation() {
+  applyTransformation() {
     const appliedVerts: vec2[] = [];
     this.transformedVertices.forEach((vert) => {
       appliedVerts.push(vec2.clone(vert));
@@ -29,7 +29,7 @@ export class Polygon {
     this.unappliedTansformations = false;
   }
 
-  public clearTransformation() {
+  clearTransformation() {
     const clearedVerts: vec2[] = [];
     this.vertices.forEach((vert) => {
       clearedVerts.push(vec2.clone(vert));
@@ -37,17 +37,17 @@ export class Polygon {
     this.transformedVertices = clearedVerts;
   }
   // returns the amount of edges
-  public edgeAmt() {
+  edgeAmt() {
     return this.vertices.length;
   }
 
   // gets edge by index, edges are considered counterclockwise
-  public getEdge(edgeIndex: number, vertices = this.vertices) {
+  getEdge(edgeIndex: number, vertices = this.vertices) {
     return [vertices[edgeIndex], vertices[(edgeIndex + 1) % this.edgeAmt()]];
   }
 
   // determines the center of the polygon
-  public determineCenter() {
+  determineCenter() {
     const summedVecs = this.vertices.reduce((a, b) => {
       const out = vec2.create();
       vec2.add(out, a, b);
@@ -59,13 +59,13 @@ export class Polygon {
     this.recalculateCenter = false;
   }
 
-  public getCenter() {
+  getCenter() {
     if (this.recalculateCenter) this.determineCenter();
     return this.center;
   }
 
   // calcs area
-  public getArea() {
+  getArea() {
     if (this.vertices.length == 0) return this.area;
     if (this.area == Number.POSITIVE_INFINITY) {
       let areaSum = 0;
@@ -82,7 +82,7 @@ export class Polygon {
   }
 
   // performes counterclockwise roatation transformation
-  public rotatePolygon(rad: number) {
+  rotatePolygon(rad: number) {
     if (this.recalculateCenter) this.determineCenter();
     this.transformedVertices.forEach((vec) =>
       vec2.rotate(vec, vec, this.center, rad)
@@ -90,7 +90,7 @@ export class Polygon {
     this.unappliedTansformations = true;
   }
 
-  public scalePolygon(factor: number) {
+  scalePolygon(factor: number) {
     const center = this.getCenter();
     this.transformedVertices.forEach((element) => {
       vec2.subtract(element, element, center);
@@ -100,7 +100,7 @@ export class Polygon {
     this.unappliedTansformations = true;
   }
 
-  public pointInPolygon(point: vec2, vertices = this.vertices) {
+  pointInPolygon(point: vec2, vertices = this.vertices) {
     //https://towardsdatascience.com/is-the-point-inside-the-polygon-574b86472119
     let sideOfEdge = 0;
     for (let index = 0; index < this.edgeAmt(); index++) {
@@ -117,11 +117,11 @@ export class Polygon {
     return true;
   }
 
-  public pointInPolygonCoords(x: number, y: number, vertices = this.vertices) {
-    this.pointInPolygon(vec2.fromValues(x, y), vertices);
+  pointInPolygonCoords(x: number, y: number, vertices = this.vertices) {
+    return this.pointInPolygon(vec2.fromValues(x, y), vertices);
   }
 
-  public closestPointOnPoly(point: vec2, vertices = this.vertices) {
+  closestPointOnPoly(point: vec2, vertices = this.vertices) {
     const pointsOnEdges: vec2[] = [];
     for (let index = 0; index < this.edgeAmt(); index++) {
       pointsOnEdges.push(this.closestPointOnEdge(index, point, vertices));
@@ -139,15 +139,11 @@ export class Polygon {
     return pointsOnEdges[minIndex];
   }
 
-  public closestPointOnPolyCoords(
-    x: number,
-    y: number,
-    vertices = this.vertices
-  ) {
-    this.closestPointOnPoly(vec2.fromValues(x, y), vertices);
+  closestPointOnPolyCoords(x: number, y: number, vertices = this.vertices) {
+    return this.closestPointOnPoly(vec2.fromValues(x, y), vertices);
   }
 
-  public samplePointsInPoly(pointsAmt: number): vec2[] {
+  samplePointsInPoly(pointsAmt: number): vec2[] {
     if (this.unappliedTansformations) this.applyTransformation();
     const randomPoints: vec2[] = [];
     const edge = this.getEdge(0, this.transformedVertices);
@@ -177,11 +173,7 @@ export class Polygon {
     return randomPoints;
   }
 
-  public closestPointOnEdge(
-    edgeIdx: number,
-    point: vec2,
-    vertices = this.vertices
-  ) {
+  closestPointOnEdge(edgeIdx: number, point: vec2, vertices = this.vertices) {
     // https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
     const edge = this.getEdge(edgeIdx, vertices);
     // v1 edge start to query point
@@ -212,7 +204,7 @@ export class Polygon {
     );
   }
 
-  public verticesToArray(duplicatefirstElem = false) {
+  verticesToArray(duplicatefirstElem = false) {
     const outVerts: [number, number][] = [];
     this.vertices.forEach((elem) => {
       outVerts.push([elem[0], elem[1]]);

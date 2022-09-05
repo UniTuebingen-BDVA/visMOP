@@ -75,12 +75,7 @@ var MAX_FORCE = 10;
  * @param  {Float32Array} EdgeMatrix - Edge data.
  * @return {object}                  - Some metadata.
  */
-module.exports = function iterate(
-  options,
-  NodeMatrix,
-  EdgeMatrix,
-  boundingPoly
-) {
+export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
   // Initializing variables
   var l, r, n, n1, n2, rn, e, w, g, s;
 
@@ -758,12 +753,19 @@ module.exports = function iterate(
         newX =
           NodeMatrix[n + NODE_X] +
           NodeMatrix[n + NODE_DX] * (nodespeed / options.slowDown);
-        NodeMatrix[n + NODE_X] = newX;
 
         newY =
           NodeMatrix[n + NODE_Y] +
           NodeMatrix[n + NODE_DY] * (nodespeed / options.slowDown);
-        NodeMatrix[n + NODE_Y] = newY;
+
+        if (boundingPoly.pointInPolygonCoords(newX, newY)) {
+          NodeMatrix[n + NODE_X] = newX;
+          NodeMatrix[n + NODE_Y] = newY;
+        } else {
+          const pointOnPoly = boundingPoly.closestPointOnPolyCoords(newX, newY);
+          NodeMatrix[n + NODE_X] = pointOnPoly[0] + Math.random() * 0.0001;
+          NodeMatrix[n + NODE_Y] = pointOnPoly[1] + Math.random() * 0.0001;
+        }
       }
     }
   } else {
@@ -816,8 +818,8 @@ module.exports = function iterate(
           NodeMatrix[n + NODE_Y] = newY;
         } else {
           const pointOnPoly = boundingPoly.closestPointOnPolyCoords(newX, newY);
-          NodeMatrix[n + NODE_X] = pointOnPoly[0];
-          NodeMatrix[n + NODE_Y] = pointOnPoly[1];
+          NodeMatrix[n + NODE_X] = pointOnPoly[0] + Math.random() * 0.0001;
+          NodeMatrix[n + NODE_Y] = pointOnPoly[1] + Math.random() * 0.0001;
         }
       }
     }
@@ -825,4 +827,4 @@ module.exports = function iterate(
 
   // We return the information about the layout (no need to return the matrices)
   return {};
-};
+}

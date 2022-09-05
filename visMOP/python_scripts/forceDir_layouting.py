@@ -34,9 +34,9 @@ def get_adjusted_force_dir_node_pos(
     pos, pos_out = get_pos_in_force_dir_layout(
         G_with_weights, mod_num, 2, repulsive_force_par, extent
     )
-    nx.draw(G, pos=pos)
-    plt.savefig("test2_" + str(mod_num) + ".png", dpi=300)
-    plt.close()
+    # nx.draw(G, pos=pos)
+    # plt.savefig("test2_" + str(mod_num) + ".png", dpi=300)
+    # plt.close()
     return pos_out
 
 

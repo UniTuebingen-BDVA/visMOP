@@ -1,6 +1,5 @@
 import { voronoiMapSimulation } from 'd3-voronoi-map';
 import { ConvexPolygon } from './ConvexPolygon';
-import { Polygon } from './Polygon';
 import { cluster, clusterData } from './voronoiTypes';
 
 /**
@@ -87,8 +86,8 @@ function generateVoronoiPolygons(inputData: clusterData, radius: number) {
   const circle = [];
   // one has to take care that the initial cluster centers are completely inside the circle, otherwise they will get movbed around very weirdly
   for (let val = 0; val < 2 * Math.PI; val += Math.PI / 30) {
-    const x = radius * Math.cos(val);
-    const y = radius * Math.sin(val);
+    const x = radius * (Math.cos(val) + 1);
+    const y = radius * (Math.sin(val) + 1);
     circle.push([x, y]);
   }
   const simulation = voronoiMapSimulation(inputData)
