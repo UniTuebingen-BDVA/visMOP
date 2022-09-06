@@ -121,6 +121,23 @@ export class Polygon {
     return this.pointInPolygon(vec2.fromValues(x, y), vertices);
   }
 
+  movePointCloserToCenter(point: vec2, ratio: number) {
+    const centerDirection = vec2.sub(vec2.create(), this.getCenter(), point);
+    return vec2.add(
+      point,
+      point,
+      vec2.multiply(
+        vec2.create(),
+        centerDirection,
+        vec2.fromValues(ratio, ratio)
+      )
+    );
+  }
+
+  movePointCloserToCenterCoord(x: number, y: number, ratio: number) {
+    return this.movePointCloserToCenter(vec2.fromValues(x, y), ratio);
+  }
+
   closestPointOnPoly(point: vec2, vertices = this.vertices) {
     const pointsOnEdges: vec2[] = [];
     for (let index = 0; index < this.edgeAmt(); index++) {

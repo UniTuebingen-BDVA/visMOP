@@ -100,7 +100,8 @@ function adjustHullPoints(
         currPoint[0] + moveVec[0] * pushLen,
         currPoint[1] + moveVec[1] * pushLen,
       ];
-      outList.push(newPushedOutPoint);
+      //outList.push(newPushedOutPoint);
+      outList.push([currPoint[0], currPoint[1]]);
     } else {
       console.log('else');
       const newPushedOutPoint = [
@@ -118,10 +119,11 @@ function adjustHullPoints(
         newPushedOutPoint[0] + perpendicularCounterclockWise[0] * halfPushLen,
         newPushedOutPoint[1] + perpendicularCounterclockWise[1] * halfPushLen,
       ];
-      outList.push(newPointClockWise, newPointCounterclockWise);
+      //outList.push(newPointClockWise, newPointCounterclockWise);
+      outList.push([currPoint[0], currPoint[1]]);
     }
   }
-  outList.push(outList[0]);
+  //outList.push(outList[0]);
   return outList;
 }
 
@@ -166,11 +168,7 @@ export default class ClusterHulls {
   constructor(angleThreshold: number) {
     this.radianThreshold = (angleThreshold * Math.PI) / 180;
   }
-  adjustOneHull(
-    convexHullPoints: [number, number][],
-    max_ext: number
-  ) {
-    
+  adjustOneHull(convexHullPoints: [number, number][], max_ext: number) {
     const finalHullNodes = adjustHullPoints(
       convexHullPoints,
       this.radianThreshold

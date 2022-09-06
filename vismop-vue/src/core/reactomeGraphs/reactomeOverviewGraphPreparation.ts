@@ -189,12 +189,14 @@ export function generateGraphData(
   // const totalNumHulls = moduleAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
-  let focusNormalizeParameterPerCl = [] as {varX: number,
-    varY: number,
-    meanX: number,
-    meanY: number,
-    minCentered: number,
-    maxCentered: number,}[]
+  const focusNormalizeParameterPerCl = [] as {
+    varX: number;
+    varY: number;
+    meanX: number;
+    meanY: number;
+    minCentered: number;
+    maxCentered: number;
+  }[];
   _.forEach(voronoiTest, (nodes) => {
     /*
     const clusterHullPoints = hull(
@@ -207,12 +209,11 @@ export function generateGraphData(
         nodes,
         max_ext
       );
-      let greyValue = clusterNum >= firstNoneNoiseCluster ? 150: 250
+      const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
       greyValues.push(greyValue);
       clusterHulls.push(hullAdjustment.finalHullNodes);
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
       focusNormalizeParameterPerCl.push(hullAdjustment.focusNormalizeParameter);
-
     }
     //norm_node_pos = norm_node_pos.concat(nodes);
 
@@ -221,25 +222,22 @@ export function generateGraphData(
   // if one wants to use rectangle use getRightResultFormForRectangle()
 
   _.forEach(graph.nodes, (node) => {
-    let curr_cl = 0
+    let curr_cl = 0;
     for (let cl = 0; cl < clusterNum; cl++) {
-      if(useMainStore().modules[cl].includes(node.key)){
-      curr_cl = cl;
-      break
+      if (useMainStore().modules[cl].includes(node.key)) {
+        curr_cl = cl;
+        break;
       }
     }
-    let curFocusNormPara = focusNormalizeParameterPerCl[curr_cl]
+    const curFocusNormPara = focusNormalizeParameterPerCl[curr_cl];
     const centeredX = node.attributes.x - curFocusNormPara.meanX;
     const centeredY = node.attributes.y - curFocusNormPara.meanY;
     node.attributes.xOnClusterFocus =
       (max_ext * (centeredX - curFocusNormPara.minCentered)) /
-      (curFocusNormPara.maxCentered -
-        curFocusNormPara.minCentered);
+      (curFocusNormPara.maxCentered - curFocusNormPara.minCentered);
     node.attributes.yOnClusterFocus =
       (max_ext * (centeredY - curFocusNormPara.minCentered)) /
-      (curFocusNormPara.maxCentered -
-        curFocusNormPara.minCentered);
-    
+      (curFocusNormPara.maxCentered - curFocusNormPara.minCentered);
   });
 
   graph.clusterData.normalHullPoints = clusterHulls;

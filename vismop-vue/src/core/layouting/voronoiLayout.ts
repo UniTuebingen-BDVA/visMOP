@@ -30,7 +30,7 @@ export function generateVoronoiCells(
   const voronoiPolys = generateVoronoiPolygons(inputData, radius);
   for (let index = 0; index < voronoiPolys.length; index++) {
     const polygonObj = generatePolygonObj(voronoiPolys[index]);
-    polygonObj.scalePolygon(0.7);
+    polygonObj.scalePolygon(0.9);
     polygonObj.applyTransformation();
     outData[voronoiPolys[index].site.originalObject.index] = polygonObj;
   }
@@ -86,8 +86,8 @@ function generateVoronoiPolygons(inputData: clusterData, radius: number) {
   const circle = [];
   // one has to take care that the initial cluster centers are completely inside the circle, otherwise they will get movbed around very weirdly
   for (let val = 0; val < 2 * Math.PI; val += Math.PI / 30) {
-    const x = radius * (Math.cos(val) + 1);
-    const y = radius * (Math.sin(val) + 1);
+    const x = radius * Math.cos(val);
+    const y = radius * Math.sin(val);
     circle.push([x, y]);
   }
   const simulation = voronoiMapSimulation(inputData)

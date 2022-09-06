@@ -213,21 +213,37 @@ export default class overviewGraph {
     // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
 
     const rootPositions = orderedCircularLayout(rootSubgraph, {
-      scale: width / 1.5,
-      center: 1.25,
+      scale: width / 1.8,
+      center: 0.5,
     }) as LayoutMapping<{ [dimension: string]: number }>;
     assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
 
     Object.keys(this.polygons).forEach((element) => {
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
-        return attr.modNum == parseInt(element);
+        return attr.modNum == parseInt(element) && attr.isRoot == false;
       });
+      currentSubgraph.forEachNode((node, attr) => {
+        currentSubgraph.forEachNode((nodeInner, attrInner) => {
+          if (node != nodeInner) {
+            if (!currentSubgraph.hasEdge(node, nodeInner)) {
+              currentSubgraph.addEdge(node, nodeInner, {
+                weight: attr.rootId == attrInner.rootId ? 20 : 1,
+              });
+            }
+          }
+        });
+      });
+      const settings = fa2.inferSettings(currentSubgraph);
       const currentPositions = fa2(
         currentSubgraph,
         {
-          iterations: 150,
+          iterations: 200,
+          getEdgeWeight: 'weight',
           settings: {
-            adjustSizes: true,
+            ...settings,
+            gravity: 1.0,
+            edgeWeightInfluence: 0.1,
+            scalingRatio: 0.1,
           },
         },
         this.polygons[parseInt(element)]
