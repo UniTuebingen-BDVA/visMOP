@@ -28,10 +28,10 @@ import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 
 export default class overviewGraph {
   // constants
-  static readonly DEFAULT_SIZE = 6;
-  static readonly ROOT_DEFAULT_SIZE = 15;
-  static readonly MODULE_DEFAULT_SIZE = 15;
-  static readonly FOCUS_NODE_SIZE = 10;
+  static readonly DEFAULT_SIZE = 3 * 2;
+  static readonly ROOT_DEFAULT_SIZE = 7.5 * 2;
+  static readonly MODULE_DEFAULT_SIZE = 7.5 * 2;
+  static readonly FOCUS_NODE_SIZE = 5 * 2;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];
@@ -222,12 +222,13 @@ export default class overviewGraph {
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
         return attr.modNum == parseInt(element) && attr.isRoot == false;
       });
+      currentSubgraph.clearEdges();
       currentSubgraph.forEachNode((node, attr) => {
         currentSubgraph.forEachNode((nodeInner, attrInner) => {
           if (node != nodeInner) {
             if (!currentSubgraph.hasEdge(node, nodeInner)) {
               currentSubgraph.addEdge(node, nodeInner, {
-                weight: attr.rootId == attrInner.rootId ? 20 : 1,
+                weight: attr.rootId == attrInner.rootId ? 5 : 1,
               });
             }
           }
@@ -237,13 +238,15 @@ export default class overviewGraph {
       const currentPositions = fa2(
         currentSubgraph,
         {
-          iterations: 200,
+          iterations: 20000,
           getEdgeWeight: 'weight',
           settings: {
             ...settings,
-            gravity: 1.0,
-            edgeWeightInfluence: 0.1,
-            scalingRatio: 0.1,
+            gravity: 2.0,
+            edgeWeightInfluence: 7,
+            scalingRatio: 5,
+            adjustSizes: true,
+            //outboundAttractionDistribution: true,
           },
         },
         this.polygons[parseInt(element)]

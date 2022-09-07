@@ -17,11 +17,12 @@ function splitText(
   context: CanvasRenderingContext2D,
   text: string,
   maxWidth = 100
-): string[] {
+): { text: string[]; maxWidth: number } {
   const internalText = text.replaceAll('\n', ' ');
   const internalTextArray = internalText.split(' ');
   const firstWord = internalTextArray.shift();
   const textRows = [firstWord ? firstWord : ''];
+  let longestRowWidth = 0;
   let currentRow = 0;
   internalTextArray.forEach((word) => {
     const currRowWidth = context.measureText(textRows[currentRow]).width;
@@ -34,7 +35,13 @@ function splitText(
       textRows.push(word);
     }
   });
-  return textRows;
+  textRows.forEach((row) => {
+    const currentRowWidth = context.measureText(row).width;
+    if (currentRowWidth > longestRowWidth) {
+      longestRowWidth = currentRowWidth;
+    }
+  });
+  return { text: textRows, maxWidth: longestRowWidth };
 }
 
 export function drawLabel(
@@ -51,11 +58,13 @@ export function drawLabel(
   const labelText = splitText(context, data.label);
   context.fillStyle = '#000';
   context.font = `${weight} ${size}px ${font}`;
-  labelText.forEach((row, i) => {
+  labelText.text.forEach((row, i) => {
     context.fillText(
       row,
-      data.x + data.size + 3,
-      data.y + size / 3 + (i - (labelText.length / 2 - 0.5)) * size
+      data.layoutX < 0 && data.isRoot
+        ? data.x - labelText.maxWidth - data.size - 3
+        : data.x + data.size + 3,
+      data.y + size / 3 + (i - (labelText.text.length / 2 - 0.5)) * size
     );
   });
 }
@@ -86,32 +95,36 @@ export function drawHover(
   const MARGIN = 2;
 
   if (typeof data.label === 'string') {
-    let textWidth = 0;
     const labelText = splitText(context, data.label);
+    const boxWidth = Math.round(labelText.maxWidth + 9);
+    const boxHeight = Math.round(size * labelText.text.length + 2 * MARGIN);
+    const radius =
+      Math.max(data.size, (size * labelText.text.length) / 2) + MARGIN;
 
-    labelText.forEach((row) => {
-      const currTextWidth = context.measureText(row).width;
-      if (currTextWidth > textWidth) {
-        textWidth = currTextWidth;
-      }
-    });
-    const boxWidth = Math.round(textWidth + 9);
-    const boxHeight = Math.round(size * labelText.length + 2 * MARGIN);
-    const radious = Math.max(data.size, (size * labelText.length) / 2) + MARGIN;
-
-    const angleRadian = Math.asin(boxHeight / 2 / radious);
+    const angleRadian = Math.asin(boxHeight / 2 / radius);
     const xDeltaCoord = Math.sqrt(
-      Math.abs(Math.pow(radious, 2) - Math.pow(boxHeight / 2, 2))
+      Math.abs(Math.pow(radius, 2) - Math.pow(boxHeight / 2, 2))
     );
-
-    context.beginPath();
-    context.moveTo(data.x + xDeltaCoord, data.y + boxHeight / 2);
-    context.lineTo(data.x + radious + boxWidth, data.y + boxHeight / 2);
-    context.lineTo(data.x + radious + boxWidth, data.y - boxHeight / 2);
-    context.lineTo(data.x + xDeltaCoord, data.y - boxHeight / 2);
-    context.arc(data.x, data.y, radious, angleRadian, -angleRadian);
-    context.closePath();
-    context.fill();
+    console.log('labelData', data.layoutX);
+    if (data.layoutX < 0 && data.isRoot) {
+      context.beginPath();
+      context.moveTo(data.x - xDeltaCoord, data.y + boxHeight / 2);
+      context.lineTo(data.x - radius - boxWidth, data.y + boxHeight / 2);
+      context.lineTo(data.x - radius - boxWidth, data.y - boxHeight / 2);
+      context.lineTo(data.x - xDeltaCoord, data.y - boxHeight / 2);
+      context.arc(data.x, data.y, radius, -angleRadian, angleRadian);
+      context.closePath();
+      context.fill();
+    } else {
+      context.beginPath();
+      context.moveTo(data.x + xDeltaCoord, data.y + boxHeight / 2);
+      context.lineTo(data.x + radius + boxWidth, data.y + boxHeight / 2);
+      context.lineTo(data.x + radius + boxWidth, data.y - boxHeight / 2);
+      context.lineTo(data.x + xDeltaCoord, data.y - boxHeight / 2);
+      context.arc(data.x, data.y, radius, angleRadian, -angleRadian);
+      context.closePath();
+      context.fill();
+    }
   } else {
     context.beginPath();
     context.arc(data.x, data.y, data.size + MARGIN, 0, Math.PI * 2);

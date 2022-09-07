@@ -586,7 +586,9 @@ class Module_layout:
         return new_data_table
 
     # for clustering higer n_components and n_neighbors and lower min_dist
-    def get_umap_layout_pos(self, n_components=2, n_neighbors=5, min_dist=0.1):
+    def get_umap_layout_pos(
+        self, n_components=2, n_neighbors=5, min_dist=0.1, norm_lower=0, norm_upper=1
+    ):
         """Performs UMAP on scaled data returns new normalizied in [0,1] n-D Positions in node dict and postion list of lists
 
         Args:
@@ -600,7 +602,7 @@ class Module_layout:
             min_dist=min_dist,
             # random_state=10,
         ).fit_transform(self.data_table_scaled_filled)
-        new_pos_norm = normalize_value_list_in_range(new_pos, [0, 1])
+        new_pos_norm = normalize_value_list_in_range(new_pos, [norm_lower, norm_upper])
         pos_norm_dic = {
             node_name: row
             for row, node_name in zip(new_pos_norm, list(self.data_table.index))
@@ -641,7 +643,11 @@ class Module_layout:
             n_comp = min(math.ceil(num_features / 2), 10)
             n_neighbors = 5 if num_pathways < 100 else 10 if num_pathways < 200 else 15
             positions_dict, position_list = self.get_umap_layout_pos(
-                n_components=n_comp, n_neighbors=n_neighbors, min_dist=0
+                n_components=n_comp,
+                n_neighbors=n_neighbors,
+                min_dist=0,
+                norm_lower=-125,
+                norm_upper=125,
             )
         else:
             position_list = self.data_table_scaled_filled

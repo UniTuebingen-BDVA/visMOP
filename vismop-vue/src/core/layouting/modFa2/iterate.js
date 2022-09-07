@@ -766,7 +766,7 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
           pointOnPoly = boundingPoly.movePointCloserToCenterCoord(
             pointOnPoly[0],
             pointOnPoly[1],
-            0.2
+            0.25
           );
           NodeMatrix[n + NODE_X] = pointOnPoly[0] + Math.random() * 0.0001;
           NodeMatrix[n + NODE_Y] = pointOnPoly[1] + Math.random() * 0.0001;
@@ -826,7 +826,7 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
           pointOnPoly = boundingPoly.movePointCloserToCenterCoord(
             pointOnPoly[0],
             pointOnPoly[1],
-            0.2
+            0.25
           );
           NodeMatrix[n + NODE_X] = pointOnPoly[0] + Math.random() * 0.0001;
           NodeMatrix[n + NODE_Y] = pointOnPoly[1] + Math.random() * 0.0001;

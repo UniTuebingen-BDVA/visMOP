@@ -410,7 +410,7 @@ const drawNetwork = () => {
   //get module areas here!!!
   const clusterWeights = mainStore.modules.map((elem) => elem.length);
   const polygons = generateVoronoiCells(
-    10,
+    250,
     clusterWeights,
     mainStore.moduleCenters
   );
