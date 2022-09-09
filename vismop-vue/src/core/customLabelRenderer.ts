@@ -158,6 +158,17 @@ export function drawHover(
         (labelText.text.length / 2 - 0.5) * size +
         Math.sin(angleToX) * ((size * labelText.text.length) / 2);
       const rootY2 = rootY1 + boxHeight;
+      const circleVec = vec2.fromValues(-normalized[1], -normalized[0]);
+      const startPos = [
+        data.x - radius * circleVec[0],
+        data.y - radius * circleVec[1],
+      ];
+      const endPos = [
+        data.x + radius * circleVec[0],
+        data.y + radius * circleVec[1],
+      ];
+      const startAngle = Math.atan2(startPos[1] - data.y, startPos[0] - data.x);
+      const endAngle = Math.atan2(endPos[1] - data.y, endPos[0] - data.x);
 
       // sort points by angle to center
       console.log(data.label);
@@ -170,31 +181,92 @@ export function drawHover(
         ],
         [data.x, data.y]
       );
-      const cond1 =
-        vec2.dist(rotCenter, angleOrder[0].coords) >
-        vec2.dist(rotCenter, angleOrder[1].coords);
 
-      const cond2 =
-        vec2.dist(rotCenter, angleOrder[0].coords) >
-        vec2.dist(rotCenter, angleOrder[2].coords);
+      // handle case for right side discontinuity
+      if (
+        angleOrder[0].coords[0] > angleOrder[1].coords[0] &&
+        angleOrder[3].coords[0] > angleOrder[2].coords[0] &&
+        data.x < angleOrder[1].coords[0]
+      ) {
+        angleOrder.splice(0, 0, ...angleOrder.splice(2, 2));
+      }
+      // if vertex 1 is closer to center than vertex 0 it should be skipped if only if its not a on an edge case
+      const draw1 =
+        vec2.dist(rotCenter, angleOrder[0].coords) <
+          vec2.dist(rotCenter, angleOrder[1].coords) ||
+        (angleOrder[0].coords[0] >= data.x &&
+          data.x >= angleOrder[3].coords[0]) ||
+        (angleOrder[0].coords[0] <= data.x &&
+          data.x <= angleOrder[3].coords[0]);
 
-      const angleRadian = cond1
-        ? Math.asin(
-            vec2.dist(angleOrder[0].coords, angleOrder[2].coords) / 2 / radius
-          )
-        : Math.asin(boxHeight / 2 / radius);
+      // if vertex 1 is closer to center than vertex 0 it should be skipped only if its not a on an edge center case
+      const draw2 =
+        vec2.dist(rotCenter, angleOrder[0].coords) <
+          vec2.dist(rotCenter, angleOrder[2].coords) ||
+        (angleOrder[0].coords[0] <= data.x &&
+          data.x <= angleOrder[3].coords[0]) ||
+        (angleOrder[0].coords[0] >= data.x &&
+          data.x >= angleOrder[3].coords[0]);
+
+      const skip0 =
+        ((startPos[0] < angleOrder[0].coords[0] &&
+          startPos[0] < angleOrder[3].coords[0]) ||
+          (startPos[0] > angleOrder[0].coords[0] &&
+            startPos[0] > angleOrder[3].coords[0])) &&
+        ((startPos[1] < angleOrder[0].coords[1] &&
+          startPos[1] < angleOrder[3].coords[1]) ||
+          (startPos[1] > angleOrder[0].coords[1] &&
+            startPos[1] > angleOrder[3].coords[1]));
+
+      /*
+        ((angleOrder[0].coords[1] < startPos[1] &&
+          endPos[1] < angleOrder[0].coords[1]) ||
+          (angleOrder[0].coords[1] < endPos[1] &&
+            startPos[1] < angleOrder[0].coords[1])) &&
+        ((angleOrder[0].coords[0] < startPos[0] &&
+          angleOrder[0].coords[0] < endPos[0]) ||
+          (angleOrder[0].coords[0] > startPos[0] &&
+            angleOrder[0].coords[0] > endPos[0]));
+            */
+
+      const skip3 =
+        ((endPos[0] < angleOrder[0].coords[0] &&
+          endPos[0] < angleOrder[3].coords[0]) ||
+          (endPos[0] > angleOrder[0].coords[0] &&
+            endPos[0] > angleOrder[3].coords[0])) &&
+        ((endPos[1] < angleOrder[0].coords[1] &&
+          endPos[1] < angleOrder[3].coords[1]) ||
+          (endPos[1] > angleOrder[0].coords[1] &&
+            endPos[1] > angleOrder[3].coords[1]));
+      /*
+        ((angleOrder[3].coords[1] < startPos[1] &&
+          endPos[1] < angleOrder[3].coords[1]) ||
+          (angleOrder[3].coords[1] < endPos[1] &&
+            startPos[1] < angleOrder[3].coords[1])) &&
+        ((angleOrder[3].coords[0] < startPos[0] &&
+          angleOrder[3].coords[0] < endPos[0]) ||
+          (angleOrder[3].coords[0] > startPos[0] &&
+            angleOrder[3].coords[0] > endPos[0]));*/
+
+      console.log(normalized);
+      //flip y aswell due to inverted coord system
 
       context.beginPath();
-      context.moveTo(angleOrder[0].coords[0], angleOrder[0].coords[1]);
-      if (!cond1) {
+      context.moveTo(startPos[0], startPos[1]);
+      //if (!skip0 && draw1 && draw2) {
+      context.lineTo(angleOrder[0].coords[0], angleOrder[0].coords[1]);
+      //}
+      if (draw1) {
         context.lineTo(angleOrder[1].coords[0], angleOrder[1].coords[1]);
       }
-      if (!cond2) {
+      if (draw2) {
         context.lineTo(angleOrder[2].coords[0], angleOrder[2].coords[1]);
       }
+      //if (!skip3 && draw1 && draw2) {
       context.lineTo(angleOrder[3].coords[0], angleOrder[3].coords[1]);
-      context.lineTo(data.x, data.y);
-      //context.arc(data.x, data.y, radius, angleRadian, -angleRadian);
+      //}
+      context.lineTo(endPos[0], endPos[1]);
+      context.arc(data.x, data.y, radius, startAngle, endAngle);
       context.closePath();
       context.fill();
     } else {
@@ -257,9 +329,8 @@ function addAngleOrder(points: [number, number][], center: [number, number]) {
     angleRank: number;
   }[] = [];
   points.forEach((point) => {
-    let angle = Math.atan2(point[1] - center[1], point[0] - center[0]);
+    let angle = -Math.atan2(point[1] - center[1], point[0] - center[0]);
     if (angle < 0) angle = angle + 2 * Math.PI;
-    console.log(angle);
     const pointObj = {
       coords: vec2.fromValues(point[0], point[1]),
       angle: angle,
