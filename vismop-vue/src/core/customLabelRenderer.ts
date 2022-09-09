@@ -207,7 +207,7 @@ export function drawHover(
           data.x <= angleOrder[3].coords[0]) ||
         (angleOrder[0].coords[0] >= data.x &&
           data.x >= angleOrder[3].coords[0]);
-
+      /*
       const skip0 =
         ((startPos[0] < angleOrder[0].coords[0] &&
           startPos[0] < angleOrder[3].coords[0]) ||
@@ -218,7 +218,6 @@ export function drawHover(
           (startPos[1] > angleOrder[0].coords[1] &&
             startPos[1] > angleOrder[3].coords[1]));
 
-      /*
         ((angleOrder[0].coords[1] < startPos[1] &&
           endPos[1] < angleOrder[0].coords[1]) ||
           (angleOrder[0].coords[1] < endPos[1] &&
@@ -227,7 +226,7 @@ export function drawHover(
           angleOrder[0].coords[0] < endPos[0]) ||
           (angleOrder[0].coords[0] > startPos[0] &&
             angleOrder[0].coords[0] > endPos[0]));
-            */
+          
 
       const skip3 =
         ((endPos[0] < angleOrder[0].coords[0] &&
@@ -238,7 +237,7 @@ export function drawHover(
           endPos[1] < angleOrder[3].coords[1]) ||
           (endPos[1] > angleOrder[0].coords[1] &&
             endPos[1] > angleOrder[3].coords[1]));
-      /*
+      
         ((angleOrder[3].coords[1] < startPos[1] &&
           endPos[1] < angleOrder[3].coords[1]) ||
           (angleOrder[3].coords[1] < endPos[1] &&
@@ -246,13 +245,16 @@ export function drawHover(
         ((angleOrder[3].coords[0] < startPos[0] &&
           angleOrder[3].coords[0] < endPos[0]) ||
           (angleOrder[3].coords[0] > startPos[0] &&
-            angleOrder[3].coords[0] > endPos[0]));*/
+            angleOrder[3].coords[0] > endPos[0]));
+            */
 
       console.log(normalized);
       //flip y aswell due to inverted coord system
 
       context.beginPath();
-      context.moveTo(startPos[0], startPos[1]);
+      //context.moveTo(startPos[0], startPos[1]);
+      context.moveTo(data.x, data.y);
+
       //if (!skip0 && draw1 && draw2) {
       context.lineTo(angleOrder[0].coords[0], angleOrder[0].coords[1]);
       //}
@@ -265,8 +267,9 @@ export function drawHover(
       //if (!skip3 && draw1 && draw2) {
       context.lineTo(angleOrder[3].coords[0], angleOrder[3].coords[1]);
       //}
-      context.lineTo(endPos[0], endPos[1]);
-      context.arc(data.x, data.y, radius, startAngle, endAngle);
+      //context.lineTo(endPos[0], endPos[1]);
+      context.lineTo(data.x, data.y);
+      //context.arc(data.x, data.y, radius, startAngle, endAngle);
       context.closePath();
       context.fill();
     } else {
