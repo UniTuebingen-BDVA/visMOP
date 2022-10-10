@@ -108,6 +108,8 @@ export function generateGraphData(
         up: { x: initPosX, y: initPosY, gamma: 0 },
         layoutX: initPosX,
         layoutY: initPosX,
+        preFa2X: initPosX,
+        preFa2Y: initPosY,
         xOnClusterFocus: 0,
         yOnClusterFocus: 0,
         rootId: entry.rootId,

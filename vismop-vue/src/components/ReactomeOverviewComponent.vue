@@ -31,6 +31,11 @@
               v-model:sumRegulated="sumRegulated"
             ></graph-filter>
           </q-fab-action>
+          <q-fab-action color="white">
+            <fa2-params
+              v-model:fa2LayoutParams="fa2LayoutParams"
+            ></fa2-params>
+          </q-fab-action>
         </q-fab>
         <div
           :id="contextID"
@@ -57,6 +62,7 @@ import {
   generateVoronoiCells,
   nodePolygonMapping,
 } from '@/core/layouting/voronoiLayout';
+import Fa2Params from './Fa2Params.vue';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -136,6 +142,17 @@ const metabolomicsFilter = ref({
   inside: true,
   disable: true,
 });
+
+const fa2LayoutParams = ref({
+  iterations: 250,
+  weightShared: 5.0,
+  weightDefault: 1.0,
+  gravity: 2.0,
+  edgeWeightInfluence: 7.0,
+  scalingRatio: 5.0,
+  adjustSizes: true,
+  outboundAttractionDistribution: false
+})
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
@@ -375,6 +392,10 @@ watch(
 watch(rootFilter.value, () => {
   networkGraph?.value?.setRootFilter(rootFilter.value);
 });
+
+watch(fa2LayoutParams.value, () => {
+  networkGraph?.value?.relayoutGraph(fa2LayoutParams.value)
+})
 
 const expandComponent = () => {
   expandOverview.value = true;

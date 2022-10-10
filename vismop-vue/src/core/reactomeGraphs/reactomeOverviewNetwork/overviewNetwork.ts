@@ -25,6 +25,7 @@ import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
 import _ from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
+import { animateNodes } from 'sigma/utils/animate';
 
 export default class overviewGraph {
   // constants
@@ -371,6 +372,77 @@ export default class overviewGraph {
 
     return renderer;
   }
+
+  relayoutGraph(
+    //tarGraph: Sigma,
+    layoutParams: {
+      weightShared: number;
+      weightDefault: number;
+      gravity: number;
+      edgeWeightInfluence: number;
+      scalingRatio: number;
+      iterations: number;
+      adjustSizes: boolean;
+      outboundAttractionDistribution: boolean;
+    }
+  ) {
+    console.log('relayoutTriggered');
+    Object.keys(this.polygons).forEach((element) => {
+      const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
+        return attr.modNum == parseInt(element) && attr.isRoot == false;
+      });
+      currentSubgraph.clearEdges();
+      currentSubgraph.forEachNode((node, attr) => {
+        currentSubgraph.forEachNode((nodeInner, attrInner) => {
+          if (node != nodeInner) {
+            if (!currentSubgraph.hasEdge(node, nodeInner)) {
+              currentSubgraph.addEdge(node, nodeInner, {
+                weight:
+                  attr.rootId == attrInner.rootId
+                    ? layoutParams.weightShared
+                    : layoutParams.weightDefault,
+              });
+            }
+          }
+        });
+      });
+      currentSubgraph.forEachNode((node, attributes) => {
+        attributes.x = attributes.preFa2X;
+        attributes.y = attributes.preFa2Y;
+        attributes.layoutX = attributes.preFa2X;
+        attributes.layoutY = attributes.preFa2Y;
+      });
+      const settings = fa2.inferSettings(currentSubgraph);
+      const currentPositions = fa2(
+        currentSubgraph,
+        {
+          iterations: layoutParams.iterations,
+          getEdgeWeight: 'weight',
+          settings: {
+            ...settings,
+            gravity: layoutParams.gravity,
+            edgeWeightInfluence: layoutParams.edgeWeightInfluence,
+            scalingRatio: layoutParams.scalingRatio,
+            adjustSizes: layoutParams.adjustSizes,
+            outboundAttractionDistribution:
+              layoutParams.outboundAttractionDistribution,
+          },
+        },
+        this.polygons[parseInt(element)]
+      );
+      //assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
+      this.cancelCurrentAnimation = animateNodes(this.graph, currentPositions, {
+        duration: 2000,
+        //easing: 'quadraticOut',
+      });
+    });
+
+    this.graph.forEachNode((node, attributes) => {
+      attributes.layoutX = attributes.x;
+      attributes.layoutY = attributes.y;
+    });
+  }
+
   getModuleNodeIds() {
     const moduleNodeMapping: {
       [key: string]: {
