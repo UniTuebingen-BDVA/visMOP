@@ -384,6 +384,11 @@ export default class overviewGraph {
       iterations: number;
       adjustSizes: boolean;
       outboundAttractionDistribution: boolean;
+      strongGravity: boolean;
+      barnesHut: boolean;
+      barnesHutTheta: number;
+      slowDown: number;
+      linLog: boolean;
     }
   ) {
     console.log('relayoutTriggered');
@@ -420,6 +425,11 @@ export default class overviewGraph {
           getEdgeWeight: 'weight',
           settings: {
             ...settings,
+            linLogMode: layoutParams.linLog,
+            barnesHutOptimize: layoutParams.barnesHut,
+            barnesHutTheta: layoutParams.barnesHutTheta,
+            slowDown: layoutParams.slowDown,
+            strongGravityMode: layoutParams.strongGravity,
             gravity: layoutParams.gravity,
             edgeWeightInfluence: layoutParams.edgeWeightInfluence,
             scalingRatio: layoutParams.scalingRatio,

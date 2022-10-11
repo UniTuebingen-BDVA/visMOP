@@ -32,9 +32,7 @@
             ></graph-filter>
           </q-fab-action>
           <q-fab-action color="white">
-            <fa2-params
-              v-model:fa2LayoutParams="fa2LayoutParams"
-            ></fa2-params>
+            <fa2-params v-model:fa2LayoutParams="fa2LayoutParams"></fa2-params>
           </q-fab-action>
         </q-fab>
         <div
@@ -151,8 +149,13 @@ const fa2LayoutParams = ref({
   edgeWeightInfluence: 7.0,
   scalingRatio: 5.0,
   adjustSizes: true,
-  outboundAttractionDistribution: false
-})
+  outboundAttractionDistribution: false,
+  barnesHut: false,
+  linLog: false,
+  strongGravity: false,
+  slowDown: 1,
+  barnesHutTheta: 0.5,
+});
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
@@ -394,8 +397,8 @@ watch(rootFilter.value, () => {
 });
 
 watch(fa2LayoutParams.value, () => {
-  networkGraph?.value?.relayoutGraph(fa2LayoutParams.value)
-})
+  networkGraph?.value?.relayoutGraph(fa2LayoutParams.value);
+});
 
 const expandComponent = () => {
   expandOverview.value = true;
