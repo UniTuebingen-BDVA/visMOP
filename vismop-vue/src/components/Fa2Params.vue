@@ -1,9 +1,8 @@
 <template>
   <div>
-    <div class="text-h6 text-grey-9 grey-9">Fa2 Layout Params</div>
     <div class="graphFilterCard">
       <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-4">
+        <div class="col-12">
           <q-checkbox
             v-model="fa2LayoutParams.outboundAttractionDistribution"
             checked-icon="task_alt"
@@ -11,7 +10,7 @@
             label="OutboundAttractionDistribution"
           />
         </div>
-        <div class="col-4">
+        <div class="col-6">
           <q-checkbox
             v-model="fa2LayoutParams.adjustSizes"
             checked-icon="task_alt"
@@ -19,7 +18,7 @@
             label="Adjust Sizes"
           />
         </div>
-        <div class="col-4">
+        <div class="col-6">
           <q-checkbox
             v-model="fa2LayoutParams.strongGravity"
             checked-icon="task_alt"

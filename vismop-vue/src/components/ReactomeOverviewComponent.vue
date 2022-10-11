@@ -22,17 +22,35 @@
             icon="mdi-restore"
             @click="resetZoom"
           ></q-fab-action>
-          <q-fab-action color="white">
-            <graph-filter
-              v-model:rootFilter="rootFilter"
-              v-model:transcriptomics="transcriptomicsFilter"
-              v-model:proteomics="proteomicsFilter"
-              v-model:metabolomics="metabolomicsFilter"
-              v-model:sumRegulated="sumRegulated"
-            ></graph-filter>
+          <q-fab-action color="white" text-color="black">
+            <q-expansion-item
+              v-model="expandFilter"
+              icon="mdi-filter"
+              label="Graph Filter"
+              @click.prevent
+            >
+              <graph-filter
+                v-model:rootFilter="rootFilter"
+                v-model:transcriptomics="transcriptomicsFilter"
+                v-model:proteomics="proteomicsFilter"
+                v-model:metabolomics="metabolomicsFilter"
+                v-model:sumRegulated="sumRegulated"
+                @click.prevent
+              ></graph-filter>
+            </q-expansion-item>
           </q-fab-action>
-          <q-fab-action color="white">
-            <fa2-params v-model:fa2LayoutParams="fa2LayoutParams"></fa2-params>
+          <q-fab-action color="white" text-color="black">
+            <q-expansion-item
+              v-model="expandFa2Controls"
+              icon="mdi-graph"
+              label="FA2 Controls"
+              @click.prevent
+            >
+              <fa2-params
+                v-model:fa2LayoutParams="fa2LayoutParams"
+                @click.prevent
+              ></fa2-params>
+            </q-expansion-item>
           </q-fab-action>
         </q-fab>
         <div
@@ -85,6 +103,8 @@ const props = defineProps({
 const mainStore = useMainStore();
 
 const expandOverview = ref(false);
+const expandFilter = ref(false);
+const expandFa2Controls = ref(false);
 const outstandingDraw = ref(false);
 const networkGraph: Ref<OverviewGraph | undefined> = ref(undefined);
 const transcriptomicsIntersection: Ref<string[]> = ref([]);
