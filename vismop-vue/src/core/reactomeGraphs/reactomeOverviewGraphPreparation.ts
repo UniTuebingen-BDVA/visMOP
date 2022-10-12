@@ -182,7 +182,7 @@ export function generateGraphData(
     nodes_per_cluster[nodes_per_cluster.length - 1]; // already add superpathways as they are not part of the convex hull
   nodes_per_cluster.pop();
   */
-  const max_ext = 20;
+  const maxExt = 250;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
@@ -209,7 +209,7 @@ export function generateGraphData(
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
         nodes,
-        max_ext
+        maxExt
       );
       const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
       greyValues.push(greyValue);
@@ -235,10 +235,10 @@ export function generateGraphData(
     const centeredX = node.attributes.x - curFocusNormPara.meanX;
     const centeredY = node.attributes.y - curFocusNormPara.meanY;
     node.attributes.xOnClusterFocus =
-      (max_ext * (centeredX - curFocusNormPara.minCentered)) /
+      (maxExt * centeredX) /
       (curFocusNormPara.maxCentered - curFocusNormPara.minCentered);
     node.attributes.yOnClusterFocus =
-      (max_ext * (centeredY - curFocusNormPara.minCentered)) /
+      (maxExt * centeredY) /
       (curFocusNormPara.maxCentered - curFocusNormPara.minCentered);
   });
 

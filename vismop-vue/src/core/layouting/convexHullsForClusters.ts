@@ -169,32 +169,32 @@ export default class ClusterHulls {
     this.radianThreshold = (angleThreshold * Math.PI) / 180;
   }
   adjustOneHull(convexHullPoints: [number, number][], max_ext: number) {
-    const finalHullNodes = adjustHullPoints(
-      convexHullPoints,
-      this.radianThreshold
-    );
+    // const finalHullNodes = adjustHullPoints(
+    //   convexHullPoints,
+    //   this.radianThreshold
+    // );
     const XYVals = {
       x: convexHullPoints.map((o) => o[0]) as number[],
       y: convexHullPoints.map((o) => o[1]) as number[],
     };
     const focusNormalizeParameter = getFocusNormalizeParameter(XYVals);
     const focusHullPoints = [] as number[][];
-    _.forEach(finalHullNodes, (hullPoint) => {
+    _.forEach(convexHullPoints, (hullPoint) => {
       const centeredX = hullPoint[0] - focusNormalizeParameter.meanX;
       const centeredY = hullPoint[1] - focusNormalizeParameter.meanY;
       const normX =
-        (max_ext * (centeredX - focusNormalizeParameter.minCentered)) /
+        (max_ext * centeredX) /
         (focusNormalizeParameter.maxCentered -
           focusNormalizeParameter.minCentered);
       const normY =
-        (max_ext * (centeredY - focusNormalizeParameter.minCentered)) /
+        (max_ext * centeredY) /
         (focusNormalizeParameter.maxCentered -
           focusNormalizeParameter.minCentered);
       focusHullPoints.push([normX, normY]);
     });
 
     return {
-      finalHullNodes: finalHullNodes,
+      finalHullNodes: convexHullPoints,
       focusHullPoints: focusHullPoints,
       focusNormalizeParameter: focusNormalizeParameter,
     };

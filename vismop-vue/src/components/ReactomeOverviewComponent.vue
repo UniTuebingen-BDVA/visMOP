@@ -482,7 +482,8 @@ const drawNetwork = () => {
   networkGraph.value = new OverviewGraph(
     props.contextID ? props.contextID : '',
     networkData,
-    polygons
+    polygons,
+    fa2LayoutParams.value
   );
 };
 </script>

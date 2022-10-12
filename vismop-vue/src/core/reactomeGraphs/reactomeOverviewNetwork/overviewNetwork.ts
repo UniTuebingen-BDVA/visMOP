@@ -149,13 +149,16 @@ export default class overviewGraph {
     },
   };
   polygons: { [key: number]: ConvexPolygon };
+  initialFa2Params: fa2LayoutParams;
 
   constructor(
     containerID: string,
     graphData: overviewGraphData,
-    polygons: { [key: number]: ConvexPolygon }
+    polygons: { [key: number]: ConvexPolygon },
+    layoutParams: fa2LayoutParams
   ) {
     this.graph = UndirectedGraph.from(graphData);
+    this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
     this.renderer = this.mainGraph(containerID);
@@ -219,46 +222,7 @@ export default class overviewGraph {
     }) as LayoutMapping<{ [dimension: string]: number }>;
     assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
 
-    Object.keys(this.polygons).forEach((element) => {
-      const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
-        return attr.modNum == parseInt(element) && attr.isRoot == false;
-      });
-      currentSubgraph.clearEdges();
-      currentSubgraph.forEachNode((node, attr) => {
-        currentSubgraph.forEachNode((nodeInner, attrInner) => {
-          if (node != nodeInner) {
-            if (!currentSubgraph.hasEdge(node, nodeInner)) {
-              currentSubgraph.addEdge(node, nodeInner, {
-                weight: attr.rootId == attrInner.rootId ? 5 : 1,
-              });
-            }
-          }
-        });
-      });
-      const settings = fa2.inferSettings(currentSubgraph);
-      const currentPositions = fa2(
-        currentSubgraph,
-        {
-          iterations: 20000,
-          getEdgeWeight: 'weight',
-          settings: {
-            ...settings,
-            gravity: 2.0,
-            edgeWeightInfluence: 7,
-            scalingRatio: 5,
-            adjustSizes: true,
-            //outboundAttractionDistribution: true,
-          },
-        },
-        this.polygons[parseInt(element)]
-      );
-      assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
-    });
-
-    this.graph.forEachNode((node, attributes) => {
-      attributes.layoutX = attributes.x;
-      attributes.layoutY = attributes.y;
-    });
+    this.relayoutGraph(this.initialFa2Params);
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
@@ -391,7 +355,7 @@ export default class overviewGraph {
       linLog: boolean;
     }
   ) {
-    console.log('relayoutTriggered');
+    const maxExt = 250;
     Object.keys(this.polygons).forEach((element) => {
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
         return (
@@ -454,12 +418,50 @@ export default class overviewGraph {
       //easing: 'quadraticOut',
       // });
     });
-    // causes nodes to vanish when zooming out
     this.graph.forEachNode((node, attributes) => {
-      if (attributes.nodeType !== 'moduleNode' && !attributes.isRoot) {
+      if (attributes.nodeType !== 'moduleNode') {
         attributes.layoutX = attributes.x;
         attributes.layoutY = attributes.y;
       }
+    });
+    Object.keys(this.polygons).forEach((element) => {
+      const currentXs: number[] = [];
+      const currentYs: number[] = [];
+
+      const currentNodes = useMainStore().modules[parseInt(element)];
+      currentNodes.forEach((node) => {
+        const currAttribs = this.graph.getNodeAttributes(node);
+        currentXs.push(currAttribs.x);
+        currentYs.push(currAttribs.y);
+      });
+      const currentMeanX = _.mean(currentXs);
+      const currentMeanY = _.mean(currentYs);
+      const currentCenteredX = currentXs.map((x) => x - currentMeanX);
+      const currentCenteredY = currentXs.map((y) => y - currentMeanY);
+      const currentMaxCentered = Math.max(
+        ...currentCenteredX,
+        ...currentCenteredY
+      );
+      const currentMinCentered = Math.min(
+        ...currentCenteredX,
+        ...currentCenteredY
+      );
+
+      currentNodes.forEach((node) => {
+        const currAttribs = this.graph.getNodeAttributes(node);
+        const centeredX = currAttribs.x - currentMeanX;
+        const centeredY = currAttribs.y - currentMeanY;
+        this.graph.setNodeAttribute(
+          node,
+          'xOnClusterFocus',
+          (maxExt * centeredX) / (currentMaxCentered - currentMinCentered)
+        );
+        this.graph.setNodeAttribute(
+          node,
+          'yOnClusterFocus',
+          (maxExt * centeredY) / (currentMaxCentered - currentMinCentered)
+        );
+      });
     });
   }
 
