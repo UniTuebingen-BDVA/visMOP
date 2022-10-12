@@ -48,6 +48,7 @@ export class Polygon {
 
   // determines the center of the polygon
   determineCenter() {
+    /*
     const summedVecs = this.vertices.reduce((a, b) => {
       const out = vec2.create();
       vec2.add(out, a, b);
@@ -55,7 +56,28 @@ export class Polygon {
     });
     summedVecs[0] = summedVecs[0] / this.vertices.length;
     summedVecs[1] = summedVecs[1] / this.vertices.length;
-    this.center = summedVecs;
+    */
+    let totalX = 0.0;
+    let totalY = 0.0;
+    let totalWeight = 0.0;
+    for (let idx = 0; idx < this.vertices.length; idx++) {
+      const currentVertex = this.vertices[idx];
+      const nextVertex =
+        idx == this.vertices.length - 1
+          ? this.vertices[0]
+          : this.vertices[idx + 1];
+      const prevVertex =
+        idx == 0
+          ? this.vertices[this.vertices.length - 1]
+          : this.vertices[idx - 1];
+      const currentWeight =
+        vec2.dist(prevVertex, currentVertex) +
+        vec2.dist(currentVertex, nextVertex);
+      totalX += currentWeight * currentVertex[0];
+      totalY += currentWeight * currentVertex[1];
+      totalWeight += currentWeight;
+    }
+    this.center = vec2.fromValues(totalX / totalWeight, totalY / totalWeight);
     this.recalculateCenter = false;
   }
 
