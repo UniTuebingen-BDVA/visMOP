@@ -70,7 +70,7 @@
             :model-value="fa2LayoutParams.weightShared"
             :min="0"
             :max="100"
-            :step="1"
+            :step="0.2"
             label
             @change="
               (val) => {
@@ -88,7 +88,7 @@
             :model-value="fa2LayoutParams.weightDefault"
             :min="0"
             :max="25"
-            :step="1"
+            :step="0.2"
             label
             @change="
               (val) => {
@@ -124,7 +124,7 @@
             :model-value="fa2LayoutParams.edgeWeightInfluence"
             :min="0"
             :max="25"
-            :step="1"
+            :step="0.5"
             label
             @change="
               (val) => {
@@ -142,24 +142,6 @@
             :model-value="fa2LayoutParams.scalingRatio"
             :min="0"
             :max="100"
-            :step="1"
-            label
-            @change="
-              (val) => {
-                fa2LayoutParams.scalingRatio = val;
-              }
-            "
-          >
-          </q-slider>
-        </div>
-      </div>
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-12">
-          <div class="col-12 text-caption text-grey-9">scalingRatio</div>
-          <q-slider
-            :model-value="fa2LayoutParams.scalingRatio"
-            :min="0"
-            :max="50"
             :step="1"
             label
             @change="

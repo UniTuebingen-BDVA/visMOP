@@ -54,7 +54,7 @@ export default class overviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected clusterData;
-  protected lodRatio = 1;
+  protected lodRatio = 1.1;
   protected lastClickedClusterNode = -1;
   protected additionalData!: additionalData;
   protected cancelCurrentAnimation: (() => void) | null = null;
@@ -394,7 +394,11 @@ export default class overviewGraph {
     console.log('relayoutTriggered');
     Object.keys(this.polygons).forEach((element) => {
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
-        return attr.modNum == parseInt(element) && attr.isRoot == false;
+        return (
+          attr.modNum == parseInt(element) &&
+          attr.isRoot == false &&
+          attr.nodeType !== 'moduleNode'
+        );
       });
       currentSubgraph.clearEdges();
       currentSubgraph.forEachNode((node, attr) => {
@@ -411,11 +415,15 @@ export default class overviewGraph {
           }
         });
       });
+      //causes cluster nodes to vanish
+      // ALSO: clusternodes seem to be at the wrong position
       currentSubgraph.forEachNode((node, attributes) => {
-        attributes.x = attributes.preFa2X;
-        attributes.y = attributes.preFa2Y;
-        attributes.layoutX = attributes.preFa2X;
-        attributes.layoutY = attributes.preFa2Y;
+        if (attributes.nodeType !== 'moduleNode') {
+          attributes.x = attributes.preFa2X;
+          attributes.y = attributes.preFa2Y;
+          attributes.layoutX = attributes.preFa2X;
+          attributes.layoutY = attributes.preFa2Y;
+        }
       });
       const settings = fa2.inferSettings(currentSubgraph);
       const currentPositions = fa2(
@@ -440,16 +448,18 @@ export default class overviewGraph {
         },
         this.polygons[parseInt(element)]
       );
-      //assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
-      this.cancelCurrentAnimation = animateNodes(this.graph, currentPositions, {
-        duration: 2000,
-        //easing: 'quadraticOut',
-      });
+      assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
+      //this.cancelCurrentAnimation = animateNodes(this.graph, currentPositions, {
+      // duration: 2000,
+      //easing: 'quadraticOut',
+      // });
     });
-
+    // causes nodes to vanish when zooming out
     this.graph.forEachNode((node, attributes) => {
-      attributes.layoutX = attributes.x;
-      attributes.layoutY = attributes.y;
+      if (attributes.nodeType !== 'moduleNode' && !attributes.isRoot) {
+        attributes.layoutX = attributes.x;
+        attributes.layoutY = attributes.y;
+      }
     });
   }
 
@@ -487,8 +497,8 @@ export default class overviewGraph {
     const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
     console.log('ModuleGlyphs', glyphs);
     for (const key in Object.keys(moduleNodeMapping)) {
-      const xPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
-      const yPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
+      const xPos = this.polygons[key].getCenter()[0]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
+      const yPos = this.polygons[key].getCenter()[1]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
       const moduleNode: overviewNodeAttr = {
         name: key,
         id: key,
@@ -496,6 +506,8 @@ export default class overviewGraph {
         y: yPos,
         layoutX: xPos,
         layoutY: yPos,
+        preFa2X: xPos,
+        preFa2Y: yPos,
         xOnClusterFocus: _.mean(
           moduleNodeMapping[key].posOnClusterFocus.map((elem) => elem[0])
         ),
