@@ -165,6 +165,8 @@ export default class overviewGraph {
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
+    this.relayoutGraph(this.initialFa2Params);
+
     this.refreshCurrentPathway();
   }
 
@@ -222,7 +224,6 @@ export default class overviewGraph {
     }) as LayoutMapping<{ [dimension: string]: number }>;
     assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
 
-    this.relayoutGraph(this.initialFa2Params);
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
@@ -285,6 +286,7 @@ export default class overviewGraph {
         }
       } else {
         const defocus = this.lastClickedClusterNode == parseInt(node);
+        console.log('MODULE CLICK', this.graph.getNodeAttributes(node));
         this.graph.forEachNode((_, attributes) => {
           if (
             !defocus &&
@@ -299,21 +301,25 @@ export default class overviewGraph {
             attributes.size = overviewGraph.FOCUS_NODE_SIZE;
             attributes.nonHoverSize = overviewGraph.FOCUS_NODE_SIZE;
           } else if (!defocus && !attributes.isRoot) {
-            attributes.x = 0;
-            attributes.y = 0;
+            attributes.x = attributes.xOnClusterFocus;
+            attributes.y = attributes.yOnClusterFocus;
             if (attributes.id != node) {
               attributes.moduleHidden = true;
             } else {
               attributes.moduleFixed = true;
               attributes.zoomHidden = false;
             }
-          } else {
+          } else if (!attributes.isRoot) {
             attributes.x = attributes.layoutX;
             attributes.y = attributes.layoutY;
             attributes.moduleFixed = false;
             attributes.moduleHidden = false;
             attributes.size = overviewGraph.DEFAULT_SIZE;
             attributes.nonHoverSize = overviewGraph.DEFAULT_SIZE;
+            // ? overviewGraph.ROOT_DEFAULT_SIZE
+            //   : attributes.nodeType == 'moduleNode'
+            //   ? overviewGraph.MODULE_DEFAULT_SIZE
+            //   : overviewGraph.DEFAULT_SIZE;
           }
         });
 
@@ -357,9 +363,10 @@ export default class overviewGraph {
   ) {
     const maxExt = 250;
     Object.keys(this.polygons).forEach((element) => {
+      const polygonIdx = parseInt(element);
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
         return (
-          attr.modNum == parseInt(element) &&
+          attr.modNum == polygonIdx &&
           attr.isRoot == false &&
           attr.nodeType !== 'moduleNode'
         );
@@ -410,7 +417,7 @@ export default class overviewGraph {
               layoutParams.outboundAttractionDistribution,
           },
         },
-        this.polygons[parseInt(element)]
+        this.polygons[polygonIdx]
       );
       assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
       //this.cancelCurrentAnimation = animateNodes(this.graph, currentPositions, {
@@ -425,43 +432,44 @@ export default class overviewGraph {
       }
     });
     Object.keys(this.polygons).forEach((element) => {
-      const currentXs: number[] = [];
-      const currentYs: number[] = [];
+      const polygonIdx = parseInt(element);
+      const currentPolygon = this.polygons[polygonIdx];
 
-      const currentNodes = useMainStore().modules[parseInt(element)];
-      currentNodes.forEach((node) => {
-        const currAttribs = this.graph.getNodeAttributes(node);
-        currentXs.push(currAttribs.x);
-        currentYs.push(currAttribs.y);
-      });
-      const currentMeanX = _.mean(currentXs);
-      const currentMeanY = _.mean(currentYs);
-      const currentCenteredX = currentXs.map((x) => x - currentMeanX);
-      const currentCenteredY = currentXs.map((y) => y - currentMeanY);
-      const currentMaxCentered = Math.max(
-        ...currentCenteredX,
-        ...currentCenteredY
-      );
-      const currentMinCentered = Math.min(
-        ...currentCenteredX,
-        ...currentCenteredY
-      );
+      const currentNodes = useMainStore().modules[polygonIdx];
+
+      const polygonBB = currentPolygon.getBoundingBox();
+      const minX = polygonBB.vertices[0][0];
+      const minY = polygonBB.vertices[0][1];
+      const minXY = Math.min(minX, minY);
+      const maxX = polygonBB.vertices[2][0];
+      const maxY = polygonBB.vertices[2][1];
+      const maxXY = Math.min(maxX, maxY);
 
       currentNodes.forEach((node) => {
         const currAttribs = this.graph.getNodeAttributes(node);
-        const centeredX = currAttribs.x - currentMeanX;
-        const centeredY = currAttribs.y - currentMeanY;
+        const centeredX = currAttribs.x - currentPolygon.getCenter()[0];
+        const centeredY = currAttribs.y - currentPolygon.getCenter()[1];
         this.graph.setNodeAttribute(
           node,
           'xOnClusterFocus',
-          (maxExt * centeredX) / (currentMaxCentered - currentMinCentered)
+          (maxExt * centeredX) / (maxXY - minXY)
         );
         this.graph.setNodeAttribute(
           node,
           'yOnClusterFocus',
-          (maxExt * centeredY) / (currentMaxCentered - currentMinCentered)
+          (maxExt * centeredY) / (maxXY - minXY)
         );
       });
+      this.graph.setNodeAttribute(
+        polygonIdx,
+        'xOnClusterFocus',
+        (maxExt * (minX - currentPolygon.getCenter()[0])) / (maxXY - minXY)
+      );
+      this.graph.setNodeAttribute(
+        polygonIdx,
+        'yOnClusterFocus',
+        (maxExt * (minY - currentPolygon.getCenter()[1])) / (maxXY - minXY)
+      );
     });
   }
 
@@ -510,14 +518,8 @@ export default class overviewGraph {
         layoutY: yPos,
         preFa2X: xPos,
         preFa2Y: yPos,
-        xOnClusterFocus: _.mean(
-          moduleNodeMapping[key].posOnClusterFocus.map((elem) => elem[0])
-        ),
-        yOnClusterFocus: _.mean(
-          moduleNodeMapping[key].posOnClusterFocus.map((elem) => elem[1])
-        ),
-        //x: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0])),
-        //y: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1])),
+        xOnClusterFocus: -50,
+        yOnClusterFocus: -50,
         modNum: parseInt(key),
         isRoot: false,
         zIndex: 1,

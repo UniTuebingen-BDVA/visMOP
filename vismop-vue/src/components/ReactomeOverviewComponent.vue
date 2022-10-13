@@ -475,7 +475,7 @@ const drawNetwork = () => {
     glyphDataVar.value,
     pathwayLayouting.value.rootIds,
     [[1, 1, 1, 1]],
-    polygonsArrays,
+    polygons,
     positionMapping
   );
   console.log('base dat', networkData);

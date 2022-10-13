@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { ConvexPolygon } from './ConvexPolygon';
 
 export function getRightResultFormForRectangle(
   clusterRectangles: [number[]]
@@ -168,33 +169,37 @@ export default class ClusterHulls {
   constructor(angleThreshold: number) {
     this.radianThreshold = (angleThreshold * Math.PI) / 180;
   }
-  adjustOneHull(convexHullPoints: [number, number][], max_ext: number) {
+  adjustOneHull(polygon: ConvexPolygon, max_ext: number) {
     // const finalHullNodes = adjustHullPoints(
     //   convexHullPoints,
     //   this.radianThreshold
     // );
+    const polygonPoints = polygon.verticesToArray();
+
     const XYVals = {
-      x: convexHullPoints.map((o) => o[0]) as number[],
-      y: convexHullPoints.map((o) => o[1]) as number[],
+      x: polygonPoints.map((o) => o[0]) as number[],
+      y: polygonPoints.map((o) => o[1]) as number[],
     };
     const focusNormalizeParameter = getFocusNormalizeParameter(XYVals);
+    const polygonBB = polygon.getBoundingBox();
+    const minX = polygonBB.vertices[0][0];
+    const minY = polygonBB.vertices[0][1];
+    const minXY = Math.min(minX, minY);
+    const maxX = polygonBB.vertices[2][0];
+    const maxY = polygonBB.vertices[2][1];
+    const maxXY = Math.min(maxX, maxY);
+
     const focusHullPoints = [] as number[][];
-    _.forEach(convexHullPoints, (hullPoint) => {
-      const centeredX = hullPoint[0] - focusNormalizeParameter.meanX;
-      const centeredY = hullPoint[1] - focusNormalizeParameter.meanY;
-      const normX =
-        (max_ext * centeredX) /
-        (focusNormalizeParameter.maxCentered -
-          focusNormalizeParameter.minCentered);
-      const normY =
-        (max_ext * centeredY) /
-        (focusNormalizeParameter.maxCentered -
-          focusNormalizeParameter.minCentered);
+    _.forEach(polygonPoints, (hullPoint) => {
+      const centeredX = hullPoint[0] - polygon.getCenter()[0];
+      const centeredY = hullPoint[1] - polygon.getCenter()[1];
+      const normX = (max_ext * centeredX) / (maxXY - minXY);
+      const normY = (max_ext * centeredY) / (maxXY - minXY);
       focusHullPoints.push([normX, normY]);
     });
 
     return {
-      finalHullNodes: convexHullPoints,
+      finalHullNodes: polygonPoints,
       focusHullPoints: focusHullPoints,
       focusNormalizeParameter: focusNormalizeParameter,
     };
