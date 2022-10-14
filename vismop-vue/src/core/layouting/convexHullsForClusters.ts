@@ -176,11 +176,6 @@ export default class ClusterHulls {
     // );
     const polygonPoints = polygon.verticesToArray();
 
-    const XYVals = {
-      x: polygonPoints.map((o) => o[0]) as number[],
-      y: polygonPoints.map((o) => o[1]) as number[],
-    };
-    const focusNormalizeParameter = getFocusNormalizeParameter(XYVals);
     const polygonBB = polygon.getBoundingBox();
     const minX = polygonBB.vertices[0][0];
     const minY = polygonBB.vertices[0][1];
@@ -201,7 +196,6 @@ export default class ClusterHulls {
     return {
       finalHullNodes: polygonPoints,
       focusHullPoints: focusHullPoints,
-      focusNormalizeParameter: focusNormalizeParameter,
     };
   }
 }

@@ -79,7 +79,7 @@ export function generateGraphData(
         id: id,
         hidden: false,
         filterHidden: false,
-        zoomHidden: false,
+        zoomHidden: true,
         moduleHidden: false,
         moduleFixed: false,
         color:
@@ -180,14 +180,6 @@ export function generateGraphData(
   // const totalNumHulls = moduleAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
-  const focusNormalizeParameterPerCl = [] as {
-    varX: number;
-    varY: number;
-    meanX: number;
-    meanY: number;
-    minCentered: number;
-    maxCentered: number;
-  }[];
   _.forEach(voronoiPolygons, (polygon) => {
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
@@ -198,7 +190,6 @@ export function generateGraphData(
       greyValues.push(greyValue);
       clusterHulls.push(hullAdjustment.finalHullNodes);
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
-      focusNormalizeParameterPerCl.push(hullAdjustment.focusNormalizeParameter);
     }
     clusterNum += 1;
   });
