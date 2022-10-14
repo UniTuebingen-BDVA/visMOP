@@ -22,6 +22,11 @@
             icon="mdi-restore"
             @click="resetZoom"
           ></q-fab-action>
+          <q-fab-action
+            color="primary"
+            icon="mdi-select-remove"
+            @click="removeSelection"
+          ></q-fab-action>
           <q-fab-action color="white" text-color="black">
             <q-expansion-item
               v-model="expandFilter"
@@ -428,6 +433,9 @@ const minimizeComponent = () => {
 };
 const resetZoom = () => {
   networkGraph.value?.resetZoom();
+};
+const removeSelection = () => {
+  networkGraph.value?.clearSelection();
 };
 const drawNetwork = () => {
   networkGraph.value?.killGraph();

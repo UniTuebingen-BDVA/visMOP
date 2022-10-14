@@ -38,8 +38,8 @@ export default class overviewGraph {
   protected shortestPathClick: string[] = [];
   protected shortestPathNodes: string[] = [];
   protected shortestPathEdges: string[] = [];
-  protected highlighedEdgesClick = new Set();
-  protected highlighedNodesClick = new Set();
+  protected highlightedEdgesClick = new Set();
+  protected highlightedNodesClick = new Set();
   //from events SIGMA2 example, initialze sets for highlight on hover:
   protected highlighedNodesHover = new Set();
   protected highlighedEdgesHover = new Set();
@@ -254,33 +254,34 @@ export default class overviewGraph {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
         } else if (event.original.altKey) {
-          if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
-          this.shortestPathClick.push(node);
-          if (this.shortestPathClick.length === 2) {
-            this.shortestPathNodes = bidirectional(
-              this.graph,
-              this.shortestPathClick[0],
-              this.shortestPathClick[1]
-            ) as string[];
-            if (this.shortestPathNodes?.length > 0) {
-              this.shortestPathEdges = edgePathFromNodePath(
-                this.graph,
-                this.shortestPathNodes as string[]
-              );
-              console.log('shortest Path edges', this.shortestPathEdges);
-              mainStore.selectPathwayCompare(this.shortestPathNodes);
-            } else {
-              this.shortestPathClick = [];
-            }
-          }
+          // TODO Get working again
+          // if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
+          // this.shortestPathClick.push(node);
+          // if (this.shortestPathClick.length === 2) {
+          //   this.shortestPathNodes = bidirectional(
+          //     this.graph,
+          //     this.shortestPathClick[0],
+          //     this.shortestPathClick[1]
+          //   ) as string[];
+          //   if (this.shortestPathNodes?.length > 0) {
+          //     this.shortestPathEdges = edgePathFromNodePath(
+          //       this.graph,
+          //       this.shortestPathNodes as string[]
+          //     );
+          //     console.log('shortest Path edges', this.shortestPathEdges);
+          //     mainStore.selectPathwayCompare(this.shortestPathNodes);
+          //   } else {
+          //     this.shortestPathClick = [];
+          //   }
+          // }
         } else {
           this.shortestPathClick = [];
           this.shortestPathNodes = [];
           this.shortestPathEdges = [];
-          this.highlighedEdgesClick.clear();
-          this.highlighedNodesClick.clear();
-          this.highlighedNodesClick = new Set(this.graph.neighbors(node));
-          this.highlighedEdgesClick = new Set(this.graph.edges(node));
+          this.highlightedEdgesClick.clear();
+          this.highlightedNodesClick.clear();
+          this.highlightedNodesClick = new Set(this.graph.neighbors(node));
+          this.highlightedEdgesClick = new Set(this.graph.edges(node));
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
         }
@@ -298,7 +299,7 @@ export default class overviewGraph {
             attributes.y = attributes.yOnClusterFocus;
             attributes.moduleFixed = true;
             attributes.zoomHidden = false;
-            attributes.size = overviewGraph.FOCUS_NODE_SIZE;
+            attributes.size = overviewGraph.FOCUS_NODE_SIZE; // size behavíour is strange!
             attributes.nonHoverSize = overviewGraph.FOCUS_NODE_SIZE;
           } else if (!defocus && !attributes.isRoot) {
             attributes.x = attributes.xOnClusterFocus;
@@ -314,12 +315,16 @@ export default class overviewGraph {
             attributes.y = attributes.layoutY;
             attributes.moduleFixed = false;
             attributes.moduleHidden = false;
-            attributes.size = overviewGraph.DEFAULT_SIZE;
-            attributes.nonHoverSize = overviewGraph.DEFAULT_SIZE;
-            // ? overviewGraph.ROOT_DEFAULT_SIZE
-            //   : attributes.nodeType == 'moduleNode'
-            //   ? overviewGraph.MODULE_DEFAULT_SIZE
-            //   : overviewGraph.DEFAULT_SIZE;
+            attributes.size = attributes.isRoot
+              ? overviewGraph.ROOT_DEFAULT_SIZE
+              : attributes.nodeType == 'moduleNode'
+              ? overviewGraph.MODULE_DEFAULT_SIZE
+              : overviewGraph.DEFAULT_SIZE;
+            attributes.nonHoverSize = attributes.isRoot
+              ? overviewGraph.ROOT_DEFAULT_SIZE
+              : attributes.nodeType == 'moduleNode'
+              ? overviewGraph.MODULE_DEFAULT_SIZE
+              : overviewGraph.DEFAULT_SIZE;
           }
         });
 
@@ -343,6 +348,20 @@ export default class overviewGraph {
     return renderer;
   }
 
+  /**
+   * clear selection of node
+   */
+  clearSelection() {
+    this.highlightedEdgesClick.clear();
+    this.highlightedNodesClick.clear();
+    useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
+    this.renderer.refresh();
+  }
+
+  /**
+   * relayouts graph with the supplied FA2 settings, influencing the layouting inside the clusters themselves
+   * @param layoutParams
+   */
   relayoutGraph(
     //tarGraph: Sigma,
     layoutParams: {
@@ -557,13 +576,13 @@ export default class overviewGraph {
     this.shortestPathClick = [];
     this.shortestPathNodes = [];
     this.shortestPathEdges = [];
-    this.highlighedEdgesClick.clear();
-    this.highlighedNodesClick.clear();
+    this.highlightedEdgesClick.clear();
+    this.highlightedNodesClick.clear();
     if (this.currentPathway) {
-      this.highlighedNodesClick = new Set(
+      this.highlightedNodesClick = new Set(
         this.graph.neighbors(this.currentPathway)
       );
-      this.highlighedEdgesClick = new Set(
+      this.highlightedEdgesClick = new Set(
         this.graph.edges(this.currentPathway)
       );
     }

@@ -18,7 +18,21 @@
           option-label="text"
           option-value="value"
           @filter="filterFunction"
-        ></q-select>
+        >
+          <template #append>
+            <q-icon
+              name="close"
+              class="cursor-pointer"
+              @click.stop.prevent="
+                pathwaySelection = {
+                  title: '',
+                  value: '',
+                  text: '',
+                }
+              "
+            />
+          </template>
+        </q-select>
         <div
           :id="contextID"
           :class="[
@@ -122,7 +136,11 @@ watch(pathwayLayouting, () => {
 watch(pathwaySelection, () => {
   if (pathwaySelection.value) {
     const tarID = pathwaySelection.value.value;
-    getJsonFiles(tarID);
+    if (pathwaySelection.value.value != '') {
+      getJsonFiles(tarID);
+    } else {
+      currentView.value?.clearView();
+    }
     mainStore.focusPathwayViaDropdown(pathwaySelection.value);
   }
 });

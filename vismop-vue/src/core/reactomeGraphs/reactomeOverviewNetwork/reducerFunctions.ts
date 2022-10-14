@@ -136,7 +136,7 @@ export function nodeReducer(
         hidden: hidden,
       };
     }
-    if (this.highlighedNodesClick.has(node)) {
+    if (this.highlightedNodesClick.has(node)) {
       return {
         ...data,
         color: overviewColors.highlight,
@@ -191,7 +191,7 @@ export function edgeReducer(
         hidden: false,
       };
     }
-    if (this.highlighedEdgesClick.has(edge)) {
+    if (this.highlightedEdgesClick.has(edge)) {
       return {
         ...data,
         color: overviewColors.edgesHighlight,
