@@ -167,17 +167,17 @@ const metabolomicsFilter = ref({
 });
 
 const fa2LayoutParams = ref({
-  iterations: 250,
+  iterations: 750,
   weightShared: 5.0,
-  weightDefault: 1.0,
+  weightDefault: 0.2,
   gravity: 2.0,
-  edgeWeightInfluence: 7.0,
+  edgeWeightInfluence: 3.0,
   scalingRatio: 5.0,
   adjustSizes: true,
-  outboundAttractionDistribution: false,
-  barnesHut: false,
+  outboundAttractionDistribution: true,
+  barnesHut: true,
   linLog: false,
-  strongGravity: false,
+  strongGravity: true,
   slowDown: 1,
   barnesHutTheta: 0.5,
 });

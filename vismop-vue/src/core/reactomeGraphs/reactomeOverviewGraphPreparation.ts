@@ -79,7 +79,7 @@ export function generateGraphData(
         id: id,
         hidden: false,
         filterHidden: false,
-        zoomHidden: true,
+        zoomHidden: false,
         moduleHidden: false,
         moduleFixed: false,
         color:

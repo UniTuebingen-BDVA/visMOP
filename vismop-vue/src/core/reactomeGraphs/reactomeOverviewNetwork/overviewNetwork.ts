@@ -31,7 +31,7 @@ export default class overviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 3 * 2;
   static readonly ROOT_DEFAULT_SIZE = 7.5 * 2;
-  static readonly MODULE_DEFAULT_SIZE = 7.5 * 2;
+  static readonly MODULE_DEFAULT_SIZE = 7.5 * 3;
   static readonly FOCUS_NODE_SIZE = 5 * 2;
 
   // data structures for reducers
@@ -54,7 +54,7 @@ export default class overviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected clusterData;
-  protected lodRatio = 1.1;
+  protected lodRatio = 1.3;
   protected lastClickedClusterNode = -1;
   protected additionalData!: additionalData;
   protected cancelCurrentAnimation: (() => void) | null = null;
@@ -554,9 +554,9 @@ export default class overviewGraph {
         imageLowRes: glyphs[key],
         imageHighRes: glyphs[key],
         imageLowZoom: glyphs[key],
-        hidden: this.camera.ratio >= this.lodRatio ? true : false,
+        hidden: this.camera.ratio >= this.lodRatio ? false : true,
         filterHidden: false,
-        zoomHidden: this.camera.ratio >= this.lodRatio ? true : false,
+        zoomHidden: this.camera.ratio >= this.lodRatio ? true : true,
         moduleHidden: false,
         moduleFixed: false,
       };
