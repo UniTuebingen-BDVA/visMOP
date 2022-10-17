@@ -50,18 +50,40 @@
           <q-badge color="primary">
             {{ variable.text }}
           </q-badge>
-          <q-checkbox
-            v-model="slidersInternal[variable.text].empties"
-            :label="'Empties'"
-          ></q-checkbox>
-          <q-range
-            v-model="slidersInternal[variable.text].vals"
-            :max="variable.max"
-            :min="variable.min"
-            :step="variable.step"
-            label
-          >
-          </q-range>
+          <div class="col-2">
+            <q-checkbox
+              v-model="slidersInternal[variable.text].empties"
+              :label="'Empties'"
+            ></q-checkbox>
+          </div>
+          <div class="col-8">
+            <q-range
+              v-model="slidersInternal[variable.text].vals"
+              :max="variable.max"
+              :min="variable.min"
+              :step="variable.step"
+              label
+              :color="
+                slidersInternal[variable.text].inside
+                  ? 'primary'
+                  : 'graphFilterSlider'
+              "
+              :track-color="
+                slidersInternal[variable.text].inside
+                  ? 'graphFilterSlider'
+                  : 'primary'
+              "
+            >
+            </q-range>
+        </div>
+        <div class="col-2">
+          <q-toggle
+            v-model="slidersInternal[variable.text].inside"
+            checked-icon="mdi-arrow-collapse-horizontal"
+            color="primary"
+            unchecked-icon="mdi-arrow-split-vertical"
+          />
+        </div>
         </div>
       </q-card-section>
     </q-card>
@@ -92,7 +114,7 @@ const props = defineProps<{
   valueCol: ColType;
   recievedOmicsData: boolean;
   sliderVals: {
-    [key: string]: { vals: { min: number; max: number }; empties: boolean };
+    [key: string]: { vals: { min: number; max: number }; empties: boolean; inside: boolean };
   };
 }>();
 
@@ -162,8 +184,8 @@ const slider = computed(() => {
       });
       if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
         console.log(element.field, numArr);
-        const min = Math.floor(Math.min(...numArr));
-        const max = Math.ceil(Math.max(...numArr));
+        const min = Math.floor(Math.min(...numArr)*10)/10;
+        const max = Math.ceil(Math.max(...numArr)*10)/10;
         outObj[element.field] = {
           min: min,
           max: max,
@@ -185,6 +207,7 @@ watch(slider, () => {
         slidersInternal.value[element.text] = {
           vals: { min: element.min, max: element.max },
           empties: true,
+          inside:true
         };
       }
     }
@@ -239,3 +262,8 @@ const sheetRules = ref([
   },
 ]);
 </script>
+<style lang="css">
+  .text-graphFilterSlider {
+    color: rgba(187, 187, 187) !important;
+  }
+  </style>

@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="text-h6 text-grey-9 grey-9">Graph Filtering</div>
     <div class="graphFilterCard">
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-12 text-subtitle1 text-grey-9">General</div>

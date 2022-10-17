@@ -139,6 +139,8 @@ export class HighDetailGlyph {
     const mainStore = useMainStore();
     let svg;
     let g;
+    const textSmallThreshold = 5;
+    const textTinyThreshold = 12;
 
     if (this.drawLabels) {
       svg = d3
@@ -163,9 +165,18 @@ export class HighDetailGlyph {
           .data(this.outerArcDat)
           .attr('fill-opacity', (d, i) => {
             if (i === this.highlightSection) {
+              const label = d.name.split(' ')[0]; // more of a temp fix
               d3.select(`#glyph${this.glyphIdx}`)
                 .select('#tspan1')
-                .text(d.name.split(' ')[0]); // more of a temp fix
+                .attr(
+                  'class',
+                  label.length > textSmallThreshold
+                    ? label.length > textTinyThreshold
+                      ? 'glyphTextTiny'
+                      : 'glyphTextSmall'
+                    : 'glyphText'
+                )
+                .text(label);
               d3.select(`#glyph${this.glyphIdx}`)
                 .select('#tspan2')
                 .text(d.fc.toFixed(3));
@@ -180,6 +191,7 @@ export class HighDetailGlyph {
           .attr('fill-opacity', (_d, _i) => {
             d3.select(`#glyph${this.glyphIdx}`)
               .select('#tspan1')
+              .attr('class', 'glyphText')
               .text('Total:');
             d3.select(`#glyph${this.glyphIdx}`)
               .select('#tspan2')
@@ -202,9 +214,18 @@ export class HighDetailGlyph {
           .data(this.outerArcDat)
           .attr('fill-opacity', (d, i) => {
             if (i === this.highlightSection) {
+              const label = d.name.split(' ')[0]; // more of a temp fix
               d3.select(`#glyph${this.glyphIdx}`)
                 .select('#tspan1')
-                .text(d.name.split(' ')[0]); // more of a temp fix
+                .attr(
+                  'class',
+                  label.length > textSmallThreshold
+                    ? label.length > textTinyThreshold
+                      ? 'glyphTextTiny'
+                      : 'glyphTextSmall'
+                    : 'glyphText'
+                )
+                .text(label);
               d3.select(`#glyph${this.glyphIdx}`)
                 .select('#tspan2')
                 .text(d.fc.toFixed(3));
@@ -329,10 +350,11 @@ export class HighDetailGlyph {
         .attr('class', 'glyphText')
         .attr('href', (_d, i) => `#labelArc${i}`);
 
-      const text = g.append('text').attr('class', 'glyphText centeredText');
+      const text = g.append('text');
 
       text
         .append('tspan')
+        .attr('class', 'glyphText')
         .attr('id', 'tspan1')
         .attr('x', 0)
         .attr('dy', '-0.5em')
@@ -341,6 +363,7 @@ export class HighDetailGlyph {
       text
         .append('tspan')
         .attr('id', 'tspan2')
+        .attr('class', 'glyphText ')
         .attr('x', 0)
         .attr('dy', '1em')
         .text(this.totalNodes);

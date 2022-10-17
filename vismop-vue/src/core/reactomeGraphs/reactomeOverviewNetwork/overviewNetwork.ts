@@ -25,20 +25,21 @@ import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
 import _ from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
+import { animateNodes } from 'sigma/utils/animate';
 
 export default class overviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 3 * 2;
   static readonly ROOT_DEFAULT_SIZE = 7.5 * 2;
-  static readonly MODULE_DEFAULT_SIZE = 7.5 * 2;
+  static readonly MODULE_DEFAULT_SIZE = 7.5 * 3;
   static readonly FOCUS_NODE_SIZE = 5 * 2;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];
   protected shortestPathNodes: string[] = [];
   protected shortestPathEdges: string[] = [];
-  protected highlighedEdgesClick = new Set();
-  protected highlighedNodesClick = new Set();
+  protected highlightedEdgesClick = new Set();
+  protected highlightedNodesClick = new Set();
   //from events SIGMA2 example, initialze sets for highlight on hover:
   protected highlighedNodesHover = new Set();
   protected highlighedEdgesHover = new Set();
@@ -53,7 +54,7 @@ export default class overviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected clusterData;
-  protected lodRatio = 1;
+  protected lodRatio = 1.3;
   protected lastClickedClusterNode = -1;
   protected additionalData!: additionalData;
   protected cancelCurrentAnimation: (() => void) | null = null;
@@ -148,19 +149,24 @@ export default class overviewGraph {
     },
   };
   polygons: { [key: number]: ConvexPolygon };
+  initialFa2Params: fa2LayoutParams;
 
   constructor(
     containerID: string,
     graphData: overviewGraphData,
-    polygons: { [key: number]: ConvexPolygon }
+    polygons: { [key: number]: ConvexPolygon },
+    layoutParams: fa2LayoutParams
   ) {
     this.graph = UndirectedGraph.from(graphData);
+    this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
+    this.relayoutGraph(this.initialFa2Params);
+
     this.refreshCurrentPathway();
   }
 
@@ -218,46 +224,6 @@ export default class overviewGraph {
     }) as LayoutMapping<{ [dimension: string]: number }>;
     assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
 
-    Object.keys(this.polygons).forEach((element) => {
-      const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
-        return attr.modNum == parseInt(element) && attr.isRoot == false;
-      });
-      currentSubgraph.clearEdges();
-      currentSubgraph.forEachNode((node, attr) => {
-        currentSubgraph.forEachNode((nodeInner, attrInner) => {
-          if (node != nodeInner) {
-            if (!currentSubgraph.hasEdge(node, nodeInner)) {
-              currentSubgraph.addEdge(node, nodeInner, {
-                weight: attr.rootId == attrInner.rootId ? 5 : 1,
-              });
-            }
-          }
-        });
-      });
-      const settings = fa2.inferSettings(currentSubgraph);
-      const currentPositions = fa2(
-        currentSubgraph,
-        {
-          iterations: 20000,
-          getEdgeWeight: 'weight',
-          settings: {
-            ...settings,
-            gravity: 2.0,
-            edgeWeightInfluence: 7,
-            scalingRatio: 5,
-            adjustSizes: true,
-            //outboundAttractionDistribution: true,
-          },
-        },
-        this.polygons[parseInt(element)]
-      );
-      assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
-    });
-
-    this.graph.forEachNode((node, attributes) => {
-      attributes.layoutX = attributes.x;
-      attributes.layoutY = attributes.y;
-    });
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
@@ -288,38 +254,40 @@ export default class overviewGraph {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
         } else if (event.original.altKey) {
-          if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
-          this.shortestPathClick.push(node);
-          if (this.shortestPathClick.length === 2) {
-            this.shortestPathNodes = bidirectional(
-              this.graph,
-              this.shortestPathClick[0],
-              this.shortestPathClick[1]
-            ) as string[];
-            if (this.shortestPathNodes?.length > 0) {
-              this.shortestPathEdges = edgePathFromNodePath(
-                this.graph,
-                this.shortestPathNodes as string[]
-              );
-              console.log('shortest Path edges', this.shortestPathEdges);
-              mainStore.selectPathwayCompare(this.shortestPathNodes);
-            } else {
-              this.shortestPathClick = [];
-            }
-          }
+          // TODO Get working again
+          // if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
+          // this.shortestPathClick.push(node);
+          // if (this.shortestPathClick.length === 2) {
+          //   this.shortestPathNodes = bidirectional(
+          //     this.graph,
+          //     this.shortestPathClick[0],
+          //     this.shortestPathClick[1]
+          //   ) as string[];
+          //   if (this.shortestPathNodes?.length > 0) {
+          //     this.shortestPathEdges = edgePathFromNodePath(
+          //       this.graph,
+          //       this.shortestPathNodes as string[]
+          //     );
+          //     console.log('shortest Path edges', this.shortestPathEdges);
+          //     mainStore.selectPathwayCompare(this.shortestPathNodes);
+          //   } else {
+          //     this.shortestPathClick = [];
+          //   }
+          // }
         } else {
           this.shortestPathClick = [];
           this.shortestPathNodes = [];
           this.shortestPathEdges = [];
-          this.highlighedEdgesClick.clear();
-          this.highlighedNodesClick.clear();
-          this.highlighedNodesClick = new Set(this.graph.neighbors(node));
-          this.highlighedEdgesClick = new Set(this.graph.edges(node));
+          this.highlightedEdgesClick.clear();
+          this.highlightedNodesClick.clear();
+          this.highlightedNodesClick = new Set(this.graph.neighbors(node));
+          this.highlightedEdgesClick = new Set(this.graph.edges(node));
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
         }
       } else {
         const defocus = this.lastClickedClusterNode == parseInt(node);
+        console.log('MODULE CLICK', this.graph.getNodeAttributes(node));
         this.graph.forEachNode((_, attributes) => {
           if (
             !defocus &&
@@ -331,24 +299,32 @@ export default class overviewGraph {
             attributes.y = attributes.yOnClusterFocus;
             attributes.moduleFixed = true;
             attributes.zoomHidden = false;
-            attributes.size = overviewGraph.FOCUS_NODE_SIZE;
+            attributes.size = overviewGraph.FOCUS_NODE_SIZE; // size behavíour is strange!
             attributes.nonHoverSize = overviewGraph.FOCUS_NODE_SIZE;
           } else if (!defocus && !attributes.isRoot) {
-            attributes.x = 0;
-            attributes.y = 0;
+            attributes.x = attributes.xOnClusterFocus;
+            attributes.y = attributes.yOnClusterFocus;
             if (attributes.id != node) {
               attributes.moduleHidden = true;
             } else {
               attributes.moduleFixed = true;
               attributes.zoomHidden = false;
             }
-          } else {
+          } else if (!attributes.isRoot) {
             attributes.x = attributes.layoutX;
             attributes.y = attributes.layoutY;
             attributes.moduleFixed = false;
             attributes.moduleHidden = false;
-            attributes.size = overviewGraph.DEFAULT_SIZE;
-            attributes.nonHoverSize = overviewGraph.DEFAULT_SIZE;
+            attributes.size = attributes.isRoot
+              ? overviewGraph.ROOT_DEFAULT_SIZE
+              : attributes.nodeType == 'moduleNode'
+              ? overviewGraph.MODULE_DEFAULT_SIZE
+              : overviewGraph.DEFAULT_SIZE;
+            attributes.nonHoverSize = attributes.isRoot
+              ? overviewGraph.ROOT_DEFAULT_SIZE
+              : attributes.nodeType == 'moduleNode'
+              ? overviewGraph.MODULE_DEFAULT_SIZE
+              : overviewGraph.DEFAULT_SIZE;
           }
         });
 
@@ -371,6 +347,151 @@ export default class overviewGraph {
 
     return renderer;
   }
+
+  /**
+   * clear selection of node
+   */
+  clearSelection() {
+    this.highlightedEdgesClick.clear();
+    this.highlightedNodesClick.clear();
+    useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
+    this.renderer.refresh();
+  }
+
+  /**
+   * relayouts graph with the supplied FA2 settings, influencing the layouting inside the clusters themselves
+   * @param layoutParams
+   */
+  relayoutGraph(
+    //tarGraph: Sigma,
+    layoutParams: {
+      weightShared: number;
+      weightDefault: number;
+      gravity: number;
+      edgeWeightInfluence: number;
+      scalingRatio: number;
+      iterations: number;
+      adjustSizes: boolean;
+      outboundAttractionDistribution: boolean;
+      strongGravity: boolean;
+      barnesHut: boolean;
+      barnesHutTheta: number;
+      slowDown: number;
+      linLog: boolean;
+    }
+  ) {
+    const maxExt = 250;
+    Object.keys(this.polygons).forEach((element) => {
+      const polygonIdx = parseInt(element);
+      const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
+        return (
+          attr.modNum == polygonIdx &&
+          attr.isRoot == false &&
+          attr.nodeType !== 'moduleNode'
+        );
+      });
+      currentSubgraph.clearEdges();
+      currentSubgraph.forEachNode((node, attr) => {
+        currentSubgraph.forEachNode((nodeInner, attrInner) => {
+          if (node != nodeInner) {
+            if (!currentSubgraph.hasEdge(node, nodeInner)) {
+              currentSubgraph.addEdge(node, nodeInner, {
+                weight:
+                  attr.rootId == attrInner.rootId
+                    ? layoutParams.weightShared
+                    : layoutParams.weightDefault,
+              });
+            }
+          }
+        });
+      });
+      //causes cluster nodes to vanish
+      // ALSO: clusternodes seem to be at the wrong position
+      currentSubgraph.forEachNode((node, attributes) => {
+        if (attributes.nodeType !== 'moduleNode') {
+          attributes.x = attributes.preFa2X;
+          attributes.y = attributes.preFa2Y;
+          attributes.layoutX = attributes.preFa2X;
+          attributes.layoutY = attributes.preFa2Y;
+        }
+      });
+      const settings = fa2.inferSettings(currentSubgraph);
+      const currentPositions = fa2(
+        currentSubgraph,
+        {
+          iterations: layoutParams.iterations,
+          getEdgeWeight: 'weight',
+          settings: {
+            ...settings,
+            linLogMode: layoutParams.linLog,
+            barnesHutOptimize: layoutParams.barnesHut,
+            barnesHutTheta: layoutParams.barnesHutTheta,
+            slowDown: layoutParams.slowDown,
+            strongGravityMode: layoutParams.strongGravity,
+            gravity: layoutParams.gravity,
+            edgeWeightInfluence: layoutParams.edgeWeightInfluence,
+            scalingRatio: layoutParams.scalingRatio,
+            adjustSizes: layoutParams.adjustSizes,
+            outboundAttractionDistribution:
+              layoutParams.outboundAttractionDistribution,
+          },
+        },
+        this.polygons[polygonIdx]
+      );
+      assignLayout(this.graph, currentPositions, { dimensions: ['x', 'y'] });
+      //this.cancelCurrentAnimation = animateNodes(this.graph, currentPositions, {
+      // duration: 2000,
+      //easing: 'quadraticOut',
+      // });
+    });
+    this.graph.forEachNode((node, attributes) => {
+      if (attributes.nodeType !== 'moduleNode') {
+        attributes.layoutX = attributes.x;
+        attributes.layoutY = attributes.y;
+      }
+    });
+    Object.keys(this.polygons).forEach((element) => {
+      const polygonIdx = parseInt(element);
+      const currentPolygon = this.polygons[polygonIdx];
+
+      const currentNodes = useMainStore().modules[polygonIdx];
+
+      const polygonBB = currentPolygon.getBoundingBox();
+      const minX = polygonBB.vertices[0][0];
+      const minY = polygonBB.vertices[0][1];
+      const minXY = Math.min(minX, minY);
+      const maxX = polygonBB.vertices[2][0];
+      const maxY = polygonBB.vertices[2][1];
+      const maxXY = Math.min(maxX, maxY);
+
+      currentNodes.forEach((node) => {
+        const currAttribs = this.graph.getNodeAttributes(node);
+        const centeredX = currAttribs.x - currentPolygon.getCenter()[0];
+        const centeredY = currAttribs.y - currentPolygon.getCenter()[1];
+        this.graph.setNodeAttribute(
+          node,
+          'xOnClusterFocus',
+          (maxExt * centeredX) / (maxXY - minXY)
+        );
+        this.graph.setNodeAttribute(
+          node,
+          'yOnClusterFocus',
+          (maxExt * centeredY) / (maxXY - minXY)
+        );
+      });
+      this.graph.setNodeAttribute(
+        polygonIdx,
+        'xOnClusterFocus',
+        (maxExt * (minX - currentPolygon.getCenter()[0])) / (maxXY - minXY)
+      );
+      this.graph.setNodeAttribute(
+        polygonIdx,
+        'yOnClusterFocus',
+        (maxExt * (minY - currentPolygon.getCenter()[1])) / (maxXY - minXY)
+      );
+    });
+  }
+
   getModuleNodeIds() {
     const moduleNodeMapping: {
       [key: string]: {
@@ -405,8 +526,8 @@ export default class overviewGraph {
     const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
     console.log('ModuleGlyphs', glyphs);
     for (const key in Object.keys(moduleNodeMapping)) {
-      const xPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
-      const yPos = _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
+      const xPos = this.polygons[key].getCenter()[0]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
+      const yPos = this.polygons[key].getCenter()[1]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
       const moduleNode: overviewNodeAttr = {
         name: key,
         id: key,
@@ -414,14 +535,10 @@ export default class overviewGraph {
         y: yPos,
         layoutX: xPos,
         layoutY: yPos,
-        xOnClusterFocus: _.mean(
-          moduleNodeMapping[key].posOnClusterFocus.map((elem) => elem[0])
-        ),
-        yOnClusterFocus: _.mean(
-          moduleNodeMapping[key].posOnClusterFocus.map((elem) => elem[1])
-        ),
-        //x: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[0])),
-        //y: _.mean(moduleNodeMapping[key].pos.map((elem) => elem[1])),
+        preFa2X: xPos,
+        preFa2Y: yPos,
+        xOnClusterFocus: -50,
+        yOnClusterFocus: -50,
         modNum: parseInt(key),
         isRoot: false,
         zIndex: 1,
@@ -437,9 +554,9 @@ export default class overviewGraph {
         imageLowRes: glyphs[key],
         imageHighRes: glyphs[key],
         imageLowZoom: glyphs[key],
-        hidden: this.camera.ratio >= this.lodRatio ? true : false,
+        hidden: this.camera.ratio >= this.lodRatio ? false : true,
         filterHidden: false,
-        zoomHidden: this.camera.ratio >= this.lodRatio ? true : false,
+        zoomHidden: this.camera.ratio >= this.lodRatio ? true : true,
         moduleHidden: false,
         moduleFixed: false,
       };
@@ -459,13 +576,13 @@ export default class overviewGraph {
     this.shortestPathClick = [];
     this.shortestPathNodes = [];
     this.shortestPathEdges = [];
-    this.highlighedEdgesClick.clear();
-    this.highlighedNodesClick.clear();
+    this.highlightedEdgesClick.clear();
+    this.highlightedNodesClick.clear();
     if (this.currentPathway) {
-      this.highlighedNodesClick = new Set(
+      this.highlightedNodesClick = new Set(
         this.graph.neighbors(this.currentPathway)
       );
-      this.highlighedEdgesClick = new Set(
+      this.highlightedEdgesClick = new Set(
         this.graph.edges(this.currentPathway)
       );
     }

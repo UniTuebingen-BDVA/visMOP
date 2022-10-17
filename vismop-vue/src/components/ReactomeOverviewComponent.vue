@@ -22,14 +22,40 @@
             icon="mdi-restore"
             @click="resetZoom"
           ></q-fab-action>
-          <q-fab-action color="white">
-            <graph-filter
-              v-model:rootFilter="rootFilter"
-              v-model:transcriptomics="transcriptomicsFilter"
-              v-model:proteomics="proteomicsFilter"
-              v-model:metabolomics="metabolomicsFilter"
-              v-model:sumRegulated="sumRegulated"
-            ></graph-filter>
+          <q-fab-action
+            color="primary"
+            icon="mdi-select-remove"
+            @click="removeSelection"
+          ></q-fab-action>
+          <q-fab-action color="white" text-color="black">
+            <q-expansion-item
+              v-model="expandFilter"
+              icon="mdi-filter"
+              label="Graph Filter"
+              @click.prevent
+            >
+              <graph-filter
+                v-model:rootFilter="rootFilter"
+                v-model:transcriptomics="transcriptomicsFilter"
+                v-model:proteomics="proteomicsFilter"
+                v-model:metabolomics="metabolomicsFilter"
+                v-model:sumRegulated="sumRegulated"
+                @click.prevent
+              ></graph-filter>
+            </q-expansion-item>
+          </q-fab-action>
+          <q-fab-action color="white" text-color="black">
+            <q-expansion-item
+              v-model="expandFa2Controls"
+              icon="mdi-graph"
+              label="FA2 Controls"
+              @click.prevent
+            >
+              <fa2-params
+                v-model:fa2LayoutParams="fa2LayoutParams"
+                @click.prevent
+              ></fa2-params>
+            </q-expansion-item>
           </q-fab-action>
         </q-fab>
         <div
@@ -57,6 +83,7 @@ import {
   generateVoronoiCells,
   nodePolygonMapping,
 } from '@/core/layouting/voronoiLayout';
+import Fa2Params from './Fa2Params.vue';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -81,6 +108,8 @@ const props = defineProps({
 const mainStore = useMainStore();
 
 const expandOverview = ref(false);
+const expandFilter = ref(false);
+const expandFa2Controls = ref(false);
 const outstandingDraw = ref(false);
 const networkGraph: Ref<OverviewGraph | undefined> = ref(undefined);
 const transcriptomicsIntersection: Ref<string[]> = ref([]);
@@ -135,6 +164,22 @@ const metabolomicsFilter = ref({
   filterActive: false,
   inside: true,
   disable: true,
+});
+
+const fa2LayoutParams = ref({
+  iterations: 750,
+  weightShared: 5.0,
+  weightDefault: 0.2,
+  gravity: 2.0,
+  edgeWeightInfluence: 3.0,
+  scalingRatio: 5.0,
+  adjustSizes: true,
+  outboundAttractionDistribution: true,
+  barnesHut: true,
+  linLog: false,
+  strongGravity: true,
+  slowDown: 1,
+  barnesHutTheta: 0.5,
 });
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
@@ -376,6 +421,10 @@ watch(rootFilter.value, () => {
   networkGraph?.value?.setRootFilter(rootFilter.value);
 });
 
+watch(fa2LayoutParams.value, () => {
+  networkGraph?.value?.relayoutGraph(fa2LayoutParams.value);
+});
+
 const expandComponent = () => {
   expandOverview.value = true;
 };
@@ -384,6 +433,9 @@ const minimizeComponent = () => {
 };
 const resetZoom = () => {
   networkGraph.value?.resetZoom();
+};
+const removeSelection = () => {
+  networkGraph.value?.clearSelection();
 };
 const drawNetwork = () => {
   networkGraph.value?.killGraph();
@@ -431,14 +483,15 @@ const drawNetwork = () => {
     glyphDataVar.value,
     pathwayLayouting.value.rootIds,
     [[1, 1, 1, 1]],
-    polygonsArrays,
+    polygons,
     positionMapping
   );
   console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(
     props.contextID ? props.contextID : '',
     networkData,
-    polygons
+    polygons,
+    fa2LayoutParams.value
   );
 };
 </script>

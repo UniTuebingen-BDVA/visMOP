@@ -13,6 +13,7 @@ import ClusterHulls from '@/core/layouting/convexHullsForClusters';
 import overviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
 import { useMainStore } from '@/stores';
+import { ConvexPolygon } from '../layouting/ConvexPolygon';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -28,7 +29,9 @@ export function generateGraphData(
   },
   rootIds: string[],
   moduleAreas: [number[]] = [[]],
-  voronoiTest: [number, number][][],
+  voronoiPolygons: {
+    [key: number]: ConvexPolygon;
+  },
   positionMapping: {
     [key: string]: {
       id: string;
@@ -108,6 +111,8 @@ export function generateGraphData(
         up: { x: initPosX, y: initPosY, gamma: 0 },
         layoutX: initPosX,
         layoutY: initPosX,
+        preFa2X: initPosX,
+        preFa2Y: initPosY,
         xOnClusterFocus: 0,
         yOnClusterFocus: 0,
         rootId: entry.rootId,
@@ -165,22 +170,8 @@ export function generateGraphData(
     }
     index += 1;
   }
-  /*
-  const withNoiseCluster = moduleAreas[0].length != 0;
-  if (!withNoiseCluster) {
-    moduleAreas.shift();
-  }
-  const nodes_per_cluster = pfsPrime_modules(
-    graph.nodes,
-    maxModuleNum,
-    moduleAreas
-  );
-  
-  let norm_node_pos: overviewNode[] =
-    nodes_per_cluster[nodes_per_cluster.length - 1]; // already add superpathways as they are not part of the convex hull
-  nodes_per_cluster.pop();
-  */
-  const max_ext = 20;
+
+  const maxExt = 250;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
@@ -189,56 +180,20 @@ export function generateGraphData(
   // const totalNumHulls = moduleAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
-  const focusNormalizeParameterPerCl = [] as {
-    varX: number;
-    varY: number;
-    meanX: number;
-    meanY: number;
-    minCentered: number;
-    maxCentered: number;
-  }[];
-  _.forEach(voronoiTest, (nodes) => {
-    /*
-    const clusterHullPoints = hull(
-      nodes.map((o) => [o.attributes.x, o.attributes.y]),
-      Infinity
-    ) as [[number, number]];
-    */
+  _.forEach(voronoiPolygons, (polygon) => {
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
-        nodes,
-        max_ext
+        polygon,
+        maxExt
       );
       const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
       greyValues.push(greyValue);
       clusterHulls.push(hullAdjustment.finalHullNodes);
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
-      focusNormalizeParameterPerCl.push(hullAdjustment.focusNormalizeParameter);
     }
-    //norm_node_pos = norm_node_pos.concat(nodes);
-
     clusterNum += 1;
   });
   // if one wants to use rectangle use getRightResultFormForRectangle()
-
-  _.forEach(graph.nodes, (node) => {
-    let curr_cl = 0;
-    for (let cl = 0; cl < clusterNum; cl++) {
-      if (useMainStore().modules[cl].includes(node.key)) {
-        curr_cl = cl;
-        break;
-      }
-    }
-    const curFocusNormPara = focusNormalizeParameterPerCl[curr_cl];
-    const centeredX = node.attributes.x - curFocusNormPara.meanX;
-    const centeredY = node.attributes.y - curFocusNormPara.meanY;
-    node.attributes.xOnClusterFocus =
-      (max_ext * (centeredX - curFocusNormPara.minCentered)) /
-      (curFocusNormPara.maxCentered - curFocusNormPara.minCentered);
-    node.attributes.yOnClusterFocus =
-      (max_ext * (centeredY - curFocusNormPara.minCentered)) /
-      (curFocusNormPara.maxCentered - curFocusNormPara.minCentered);
-  });
 
   graph.clusterData.normalHullPoints = clusterHulls;
   graph.clusterData.focusHullPoints = focusClusterHulls;

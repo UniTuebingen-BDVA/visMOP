@@ -106,7 +106,11 @@ def getModuleLayout(
     # module_areas = module_layout.get_module_areas()
     # module_areas = []
     # return module_node_pos, module_areas
-    return module_layout.modules , module_layout.modules_center, module_layout.noise_cluster_exists
+    return (
+        module_layout.modules,
+        module_layout.modules_center,
+        module_layout.noise_cluster_exists,
+    )
 
 
 def get_layout_settings(settings, omics_recieved):
@@ -248,9 +252,16 @@ def uniprot_access(colname, filter_obj):
         is_empty = v["empties"] & (prot_table[k] == "None")
         is_numeric = pd.to_numeric(prot_table[k], errors="coerce").notnull()
         df_numeric = prot_table.loc[is_numeric]
-        df_is_in_range = df_numeric.loc[
-            (df_numeric[k] >= v["vals"]["min"]) & (df_numeric[k] <= v["vals"]["max"])
-        ]
+        if v["inside"]:
+            df_is_in_range = df_numeric.loc[
+                (df_numeric[k] >= v["vals"]["min"])
+                & (df_numeric[k] <= v["vals"]["max"])
+            ]
+        else:
+            df_is_in_range = df_numeric.loc[
+                (df_numeric[k] <= v["vals"]["min"])
+                | (df_numeric[k] >= v["vals"]["max"])
+            ]
         df_is_empty = prot_table.loc[is_empty]
 
         prot_table = prot_table.loc[
@@ -373,10 +384,16 @@ def reactome_parsing():
                     metabolomics_df[k], errors="coerce"
                 ).notnull()
                 df_numeric = metabolomics_df.loc[is_numeric]
-                df_is_in_range = df_numeric.loc[
-                    (df_numeric[k] >= v["vals"]["min"])
-                    & (df_numeric[k] <= v["vals"]["max"])
-                ]
+                if v["inside"]:
+                    df_is_in_range = df_numeric.loc[
+                        (df_numeric[k] >= v["vals"]["min"])
+                        & (df_numeric[k] <= v["vals"]["max"])
+                    ]
+                else:
+                    df_is_in_range = df_numeric.loc[
+                        (df_numeric[k] <= v["vals"]["min"])
+                        | (df_numeric[k] >= v["vals"]["max"])
+                    ]
                 df_is_empty = metabolomics_df.loc[is_empty]
 
                 metabolomics_df = metabolomics_df.loc[
@@ -447,10 +464,16 @@ def reactome_parsing():
             is_empty = v["empties"] & (transcriptomics_df[k] == "None")
             is_numeric = pd.to_numeric(transcriptomics_df[k], errors="coerce").notnull()
             df_numeric = transcriptomics_df.loc[is_numeric]
-            df_is_in_range = df_numeric.loc[
-                (df_numeric[k] >= v["vals"]["min"])
-                & (df_numeric[k] <= v["vals"]["max"])
-            ]
+            if v["inside"]:
+                df_is_in_range = df_numeric.loc[
+                    (df_numeric[k] >= v["vals"]["min"])
+                    & (df_numeric[k] <= v["vals"]["max"])
+                ]
+            else:
+                df_is_in_range = df_numeric.loc[
+                    (df_numeric[k] <= v["vals"]["min"])
+                    | (df_numeric[k] >= v["vals"]["max"])
+                ]
             df_is_empty = transcriptomics_df.loc[is_empty]
 
             transcriptomics_df = transcriptomics_df.loc[

@@ -163,17 +163,29 @@ const recievedMetabolomicsData = ref(false);
 
 const sliderValsTranscriptomics = ref(
   {} as {
-    [key: string]: { vals: { min: number; max: number }; empties: boolean };
+    [key: string]: {
+      vals: { min: number; max: number };
+      empties: boolean;
+      inside: boolean;
+    };
   }
 );
 const sliderValsProteomics = ref(
   {} as {
-    [key: string]: { vals: { min: number; max: number }; empties: boolean };
+    [key: string]: {
+      vals: { min: number; max: number };
+      empties: boolean;
+      inside: boolean;
+    };
   }
 );
 const sliderValsMetabolomics = ref(
   {} as {
-    [key: string]: { vals: { min: number; max: number }; empties: boolean };
+    [key: string]: {
+      vals: { min: number; max: number };
+      empties: boolean;
+      inside: boolean;
+    };
   }
 );
 const transcriptomicsTableHeaders = computed(

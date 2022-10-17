@@ -81,7 +81,6 @@ function abstractSynchronousLayout(assign, graph, params, boundingPoly) {
 
   // Building matrices
   var matrices = helpers.graphToByteArrays(graph, getEdgeWeight);
-  console.log('weightMat', matrices);
   var i;
 
   // Iterating

@@ -590,12 +590,16 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
   //------------
   g = options.gravity / options.scalingRatio;
   coefficient = options.scalingRatio;
+
+  //my edits
+  const polyCenter = boundingPoly.getCenter();
+  //
   for (n = 0; n < order; n += PPN) {
     factor = 0;
 
     // Common to both methods
-    xDist = NodeMatrix[n + NODE_X];
-    yDist = NodeMatrix[n + NODE_Y];
+    xDist = NodeMatrix[n + NODE_X] - polyCenter[0]; // causes the polyCenter to be gravity center instead of x:0, y:0
+    yDist = NodeMatrix[n + NODE_Y] - polyCenter[1];
     distance = Math.sqrt(Math.pow(xDist, 2) + Math.pow(yDist, 2));
 
     if (options.strongGravityMode) {
