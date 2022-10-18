@@ -19,6 +19,7 @@ function filterFunction(
   if (attributes.isRoot || attributes.nodeType == 'moduleNode') {
     return false;
   } else if (
+    this.filterFuncNegativeRoot(node) &&
     this.filterFuncRoot(node) &&
     this.filterFuncTrans(attributes.averageTranscriptomics as number) &&
     this.filterFuncProt(attributes.averageProteomics as number) &&
@@ -171,6 +172,27 @@ export function setRootFilter(
     };
   } else {
     this.filterFuncRoot = (_x: string) => true;
+  }
+  this.filtersChanged = true;
+  this.renderer.refresh();
+}
+
+export function setRootNegativeFilter(
+  this: overviewGraph,
+  rootNegativeFilter: { filterActive: boolean; rootIDs: string[] }
+) {
+  if (
+    rootNegativeFilter.filterActive &&
+    rootNegativeFilter.rootIDs.length > 0
+  ) {
+    const filteredNodeKeys = this.graph.filterNodes((node, attr) => {
+      return !rootNegativeFilter.rootIDs.includes(attr.rootId);
+    });
+    this.filterFuncNegativeRoot = (x: string) => {
+      return filteredNodeKeys.includes(x);
+    };
+  } else {
+    this.filterFuncNegativeRoot = (_x: string) => true;
   }
   this.filtersChanged = true;
   this.renderer.refresh();

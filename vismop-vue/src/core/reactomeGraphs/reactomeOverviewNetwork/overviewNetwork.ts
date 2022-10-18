@@ -15,7 +15,12 @@ import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
-import { filterElements, setAverageFilter, setRootFilter } from './filter';
+import {
+  filterElements,
+  setAverageFilter,
+  setRootNegativeFilter,
+  setRootFilter,
+} from './filter';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
@@ -61,6 +66,8 @@ export default class overviewGraph {
 
   // filter
   protected filtersChanged = false;
+  protected filterFuncNegativeRoot: (x: string) => boolean = (_x: string) =>
+    true;
   protected filterFuncRoot: (x: string) => boolean = (_x: string) => true;
   protected filterFuncTrans: (x: number) => boolean = (_x: number) => true;
   protected filterFuncProt: (x: number) => boolean = (_x: number) => true;
@@ -567,6 +574,7 @@ export default class overviewGraph {
   public resetZoom = resetZoom;
   public setAverageFilter = setAverageFilter;
   public setRootFilter = setRootFilter;
+  public setRootNegativeFilter = setRootNegativeFilter;
   /**
    * Refresehes sets current pathway to the version selected in the store
    */

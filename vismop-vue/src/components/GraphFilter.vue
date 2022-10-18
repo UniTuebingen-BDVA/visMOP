@@ -12,6 +12,30 @@
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-2">
           <q-checkbox
+            v-model="rootNegativeFilter.filterActive"
+            checked-icon="task_alt"
+            unchecked-icon="highlight_off"
+          />
+        </div>
+        <div class="col-10">
+          <q-select
+            v-model="rootNegativeSelection"
+            filled
+            multiple
+            :options="rootFilterOptionsInternal"
+            input-debounce="0"
+            option-label="text"
+            option-value="value"
+            use-chips
+            label="Reactome Topic Negative Filter"
+            @filter="filterFunction"
+          />
+        </div>
+      </div>
+
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-2">
+          <q-checkbox
             v-model="rootFilter.filterActive"
             checked-icon="task_alt"
             unchecked-icon="highlight_off"
@@ -22,7 +46,7 @@
             v-model="rootSelection"
             filled
             :options="rootFilterOptionsInternal"
-            label="Reactome Topic"
+            label="Reactome Topic Positive Filter"
             use-input
             input-debounce="0"
             option-label="text"
@@ -283,6 +307,13 @@ import { useMainStore } from '@/stores/index.js';
 import { computed, defineProps, defineEmits, PropType, ref, watch } from 'vue';
 
 const props = defineProps({
+  rootNegativeFilter: {
+    type: Object as PropType<{
+      filterActive: boolean;
+      rootIDs: string[];
+    }>,
+    required: true,
+  },
   rootFilter: {
     type: Object as PropType<{
       filterActive: boolean;
@@ -347,14 +378,29 @@ const emit = defineEmits([
   'update:proteomics',
   'update:metabolomics',
   'update:rootFilter',
+  'update:rootNegativeFilter',
 ]);
 const mainStore = useMainStore();
+
+const rootNegativeSelection = ref([]);
+watch(rootNegativeSelection, () => {
+  if (rootNegativeSelection.value) {
+    rootNegativeFilter.value.rootIDs = rootNegativeSelection.value.map(
+      (elem: { title: string; value: string; text: string }) => elem.value
+    );
+  }
+});
 
 const rootSelection = ref({ title: '', value: '', text: '' });
 watch(rootSelection, () => {
   if (rootSelection.value) {
     rootFilter.value.rootID = rootSelection.value.value;
   }
+});
+
+const rootNegativeFilter = computed({
+  get: () => props.rootNegativeFilter,
+  set: (value) => emit('update:rootNegativeFilter', value),
 });
 
 const rootFilter = computed({
@@ -378,7 +424,6 @@ const rootFilterOptions = computed(() => {
 const rootFilterOptionsInternal = ref(rootFilterOptions.value);
 watch(rootFilterOptions.value, () => {
   rootFilterOptionsInternal.value = rootFilterOptions.value;
-  console.log('rootfilter', rootFilterOptionsInternal.value, rootFilter.value);
 });
 
 const filterFunction = (val: string, update: (n: () => void) => void) => {

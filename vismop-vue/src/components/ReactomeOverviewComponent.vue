@@ -35,6 +35,7 @@
               @click.prevent
             >
               <graph-filter
+                v-model:root-negative-filter="rootNegativeFilter"
                 v-model:rootFilter="rootFilter"
                 v-model:transcriptomics="transcriptomicsFilter"
                 v-model:proteomics="proteomicsFilter"
@@ -137,6 +138,11 @@ const sumRegulated = ref({
     inside: true,
     disable: false,
   },
+});
+
+const rootNegativeFilter = ref({
+  filterActive: false,
+  rootIDs: [],
 });
 
 const rootFilter = ref({
@@ -419,6 +425,10 @@ watch(
 );
 watch(rootFilter.value, () => {
   networkGraph?.value?.setRootFilter(rootFilter.value);
+});
+
+watch(rootNegativeFilter.value, () => {
+  networkGraph?.value?.setRootNegativeFilter(rootNegativeFilter.value);
 });
 
 watch(fa2LayoutParams.value, () => {
