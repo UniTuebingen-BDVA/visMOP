@@ -1,20 +1,24 @@
+import { overviewNodeAttr } from '@/core/graphTypes';
 import { PlainObject } from 'sigma/types';
 import { animateNodes } from 'sigma/utils/animate';
 import { filterValues } from '../../generalTypes';
-import overviewGraph from './overviewNetwork';
+import OverviewGraph from './overviewNetwork';
 
+type attributes = Record<string, unknown>;
+function isNodeState(
+  val: string | number | typeof NaN | { regulated: number; total: number }
+) {
+  return Object.prototype.hasOwnProperty.call(val, 'regulated');
+}
 /**
  * Function used to apply the GUI filter to a single overview node
  * @param attributes node attributes
  * @returns boolean, indicating pass or block by filter
  */
 function filterFunction(
-  this: overviewGraph,
+  this: OverviewGraph,
   node: string,
-  attributes: Record<
-    string,
-    string | number | typeof NaN | { regulated: number; total: number }
-  >
+  attributes: overviewNodeAttr
 ): boolean {
   if (attributes.isRoot || attributes.nodeType == 'moduleNode') {
     return false;
@@ -22,20 +26,25 @@ function filterFunction(
     this.filterFuncNegativeRoot(node) &&
     this.filterFuncRoot(node) &&
     this.filterFuncTrans(attributes.averageTranscriptomics as number) &&
-    this.filterFuncProt(attributes.averageProteomics as number) &&
-    this.filterFuncMeta(attributes.averageMetabolonmics as number) &&
-    this.filterFuncSumRegulatedAbsolute(
-      getRegSum(
-        false,
-        attributes as Record<string, { regulated: number; total: number }>
-      )
+    this.filterFuncAmtAbsTrans(attributes.transcriptomicsNodeState.regulated) &&
+    this.filterFuncAmtRelTrans(
+      attributes.transcriptomicsNodeState.regulated /
+        attributes.transcriptomicsNodeState.total
     ) &&
-    this.filterFuncSumRegulatedRelative(
-      getRegSum(
-        true,
-        attributes as Record<string, { regulated: number; total: number }>
-      )
-    )
+    this.filterFuncAmtAbsProt(attributes.proteomicsNodeState.regulated) &&
+    this.filterFuncAmtRelProt(
+      attributes.proteomicsNodeState.regulated /
+        attributes.proteomicsNodeState.total
+    ) &&
+    this.filterFuncAmtAbsMeta(attributes.metabolomicsNodeState.regulated) &&
+    this.filterFuncAmtRelMeta(
+      attributes.metabolomicsNodeState.regulated /
+        attributes.metabolomicsNodeState.total
+    ) &&
+    this.filterFuncProt(attributes.averageProteomics as number) &&
+    this.filterFuncMeta(attributes.averageMetabolomics as number) &&
+    this.filterFuncAmtAbsSum(getRegSum(false, attributes)) &&
+    this.filterFuncAmtRelSum(getRegSum(true, attributes))
   ) {
     return false;
   } else {
@@ -43,10 +52,7 @@ function filterFunction(
   }
 }
 
-function getRegSum(
-  relative: boolean,
-  attributes: Record<string, { regulated: number; total: number }>
-): number {
+function getRegSum(relative: boolean, attributes: overviewNodeAttr): number {
   if (relative) {
     const enumerator =
       attributes.transcriptomicsNodeState.regulated +
@@ -71,7 +77,7 @@ function getRegSum(
 /**
  * Apply GUI filter to graph
  */
-export function filterElements(this: overviewGraph) {
+export function filterElements(this: OverviewGraph) {
   if (this.filtersChanged) {
     this.filtersChanged = false;
     const tarPositions: PlainObject<PlainObject<number>> = {};
@@ -120,27 +126,41 @@ export function filterElements(this: overviewGraph) {
  * @param metabolomics  set of metabolomics GUI filter values
  */
 export function setAverageFilter(
-  this: overviewGraph,
+  this: OverviewGraph,
   transcriptomics: filterValues,
+  transcriptomicsRegulated: { relative: filterValues; absolute: filterValues },
   proteomics: filterValues,
+  proteomicsRegulated: { relative: filterValues; absolute: filterValues },
   metabolomics: filterValues,
+  metabolomicsRegulated: { relative: filterValues; absolute: filterValues },
   sumRegulated: { relative: filterValues; absolute: filterValues }
 ) {
   this.averageFilter.transcriptomics = transcriptomics;
+  this.regulateFilterTrans.relative = transcriptomicsRegulated.relative;
+  this.regulateFilterTrans.absolute = transcriptomicsRegulated.absolute;
   this.averageFilter.proteomics = proteomics;
+  this.regulateFilterProt.relative = proteomicsRegulated.relative;
+  this.regulateFilterProt.absolute = proteomicsRegulated.absolute;
   this.averageFilter.metabolomics = metabolomics;
+  this.regulateFilterMeta.relative = metabolomicsRegulated.relative;
+  this.regulateFilterMeta.absolute = metabolomicsRegulated.absolute;
   this.regulatedFilter.relative = sumRegulated.relative;
   this.regulatedFilter.absolute = sumRegulated.absolute;
 
   this.filterFuncTrans = filterFactory(this.averageFilter.transcriptomics);
+  this.filterFuncAmtAbsTrans = filterFactory(this.regulateFilterTrans.absolute);
+  this.filterFuncAmtRelTrans = filterFactory(this.regulateFilterTrans.relative);
+
   this.filterFuncProt = filterFactory(this.averageFilter.proteomics);
+  this.filterFuncAmtAbsProt = filterFactory(this.regulateFilterProt.absolute);
+  this.filterFuncAmtRelProt = filterFactory(this.regulateFilterProt.relative);
+
   this.filterFuncMeta = filterFactory(this.averageFilter.metabolomics);
-  this.filterFuncSumRegulatedRelative = filterFactory(
-    this.regulatedFilter.relative
-  );
-  this.filterFuncSumRegulatedAbsolute = filterFactory(
-    this.regulatedFilter.absolute
-  );
+  this.filterFuncAmtAbsMeta = filterFactory(this.regulateFilterMeta.absolute);
+  this.filterFuncAmtRelMeta = filterFactory(this.regulateFilterMeta.relative);
+
+  this.filterFuncAmtRelSum = filterFactory(this.regulatedFilter.relative);
+  this.filterFuncAmtAbsSum = filterFactory(this.regulatedFilter.absolute);
 
   this.filtersChanged = true;
   this.renderer.refresh();
@@ -162,7 +182,7 @@ function filterFactory(filterObj: filterValues): (X: number) => boolean {
 }
 
 export function setRootFilter(
-  this: overviewGraph,
+  this: OverviewGraph,
   rootFilter: { filterActive: boolean; rootID: string }
 ) {
   if (rootFilter.filterActive && rootFilter.rootID) {
@@ -178,7 +198,7 @@ export function setRootFilter(
 }
 
 export function setRootNegativeFilter(
-  this: overviewGraph,
+  this: OverviewGraph,
   rootNegativeFilter: { filterActive: boolean; rootIDs: string[] }
 ) {
   if (

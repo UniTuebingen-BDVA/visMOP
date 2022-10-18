@@ -39,7 +39,7 @@ type detailNodeAttr = baseNodeAttr & {
   initialY: number;
 };
 
-type baseNodeAttr = Attributes & {
+type baseNodeAttr = {
   name: string;
   id: string;
   x: number;
@@ -53,12 +53,34 @@ type baseNodeAttr = Attributes & {
 };
 
 type overviewNodeAttr = baseNodeAttr & {
+  layoutX: number;
+  layoutY: number;
+  preFa2X: number;
+  preFa2Y: number;
   yOnClusterFocus: number;
   xOnClusterFocus: number;
   modNum: number;
   up: upDatedPos;
   isRoot: boolean;
   nodeType: string;
+  nonHoverSize: number;
+  image: string;
+  imageLowRes: string;
+  imageHighRes: string;
+  imageLowZoom: string;
+  hidden: boolean;
+  filterHidden: boolean;
+  zoomHidden: boolean;
+  moduleHidden: boolean;
+  moduleFixed: boolean;
+  forceLabel: boolean;
+  averageTranscriptomics: number;
+  averageProteomics: number;
+  averageMetabolomics: number;
+  transcriptomicsNodeState: { regulated: number; total: number };
+  proteomicsNodeState: { regulated: number; total: number };
+  metabolomicsNodeState: { regulated: number; total: number };
+  rootId: string;
 };
 
 type CartesianVector = {
