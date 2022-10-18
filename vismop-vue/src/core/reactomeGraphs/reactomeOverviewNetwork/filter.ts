@@ -4,12 +4,6 @@ import { animateNodes } from 'sigma/utils/animate';
 import { filterValues } from '../../generalTypes';
 import OverviewGraph from './overviewNetwork';
 
-type attributes = Record<string, unknown>;
-function isNodeState(
-  val: string | number | typeof NaN | { regulated: number; total: number }
-) {
-  return Object.prototype.hasOwnProperty.call(val, 'regulated');
-}
 /**
  * Function used to apply the GUI filter to a single overview node
  * @param attributes node attributes
