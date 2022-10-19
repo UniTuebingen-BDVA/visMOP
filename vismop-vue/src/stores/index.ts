@@ -446,12 +446,18 @@ export const useMainStore = defineStore('mainStore', {
           quantProteomics[0],
         ]);
       const colorScaleMetabolomics = d3
-        .scaleDiverging(d3.interpolatePRGn)
+        .scaleDiverging(d3.interpolateRdBu)
         .domain([
-          quantMetabolomics[0],
-          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
           quantMetabolomics[1],
+          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
+          quantMetabolomics[0],
         ]);
+      // .scaleDiverging(d3.interpolatePRGn) // try rdbu aswell
+      // .domain([
+      //   quantMetabolomics[0],
+      //   quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
+      //   quantMetabolomics[1],
+      // ]);
 
       this.fcQuantiles = {
         transcriptomics: quantTranscriptomics,
