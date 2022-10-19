@@ -54,12 +54,14 @@
       </div>
       <regulation-filter
         v-model:filter-value="omicsRegulatedFilter.absolute"
+        :stepsize="1"
       ></regulation-filter>
       <div class="row flex-center" justify="space-between" align="center">
         <div class="col-12 text-caption text-grey-9">regulation relative</div>
       </div>
       <regulation-filter
         v-model:filter-value="omicsRegulatedFilter.relative"
+        :stepsize="0.5"
       ></regulation-filter>
     </q-expansion-item>
   </div>

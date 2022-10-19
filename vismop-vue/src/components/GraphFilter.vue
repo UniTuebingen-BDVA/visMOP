@@ -63,19 +63,21 @@
         </div>
         <div class="row flex-center" justify="space-between" align="center">
           <div class="col-12 text-caption text-grey-9">
-            Sum all omics, relative
-          </div>
-        </div>
-        <regulation-filter
-          v-model:filter-value="sumRegulatedFilter.relative"
-        ></regulation-filter>
-        <div class="row flex-center" justify="space-between" align="center">
-          <div class="col-12 text-caption text-grey-9">
             Sum all omics, absolute
           </div>
         </div>
         <regulation-filter
           v-model:filter-value="sumRegulatedFilter.absolute"
+          :stepsize="1"
+        ></regulation-filter>
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-12 text-caption text-grey-9">
+            Sum all omics, relative
+          </div>
+        </div>
+        <regulation-filter
+          v-model:filter-value="sumRegulatedFilter.relative"
+          :stepsize="0.5"
         ></regulation-filter>
       </q-expansion-item>
       <omics-filter

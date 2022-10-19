@@ -47,6 +47,10 @@ import { computed, PropType } from 'vue';
 const emit = defineEmits(['update:filterValue']);
 
 const props = defineProps({
+  stepsize: {
+    type: Number,
+    required: true,
+  },
   filterValue: {
     type: Object as PropType<filterValues>,
     required: true,
