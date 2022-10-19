@@ -20,7 +20,7 @@
               {{
                 pathwayLayouting.pathwayList.find(
                   (elem) => elem.value === pathway
-                ).value
+                )?.value
               }}
             </div>
           </div>
@@ -28,7 +28,7 @@
             {{
               pathwayLayouting.pathwayList.find(
                 (elem) => elem.value === pathway
-              ).title
+              )?.title
             }}
           </q-card-section>
           <div class="centeredGlyphs">
