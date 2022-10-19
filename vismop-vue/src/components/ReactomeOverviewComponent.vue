@@ -184,16 +184,16 @@ const metabolomicsRegulatedFilter = ref({
 
 const fa2LayoutParams = ref({
   iterations: 750,
-  weightShared: 5.0,
-  weightDefault: 0.2,
-  gravity: 2.0,
-  edgeWeightInfluence: 3.0,
-  scalingRatio: 5.0,
+  weightShared: 3.8,
+  weightDefault: 0.0,
+  gravity: 11.0,
+  edgeWeightInfluence: 2.5,
+  scalingRatio: 9.0,
   adjustSizes: true,
   outboundAttractionDistribution: true,
   barnesHut: true,
   linLog: false,
-  strongGravity: true,
+  strongGravity: false,
   slowDown: 1,
   barnesHutTheta: 0.5,
 });
