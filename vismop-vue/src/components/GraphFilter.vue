@@ -1,77 +1,83 @@
 <template>
   <div>
     <div class="graphFilterCard">
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-12 text-subtitle1 text-grey-9">General</div>
-      </div>
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-12 text-caption text-grey-9">
-          Filter By Reactome Topic
+      <q-expansion-item
+        v-model="expandGeneral"
+        :header-inset-level="0.5"
+        :content-inset-level="0.5"
+        expand-separator
+        icon="mdi-filter"
+        label="General"
+        @click.prevent
+      >
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-12 text-caption text-grey-9">
+            Filter By Reactome Topic
+          </div>
         </div>
-      </div>
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-2">
-          <q-checkbox
-            v-model="rootNegativeFilter.filterActive"
-            checked-icon="task_alt"
-            unchecked-icon="highlight_off"
-          />
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-2">
+            <q-checkbox
+              v-model="rootNegativeFilter.filterActive"
+              checked-icon="task_alt"
+              unchecked-icon="highlight_off"
+            />
+          </div>
+          <div class="col-10">
+            <q-select
+              v-model="rootNegativeSelection"
+              filled
+              multiple
+              :options="rootFilterOptionsInternal"
+              input-debounce="0"
+              option-label="text"
+              option-value="value"
+              use-chips
+              label="Reactome Topic Negative Filter"
+              @filter="filterFunction"
+            />
+          </div>
         </div>
-        <div class="col-10">
-          <q-select
-            v-model="rootNegativeSelection"
-            filled
-            multiple
-            :options="rootFilterOptionsInternal"
-            input-debounce="0"
-            option-label="text"
-            option-value="value"
-            use-chips
-            label="Reactome Topic Negative Filter"
-            @filter="filterFunction"
-          />
-        </div>
-      </div>
 
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-2">
-          <q-checkbox
-            v-model="rootFilter.filterActive"
-            checked-icon="task_alt"
-            unchecked-icon="highlight_off"
-          />
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-2">
+            <q-checkbox
+              v-model="rootFilter.filterActive"
+              checked-icon="task_alt"
+              unchecked-icon="highlight_off"
+            />
+          </div>
+          <div class="col-10">
+            <q-select
+              v-model="rootSelection"
+              filled
+              :options="rootFilterOptionsInternal"
+              label="Reactome Topic Positive Filter"
+              use-input
+              input-debounce="0"
+              option-label="text"
+              option-value="value"
+              @filter="filterFunction"
+            ></q-select>
+          </div>
         </div>
-        <div class="col-10">
-          <q-select
-            v-model="rootSelection"
-            filled
-            :options="rootFilterOptionsInternal"
-            label="Reactome Topic Positive Filter"
-            use-input
-            input-debounce="0"
-            option-label="text"
-            option-value="value"
-            @filter="filterFunction"
-          ></q-select>
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-12 text-caption text-grey-9">
+            Sum all omics, relative
+          </div>
         </div>
-      </div>
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-12 text-caption text-grey-9">
-          Sum all omics, relative
+        <regulation-filter
+          v-model:filter-value="sumRegulatedFilter.relative"
+        ></regulation-filter>
+        <div class="row flex-center" justify="space-between" align="center">
+          <div class="col-12 text-caption text-grey-9">
+            Sum all omics, absolute
+          </div>
         </div>
-      </div>
-      <regulation-filter
-        v-model:filter-value="sumRegulatedFilter.relative"
-      ></regulation-filter>
-      <div class="row flex-center" justify="space-between" align="center">
-        <div class="col-12 text-caption text-grey-9">
-          Sum all omics, absolute
-        </div>
-      </div>
-      <regulation-filter
-        v-model:filter-value="sumRegulatedFilter.absolute"
-      ></regulation-filter>
-
+        <regulation-filter
+          v-model:filter-value="sumRegulatedFilter.absolute"
+        ></regulation-filter>
+      </q-expansion-item>
       <omics-filter
         v-model:omics="transcriptomicsFilter"
         v-model:omics-regulated="transcriptomicsRegulatedFilter"
@@ -179,6 +185,7 @@ watch(rootNegativeSelection, () => {
     );
   }
 });
+const expandGeneral = ref(false);
 
 const rootSelection = ref({ title: '', value: '', text: '' });
 watch(rootSelection, () => {

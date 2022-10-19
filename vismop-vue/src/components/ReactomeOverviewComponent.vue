@@ -4,29 +4,49 @@
       <div class="col-12 q-pa-md">
         <q-fab
           icon="keyboard_arrow_down"
+          label="Overview Actions"
           direction="down"
           vertical-actions-align="left"
         >
-          <q-fab-action
-            color="primary"
-            icon="keyboard_arrow_left"
-            @click="expandComponent"
-          ></q-fab-action>
-          <q-fab-action
-            color="primary"
+          <q-fab
             icon="keyboard_arrow_right"
-            @click="minimizeComponent"
-          ></q-fab-action>
-          <q-fab-action
-            color="primary"
-            icon="mdi-restore"
-            @click="resetZoom"
-          ></q-fab-action>
-          <q-fab-action
-            color="primary"
-            icon="mdi-select-remove"
-            @click="removeSelection"
-          ></q-fab-action>
+            direction="right"
+            vertical-actions-align="left"
+          >
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Expand"
+              icon="keyboard_arrow_left"
+              @click="expandComponent"
+            ></q-fab-action>
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Shrink"
+              icon="keyboard_arrow_right"
+              @click="minimizeComponent"
+            ></q-fab-action>
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Reset"
+              icon="mdi-restore"
+              @click="resetZoom"
+            ></q-fab-action>
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Deselect"
+              icon="mdi-select-remove"
+              @click="removeSelection"
+            ></q-fab-action>
+          </q-fab>
+
           <q-fab-action color="white" text-color="black">
             <q-expansion-item
               v-model="expandFilter"

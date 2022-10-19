@@ -1,67 +1,74 @@
 <template>
   <div v-if="!omicsFilter.disable" class="graphFilterCard">
-    <div class="row flex-center" justify="space-between" align="center">
-      <div class="col-12 text-subtitle-10 text-grey-9">{{ omicsType }}</div>
-    </div>
-    <div class="row flex-center" justify="space-between" align="center">
-      <div class="col-12 text-caption text-grey-9">fold change average</div>
-    </div>
-    <div class="row flex-center" justify="space-between" align="center">
-      <div class="col-2">
-        <q-checkbox
-          v-model="omicsFilter.filterActive"
-          checked-icon="task_alt"
-          unchecked-icon="highlight_off"
-          :disable="omicsFilter.disable"
-        />
+    <q-expansion-item
+      v-model="expand"
+      :header-inset-level="0.5"
+      :content-inset-level="0.5"
+      expand-separator
+      :icon="`svguse:/icons/${omicsType}.svg#${omicsType}|0 0 9 9`"
+      :label="omicsType"
+      @click.prevent
+    >
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">fold change average</div>
       </div>
-      <div class="col-8">
-        <q-range
-          :model-value="omicsFilter.value"
-          :min="Math.floor(omicsFilter.limits.min)"
-          :max="Math.ceil(omicsFilter.limits.max)"
-          :step="0.1"
-          label
-          :color="omicsFilter.inside ? 'primary' : 'graphFilterSlider'"
-          :track-color="omicsFilter.inside ? 'graphFilterSlider' : 'primary'"
-          :disable="omicsFilter.disable"
-          @change="
-            (val) => {
-              omicsFilter.value = val;
-            }
-          "
-        >
-        </q-range>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-2">
+          <q-checkbox
+            v-model="omicsFilter.filterActive"
+            checked-icon="task_alt"
+            unchecked-icon="highlight_off"
+            :disable="omicsFilter.disable"
+          />
+        </div>
+        <div class="col-8">
+          <q-range
+            :model-value="omicsFilter.value"
+            :min="Math.floor(omicsFilter.limits.min)"
+            :max="Math.ceil(omicsFilter.limits.max)"
+            :step="0.1"
+            label
+            :color="omicsFilter.inside ? 'primary' : 'graphFilterSlider'"
+            :track-color="omicsFilter.inside ? 'graphFilterSlider' : 'primary'"
+            :disable="omicsFilter.disable"
+            @change="
+              (val) => {
+                omicsFilter.value = val;
+              }
+            "
+          >
+          </q-range>
+        </div>
+        <div class="col-2">
+          <q-toggle
+            v-model="omicsFilter.inside"
+            checked-icon="mdi-arrow-collapse-horizontal"
+            color="primary"
+            unchecked-icon="mdi-arrow-split-vertical"
+            :disable="omicsFilter.disable"
+          />
+        </div>
       </div>
-      <div class="col-2">
-        <q-toggle
-          v-model="omicsFilter.inside"
-          checked-icon="mdi-arrow-collapse-horizontal"
-          color="primary"
-          unchecked-icon="mdi-arrow-split-vertical"
-          :disable="omicsFilter.disable"
-        />
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">regulation absolute</div>
       </div>
-    </div>
-    <div class="row flex-center" justify="space-between" align="center">
-      <div class="col-12 text-caption text-grey-9">regulation absolute</div>
-    </div>
-    <regulation-filter
-      v-model:filter-value="omicsRegulatedFilter.absolute"
-    ></regulation-filter>
-    <div class="row flex-center" justify="space-between" align="center">
-      <div class="col-12 text-caption text-grey-9">regulation relative</div>
-    </div>
-    <regulation-filter
-      v-model:filter-value="omicsRegulatedFilter.relative"
-    ></regulation-filter>
+      <regulation-filter
+        v-model:filter-value="omicsRegulatedFilter.absolute"
+      ></regulation-filter>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12 text-caption text-grey-9">regulation relative</div>
+      </div>
+      <regulation-filter
+        v-model:filter-value="omicsRegulatedFilter.relative"
+      ></regulation-filter>
+    </q-expansion-item>
   </div>
 </template>
 
 <script setup lang="ts">
 import RegulationFilter from './RegulationFilter.vue';
 import { filterValues } from '@/core/generalTypes';
-import { computed, defineProps, defineEmits, PropType } from 'vue';
+import { computed, defineProps, defineEmits, PropType, ref } from 'vue';
 
 const props = defineProps({
   omicsType: {
@@ -81,7 +88,7 @@ const props = defineProps({
   },
 });
 const emit = defineEmits(['update:omics', 'update:omicsRegulated']);
-
+const expand = ref(false);
 const omicsFilter = computed({
   get: () => props.omics,
   set: (value) => emit('update:omics', value),
