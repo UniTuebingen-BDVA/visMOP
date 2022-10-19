@@ -25,6 +25,7 @@ function filterFunction(
       attributes.transcriptomicsNodeState.regulated /
         attributes.transcriptomicsNodeState.total
     ) &&
+    this.filterFuncProt(attributes.averageProteomics as number) &&
     this.filterFuncAmtAbsProt(attributes.proteomicsNodeState.regulated) &&
     this.filterFuncAmtRelProt(
       attributes.proteomicsNodeState.regulated /
@@ -35,7 +36,6 @@ function filterFunction(
       attributes.metabolomicsNodeState.regulated /
         attributes.metabolomicsNodeState.total
     ) &&
-    this.filterFuncProt(attributes.averageProteomics as number) &&
     this.filterFuncMeta(attributes.averageMetabolomics as number) &&
     this.filterFuncAmtAbsSum(getRegSum(false, attributes)) &&
     this.filterFuncAmtRelSum(getRegSum(true, attributes))
