@@ -1,6 +1,6 @@
 from visMOP.python_scripts.deDal_layouting import normalize_in_range
 import networkx as nx
-from fa2 import ForceAtlas2
+#from fa2 import ForceAtlas2
 
 # import matplotlib.pyplot as plt
 # import matplotlib

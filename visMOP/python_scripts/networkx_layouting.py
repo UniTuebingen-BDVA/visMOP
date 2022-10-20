@@ -1,5 +1,5 @@
 import networkx as nx
-from fa2 import ForceAtlas2
+#rom fa2 import ForceAtlas2
 import time
 
 
