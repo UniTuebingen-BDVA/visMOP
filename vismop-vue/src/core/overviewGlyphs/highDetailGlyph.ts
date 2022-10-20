@@ -121,6 +121,16 @@ export class HighDetailGlyph {
     this.backroundArcDat = [];
     this.innerArcDat = [];
     this.outerArcDat = [];
+    this.outerColors = [];
+    this.innerColors = [];
+    this.labelArcData = [];
+    this.labelTexts = [];
+    this.labelRegTexts = [];
+    this.labelTextOffset = [];
+    this.totalNodes = 0;
+    this.addedElements = 0;
+    this.availableOmics = 0;
+    this.highlightSection = 0;
     if (this.glyphData.transcriptomics.available) {
       this.prepareOmics('transcriptomics');
     }

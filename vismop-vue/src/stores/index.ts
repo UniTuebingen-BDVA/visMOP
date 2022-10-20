@@ -80,7 +80,7 @@ interface State {
   };
   moduleAreas: [number[]];
   modules: string[][];
-  noiseClusterExists : boolean;
+  noiseClusterExists: boolean;
   moduleCenters: [number, number][];
   keggChebiTranslate: { [key: string]: string[] };
 }
@@ -293,7 +293,7 @@ export const useMainStore = defineStore('mainStore', {
     setModules(val: string[][]) {
       this.modules = val;
     },
-    setNoiseClusterExists(val: boolean){
+    setNoiseClusterExists(val: boolean) {
       this.noiseClusterExists = val;
     },
     setModuleCenters(val: [number, number][]) {
@@ -371,7 +371,8 @@ export const useMainStore = defineStore('mainStore', {
           quantProteomics[1],
         ]);
       const colorScaleMetabolomics = d3
-        .scaleDiverging(d3.interpolatePRGn)
+        //.scaleDiverging(d3.interpolatePRGn) // try rdbu aswell
+        .scaleDiverging((d) => d3.interpolateRdBu(1 - d))
         .domain([
           quantMetabolomics[0],
           quantProteomics[0] < 0.0 ? 0.0 : 1.0,
@@ -445,12 +446,18 @@ export const useMainStore = defineStore('mainStore', {
           quantProteomics[0],
         ]);
       const colorScaleMetabolomics = d3
-        .scaleDiverging(d3.interpolatePRGn)
+        .scaleDiverging(d3.interpolateRdBu)
         .domain([
-          quantMetabolomics[0],
-          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
           quantMetabolomics[1],
+          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
+          quantMetabolomics[0],
         ]);
+      // .scaleDiverging(d3.interpolatePRGn) // try rdbu aswell
+      // .domain([
+      //   quantMetabolomics[0],
+      //   quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
+      //   quantMetabolomics[1],
+      // ]);
 
       this.fcQuantiles = {
         transcriptomics: quantTranscriptomics,

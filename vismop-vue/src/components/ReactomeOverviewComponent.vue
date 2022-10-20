@@ -4,29 +4,49 @@
       <div class="col-12 q-pa-md">
         <q-fab
           icon="keyboard_arrow_down"
+          label="Overview Actions"
           direction="down"
           vertical-actions-align="left"
         >
-          <q-fab-action
-            color="primary"
-            icon="keyboard_arrow_left"
-            @click="expandComponent"
-          ></q-fab-action>
-          <q-fab-action
-            color="primary"
+          <q-fab
             icon="keyboard_arrow_right"
-            @click="minimizeComponent"
-          ></q-fab-action>
-          <q-fab-action
-            color="primary"
-            icon="mdi-restore"
-            @click="resetZoom"
-          ></q-fab-action>
-          <q-fab-action
-            color="primary"
-            icon="mdi-select-remove"
-            @click="removeSelection"
-          ></q-fab-action>
+            direction="right"
+            vertical-actions-align="left"
+          >
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Expand"
+              icon="keyboard_arrow_left"
+              @click="expandComponent"
+            ></q-fab-action>
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Shrink"
+              icon="keyboard_arrow_right"
+              @click="minimizeComponent"
+            ></q-fab-action>
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Reset"
+              icon="mdi-restore"
+              @click="resetZoom"
+            ></q-fab-action>
+            <q-fab-action
+              color="primary"
+              external-label
+              label-position="top"
+              label="Deselect"
+              icon="mdi-select-remove"
+              @click="removeSelection"
+            ></q-fab-action>
+          </q-fab>
+
           <q-fab-action color="white" text-color="black">
             <q-expansion-item
               v-model="expandFilter"
@@ -35,10 +55,16 @@
               @click.prevent
             >
               <graph-filter
+                v-model:root-negative-filter="rootNegativeFilter"
                 v-model:rootFilter="rootFilter"
                 v-model:transcriptomics="transcriptomicsFilter"
+                v-model:transcriptomics-regulated="
+                  transcriptomicsRegulatedFilter
+                "
                 v-model:proteomics="proteomicsFilter"
+                v-model:proteomics-regulated="proteomicsRegulatedFilter"
                 v-model:metabolomics="metabolomicsFilter"
+                v-model:metabolomics-regulated="metabolomicsRegulatedFilter"
                 v-model:sumRegulated="sumRegulated"
                 @click.prevent
               ></graph-filter>
@@ -84,6 +110,7 @@ import {
   nodePolygonMapping,
 } from '@/core/layouting/voronoiLayout';
 import Fa2Params from './Fa2Params.vue';
+import FilterData from '@/core/reactomeGraphs/reactomeOverviewNetwork/filterData';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -123,20 +150,13 @@ const glyphDataVar: Ref<{
 }> = ref({});
 
 const sumRegulated = ref({
-  absolute: {
-    limits: { min: 0, max: 100 },
-    value: { min: 0, max: 100 },
-    filterActive: false,
-    inside: true,
-    disable: false,
-  },
-  relative: {
-    limits: { min: 0, max: 100 },
-    value: { min: 0, max: 100 },
-    filterActive: false,
-    inside: true,
-    disable: false,
-  },
+  absolute: new FilterData(),
+  relative: new FilterData(),
+});
+
+const rootNegativeFilter = ref({
+  filterActive: false,
+  rootIDs: [],
 });
 
 const rootFilter = ref({
@@ -144,40 +164,36 @@ const rootFilter = ref({
   rootID: '',
 });
 
-const transcriptomicsFilter = ref({
-  limits: { min: 0, max: 5 },
-  value: { min: 1, max: 2 },
-  filterActive: false,
-  inside: true,
-  disable: true,
+const transcriptomicsFilter = ref(new FilterData());
+const transcriptomicsRegulatedFilter = ref({
+  absolute: new FilterData(),
+  relative: new FilterData(),
 });
-const proteomicsFilter = ref({
-  limits: { min: 0, max: 5 },
-  value: { min: 1, max: 2 },
-  filterActive: false,
-  inside: true,
-  disable: true,
+
+const proteomicsFilter = ref(new FilterData());
+const proteomicsRegulatedFilter = ref({
+  absolute: new FilterData(),
+  relative: new FilterData(),
 });
-const metabolomicsFilter = ref({
-  limits: { min: 0, max: 5 },
-  value: { min: 1, max: 2 },
-  filterActive: false,
-  inside: true,
-  disable: true,
+
+const metabolomicsFilter = ref(new FilterData());
+const metabolomicsRegulatedFilter = ref({
+  absolute: new FilterData(),
+  relative: new FilterData(),
 });
 
 const fa2LayoutParams = ref({
   iterations: 750,
-  weightShared: 5.0,
-  weightDefault: 0.2,
-  gravity: 2.0,
-  edgeWeightInfluence: 3.0,
-  scalingRatio: 5.0,
+  weightShared: 3.8,
+  weightDefault: 0.0,
+  gravity: 11.0,
+  edgeWeightInfluence: 2.5,
+  scalingRatio: 9.0,
   adjustSizes: true,
   outboundAttractionDistribution: true,
   barnesHut: true,
   linLog: false,
-  strongGravity: true,
+  strongGravity: false,
   slowDown: 1,
   barnesHutTheta: 0.5,
 });
@@ -346,12 +362,36 @@ watch(glyphDataVar, () => {
     min: Number.POSITIVE_INFINITY,
     max: Number.NEGATIVE_INFINITY,
   };
+  let transcriptomicsRegulatedLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
+  let proteomicsRegulatedLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
+  let metabolomicsRegulatedLimits = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+  };
 
   for (const pathwayKey in glyphDataVar.value) {
     const currPathway = glyphDataVar.value[pathwayKey];
     let sumRegulatedNodes = 0;
     if (currPathway.transcriptomics.available) {
       transcriptomicsAvailable = true;
+      if (
+        currPathway.transcriptomics.nodeState.regulated <
+        transcriptomicsRegulatedLimits.min
+      )
+        transcriptomicsRegulatedLimits.min =
+          currPathway.transcriptomics.nodeState.regulated;
+      if (
+        currPathway.transcriptomics.nodeState.regulated >
+        transcriptomicsRegulatedLimits.max
+      )
+        transcriptomicsRegulatedLimits.max =
+          currPathway.transcriptomics.nodeState.regulated;
       sumRegulatedNodes += currPathway.transcriptomics.nodeState.regulated;
       if (
         currPathway.transcriptomics.meanFoldchange < transcriptomicsLimits.min
@@ -364,6 +404,18 @@ watch(glyphDataVar, () => {
     }
     if (currPathway.proteomics.available) {
       proteomicsAvailable = true;
+      if (
+        currPathway.proteomics.nodeState.regulated <
+        proteomicsRegulatedLimits.min
+      )
+        proteomicsRegulatedLimits.min =
+          currPathway.proteomics.nodeState.regulated;
+      if (
+        currPathway.proteomics.nodeState.regulated >
+        proteomicsRegulatedLimits.max
+      )
+        proteomicsRegulatedLimits.max =
+          currPathway.proteomics.nodeState.regulated;
       sumRegulatedNodes += currPathway.proteomics.nodeState.regulated;
       if (currPathway.proteomics.meanFoldchange < proteomicsLimits.min)
         proteomicsLimits.min = currPathway.proteomics.meanFoldchange;
@@ -372,6 +424,18 @@ watch(glyphDataVar, () => {
     }
     if (currPathway.metabolomics.available) {
       metabolomicsAvailable = true;
+      if (
+        currPathway.metabolomics.nodeState.regulated <
+        metabolomicsRegulatedLimits.min
+      )
+        metabolomicsRegulatedLimits.min =
+          currPathway.metabolomics.nodeState.regulated;
+      if (
+        currPathway.metabolomics.nodeState.regulated >
+        metabolomicsRegulatedLimits.max
+      )
+        metabolomicsRegulatedLimits.max =
+          currPathway.metabolomics.nodeState.regulated;
       sumRegulatedNodes += currPathway.metabolomics.nodeState.regulated;
       if (currPathway.metabolomics.meanFoldchange < metabolomicsLimits.min)
         metabolomicsLimits.min = currPathway.metabolomics.meanFoldchange;
@@ -384,41 +448,87 @@ watch(glyphDataVar, () => {
       regulatedLimits.max = sumRegulatedNodes;
   }
 
+  sumRegulated.value.absolute.disable = false;
+  sumRegulated.value.relative.disable = false;
   sumRegulated.value.absolute.limits.min = regulatedLimits.min;
   sumRegulated.value.absolute.limits.max = regulatedLimits.max;
-  transcriptomicsFilter.value.disable = !transcriptomicsAvailable;
-  proteomicsFilter.value.disable = !proteomicsAvailable;
-  metabolomicsFilter.value.disable = !metabolomicsAvailable;
+  sumRegulated.value.relative.limits.min = 0;
+  sumRegulated.value.relative.limits.max = 100;
 
   transcriptomicsFilter.value.limits.min = transcriptomicsLimits.min;
   transcriptomicsFilter.value.limits.max = transcriptomicsLimits.max;
+  transcriptomicsFilter.value.disable = !transcriptomicsAvailable;
+
+  transcriptomicsRegulatedFilter.value.absolute.limits.min =
+    transcriptomicsRegulatedLimits.min;
+  transcriptomicsRegulatedFilter.value.absolute.limits.max =
+    transcriptomicsRegulatedLimits.max;
+  transcriptomicsRegulatedFilter.value.absolute.disable =
+    !transcriptomicsAvailable;
+
+  transcriptomicsRegulatedFilter.value.relative.limits.min = 0;
+  transcriptomicsRegulatedFilter.value.relative.limits.max = 100;
+  transcriptomicsRegulatedFilter.value.relative.disable =
+    !transcriptomicsAvailable;
 
   proteomicsFilter.value.limits.min = proteomicsLimits.min;
   proteomicsFilter.value.limits.max = proteomicsLimits.max;
+  proteomicsFilter.value.disable = !proteomicsAvailable;
+
+  proteomicsRegulatedFilter.value.absolute.limits.min =
+    proteomicsRegulatedLimits.min;
+  proteomicsRegulatedFilter.value.absolute.limits.max =
+    proteomicsRegulatedLimits.max;
+  proteomicsRegulatedFilter.value.absolute.disable = !proteomicsAvailable;
+
+  proteomicsRegulatedFilter.value.relative.limits.min = 0;
+  proteomicsRegulatedFilter.value.relative.limits.max = 100;
+  proteomicsRegulatedFilter.value.relative.disable = !proteomicsAvailable;
 
   metabolomicsFilter.value.limits.min = metabolomicsLimits.min;
   metabolomicsFilter.value.limits.max = metabolomicsLimits.max;
+  metabolomicsFilter.value.disable = !metabolomicsAvailable;
+
+  metabolomicsRegulatedFilter.value.absolute.limits.min =
+    metabolomicsRegulatedLimits.min;
+  metabolomicsRegulatedFilter.value.absolute.limits.max =
+    metabolomicsRegulatedLimits.max;
+  metabolomicsRegulatedFilter.value.absolute.disable = !metabolomicsAvailable;
+
+  metabolomicsRegulatedFilter.value.relative.limits.min = 0;
+  metabolomicsRegulatedFilter.value.relative.limits.max = 100;
+  metabolomicsRegulatedFilter.value.relative.disable = !metabolomicsAvailable;
 });
 
 watch(
   [
     transcriptomicsFilter.value,
+    transcriptomicsRegulatedFilter.value,
     proteomicsFilter.value,
+    proteomicsRegulatedFilter.value,
     metabolomicsFilter.value,
+    metabolomicsRegulatedFilter.value,
     sumRegulated.value,
   ],
   () => {
     console.log('change Filter');
     networkGraph?.value?.setAverageFilter(
       transcriptomicsFilter.value,
+      transcriptomicsRegulatedFilter.value,
       proteomicsFilter.value,
+      proteomicsRegulatedFilter.value,
       metabolomicsFilter.value,
+      metabolomicsRegulatedFilter.value,
       sumRegulated.value
     );
   }
 );
 watch(rootFilter.value, () => {
   networkGraph?.value?.setRootFilter(rootFilter.value);
+});
+
+watch(rootNegativeFilter.value, () => {
+  networkGraph?.value?.setRootNegativeFilter(rootNegativeFilter.value);
 });
 
 watch(fa2LayoutParams.value, () => {
