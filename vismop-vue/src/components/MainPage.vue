@@ -23,7 +23,7 @@
               <q-input
                 v-model="tableSearch"
                 class="pt-0"
-                append-icon="mdi-magnify"
+                append-icon="fa-solid fa-magnifying-glass"
                 label="Search"
                 single-line
                 hide-details

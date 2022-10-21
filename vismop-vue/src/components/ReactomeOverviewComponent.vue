@@ -50,7 +50,7 @@
           <q-fab-action color="white" text-color="black">
             <q-expansion-item
               v-model="expandFilter"
-              icon="mdi-filter"
+              icon="fa-solid fa-filter"
               label="Graph Filter"
               @click.prevent
             >
@@ -73,7 +73,7 @@
           <q-fab-action color="white" text-color="black">
             <q-expansion-item
               v-model="expandFa2Controls"
-              icon="mdi-graph"
+              icon="fa-solid fa-diagram-project"
               label="FA2 Controls"
               @click.prevent
             >

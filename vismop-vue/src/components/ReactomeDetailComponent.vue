@@ -121,7 +121,7 @@ const sizeIcon = computed(() => {
     case 2:
       return 'mdi-size-l';
     case 3:
-      return 'mdi-window-minimize';
+      return 'fa-solid fa-minimize';
     default:
       return 'mdi-size-s';
   }
