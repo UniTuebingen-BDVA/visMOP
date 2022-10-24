@@ -169,11 +169,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import ReactomeDetailComponent from './ReactomeDetailComponent.vue';
-import InteractionGraph from './InteractionGraph.vue';
-import InteractionGraphTable from './InteractionGraphTable.vue';
-import PathwayCompare from './PathwayCompare.vue';
-import ReactomeOverviewComponent from './ReactomeOverviewComponent.vue';
+import ReactomeDetailComponent from './graphComponents/ReactomeDetailComponent.vue';
+import InteractionGraph from './tabComponents/InteractionGraph.vue';
+import InteractionGraphTable from './tabComponents/InteractionGraphTable.vue';
+import PathwayCompare from './tabComponents/PathwayCompare.vue';
+import ReactomeOverviewComponent from './graphComponents/ReactomeOverviewComponent.vue';
 import { useMainStore } from '@/stores';
 import { computed, Ref, ref, watch } from 'vue';
 import { QTable } from 'quasar';

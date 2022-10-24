@@ -94,11 +94,11 @@
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/reactomeGraphs/reactomeOverviewNetwork/overviewNetwork';
+import OverviewGraph from '../../core/reactomeGraphs/reactomeOverviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
-import { generateGraphData } from '../core/reactomeGraphs/reactomeOverviewGraphPreparation';
-import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
-import { generateGlyphs } from '../core/overviewGlyphs/generator';
+import { generateGraphData } from '../../core/reactomeGraphs/reactomeOverviewGraphPreparation';
+import { generateGlyphDataReactome } from '../../core/overviewGlyphs/glyphDataPreparation';
+import { generateGlyphs } from '../../core/overviewGlyphs/generator';
 import { computed, PropType, Ref, ref, watch, defineProps } from 'vue';
 import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphData } from '@/core/generalTypes';

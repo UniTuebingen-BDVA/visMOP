@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { generateInteractionGraph } from '../core/interactionGraph';
+import { generateInteractionGraph } from '../../core/interactionGraph';
 import Sigma from 'sigma';
 import { useMainStore } from '@/stores';
 import { computed, ref, watch, defineProps } from 'vue';

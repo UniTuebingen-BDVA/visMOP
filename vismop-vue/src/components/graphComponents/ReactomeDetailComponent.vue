@@ -44,15 +44,15 @@
 </template>
 
 <script setup lang="ts">
-import ReactomeDetailView from '../core/reactomeGraphs/reactomeDetailView';
+import ReactomeDetailView from '../../core/reactomeGraphs/reactomeDetailView';
 import {
   graphJSON,
   layoutJSON,
   foldChangesByType,
   foldChangesByID,
   reactomeEntry,
-} from '../core/reactomeGraphs/reactomeTypes';
-import { getEntryAmounts } from '../core/reactomeGraphs/reactomeUtils';
+} from '../../core/reactomeGraphs/reactomeTypes';
+import { getEntryAmounts } from '../../core/reactomeGraphs/reactomeUtils';
 import {
   computed,
   onMounted,
