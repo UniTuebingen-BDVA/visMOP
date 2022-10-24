@@ -8,44 +8,40 @@
           direction="down"
           vertical-actions-align="left"
         >
-          <q-fab
-            icon="keyboard_arrow_right"
-            direction="right"
-            vertical-actions-align="left"
-          >
-            <q-fab-action
-              color="primary"
-              external-label
-              label-position="top"
-              label="Expand"
-              icon="keyboard_arrow_left"
-              @click="expandComponent"
-            ></q-fab-action>
-            <q-fab-action
-              color="primary"
-              external-label
-              label-position="top"
-              label="Shrink"
-              icon="keyboard_arrow_right"
-              @click="minimizeComponent"
-            ></q-fab-action>
-            <q-fab-action
-              color="primary"
-              external-label
-              label-position="top"
-              label="Reset"
-              icon="mdi-restore"
-              @click="resetZoom"
-            ></q-fab-action>
-            <q-fab-action
-              color="primary"
-              external-label
-              label-position="top"
-              label="Deselect"
-              icon="mdi-select-remove"
-              @click="removeSelection"
-            ></q-fab-action>
-          </q-fab>
+          <div class="row graphControl">
+            <div class="col-3">
+              <q-btn
+                color="primary"
+                round
+                icon="keyboard_arrow_left"
+                @click="expandComponent"
+                ><q-tooltip class="bg-accent">Expand</q-tooltip></q-btn
+              >
+            </div>
+            <div class="col-3">
+              <q-btn
+                color="primary"
+                round
+                icon="keyboard_arrow_right"
+                @click="minimizeComponent"
+                ><q-tooltip class="bg-accent">Shrink</q-tooltip></q-btn
+              >
+            </div>
+            <div class="col-3">
+              <q-btn color="primary" round icon="mdi-restore" @click="resetZoom"
+                ><q-tooltip class="bg-accent">Reset</q-tooltip></q-btn
+              >
+            </div>
+            <div class="col-3">
+              <q-btn
+                color="primary"
+                round
+                icon="mdi-select-remove"
+                @click="removeSelection"
+                ><q-tooltip class="bg-accent">Deselect</q-tooltip></q-btn
+              >
+            </div>
+          </div>
 
           <q-fab-action color="white" text-color="black">
             <q-expansion-item
@@ -605,3 +601,8 @@ const drawNetwork = () => {
   );
 };
 </script>
+<style>
+.graphControl {
+  min-width: 10vw;
+}
+</style>

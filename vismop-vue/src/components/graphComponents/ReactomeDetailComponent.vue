@@ -456,6 +456,7 @@ const _getTotalsFromGraphJson = () => {
 }
 .cycleButton {
   position: absolute !important;
+  right: 0;
   z-index: 6;
   margin: 9px;
 }
