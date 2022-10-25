@@ -245,7 +245,6 @@ watch(
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );
-    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -268,9 +267,7 @@ watch(
       const pathwaysContaining =
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       if (pathwaysContaining) foundPathways.push(pathwaysContaining);
-      console.log('foundPathways', pathwaysContaining);
     });
-    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -294,7 +291,6 @@ watch(
         const symbol = element[usedSymbolCols.value.metabolomics];
 
         let chebiIDs = keggChebiTranslate.value[symbol];
-        console.log('CHEBI SELECT', chebiIDs);
         if (chebiIDs) {
           chebiIDs.forEach((element) => {
             try {
@@ -330,10 +326,8 @@ watch(pathwayDropdown, () => {
 });
 watch(overviewData, () => {
   if (props.isActive) {
-    console.log(props.contextID);
     drawNetwork();
   } else {
-    console.log(props.contextID, 'outstanding draw');
     outstandingDraw.value = true;
   }
 });
@@ -507,7 +501,6 @@ watch(
     sumRegulated.value,
   ],
   () => {
-    console.log('change Filter');
     networkGraph?.value?.setAverageFilter(
       transcriptomicsFilter.value,
       transcriptomicsRegulatedFilter.value,
@@ -548,7 +541,6 @@ const drawNetwork = () => {
   // const fcExtents = fcQuantiles
   glyphDataVar.value = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphDataVar.value);
-  console.log('GLYPH DATA', glyphDataVar.value);
   const generatedGlyphs = generateGlyphs(glyphDataVar.value, HighDetailGlyph);
   const generatedGlyphsHighRes = generateGlyphs(
     glyphDataVar.value,
@@ -561,20 +553,14 @@ const drawNetwork = () => {
     128
   );
   mainStore.setGlyphs(generatedGlyphs);
-  console.log('GLYPHs', mainStore.glyphs);
   //const moduleAreas = mainStore.moduleAreas;
-  //console.log('moduleAreas', moduleAreas);
-  console.log('overviewData.value', overviewData.value);
+
   //get module areas here!!!
   const clusterWeights = mainStore.modules.map((elem) => elem.length);
   const polygons = generateVoronoiCells(
     250,
     clusterWeights,
     mainStore.moduleCenters
-  );
-  console.log(
-    'Rando Test',
-    polygons[parseInt(Object.keys(polygons)[2])].pointInPolygonCoords(10, 10)
   );
   const positionMapping = nodePolygonMapping(mainStore.modules, polygons);
   const polygonsArrays: [number, number][][] = [];
@@ -592,7 +578,6 @@ const drawNetwork = () => {
     polygons,
     positionMapping
   );
-  console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(
     props.contextID ? props.contextID : '',
     networkData,

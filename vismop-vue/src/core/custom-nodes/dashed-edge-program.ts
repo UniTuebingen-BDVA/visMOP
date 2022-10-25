@@ -32,7 +32,7 @@ const POINTS = 4;
 const ATTRIBUTES = 5;
 const STRIDE = POINTS * ATTRIBUTES;
 
-export default class EdgeProgram extends AbstractEdgeProgram {
+export default class DashedEdgeProgram extends AbstractEdgeProgram {
   IndicesArray: Uint32ArrayConstructor | Uint16ArrayConstructor;
   indicesArray: Uint32Array | Uint16Array;
   indicesBuffer: WebGLBuffer;

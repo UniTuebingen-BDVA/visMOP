@@ -208,9 +208,6 @@ export default class OverviewGraph {
     });
 
     renderer.on('clickNode', ({ node, event }) => {
-      console.log('clicking Node: ', node);
-      console.log('clicking event', event);
-
       if (this.graph.getNodeAttribute(node, 'nodeType') != 'moduleNode') {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
@@ -248,7 +245,6 @@ export default class OverviewGraph {
         }
       } else {
         const defocus = this.lastClickedClusterNode == parseInt(node);
-        console.log('MODULE CLICK', this.graph.getNodeAttributes(node));
         this.graph.forEachNode((_, attributes) => {
           if (
             !defocus &&

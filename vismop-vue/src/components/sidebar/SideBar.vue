@@ -297,7 +297,6 @@ watch(currentLayoutOmic, () => {
     layoutSettings.value[
       (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
     ].attributes;
-  // console.log(typeof (layoutSettings))
   // change limits
   const limits =
     layoutSettings.value[
@@ -397,7 +396,6 @@ const getReactomeData = () => {
       mainStore.setNoiseClusterExists(dataContent.noiseClusterExists);
       mainStore.setModuleCenters(dataContent.moduleCenters);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
-      console.log('OVDATA', dataContent.overviewData);
     })
     .then(
       () => $q.loading.hide(),

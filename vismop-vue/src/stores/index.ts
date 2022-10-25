@@ -218,14 +218,11 @@ export const useMainStore = defineStore('mainStore', {
       this.interactionGraphData = val;
     },
     removeClickedNode(val: string) {
-      console.log('removedNode', val);
-
       const indexNode = this.clickedNodes
         .map((row) => {
           return row.id;
         })
         .indexOf(val);
-      console.log('removedNode', indexNode);
       if (indexNode > -1) {
         this.clickedNodes.splice(indexNode, 1);
       }
@@ -307,7 +304,6 @@ export const useMainStore = defineStore('mainStore', {
       };
     }) {
       this.fcs = val;
-      console.log('fcs', val);
       const fcsTranscriptomics: number[] = [];
       const fcsProteomics: number[] = [];
       const fcsMetabolomics: number[] = [];
@@ -396,7 +392,6 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: { [key: string]: number };
     }) {
       this.fcsReactome = val;
-      console.log('fcs', val);
       const fcsTranscriptomicsAsc = Object.values(val.transcriptomics).sort(
         (a, b) => a - b
       );
@@ -406,7 +401,6 @@ export const useMainStore = defineStore('mainStore', {
       const fcsMetabolomicsAsc = Object.values(val.metabolomics).sort(
         (a, b) => a - b
       );
-      console.log('metafc', fcsMetabolomicsAsc);
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
         const pos = (arr.length - 1) * q;

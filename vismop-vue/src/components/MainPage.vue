@@ -230,7 +230,6 @@ watch(pathwayLayouting, () => {
       if (pathwaysContaining) transcriptomicsAvailable += 1;
     }
   );
-  console.log('table headers', transcriptomicsTableHeaders);
   transcriptomicsTableHeaders.value.forEach((entry: ColType) => {
     if (entry?.name === '_reserved_available') {
       entry.label = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`;
@@ -372,7 +371,6 @@ watch(pathwayDropdown, () => {
               });
             }
           } else {
-            console.log('REACHED', symbol);
             includedInSelectedPathway = pathwayDropdown.value
               ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
                   pathwayDropdown.value.value

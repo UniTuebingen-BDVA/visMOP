@@ -252,7 +252,6 @@ function force(vi: node, vj: node): CartesianVector {
   const adeltay = Math.abs(deltay);
 
   const gij = deltay / deltax;
-  // console.log('gij',gij)
   const Gij =
     (vi.attributes.size + vj.attributes.size) /
     (vi.attributes.size + vj.attributes.size);
@@ -267,6 +266,5 @@ function force(vi: node, vj: node): CartesianVector {
       (deltay / adeltay) * (vi.attributes.size + vj.attributes.size - adeltay);
     f.x = f.y / gij;
   }
-  // console.log('force', f)
   return f;
 }

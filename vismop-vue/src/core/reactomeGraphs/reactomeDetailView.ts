@@ -91,7 +91,6 @@ export default class ReactomeDetailView {
     this.graphData = graphData;
     this.foldChanges = foldchanges; // by stable ID: R-MMU-12345
     this.foldChangeReactome = foldChangeReactome; // by internal ID: 12345
-    console.log(foldChangeReactome);
     const box = document.querySelector(containerID)?.getBoundingClientRect();
     const width = box?.width as number;
     const height = box?.height as number;

@@ -188,7 +188,6 @@ const filterFunction = (val: string, update: (n: () => void) => void) => {
 
 const getJsonFiles = (reactomeID: string) => {
   $q.loading.show();
-  console.log(reactomeID);
   fetch(`/get_reactome_json_files/${reactomeID}`, {
     method: 'GET',
     headers: {
@@ -383,7 +382,6 @@ const drawDetailView = () => {
     metabolomics: {},
   };
   const fcsReactomeKey: foldChangesByID = {};
-  console.log('OVERVIEW DATA', overviewData.value);
   const pathwayData = overviewData.value.find(
     (elem: { pathwayId: string }) =>
       elem.pathwayId === pathwaySelection.value.value
