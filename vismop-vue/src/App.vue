@@ -23,7 +23,7 @@
       <side-bar></side-bar>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container class="limitToViewport">
       <main-page></main-page>
     </q-page-container>
   </q-layout>
@@ -48,4 +48,10 @@ export default {
 </script>
 <style>
 @import './css/networkGraph.css';
+
+.limitToViewport {
+  max-height: 100vh;
+  height: 100vh;
+  min-height: 100vh;
+}
 </style>

@@ -1,18 +1,5 @@
-.webglContainer {
-  height: 83vh;
-  min-height: 83vh;
-  display: block;
-  z-index: 2;
-}
-.overviewFullscreen {
-  z-index: 3;
-  position: fixed !important;
-  top: 7vh;
-  right: 1vh;
-  bottom: 1vh;
-  left: 1vh;
-  max-width: 100vw;
-}
+
+
 .webglContainerInteraction {
   height: 79vh;
   min-height: 79vh;
@@ -120,9 +107,6 @@ from: https://codepen.io/chriscoyier/pen/eYNQyPe*/
   font-size: 0.09rem;
   text-anchor: middle;
   dominant-baseline: central;
-}
-.positionCardTitle {
-  height: 15%;
 }
 .scrollableTable .q-table__wrapper {
   scrollbar-width: thin;
