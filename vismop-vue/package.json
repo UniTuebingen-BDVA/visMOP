@@ -34,6 +34,8 @@
     "quasar": "^2.10.0",
     "roboto-fontface": "*",
     "sigma": "github:UniTuebingen-BDVA/sigma.js#additional_shape_rendering",
+    "sortablejs": "^1.15.0",
+    "sortablejs-vue3": "^1.2.2",
     "vite-plugin-glsl": "^0.5.3",
     "vue": "^3.2.41",
     "vuex": "^4.1.0",

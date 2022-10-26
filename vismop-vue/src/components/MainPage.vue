@@ -14,8 +14,8 @@
             narrow-indicator
           >
             <q-tab name="dataTable" label="Data Table"></q-tab>
-            <q-tab name="selectedNodes" label="Selected Entities"></q-tab>
-            <q-tab name="ppiGraph" label="Protein-Protein Interaction"></q-tab>
+            <!-- <q-tab name="selectedNodes" label="Selected Entities"></q-tab> -->
+            <!-- <q-tab name="ppiGraph" label="Protein-Protein Interaction"></q-tab> -->
             <q-tab name="pathwayCompare" label="Pathway Compare"></q-tab>
           </q-tabs>
           <q-tab-panels v-model="selectedTabMisc">
@@ -117,15 +117,15 @@
                 </q-tab-panel>
               </q-tab-panels>
             </q-tab-panel>
-            <q-tab-panel name="selectedNodes">
+            <!-- <q-tab-panel name="selectedNodes">
               <interaction-graph-table> </interaction-graph-table>
-            </q-tab-panel>
-            <q-tab-panel name="ppiGraph">
+            </q-tab-panel> -->
+            <!-- <q-tab-panel name="ppiGraph">
               <keep-alive>
                 <interaction-graph context-i-d="interactionGraph">
                 </interaction-graph>
               </keep-alive>
-            </q-tab-panel>
+            </q-tab-panel> -->
             <q-tab-panel name="pathwayCompare">
               <pathway-compare> </pathway-compare>
             </q-tab-panel>

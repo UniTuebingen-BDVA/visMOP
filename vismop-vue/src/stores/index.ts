@@ -70,7 +70,7 @@ interface State {
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
-  pathwayCompare: string[];
+  pathwayCompare: { id: number; pathway: string }[];
   glyphData: {
     [key: string]: glyphData;
   };
@@ -491,15 +491,27 @@ export const useMainStore = defineStore('mainStore', {
     }) {
       this.pathwayDropdown = val;
     },
+
     selectPathwayCompare(val: string[]) {
       val.forEach((element) => {
         const valClean = element.replace('path:', '');
-        if (!this.pathwayCompare.includes(valClean))
-          this.pathwayCompare.unshift(valClean);
+        let id = 0;
+        for (let index = 0; index <= this.pathwayCompare.length; index++) {
+          if (!this.pathwayCompare.some((elem) => elem.id == index)) {
+            id = index;
+            break;
+          }
+        }
+        if (!this.pathwayCompare.some((elem) => elem.pathway == valClean))
+          this.pathwayCompare.unshift({ id: id, pathway: valClean });
       });
     },
+    resortPathwayCompare(from: number, to: number) {
+      const tarPathway = this.pathwayCompare.splice(from, 1)[0];
+      this.pathwayCompare.splice(to, 0, tarPathway);
+    },
     removePathwayCompare(val: string) {
-      const idx = this.pathwayCompare.indexOf(val);
+      const idx = this.pathwayCompare.findIndex((elem) => elem.pathway == val);
       this.pathwayCompare.splice(idx, 1);
     },
     setKeggChebiTranslate(val: { [key: string]: string[] }) {
