@@ -11,7 +11,13 @@
     >
       <!-- v-for="pathway in pathwayCompare" -->
       <template #item="{ element }">
-        <q-card :key="element.id" class="col-4 q-pa-sm draggable">
+        <q-card
+          :key="element.id"
+          square
+          flat
+          bordered
+          class="col-4 q-pa-sm draggable"
+        >
           <div class="row items-center">
             <div class="col-4">
               <q-card-actions>
@@ -29,12 +35,14 @@
               </div>
             </div>
           </div>
-          <div class="positionCardTitle">
-            {{
-              pathwayLayouting.pathwayList.find(
-                (elem) => elem.value === element.pathway
-              )?.title
-            }}
+          <div class="row justify-center">
+            <div class="positionCardTitle">
+              {{
+                pathwayLayouting.pathwayList.find(
+                  (elem) => elem.value === element.pathway
+                )?.title
+              }}
+            </div>
           </div>
           <div class="centeredGlyphs">
             <div :id="'glyph' + element.pathway"></div>
@@ -103,9 +111,7 @@
                 </tr>
               </div>
               <div
-                v-if="
-                  glyphData[element.pathway]['transcriptomics']['available']
-                "
+                v-if="glyphData[element.pathway]['metabolomics']['available']"
               >
                 <tr>
                   <td>Metabolomics:</td>
@@ -174,11 +180,26 @@ const appendGlyph = (pathway: string) => {
 </script>
 <style>
 .positionCardTitle {
-  height: 2em;
-  min-height: 2em;
-  max-height: 2em;
+  height: 2.6em;
+  min-height: 2.6em;
+  max-height: 2.6em;
   overflow: hidden;
+  pointer-events: auto;
 }
+.positionCardTitle:after {
+  content: '';
+  position: absolute;
+  top: 4.4em;
+  left: 0;
+  height: 2.5em;
+  width: 100%;
+  background: linear-gradient(rgba(0, 0, 0, 0), #fff);
+  pointer-events: auto;
+}
+.positionCardTitle:hover:after {
+  background: rgba(0, 0, 0, 0);
+}
+
 .positionCardTitle:hover {
   overflow: visible;
   z-index: 9999;
