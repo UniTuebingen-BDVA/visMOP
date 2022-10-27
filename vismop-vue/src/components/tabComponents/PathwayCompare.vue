@@ -48,7 +48,7 @@
             <div :id="'glyph' + element.pathway"></div>
           </div>
           {{ appendGlyph(element.pathway) }}
-          <q-card-section>
+          <!--as long as there are no more interesting data following section is not needed <q-card-section>
             <table>
               <div
                 v-if="
@@ -141,7 +141,7 @@
                 </tr>
               </div>
             </table>
-          </q-card-section>
+          </q-card-section> -->
         </q-card>
       </template>
     </Sortable>
