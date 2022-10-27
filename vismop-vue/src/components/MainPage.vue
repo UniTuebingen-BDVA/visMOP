@@ -1,13 +1,13 @@
 <template>
   <q-page class="row no-wrap items-stretch max-height">
     <!-- Misc. Tabs -->
-    <div class="col-5 q-pa-md">
+    <div class="col-5 q-pa-sm">
       <div class="row fit no-wrap">
         <div class="col-12 column no-wrap">
           <q-tabs
             v-model="selectedTabMisc"
             dense
-            class="label-grey"
+            class="label-grey q-pa-sm"
             active-color="primary"
             indicator-color="primary"
             align="justify"
@@ -22,17 +22,18 @@
             <q-tab-panel name="dataTable" class="column no-wrap q-pa-none">
               <q-input
                 v-model="tableSearch"
-                class="pt-0"
+                class="q-pa-sm"
                 append-icon="fa-solid fa-magnifying-glass"
                 label="Search"
                 single-line
                 hide-details
+                filled
               ></q-input>
 
               <q-tabs
                 v-model="selectedTabTable"
                 dense
-                class="label-grey"
+                class="label-grey q-px-sm q-pt-sm"
                 active-color="primary"
                 indicator-color="primary"
                 align="justify"
@@ -42,11 +43,11 @@
                 <q-tab name="proteome" label="Proteomics"></q-tab>
                 <q-tab name="metabol" label="Metabolomics"></q-tab>
               </q-tabs>
-
+              <q-separator class="q-mx-sm"></q-separator>
               <q-tab-panels v-model="selectedTabTable" class="q-space">
                 <q-tab-panel
                   name="transcriptomics"
-                  class="column no-wrap q-pa-none"
+                  class="column no-wrap q-px-sm q-pb-s q-pt-none"
                 >
                   <q-table
                     id="transcriptomics"
@@ -72,7 +73,10 @@
                   </q-table>
                 </q-tab-panel>
 
-                <q-tab-panel name="proteome" class="column no-wrap q-pa-none">
+                <q-tab-panel
+                  name="proteome"
+                  class="column no-wrap q-px-sm q-pb-s q-pt-none"
+                >
                   <q-table
                     id="proteomicsTable"
                     v-model:pagination="pagination"
@@ -97,7 +101,10 @@
                   </q-table>
                 </q-tab-panel>
 
-                <q-tab-panel name="metabol" class="column no-wrap q-pa-none">
+                <q-tab-panel
+                  name="metabol"
+                  class="column no-wrap q-px-sm q-pb-s q-pt-none"
+                >
                   <q-table
                     id="metabolomicsTable"
                     v-model:pagination="pagination"
@@ -140,9 +147,9 @@
       </div>
     </div>
     <!-- Network -->
-    <div class="col-7 q-pa-md">
+    <div class="col-7 q-pa-sm">
       <div class="row fit">
-        <div class="col-12">
+        <div class="col-12 q-pa-sm">
           <keep-alive>
             <reactome-overview-component
               context-i-d="overviewContext"
