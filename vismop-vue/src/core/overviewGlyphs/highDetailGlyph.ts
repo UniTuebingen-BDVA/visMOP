@@ -169,6 +169,7 @@ export class HighDetailGlyph {
       glyphG = labelG.append('g');
       // DOMMouseScroll seems to work in FF
       glyphG.on('mouseenter', (event, _dat) => {
+        event.preventDefault();
         const amtElems = d3
           .select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')
@@ -198,7 +199,7 @@ export class HighDetailGlyph {
             } else return 0.2;
           });
       });
-      glyphG.on('mouseleave', (_event, _dat) => {
+      glyphG.on('mouseleave', (event, _dat) => {
         this.highlightSection = 0;
         d3.select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')
@@ -214,6 +215,8 @@ export class HighDetailGlyph {
           });
       });
       glyphG.on('wheel.zoom', (event, _dat) => {
+        event.preventDefault();
+        event.stopPropagation();
         const amtElems = d3
           .select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')
@@ -388,24 +391,11 @@ export class HighDetailGlyph {
           });
       });
       omicLabel.on('mouseleave', (event, dat) => {
-        const index = dat.index;
-        d3.select(`#glyph${this.glyphIdx}`)
-          .select(`#labelArc${index}`)
-          .attr('fill-opacity', (_d, _i) => {
-            d3.select(`#glyph${this.glyphIdx}`)
-              .select('#tspan1')
-              .attr('class', 'glyphText')
-              .text('Total:');
-            d3.select(`#glyph${this.glyphIdx}`)
-              .select('#tspan2')
-              .text(this.totalNodes);
-            d3.select(`#glyph${this.glyphIdx}`)
-              .select(`#omicsArc${index}`)
-              .attr('stroke', '#404040');
-            return 1.0;
-          });
+        this.removeHighlight(dat);
       });
-
+      omicLabel.on('wheel.zoom', (event, dat) => {
+        this.removeHighlight(dat);
+      });
       const text = labelG.append('text');
 
       text
@@ -426,6 +416,33 @@ export class HighDetailGlyph {
     }
     return svg.node() as SVGElement;
   }
+
+  removeHighlight(dat: {
+    data?: number;
+    value?: number;
+    index: any;
+    startAngle?: number;
+    endAngle?: number;
+    padAngle?: number;
+  }) {
+    const index = dat.index;
+    d3.select(`#glyph${this.glyphIdx}`)
+      .select(`#labelArc${index}`)
+      .attr('fill-opacity', (_d, _i) => {
+        d3.select(`#glyph${this.glyphIdx}`)
+          .select('#tspan1')
+          .attr('class', 'glyphText')
+          .text('Total:');
+        d3.select(`#glyph${this.glyphIdx}`)
+          .select('#tspan2')
+          .text(this.totalNodes);
+        d3.select(`#glyph${this.glyphIdx}`)
+          .select(`#omicsArc${index}`)
+          .attr('stroke', '#404040');
+        return 1.0;
+      });
+  }
+
   prepareOmics(
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
