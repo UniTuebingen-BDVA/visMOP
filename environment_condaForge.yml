@@ -1,0 +1,14 @@
+name: visMOP_forge
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - flask
+  - flask-caching
+  - scikit-learn
+  - networkx
+  - openpyxl
+  - pip
+  - pip:
+      - reactome2py
+      - umap-learn
