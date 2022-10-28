@@ -1,9 +1,9 @@
 export const overviewColors = {
   selected: 'rgba(211,81,108,1.0)',
   modules: 'rgba(184,86,202, 1.0)',
-  roots: 'rgba(204,125,59,1.0)',
-  union: 'rgba(118,130,208, 1.0)',
-  intersection: 'rgba(114,171,81,1.0)',
+  roots: 'rgba(117, 117, 117, 1)',
+  union: '#314aecff',
+  intersection: '#6de428ff',
   highlight: 'rgba(250,145,166,1.0)',
 
   default: 'rgba(255,255,255)',

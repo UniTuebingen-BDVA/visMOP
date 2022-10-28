@@ -1,92 +1,89 @@
 <template>
-  <div>
-    <q-card :class="expandOverview ? 'overviewFullscreen' : ''">
-      <div class="col-12 q-pa-md">
-        <q-fab
-          icon="keyboard_arrow_down"
-          label="Overview Actions"
-          direction="down"
-          vertical-actions-align="left"
-        >
-          <div class="row graphControl">
-            <div class="col-3">
-              <q-btn
-                color="primary"
-                round
-                icon="keyboard_arrow_left"
-                @click="expandComponent"
-                ><q-tooltip class="bg-accent">Expand</q-tooltip></q-btn
-              >
-            </div>
-            <div class="col-3">
-              <q-btn
-                color="primary"
-                round
-                icon="keyboard_arrow_right"
-                @click="minimizeComponent"
-                ><q-tooltip class="bg-accent">Shrink</q-tooltip></q-btn
-              >
-            </div>
-            <div class="col-3">
-              <q-btn color="primary" round icon="mdi-restore" @click="resetZoom"
-                ><q-tooltip class="bg-accent">Reset</q-tooltip></q-btn
-              >
-            </div>
-            <div class="col-3">
-              <q-btn
-                color="primary"
-                round
-                icon="mdi-select-remove"
-                @click="removeSelection"
-                ><q-tooltip class="bg-accent">Deselect</q-tooltip></q-btn
-              >
-            </div>
+  <q-card :class="[expandOverview ? 'overviewFullscreen' : '', 'row fit']">
+    <div class="col-12">
+      <q-fab
+        icon="keyboard_arrow_down"
+        label="Overview Actions"
+        direction="down"
+        vertical-actions-align="left"
+        class="absolute q-pa-md"
+      >
+        <div class="row graphControl">
+          <div class="col-3">
+            <q-btn
+              color="primary"
+              round
+              icon="keyboard_arrow_left"
+              @click="expandComponent"
+              ><q-tooltip class="bg-accent">Expand</q-tooltip></q-btn
+            >
           </div>
+          <div class="col-3">
+            <q-btn
+              color="primary"
+              round
+              icon="keyboard_arrow_right"
+              @click="minimizeComponent"
+              ><q-tooltip class="bg-accent">Shrink</q-tooltip></q-btn
+            >
+          </div>
+          <div class="col-3">
+            <q-btn color="primary" round icon="mdi-restore" @click="resetZoom"
+              ><q-tooltip class="bg-accent">Reset</q-tooltip></q-btn
+            >
+          </div>
+          <div class="col-3">
+            <q-btn
+              color="primary"
+              round
+              icon="mdi-select-remove"
+              @click="removeSelection"
+              ><q-tooltip class="bg-accent">Deselect</q-tooltip></q-btn
+            >
+          </div>
+        </div>
 
-          <q-fab-action color="white" text-color="black">
-            <q-expansion-item
-              v-model="expandFilter"
-              icon="fa-solid fa-filter"
-              label="Graph Filter"
+        <q-fab-action color="white" text-color="black">
+          <q-expansion-item
+            v-model="expandFilter"
+            icon="fa-solid fa-filter"
+            label="Graph Filter"
+            @click.prevent
+          >
+            <graph-filter
+              v-model:root-negative-filter="rootNegativeFilter"
+              v-model:rootFilter="rootFilter"
+              v-model:transcriptomics="transcriptomicsFilter"
+              v-model:transcriptomics-regulated="transcriptomicsRegulatedFilter"
+              v-model:proteomics="proteomicsFilter"
+              v-model:proteomics-regulated="proteomicsRegulatedFilter"
+              v-model:metabolomics="metabolomicsFilter"
+              v-model:metabolomics-regulated="metabolomicsRegulatedFilter"
+              v-model:sumRegulated="sumRegulated"
               @click.prevent
-            >
-              <graph-filter
-                v-model:root-negative-filter="rootNegativeFilter"
-                v-model:rootFilter="rootFilter"
-                v-model:transcriptomics="transcriptomicsFilter"
-                v-model:transcriptomics-regulated="
-                  transcriptomicsRegulatedFilter
-                "
-                v-model:proteomics="proteomicsFilter"
-                v-model:proteomics-regulated="proteomicsRegulatedFilter"
-                v-model:metabolomics="metabolomicsFilter"
-                v-model:metabolomics-regulated="metabolomicsRegulatedFilter"
-                v-model:sumRegulated="sumRegulated"
-                @click.prevent
-              ></graph-filter>
-            </q-expansion-item>
-          </q-fab-action>
-          <q-fab-action color="white" text-color="black">
-            <q-expansion-item
-              v-model="expandFa2Controls"
-              icon="fa-solid fa-diagram-project"
-              label="FA2 Controls"
+            ></graph-filter>
+          </q-expansion-item>
+        </q-fab-action>
+        <q-fab-action color="white" text-color="black">
+          <q-expansion-item
+            v-model="expandFa2Controls"
+            icon="fa-solid fa-diagram-project"
+            label="FA2 Controls"
+            @click.prevent
+          >
+            <fa2-params
+              v-model:fa2LayoutParams="fa2LayoutParams"
               @click.prevent
-            >
-              <fa2-params
-                v-model:fa2LayoutParams="fa2LayoutParams"
-                @click.prevent
-              ></fa2-params>
-            </q-expansion-item>
-          </q-fab-action>
-        </q-fab>
-        <div
-          :id="contextID"
-          :class="[expandOverview ? '' : '', 'webglContainer']"
-        ></div>
-      </div>
-    </q-card>
-  </div>
+            ></fa2-params>
+          </q-expansion-item>
+        </q-fab-action>
+      </q-fab>
+      <div
+        :id="contextID"
+        :class="[expandOverview ? '' : '', 'webglContainer']"
+      ></div>
+    </div>
+  </q-card>
 </template>
 
 <script setup lang="ts">
@@ -589,5 +586,19 @@ const drawNetwork = () => {
 <style>
 .graphControl {
   min-width: 10vw;
+}
+.webglContainer {
+  height: 100%;
+  min-height: 100%;
+  z-index: 2;
+}
+.overviewFullscreen {
+  z-index: 3;
+  position: fixed !important;
+  top: 7vh;
+  right: 1vh;
+  bottom: 1vh;
+  left: 1vh;
+  max-width: 100vw;
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <div class="row">
-      <!-- Misc. Tabs -->
-      <div class="col-5 q-pa-md">
-        <div class="q-gutter-y-md">
+  <q-page class="row no-wrap items-stretch max-height">
+    <!-- Misc. Tabs -->
+    <div class="col-5 q-pr-sm q-pl-md q-py-md">
+      <div class="row fit no-wrap">
+        <q-card class="col-12 column no-wrap">
           <q-tabs
             v-model="selectedTabMisc"
             dense
@@ -14,21 +14,21 @@
             narrow-indicator
           >
             <q-tab name="dataTable" label="Data Table"></q-tab>
-            <q-tab name="selectedNodes" label="Selected Entities"></q-tab>
-            <q-tab name="ppiGraph" label="Protein-Protein Interaction"></q-tab>
+            <!-- <q-tab name="selectedNodes" label="Selected Entities"></q-tab> -->
+            <!-- <q-tab name="ppiGraph" label="Protein-Protein Interaction"></q-tab> -->
             <q-tab name="pathwayCompare" label="Pathway Compare"></q-tab>
           </q-tabs>
-          <q-tab-panels v-model="selectedTabMisc">
-            <q-tab-panel name="dataTable">
+          <q-tab-panels v-model="selectedTabMisc" class="q-space">
+            <q-tab-panel name="dataTable" class="column no-wrap q-pa-none">
               <q-input
                 v-model="tableSearch"
-                class="pt-0"
                 append-icon="fa-solid fa-magnifying-glass"
                 label="Search"
                 single-line
                 hide-details
+                filled
               ></q-input>
-
+              <q-separator></q-separator>
               <q-tabs
                 v-model="selectedTabTable"
                 dense
@@ -42,22 +42,26 @@
                 <q-tab name="proteome" label="Proteomics"></q-tab>
                 <q-tab name="metabol" label="Metabolomics"></q-tab>
               </q-tabs>
-
-              <q-tab-panels v-model="selectedTabTable">
-                <q-tab-panel name="transcriptomics">
+              <q-separator></q-separator>
+              <q-tab-panels v-model="selectedTabTable" class="q-space">
+                <q-tab-panel
+                  name="transcriptomics"
+                  class="column no-wrap q-pa-none"
+                >
                   <q-table
                     id="transcriptomics"
                     v-model:pagination="pagination"
                     v-model:selected="selectedTranscriptomics"
                     selection="multiple"
+                    style="max-height: 100%; max-width: 100%; flex: 1"
                     dense
                     virtual-scroll
-                    style="height: 63vh"
                     :rows-per-page-options="[0]"
                     :columns="transcriptomicsTableHeaders"
                     :rows="transcriptomicsTableData"
                     row-key="_reserved_sort_id"
                     :filter="tableSearch"
+                    class="q-space"
                     @row-dblclick="transcriptomicsSelection"
                   >
                     <template #body-cell="props">
@@ -68,20 +72,21 @@
                   </q-table>
                 </q-tab-panel>
 
-                <q-tab-panel name="proteome">
+                <q-tab-panel name="proteome" class="column no-wrap q-pa-none">
                   <q-table
                     id="proteomicsTable"
                     v-model:pagination="pagination"
                     v-model:selected="selectedProteomics"
                     selection="multiple"
+                    style="max-height: 100%; max-width: 100%; flex: 1"
                     dense
                     virtual-scroll
-                    style="height: 63vh"
                     :rows-per-page-options="[0]"
                     :columns="proteomicsTableHeaders"
                     :rows="proteomicsTableData"
                     row-key="_reserved_sort_id"
                     :filter="tableSearch"
+                    class="q-space"
                     @row-dblclick="proteomicsSelection"
                   >
                     <template #body-cell="props">
@@ -92,20 +97,21 @@
                   </q-table>
                 </q-tab-panel>
 
-                <q-tab-panel name="metabol">
+                <q-tab-panel name="metabol" class="column no-wrap q-pa-none">
                   <q-table
                     id="metabolomicsTable"
                     v-model:pagination="pagination"
                     v-model:selected="selectedMetabolomics"
                     selection="multiple"
+                    style="max-height: 100%; max-width: 100%"
                     dense
                     virtual-scroll
-                    style="height: 63vh"
                     :rows-per-page-options="[0]"
                     :columns="metabolomicsTableHeaders"
                     :rows="metabolomicsTableData"
                     row-key="_reserved_sort_id"
                     :filter="tableSearch"
+                    class="q-space"
                     @row-dblclick="metabolomicsSelection"
                   >
                     <template #body-cell="props">
@@ -117,56 +123,50 @@
                 </q-tab-panel>
               </q-tab-panels>
             </q-tab-panel>
-            <q-tab-panel name="selectedNodes">
+            <!-- <q-tab-panel name="selectedNodes">
               <interaction-graph-table> </interaction-graph-table>
-            </q-tab-panel>
-            <q-tab-panel name="ppiGraph">
+            </q-tab-panel> -->
+            <!-- <q-tab-panel name="ppiGraph">
               <keep-alive>
                 <interaction-graph context-i-d="interactionGraph">
                 </interaction-graph>
               </keep-alive>
-            </q-tab-panel>
+            </q-tab-panel> -->
             <q-tab-panel name="pathwayCompare">
               <pathway-compare> </pathway-compare>
             </q-tab-panel>
           </q-tab-panels>
-        </div>
-      </div>
-      <!-- Network -->
-      <div class="col-7 q-pa-md">
-        <q-card>
-          <div class="row">
-            <div class="col-12">
-              <div v-if="targetDatabase === 'reactome'">
-                <keep-alive>
-                  <reactome-overview-component
-                    context-i-d="overviewContext"
-                    :transcriptomics-selection="selectedTranscriptomics"
-                    :proteomics-selection="selectedProteomics"
-                    :metabolomics-selection="selectedMetabolomics"
-                    :is-active="activeOverview"
-                  >
-                  </reactome-overview-component>
-                </keep-alive>
-              </div>
-            </div>
-            <div v-if="targetDatabase === 'reactome'">
-              <keep-alive>
-                <reactome-detail-component
-                  context-i-d="reactomeDetail"
-                  :transcriptomics-selection="selectedTranscriptomics"
-                  :proteomics-selection="selectedProteomics"
-                  :metabolomics-selection="selectedMetabolomics"
-                  :is-active="activeOverview"
-                >
-                </reactome-detail-component>
-              </keep-alive>
-            </div>
-          </div>
         </q-card>
       </div>
     </div>
-  </div>
+    <!-- Network -->
+    <div class="col-7 q-pl-sm q-pr-md q-py-md">
+      <div class="row fit">
+        <div class="col-12">
+          <keep-alive>
+            <reactome-overview-component
+              context-i-d="overviewContext"
+              :transcriptomics-selection="selectedTranscriptomics"
+              :proteomics-selection="selectedProteomics"
+              :metabolomics-selection="selectedMetabolomics"
+              :is-active="activeOverview"
+            >
+            </reactome-overview-component>
+          </keep-alive>
+        </div>
+        <keep-alive>
+          <reactome-detail-component
+            context-i-d="reactomeDetail"
+            :transcriptomics-selection="selectedTranscriptomics"
+            :proteomics-selection="selectedProteomics"
+            :metabolomics-selection="selectedMetabolomics"
+            :is-active="activeOverview"
+          >
+          </reactome-detail-component>
+        </keep-alive>
+      </div>
+    </div>
+  </q-page>
 </template>
 <script setup lang="ts">
 import ReactomeDetailComponent from './graphComponents/ReactomeDetailComponent.vue';
@@ -414,3 +414,9 @@ const itemRowColor = (item: { row: { [key: string]: number | string } }) => {
     : 'rowstyle-notAvailable';
 };
 </script>
+<style>
+.max-height {
+  max-height: 100%;
+  height: 100%;
+}
+</style>
