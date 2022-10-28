@@ -6,7 +6,7 @@
         label="Overview Actions"
         direction="down"
         vertical-actions-align="left"
-        class="absolute q-pa-md"
+        class="absolute q-pa-md fab-class"
       >
         <div class="row graphControl">
           <div class="col-3">
@@ -584,6 +584,9 @@ const drawNetwork = () => {
 };
 </script>
 <style>
+.fab-class {
+  z-index: 4;
+}
 .graphControl {
   min-width: 10vw;
 }
