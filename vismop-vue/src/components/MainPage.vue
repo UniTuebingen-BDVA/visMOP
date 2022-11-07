@@ -170,8 +170,6 @@
 </template>
 <script setup lang="ts">
 import ReactomeDetailComponent from './graphComponents/ReactomeDetailComponent.vue';
-import InteractionGraph from './tabComponents/InteractionGraph.vue';
-import InteractionGraphTable from './tabComponents/InteractionGraphTable.vue';
 import PathwayCompare from './tabComponents/PathwayCompare.vue';
 import ReactomeOverviewComponent from './graphComponents/ReactomeOverviewComponent.vue';
 import { useMainStore } from '@/stores';
