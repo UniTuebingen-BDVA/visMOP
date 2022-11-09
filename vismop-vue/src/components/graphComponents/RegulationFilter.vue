@@ -21,7 +21,7 @@
         "
         :disable="filterValueInternal.disable"
         @change="
-          (val) => {
+          (val: {'min': number, 'max': number}) => {
             filterValueInternal.value = val;
           }
         "

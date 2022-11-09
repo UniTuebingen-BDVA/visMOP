@@ -55,7 +55,7 @@
             :step="1"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.iterations = val;
               }
             "
@@ -73,7 +73,7 @@
             :step="0.2"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.weightShared = val;
               }
             "
@@ -91,7 +91,7 @@
             :step="0.2"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.weightDefault = val;
               }
             "
@@ -109,7 +109,7 @@
             :step="1"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.gravity = val;
               }
             "
@@ -127,7 +127,7 @@
             :step="0.5"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.edgeWeightInfluence = val;
               }
             "
@@ -145,7 +145,7 @@
             :step="1"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.scalingRatio = val;
               }
             "
@@ -163,7 +163,7 @@
             :step="1"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.barnesHutTheta = val;
               }
             "
@@ -181,7 +181,7 @@
             :step="1"
             label
             @change="
-              (val) => {
+              (val: number) => {
                 fa2LayoutParams.slowDown = val;
               }
             "

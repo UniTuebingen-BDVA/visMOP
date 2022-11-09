@@ -93,7 +93,7 @@ interface State {
 export const useMainStore = defineStore('mainStore', {
   state: (): State => ({
     sideBarExpand: true,
-    overviewData: null,
+    overviewData: {},
     targetDatabase: 'reactome',
     clickedNodes: [],
     tableHeaders: { transcriptomics: [], proteomics: [], metabolomics: [] },
@@ -103,7 +103,6 @@ export const useMainStore = defineStore('mainStore', {
       attributes: {},
       nodes: [],
       edges: [],
-      cluster_rects: [[]],
       options: null,
     },
     fcs: {},

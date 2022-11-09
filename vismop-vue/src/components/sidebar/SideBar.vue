@@ -96,7 +96,7 @@
                       />
                     </q-item-section>
                     <q-item-section>
-                      <q-item-label v-html="opt" />
+                      <q-item-label>{{ opt }}</q-item-label>
                     </q-item-section>
                   </q-item>
                 </template>
