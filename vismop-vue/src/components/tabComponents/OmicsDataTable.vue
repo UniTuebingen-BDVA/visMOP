@@ -16,17 +16,16 @@
   >
     <!-- if interaction with rows is needed at a future point in time:
    @row-dblclick="rowClick"-->
-    <template #body-cell="props">
-      <q-td :props="props" :class="itemRowColor(props)">
-        {{ props.value }}
+    <template #body-cell="rowProps">
+      <q-td :props="rowProps" :class="itemRowColor(rowProps)">
+        {{ rowProps.value }}
       </q-td>
     </template>
   </q-table>
 </template>
 <script setup lang="ts">
 import { useMainStore } from '@/stores';
-import { computed, onMounted, ref, watch } from 'vue';
-import { ColType } from '@/core/generalTypes';
+import { computed, ref, watch } from 'vue';
 const emit = defineEmits(['update:selectedEntries']);
 const props = defineProps<{
   omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics';

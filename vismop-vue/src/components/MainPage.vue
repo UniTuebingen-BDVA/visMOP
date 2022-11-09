@@ -68,8 +68,8 @@
                   class="column no-wrap q-pa-none"
                 >
                   <omics-data-table-vue
+                    v-model:selected-entries="selectedMetabolomics"
                     omics-type="metabolomics"
-                    :selected-entries="selectedMetabolomics"
                     :search-query="tableSearch"
                   />
                 </q-tab-panel>
