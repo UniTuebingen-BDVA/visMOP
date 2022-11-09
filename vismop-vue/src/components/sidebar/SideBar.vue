@@ -35,7 +35,7 @@
         v-model:valueCol="transcriptomicsValueCol"
         :table-headers="transcriptomicsTableHeaders"
         :table-data="transcriptomicsTableData"
-        omics-type="Transcriptomics"
+        omics-type="transcriptomics"
         @update:slider-value="(newVal) => (sliderValsTranscriptomics = newVal)"
       ></omic-input>
 
@@ -48,7 +48,7 @@
         v-model:valueCol="proteomicsValueCol"
         :table-headers="proteomicsTableHeaders"
         :table-data="proteomicsTableData"
-        omics-type="Proteomics"
+        omics-type="proteomics"
         @update:slider-value="(newVal) => (sliderValsProteomics = newVal)"
       ></omic-input>
 
@@ -60,7 +60,7 @@
         v-model:valueCol="metabolomicsValueCol"
         :table-headers="metabolomicsTableHeaders"
         :table-data="metabolomicsTableData"
-        omics-type="Metabolomics"
+        omics-type="metabolomics"
         @update:slider-value="(newVal) => (sliderValsMetabolomics = newVal)"
       ></omic-input>
       <q-separator />
@@ -189,18 +189,20 @@ const sliderValsMetabolomics = ref(
   }
 );
 const transcriptomicsTableHeaders = computed(
-  () => mainStore.transcriptomicsTableHeaders
+  () => mainStore.tableHeaders.transcriptomics
 );
-const proteomicsTableHeaders = computed(() => mainStore.proteomicsTableHeaders);
+const proteomicsTableHeaders = computed(
+  () => mainStore.tableHeaders.proteomics
+);
 
 const metabolomicsTableHeaders = computed(
-  () => mainStore.metabolomicsTableHeaders
+  () => mainStore.tableHeaders.metabolomics
 );
 const transcriptomicsTableData = computed(
-  () => mainStore.transcriptomicsTableData
+  () => mainStore.tableData.transcriptomics
 );
-const proteomicsTableData = computed(() => mainStore.proteomicsTableData);
-const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
+const proteomicsTableData = computed(() => mainStore.tableData.proteomics);
+const metabolomicsTableData = computed(() => mainStore.tableData.metabolomics);
 
 const transcriptomicsSymbolCol: Ref<ColType> = ref({
   name: '',

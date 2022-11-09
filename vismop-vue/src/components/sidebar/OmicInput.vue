@@ -105,7 +105,7 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-  omicsType: string;
+  omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics';
   tableHeaders: ColType[];
   tableData: {
     [x: string]: string | number;

@@ -39,8 +39,8 @@
                 narrow-indicator
               >
                 <q-tab name="transcriptomics" label="Transcriptomics"></q-tab>
-                <q-tab name="proteome" label="Proteomics"></q-tab>
-                <q-tab name="metabol" label="Metabolomics"></q-tab>
+                <q-tab name="proteomics" label="Proteomics"></q-tab>
+                <q-tab name="metabolomics" label="Metabolomics"></q-tab>
               </q-tabs>
               <q-separator></q-separator>
               <q-tab-panels v-model="selectedTabTable" class="q-space">
@@ -48,78 +48,30 @@
                   name="transcriptomics"
                   class="column no-wrap q-pa-none"
                 >
-                  <q-table
-                    id="transcriptomics"
-                    v-model:pagination="pagination"
-                    v-model:selected="selectedTranscriptomics"
-                    selection="multiple"
-                    style="max-height: 100%; max-width: 100%; flex: 1"
-                    dense
-                    virtual-scroll
-                    :rows-per-page-options="[0]"
-                    :columns="transcriptomicsTableHeaders"
-                    :rows="transcriptomicsTableData"
-                    row-key="_reserved_sort_id"
-                    :filter="tableSearch"
-                    class="q-space"
-                    @row-dblclick="transcriptomicsSelection"
-                  >
-                    <template #body-cell="props">
-                      <q-td :props="props" :class="itemRowColor(props)">
-                        {{ props.value }}
-                      </q-td>
-                    </template>
-                  </q-table>
+                  <omics-data-table-vue
+                    omics-type="transcriptomics"
+                    :selected-entries="selectedTranscriptomics"
+                    :search-query="tableSearch"
+                  />
                 </q-tab-panel>
 
-                <q-tab-panel name="proteome" class="column no-wrap q-pa-none">
-                  <q-table
-                    id="proteomicsTable"
-                    v-model:pagination="pagination"
-                    v-model:selected="selectedProteomics"
-                    selection="multiple"
-                    style="max-height: 100%; max-width: 100%; flex: 1"
-                    dense
-                    virtual-scroll
-                    :rows-per-page-options="[0]"
-                    :columns="proteomicsTableHeaders"
-                    :rows="proteomicsTableData"
-                    row-key="_reserved_sort_id"
-                    :filter="tableSearch"
-                    class="q-space"
-                    @row-dblclick="proteomicsSelection"
-                  >
-                    <template #body-cell="props">
-                      <q-td :props="props" :class="itemRowColor(props)">
-                        {{ props.value }}
-                      </q-td>
-                    </template>
-                  </q-table>
+                <q-tab-panel name="proteomics" class="column no-wrap q-pa-none">
+                  <omics-data-table-vue
+                    omics-type="proteomics"
+                    :selected-entries="selectedProteomics"
+                    :search-query="tableSearch"
+                  />
                 </q-tab-panel>
 
-                <q-tab-panel name="metabol" class="column no-wrap q-pa-none">
-                  <q-table
-                    id="metabolomicsTable"
-                    v-model:pagination="pagination"
-                    v-model:selected="selectedMetabolomics"
-                    selection="multiple"
-                    style="max-height: 100%; max-width: 100%"
-                    dense
-                    virtual-scroll
-                    :rows-per-page-options="[0]"
-                    :columns="metabolomicsTableHeaders"
-                    :rows="metabolomicsTableData"
-                    row-key="_reserved_sort_id"
-                    :filter="tableSearch"
-                    class="q-space"
-                    @row-dblclick="metabolomicsSelection"
-                  >
-                    <template #body-cell="props">
-                      <q-td :props="props" :class="itemRowColor(props)">
-                        {{ props.value }}
-                      </q-td>
-                    </template>
-                  </q-table>
+                <q-tab-panel
+                  name="metabolomics"
+                  class="column no-wrap q-pa-none"
+                >
+                  <omics-data-table-vue
+                    omics-type="metabolomics"
+                    :selected-entries="selectedMetabolomics"
+                    :search-query="tableSearch"
+                  />
                 </q-tab-panel>
               </q-tab-panels>
             </q-tab-panel>
@@ -133,7 +85,7 @@
               </keep-alive>
             </q-tab-panel> -->
             <q-tab-panel name="pathwayCompare">
-              <pathway-compare> </pathway-compare>
+              <pathway-compare-vue> </pathway-compare-vue>
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
@@ -144,38 +96,37 @@
       <div class="row fit">
         <div class="col-12">
           <keep-alive>
-            <reactome-overview-component
+            <reactome-overview-component-vue
               context-i-d="overviewContext"
               :transcriptomics-selection="selectedTranscriptomics"
               :proteomics-selection="selectedProteomics"
               :metabolomics-selection="selectedMetabolomics"
               :is-active="activeOverview"
             >
-            </reactome-overview-component>
+            </reactome-overview-component-vue>
           </keep-alive>
         </div>
         <keep-alive>
-          <reactome-detail-component
+          <reactome-detail-component-vue
             context-i-d="reactomeDetail"
             :transcriptomics-selection="selectedTranscriptomics"
             :proteomics-selection="selectedProteomics"
             :metabolomics-selection="selectedMetabolomics"
             :is-active="activeOverview"
           >
-          </reactome-detail-component>
+          </reactome-detail-component-vue>
         </keep-alive>
       </div>
     </div>
   </q-page>
 </template>
 <script setup lang="ts">
-import ReactomeDetailComponent from './graphComponents/ReactomeDetailComponent.vue';
-import PathwayCompare from './tabComponents/PathwayCompare.vue';
-import ReactomeOverviewComponent from './graphComponents/ReactomeOverviewComponent.vue';
+import ReactomeDetailComponentVue from './graphComponents/ReactomeDetailComponent.vue';
+import PathwayCompareVue from './tabComponents/PathwayCompare.vue';
+import ReactomeOverviewComponentVue from './graphComponents/ReactomeOverviewComponent.vue';
+import OmicsDataTableVue from './tabComponents/OmicsDataTable.vue';
 import { useMainStore } from '@/stores';
-import { computed, Ref, ref, watch } from 'vue';
-import { QTable } from 'quasar';
-import { ColType } from '@/core/generalTypes';
+import { computed, KeepAlive, Ref, ref, watch } from 'vue';
 
 const mainStore = useMainStore();
 
@@ -186,231 +137,17 @@ const selectedTabMisc = ref('dataTable');
 const selectedTranscriptomics: Ref<{ [key: string]: string }[]> = ref([]);
 const selectedProteomics: Ref<{ [key: string]: string }[]> = ref([]);
 const selectedMetabolomics: Ref<{ [key: string]: string }[]> = ref([]);
-const pagination = ref({ rowsPerPage: 0 });
-
-const targetDatabase = computed(() => mainStore.targetDatabase);
-const transcriptomicsTableHeaders = computed(
-  () => mainStore.transcriptomicsTableHeaders
-);
-const transcriptomicsTableData = computed(
-  () => mainStore.transcriptomicsTableData
-);
-const proteomicsTableHeaders = computed(() => mainStore.proteomicsTableHeaders);
-const proteomicsTableData = computed(() => mainStore.proteomicsTableData);
-const metabolomicsTableHeaders = computed(
-  () => mainStore.metabolomicsTableHeaders
-);
-const metabolomicsTableData = computed(() => mainStore.metabolomicsTableData);
-const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
-
-const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
-const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
+
+watch(pathwayLayouting, () => {
+  mainStore.setAvailables('transcriptomics');
+  mainStore.setAvailables('proteomics');
+  mainStore.setAvailables('metabolomics');
+});
 
 const activeOverview = computed(
   () => selectedTabNetwork.value === 'overviewNetwork'
 );
-
-watch(pathwayLayouting, () => {
-  const mainStore = useMainStore();
-  let transcriptomicsAvailable = 0;
-  let transcriptomicsTotal = 0;
-
-  transcriptomicsTableData.value.forEach(
-    (row: { [key: string]: string | number }) => {
-      transcriptomicsTotal += 1;
-      let symbol = row[usedSymbolCols.value.transcriptomics];
-      const pathwaysContaining =
-        pathwayLayouting.value.nodePathwayDictionary[symbol];
-      row._reserved_available = pathwaysContaining
-        ? pathwaysContaining.length
-        : 0;
-      if (pathwaysContaining) transcriptomicsAvailable += 1;
-    }
-  );
-  transcriptomicsTableHeaders.value.forEach((entry: ColType) => {
-    if (entry?.name === '_reserved_available') {
-      entry.label = `available (${transcriptomicsAvailable} of ${transcriptomicsTotal})`;
-    }
-  });
-  mainStore.setTranscriptomicsTableHeaders(transcriptomicsTableHeaders.value);
-  mainStore.setTranscriptomicsTableData(transcriptomicsTableData.value);
-
-  let proteomiocsAvailable = 0;
-  let proteomicsTotal = 0;
-
-  proteomicsTableData.value.forEach(
-    (row: { [key: string]: string | number }) => {
-      proteomicsTotal += 1;
-      let symbol = row[usedSymbolCols.value.proteomics];
-      const pathwaysContaining =
-        pathwayLayouting.value.nodePathwayDictionary[symbol];
-      row._reserved_available = pathwaysContaining
-        ? pathwaysContaining.length
-        : 0;
-      if (pathwaysContaining) proteomiocsAvailable += 1;
-    }
-  );
-  proteomicsTableHeaders.value.forEach(
-    (entry: { label: string; name: string }) => {
-      if (entry.name === '_reserved_available') {
-        entry.label = `available (${proteomiocsAvailable} of ${proteomicsTotal})`;
-      }
-    }
-  );
-  mainStore.setProteomicsTableHeaders(proteomicsTableHeaders.value);
-  mainStore.setProteomicsTableData(proteomicsTableData.value);
-
-  let metabolomicsAvailable = 0;
-  let metabolomicsTotal = 0;
-
-  metabolomicsTableData.value.forEach(
-    (row: { [key: string]: string | number }) => {
-      const symbol = row[usedSymbolCols.value.metabolomics];
-      metabolomicsTotal += 1;
-      let pathwaysContaining: string[] = [];
-      const keggChebiConvert = Object.keys(keggChebiTranslate.value).length > 0;
-
-      if (keggChebiConvert) {
-        let chebiIDs = keggChebiTranslate.value[symbol];
-        if (chebiIDs) {
-          chebiIDs.forEach((element) => {
-            try {
-              pathwaysContaining.push(
-                ...pathwayLayouting.value.nodePathwayDictionary[element]
-              );
-            } catch (error) {
-              //
-            }
-          });
-        }
-      } else {
-        pathwaysContaining =
-          pathwayLayouting.value.nodePathwayDictionary[symbol];
-      }
-      row._reserved_available = pathwaysContaining
-        ? pathwaysContaining.length
-        : 0;
-      if (pathwaysContaining) metabolomicsAvailable += 1;
-    }
-  );
-  metabolomicsTableHeaders.value.forEach(
-    (entry: { label: string; name: string }) => {
-      if (entry.name === '_reserved_available') {
-        entry.label = `available (${metabolomicsAvailable} of ${metabolomicsTotal})`;
-      }
-    }
-  );
-  mainStore.setMetabolomicsTableHeaders(metabolomicsTableHeaders.value);
-  mainStore.setMetabolomicsTableData(metabolomicsTableData.value);
-});
-watch(pathwayDropdown, () => {
-  const mainStore = useMainStore();
-  transcriptomicsTableData.value.forEach(
-    (row: { [key: string]: string | number }) => {
-      let symbol = row[usedSymbolCols.value.transcriptomics];
-      const available = !(row._reserved_available === 0);
-      if (available) {
-        let includedInSelectedPathway = false;
-        if (targetDatabase.value === 'reactome') {
-          includedInSelectedPathway = pathwayDropdown.value
-            ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                pathwayDropdown.value.value
-              )
-            : false;
-        }
-        row._reserved_inSelected = includedInSelectedPathway ? 'Yes' : 'No';
-      }
-    }
-  );
-  mainStore.setTranscriptomicsTableData(transcriptomicsTableData.value);
-
-  proteomicsTableData.value.forEach(
-    (row: { [key: string]: string | number }) => {
-      let symbol = row[usedSymbolCols.value.proteomics];
-      const available = !(row._reserved_available === 0);
-      if (available) {
-        let includedInSelectedPathway = false;
-        if (targetDatabase.value === 'reactome') {
-          includedInSelectedPathway = pathwayDropdown.value
-            ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                pathwayDropdown.value.value
-              )
-            : false;
-        }
-        row._reserved_inSelected = includedInSelectedPathway ? 'Yes' : 'No';
-      }
-    }
-  );
-  mainStore.setProteomicsTableData(proteomicsTableData.value);
-
-  metabolomicsTableData.value.forEach(
-    (row: { [key: string]: string | number }) => {
-      const symbol = row[usedSymbolCols.value.metabolomics];
-      const available = !(row._reserved_available === 0);
-      if (available) {
-        let includedInSelectedPathway = false;
-        if (targetDatabase.value === 'reactome') {
-          const keggChebiConvert =
-            Object.keys(keggChebiTranslate.value).length > 0;
-          if (keggChebiConvert) {
-            let chebiIDs = keggChebiTranslate.value[symbol];
-            if (chebiIDs) {
-              chebiIDs.forEach((element) => {
-                try {
-                  includedInSelectedPathway = pathwayDropdown.value
-                    ? pathwayLayouting.value.pathwayNodeDictionary[
-                        element
-                      ].includes(pathwayDropdown.value.value)
-                    : false;
-                } catch (error) {
-                  //
-                }
-              });
-            }
-          } else {
-            includedInSelectedPathway = pathwayDropdown.value
-              ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                  pathwayDropdown.value.value
-                )
-              : false;
-          }
-        }
-        row._reserved_inSelected = includedInSelectedPathway ? 'Yes' : 'No';
-      }
-    }
-  );
-  mainStore.setMetabolomicsTableData(metabolomicsTableData.value);
-});
-
-const transcriptomicsSelection = (
-  _event: Event,
-  _row: { [key: string]: string },
-  _index: number
-) => {
-  // this.transcriptomicsSelectionData = val
-};
-const proteomicsSelection = (
-  _event: Event,
-  row: { [key: string]: string },
-  _index: number
-) => {
-  mainStore.addClickedNodeFromTable(row);
-};
-const metabolomicsSelection = (
-  _event: Event,
-  _row: { [key: string]: string },
-  _index: number
-) => {
-  // this.metabolomicsSelectionData = val
-};
-const itemRowColor = (item: { row: { [key: string]: number | string } }) => {
-  return item.row._reserved_available !== 0
-    ? item.row._reserved_inSelected === 'Yes'
-      ? 'rowstyle-inPathway'
-      : 'rowstyle-available'
-    : 'rowstyle-notAvailable';
-};
 </script>
 <style>
 .max-height {

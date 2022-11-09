@@ -31,6 +31,7 @@ import { overviewColors } from '@/core/colors';
 import _ from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 import FilterData from './filterData';
+import { Loading } from 'quasar';
 
 export default class OverviewGraph {
   // constants
@@ -241,6 +242,7 @@ export default class OverviewGraph {
           this.highlightedNodesClick = new Set(this.graph.neighbors(node));
           this.highlightedEdgesClick = new Set(this.graph.edges(node));
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
+          //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
         }
       } else {
@@ -578,5 +580,20 @@ export default class OverviewGraph {
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;
     this.renderer.refresh();
+  }
+
+  getRoot(reactomeID: string): void {
+    Loading.show();
+    fetch(`/get_root_search/${reactomeID}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((content) => {
+        console.log(content);
+        Loading.hide();
+      });
   }
 }
