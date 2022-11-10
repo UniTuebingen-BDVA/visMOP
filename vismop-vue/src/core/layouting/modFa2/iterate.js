@@ -763,11 +763,21 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
           NodeMatrix[n + NODE_Y] +
           NodeMatrix[n + NODE_DY] * (nodespeed / options.slowDown);
 
-        if (boundingPoly.pointInPolygonCoords(newX, newY)) {
+        if (
+          boundingPoly.pointInPolygonCoords(
+            newX,
+            newY,
+            boundingPoly.colliderVertices
+          )
+        ) {
           NodeMatrix[n + NODE_X] = newX;
           NodeMatrix[n + NODE_Y] = newY;
         } else {
-          let pointOnPoly = boundingPoly.closestPointOnPolyCoords(newX, newY);
+          let pointOnPoly = boundingPoly.closestPointOnPolyCoords(
+            newX,
+            newY,
+            boundingPoly.colliderVertices
+          );
           pointOnPoly = boundingPoly.movePointCloserToCenterCoord(
             pointOnPoly[0],
             pointOnPoly[1],
@@ -824,11 +834,21 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
           NodeMatrix[n + NODE_Y] +
           NodeMatrix[n + NODE_DY] * (nodespeed / options.slowDown);
 
-        if (boundingPoly.pointInPolygonCoords(newX, newY)) {
+        if (
+          boundingPoly.pointInPolygonCoords(
+            newX,
+            newY,
+            boundingPoly.colliderVertices
+          )
+        ) {
           NodeMatrix[n + NODE_X] = newX;
           NodeMatrix[n + NODE_Y] = newY;
         } else {
-          let pointOnPoly = boundingPoly.closestPointOnPolyCoords(newX, newY);
+          let pointOnPoly = boundingPoly.closestPointOnPolyCoords(
+            newX,
+            newY,
+            boundingPoly.colliderVertices
+          );
           pointOnPoly = boundingPoly.movePointCloserToCenterCoord(
             pointOnPoly[0],
             pointOnPoly[1],

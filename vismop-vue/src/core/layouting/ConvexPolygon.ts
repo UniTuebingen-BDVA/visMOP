@@ -3,11 +3,21 @@ import { Polygon } from './Polygon';
 export class ConvexPolygon extends Polygon {
   // vertices are considered counterclockwise
   boundingBox: Polygon = new Polygon();
+  colliderVertices: vec2[] = [];
 
   // applies current transformation to vertex arrays
   applyTransformation() {
     super.applyTransformation();
     this.calculateOptimalBoundingBox();
+  }
+
+  calculateColliders() {
+    this.applyTransformation();
+    this.scalePolygon(0.9);
+    this.transformedVertices.forEach((vert) => {
+      this.colliderVertices.push(vec2.clone(vert));
+    });
+    this.clearTransformation();
   }
 
   calculateOptimalBoundingBox() {
