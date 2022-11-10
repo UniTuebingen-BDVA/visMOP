@@ -27,11 +27,17 @@
             </div>
             <div class="col-8">
               <div>
-                {{
-                  pathwayLayouting.pathwayList.find(
-                    (elem) => elem.value === element.pathway
-                  )?.value
-                }}
+                <a
+                  class="doc-link"
+                  :href="
+                    'https://reactome.org/content/detail/' + element.pathway
+                  "
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {{ element.pathway }}
+                  <q-icon name="fa-solid fa-arrow-up-right-from-square" />
+                </a>
               </div>
             </div>
           </div>
