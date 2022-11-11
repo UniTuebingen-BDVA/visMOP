@@ -5,6 +5,8 @@
     "target": "esnext",
     "module": "commonjs", // was "esnext" but this didnt work with mocha
     "strict": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "node",
