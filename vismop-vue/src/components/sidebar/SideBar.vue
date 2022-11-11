@@ -332,7 +332,7 @@ const dataQuery = () => {
 
 const queryReactome = () => {
   const mainStore = useMainStore();
-
+  mainStore.resetStore();
   $q.loading.show();
   const payload = {
     targetOrganism: targetOrganism.value,
