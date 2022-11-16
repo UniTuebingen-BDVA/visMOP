@@ -17,7 +17,7 @@ def generate_pickles(file_path, mapping_file_name):
     with open(data_path / mapping_file_name, encoding="utf8") as fh:
         for line in fh:
             line_split = line.strip().split("\t")
-            uniprot_ID = line_split[0]
+            query_ID = line_split[0]
             reactome_entity_ID = line_split[1]
             entity_name = line_split[2]
             reactome_pathway_ID = line_split[3]
@@ -25,20 +25,47 @@ def generate_pickles(file_path, mapping_file_name):
             organism = line_split[7].replace(" ", "_")
             if organism not in database_2_reactome:
                 database_2_reactome[organism] = {}
-            if uniprot_ID in database_2_reactome[organism]:
-                if reactome_entity_ID in database_2_reactome[organism][uniprot_ID]:
-                    database_2_reactome[organism][uniprot_ID][reactome_entity_ID][
+            # for non reactome ID query
+            if query_ID in database_2_reactome[organism]:
+                if reactome_entity_ID in database_2_reactome[organism][query_ID]:
+                    database_2_reactome[organism][query_ID][reactome_entity_ID][
                         "pathways"
                     ].append((reactome_pathway_ID, reactome_pathway_Name))
                 else:
-                    database_2_reactome[organism][uniprot_ID][reactome_entity_ID] = {
+                    database_2_reactome[organism][query_ID][reactome_entity_ID] = {
                         "reactome_id": reactome_entity_ID,
                         "name": entity_name,
                         "pathways": [(reactome_pathway_ID, reactome_pathway_Name)],
                     }
             else:
-                database_2_reactome[organism][uniprot_ID] = {}
-                database_2_reactome[organism][uniprot_ID][reactome_entity_ID] = {
+                database_2_reactome[organism][query_ID] = {}
+                database_2_reactome[organism][query_ID][reactome_entity_ID] = {
+                    "reactome_id": reactome_entity_ID,
+                    "name": entity_name,
+                    "pathways": [(reactome_pathway_ID, reactome_pathway_Name)],
+                }
+            # for reactome ID query
+            if reactome_entity_ID in database_2_reactome[organism]:
+                if (
+                    reactome_entity_ID
+                    in database_2_reactome[organism][reactome_entity_ID]
+                ):
+                    database_2_reactome[organism][reactome_entity_ID][
+                        reactome_entity_ID
+                    ]["pathways"].append((reactome_pathway_ID, reactome_pathway_Name))
+                else:
+                    database_2_reactome[organism][reactome_entity_ID][
+                        reactome_entity_ID
+                    ] = {
+                        "reactome_id": reactome_entity_ID,
+                        "name": entity_name,
+                        "pathways": [(reactome_pathway_ID, reactome_pathway_Name)],
+                    }
+            else:
+                database_2_reactome[organism][reactome_entity_ID] = {}
+                database_2_reactome[organism][reactome_entity_ID][
+                    reactome_entity_ID
+                ] = {
                     "reactome_id": reactome_entity_ID,
                     "name": entity_name,
                     "pathways": [(reactome_pathway_ID, reactome_pathway_Name)],
