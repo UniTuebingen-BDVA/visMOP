@@ -5,12 +5,10 @@ import {
   overviewNode,
   overviewGraphData,
 } from '@/core/graphTypes';
-import { pfsPrime_modules } from '@/core/layouting/noverlap_pfsp_module';
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from '../generalTypes';
-import hull from 'hull.js';
 import ClusterHulls from '@/core/layouting/convexHullsForClusters';
-import overviewGraph from './reactomeOverviewNetwork/overviewNetwork';
+import OverviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
 import { useMainStore } from '@/stores';
 import { ConvexPolygon } from '../layouting/ConvexPolygon';
@@ -68,7 +66,6 @@ export function generateGraphData(
       index: index,
       // label: "",
       attributes: {
-        entryType: 'temp',
         type: 'image',
         modNum: modNum,
         image: glyphs[id],
@@ -94,7 +91,7 @@ export function generateGraphData(
         averageProteomics: glyphData[id].proteomics.available
           ? glyphData[id].proteomics.meanFoldchange
           : NaN,
-        averageMetabolonmics: glyphData[id].metabolomics.available
+        averageMetabolomics: glyphData[id].metabolomics.available
           ? glyphData[id].metabolomics.meanFoldchange
           : NaN,
         transcriptomicsNodeState: glyphData[id].transcriptomics.available
@@ -121,12 +118,12 @@ export function generateGraphData(
         nodeType: entry.rootId === entry.pathwayId ? 'root' : 'regular',
         size:
           entry.rootId === entry.pathwayId
-            ? overviewGraph.ROOT_DEFAULT_SIZE
-            : overviewGraph.DEFAULT_SIZE,
+            ? OverviewGraph.ROOT_DEFAULT_SIZE
+            : OverviewGraph.DEFAULT_SIZE,
         nonHoverSize:
           entry.rootId === entry.pathwayId
-            ? overviewGraph.ROOT_DEFAULT_SIZE
-            : overviewGraph.DEFAULT_SIZE,
+            ? OverviewGraph.ROOT_DEFAULT_SIZE
+            : OverviewGraph.DEFAULT_SIZE,
         fixed: false, // fixed property on nodes excludes nodes from layouting
       },
     };

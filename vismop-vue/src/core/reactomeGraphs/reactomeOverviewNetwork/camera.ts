@@ -1,7 +1,7 @@
 import Sigma from 'sigma';
 import { PlainObject } from 'sigma/types';
 import { animateNodes } from 'sigma/utils/animate';
-import overviewGraph from './overviewNetwork';
+import OverviewGraph from './overviewNetwork';
 
 /**
  * Pans and zooms to the specified Node
@@ -37,7 +37,7 @@ function panToNode(renderer: Sigma, nodeKey: string): void {
 /**
  *  Defines behaviour for node animations triggered by the zoom level
  */
-export function zoomLod(this: overviewGraph): void {
+export function zoomLod(this: OverviewGraph): void {
   //console.log( 'zoomBehaivour Last/Now: ',this.prevFrameZoom, this.camera.ratio);
   if (this.prevFrameZoom > this.lodRatio && this.camera.ratio < this.lodRatio) {
     if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
@@ -52,11 +52,11 @@ export function zoomLod(this: overviewGraph): void {
           x: attributes.moduleFixed ? attributes.x : attributes.layoutX,
           y: attributes.moduleFixed ? attributes.y : attributes.layoutY,
           size: attributes.isRoot
-            ? overviewGraph.ROOT_DEFAULT_SIZE
-            : overviewGraph.DEFAULT_SIZE,
+            ? OverviewGraph.ROOT_DEFAULT_SIZE
+            : OverviewGraph.DEFAULT_SIZE,
           nonHoverSize: attributes.isRoot
-            ? overviewGraph.ROOT_DEFAULT_SIZE
-            : overviewGraph.DEFAULT_SIZE,
+            ? OverviewGraph.ROOT_DEFAULT_SIZE
+            : OverviewGraph.DEFAULT_SIZE,
         };
         console.log(tarPositions[node]);
       }
@@ -111,6 +111,6 @@ export function zoomLod(this: overviewGraph): void {
 /**
  * Resets camera zoom and position
  */
-export function resetZoom(this: overviewGraph) {
+export function resetZoom(this: OverviewGraph) {
   this.camera.animatedReset({ duration: 1000 });
 }

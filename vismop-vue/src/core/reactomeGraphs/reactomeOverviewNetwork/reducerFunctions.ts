@@ -1,4 +1,4 @@
-import overviewGraph from './overviewNetwork';
+import OverviewGraph from './overviewNetwork';
 import { Attributes } from 'graphology-types';
 import { overviewColors } from '@/core/colors';
 
@@ -10,7 +10,7 @@ import { overviewColors } from '@/core/colors';
  * @returns reduced Attributes
  */
 export function nodeReducer(
-  this: overviewGraph,
+  this: OverviewGraph,
   node: string,
   data: Attributes
 ): Attributes {
@@ -165,7 +165,7 @@ export function nodeReducer(
  */
 
 export function edgeReducer(
-  this: overviewGraph,
+  this: OverviewGraph,
   edge: string,
   data: Attributes
 ): Attributes {

@@ -17,7 +17,12 @@ import { bidirectional, dijkstra, edgePathFromNodePath } from 'graphology-shorte
 import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
-import { filterElements, setAverageFilter, setRootFilter } from './filter';
+import {
+  filterElements,
+  setAverageFilter,
+  setRootNegativeFilter,
+  setRootFilter,
+} from './filter';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
@@ -27,11 +32,11 @@ import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
 import _ from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
-import { animateNodes } from 'sigma/utils/animate';
+import FilterData from './filterData';
 import { graphExtent, createNormalizationFunction } from 'sigma/utils';
 import { Coordinates } from 'sigma/types';
 
-export default class overviewGraph {
+export default class OverviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 3 * 2;
   static readonly ROOT_DEFAULT_SIZE = 7.5 * 2;
@@ -65,92 +70,48 @@ export default class overviewGraph {
 
   // filter
   protected filtersChanged = false;
+  protected filterFuncNegativeRoot: (x: string) => boolean = (_x: string) =>
+    true;
   protected filterFuncRoot: (x: string) => boolean = (_x: string) => true;
   protected filterFuncTrans: (x: number) => boolean = (_x: number) => true;
+  protected filterFuncAmtAbsTrans: (x: number) => boolean = (_x: number) =>
+    true;
+  protected filterFuncAmtRelTrans: (x: number) => boolean = (_x: number) =>
+    true;
   protected filterFuncProt: (x: number) => boolean = (_x: number) => true;
+  protected filterFuncAmtAbsProt: (x: number) => boolean = (_x: number) => true;
+  protected filterFuncAmtRelProt: (x: number) => boolean = (_x: number) => true;
   protected filterFuncMeta: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncSumRegulatedRelative: (x: number) => boolean = (
-    _x: number
-  ) => true;
-  protected filterFuncSumRegulatedAbsolute: (x: number) => boolean = (
-    _x: number
-  ) => true;
+  protected filterFuncAmtAbsMeta: (x: number) => boolean = (_x: number) => true;
+  protected filterFuncAmtRelMeta: (x: number) => boolean = (_x: number) => true;
+  protected filterFuncAmtRelSum: (x: number) => boolean = (_x: number) => true;
+  protected filterFuncAmtAbsSum: (x: number) => boolean = (_x: number) => true;
 
-  protected regulatedFilter: {
-    relative: filterValues;
-    absolute: filterValues;
-  } = {
-    relative: {
-      limits: {
-        min: 0,
-        max: 0,
-      },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-    absolute: {
-      limits: {
-        min: 0,
-        max: 0,
-      },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
+  protected regulateFilterTrans = {
+    relative: new FilterData(),
+    absolute: new FilterData(),
+  };
+  protected regulateFilterProt = {
+    relative: new FilterData(),
+    absolute: new FilterData(),
+  };
+  protected regulateFilterMeta = {
+    relative: new FilterData(),
+    absolute: new FilterData(),
+  };
+
+  protected regulatedFilter = {
+    relative: new FilterData(),
+    absolute: new FilterData(),
   };
   protected averageFilter: {
     transcriptomics: filterValues;
     proteomics: filterValues;
     metabolomics: filterValues;
   } = {
-    transcriptomics: {
-      limits: {
-        min: 0,
-        max: 0,
-      },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-    proteomics: {
-      limits: {
-        min: 0,
-        max: 0,
-      },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
-    metabolomics: {
-      limits: {
-        min: 0,
-        max: 0,
-      },
-      value: {
-        min: 0,
-        max: 0,
-      },
-      filterActive: false,
-      inside: false,
-      disable: true,
-    },
+    transcriptomics: new FilterData(),
+    proteomics: new FilterData(),
+    metabolomics: new FilterData(),
   };
   polygons: { [key: number]: ConvexPolygon };
   initialFa2Params: fa2LayoutParams;
@@ -401,8 +362,8 @@ export default class overviewGraph {
             attributes.y = attributes.yOnClusterFocus;
             attributes.moduleFixed = true;
             attributes.zoomHidden = false;
-            attributes.size = overviewGraph.FOCUS_NODE_SIZE; // size behavíour is strange!
-            attributes.nonHoverSize = overviewGraph.FOCUS_NODE_SIZE;
+            attributes.size = OverviewGraph.FOCUS_NODE_SIZE; // size behavíour is strange!
+            attributes.nonHoverSize = OverviewGraph.FOCUS_NODE_SIZE;
           } else if (!defocus && !attributes.isRoot) {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
@@ -418,15 +379,15 @@ export default class overviewGraph {
             attributes.moduleFixed = false;
             attributes.moduleHidden = false;
             attributes.size = attributes.isRoot
-              ? overviewGraph.ROOT_DEFAULT_SIZE
+              ? OverviewGraph.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'moduleNode'
-              ? overviewGraph.MODULE_DEFAULT_SIZE
-              : overviewGraph.DEFAULT_SIZE;
+              ? OverviewGraph.MODULE_DEFAULT_SIZE
+              : OverviewGraph.DEFAULT_SIZE;
             attributes.nonHoverSize = attributes.isRoot
-              ? overviewGraph.ROOT_DEFAULT_SIZE
+              ? OverviewGraph.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'moduleNode'
-              ? overviewGraph.MODULE_DEFAULT_SIZE
-              : overviewGraph.DEFAULT_SIZE;
+              ? OverviewGraph.MODULE_DEFAULT_SIZE
+              : OverviewGraph.DEFAULT_SIZE;
           }
         });
 
@@ -645,9 +606,9 @@ export default class overviewGraph {
         isRoot: false,
         zIndex: 1,
         color: overviewColors.modules,
-        size: overviewGraph.MODULE_DEFAULT_SIZE,
+        size: OverviewGraph.MODULE_DEFAULT_SIZE,
         nodeType: 'moduleNode',
-        nonHoverSize: overviewGraph.MODULE_DEFAULT_SIZE,
+        nonHoverSize: OverviewGraph.MODULE_DEFAULT_SIZE,
         fixed: false,
         up: { x: xPos, y: yPos, gamma: 0 },
         type: 'image',
@@ -661,6 +622,14 @@ export default class overviewGraph {
         zoomHidden: this.camera.ratio >= this.lodRatio ? true : true,
         moduleHidden: false,
         moduleFixed: false,
+        forceLabel: false,
+        averageTranscriptomics: 0,
+        averageProteomics: 0,
+        averageMetabolomics: 0,
+        transcriptomicsNodeState: { regulated: 0, total: 0 },
+        proteomicsNodeState: { regulated: 0, total: 0 },
+        metabolomicsNodeState: { regulated: 0, total: 0 },
+        rootId: '',
       };
       this.graph.addNode(key, moduleNode);
     }
@@ -669,6 +638,7 @@ export default class overviewGraph {
   public resetZoom = resetZoom;
   public setAverageFilter = setAverageFilter;
   public setRootFilter = setRootFilter;
+  public setRootNegativeFilter = setRootNegativeFilter;
   /**
    * Refresehes sets current pathway to the version selected in the store
    */

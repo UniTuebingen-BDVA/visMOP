@@ -546,8 +546,8 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
             NodeMatrix[n1 + NODE_DX] += xDist * factor;
             NodeMatrix[n1 + NODE_DY] += yDist * factor;
 
-            NodeMatrix[n2 + NODE_DX] += xDist * factor;
-            NodeMatrix[n2 + NODE_DY] += yDist * factor;
+            NodeMatrix[n2 + NODE_DX] -= xDist * factor;
+            NodeMatrix[n2 + NODE_DY] -= yDist * factor;
           } else if (distance < 0) {
             factor =
               100 *
@@ -757,6 +757,7 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
         newX =
           NodeMatrix[n + NODE_X] +
           NodeMatrix[n + NODE_DX] * (nodespeed / options.slowDown);
+        NodeMatrix[n + NODE_X] = newX;
 
         newY =
           NodeMatrix[n + NODE_Y] +
@@ -817,6 +818,7 @@ export default function iterate(options, NodeMatrix, EdgeMatrix, boundingPoly) {
         newX =
           NodeMatrix[n + NODE_X] +
           NodeMatrix[n + NODE_DX] * (nodespeed / options.slowDown);
+        NodeMatrix[n + NODE_X] = newX;
 
         newY =
           NodeMatrix[n + NODE_Y] +

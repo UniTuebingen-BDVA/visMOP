@@ -65,7 +65,9 @@ function abstractSynchronousLayout(assign, graph, params, boundingPoly) {
       'graphology-layout-forceatlas2: you should provide a positive number of iterations.'
     );
 
-  var getEdgeWeight = createEdgeWeightGetter(params.getEdgeWeight).fromEntry;
+  var getEdgeWeight = createEdgeWeightGetter(
+    'getEdgeWeight' in params ? params.getEdgeWeight : 'weight'
+  ).fromEntry;
 
   var outputReducer =
     typeof params.outputReducer === 'function' ? params.outputReducer : null;
@@ -81,6 +83,7 @@ function abstractSynchronousLayout(assign, graph, params, boundingPoly) {
 
   // Building matrices
   var matrices = helpers.graphToByteArrays(graph, getEdgeWeight);
+
   var i;
 
   // Iterating
