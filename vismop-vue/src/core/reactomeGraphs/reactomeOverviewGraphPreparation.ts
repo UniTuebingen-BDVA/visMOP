@@ -222,9 +222,16 @@ function generateForceGraphEdge(
     target: entry2,
     undirected: true,
     attributes: {
+      weight: 0,
+      len: 0,
+      lock: false,
+      skip: false,
+      source: entry1,
+      target: entry2,
+      bezeierControlPoints: [],
       zIndex: 0,
       hidden: true,
-      type: type === 'maplink' ? 'dashed' : 'line',
+      type: "dashed",//type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'
           ? overviewColors.edgeMaplink

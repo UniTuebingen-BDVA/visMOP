@@ -30,6 +30,7 @@
     "graphology-shortest-path": "^2.0.1",
     "hull.js": "^1.0.2",
     "lodash": "^4.17.21",
+    "mathjs": "^11.3.2",
     "pinia": "^2.0.23",
     "quasar": "^2.9.2",
     "roboto-fontface": "*",

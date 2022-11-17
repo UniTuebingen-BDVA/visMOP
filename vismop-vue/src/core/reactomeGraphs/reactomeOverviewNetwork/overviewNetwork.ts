@@ -2,16 +2,18 @@ import { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
 import {
   additionalData,
+  edge,
   overviewGraphData,
   overviewNodeAttr,
 } from '@/core/graphTypes';
 //import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
+import { BezierEdgeProgram } from '@/core/custom-nodes/bezier-curve-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
-import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
+import { bidirectional, dijkstra, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
@@ -26,6 +28,8 @@ import { overviewColors } from '@/core/colors';
 import _ from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 import { animateNodes } from 'sigma/utils/animate';
+import { graphExtent, createNormalizationFunction } from 'sigma/utils';
+import { Coordinates } from 'sigma/types';
 
 export default class overviewGraph {
   // constants
@@ -167,7 +171,105 @@ export default class overviewGraph {
     this.addModuleOverviewNodes();
     this.relayoutGraph(this.initialFa2Params);
 
+    this.generateBezierControlPoints();
+
     this.refreshCurrentPathway();
+  }
+  
+  generateBezierControlPoints() {
+
+    // hyper parameters
+    const k = 2; // maximum distortion
+    const d = 2; // edge weight factor
+
+    const graph = this.renderer.getGraph();
+    
+    const nodeKeys = this.renderer.getGraph().nodes();
+    const nodePositions : {[key:string]: {x: number, y:number}}= {};
+    nodeKeys.forEach(key => {
+      const nodeAttribs = graph.getNodeAttributes(key);
+      nodePositions[key] = {x: nodeAttribs.x , y: nodeAttribs.y};
+    });
+    
+    const edgeKeys = this.renderer.getGraph().edges();
+
+    edgeKeys.forEach(key => {
+      const edgeAttribs = graph.getEdgeAttributes(key);
+
+      // retriving & calculating necessary data
+      const source = edgeAttribs.source;
+      const target = edgeAttribs.target;
+
+      const sx = graph.getNodeAttribute(source, "x");   //nodePositions[source].x;
+      const sy = graph.getNodeAttribute(source, "y");   //nodePositions[source].y;
+
+      const tx = graph.getNodeAttribute(target, "x");
+      const ty = graph.getNodeAttribute(target, "y");
+
+      const dx = tx - sx;
+      const dy = ty - sy;
+      const len = (dx * dx + dy * dy) ** (1/2);
+
+      graph.setEdgeAttribute(key, "len", len);
+      graph.setEdgeAttribute(key, "weight", len ** d);
+    });
+
+    edgeKeys.sort((a, b) => graph.getEdgeAttribute(b, "weight") - graph.getEdgeAttribute(a, "weight")); // sorting edgeKeys by weight descending
+
+    edgeKeys.forEach(edgeKey => {
+      const edge = graph.getEdgeAttributes(edgeKey);
+      if (edge.lock) {
+        return;
+      }
+      graph.setEdgeAttribute(edgeKey, "skip", true);
+
+      const source = edge.source;
+      const target = edge.target;
+
+      graph.dropEdge(edgeKey); // remove edge before dijkstra
+
+      const nodePath = dijkstra.bidirectional(graph, source, target, "weight");
+      let path = null;
+      if(nodePath != null) {
+        path = edgePathFromNodePath(graph, nodePath);
+      }
+
+      graph.addEdgeWithKey(edgeKey, edge.source, edge.target, edge); // add edge again after dijkstra
+
+      if (path === null) {
+        graph.setEdgeAttribute(edgeKey, "skip", false);
+        return;
+      }
+      if (this.pathLength(path) > k * edge.len) {
+        graph.setEdgeAttribute(edgeKey, "skip", false);
+        return;
+      }
+      path.forEach(pathEdge => {
+        graph.setEdgeAttribute(pathEdge, "lock", true);
+      })
+
+      
+      const nodeExtent = graphExtent(graph);
+      const normalizationFunction = createNormalizationFunction(nodeExtent); 
+
+      // get vertecies of path
+      const vertecies: number[]= [];
+      nodePath.forEach(pathNode => {
+        const norm_xy: Coordinates = { x: graph.getNodeAttribute(pathNode, "x"), y: graph.getNodeAttribute(pathNode, "y") };
+        normalizationFunction.applyTo(norm_xy);
+        vertecies.push(norm_xy.x , norm_xy.y);
+      })
+
+      graph.setEdgeAttribute(edgeKey, "bezeierControlPoints", vertecies);
+    });
+  }
+
+  pathLength(path: string[]): number {
+    let path_len = 0;
+    path.forEach(edgeKey => {
+      path_len += this.renderer.getGraph().getEdgeAttribute(edgeKey, "len");
+    })
+    return path_len;
   }
 
   /**
@@ -198,7 +300,7 @@ export default class overviewGraph {
         labelRenderedSizeThreshold: 999999,
         edgeProgramClasses: {
           ...DEFAULT_SETTINGS.edgeProgramClasses,
-          dashed: DashedEdgeProgram,
+          dashed: BezierEdgeProgram,
         },
         nodeProgramClasses: {
           ...DEFAULT_SETTINGS.nodeProgramClasses,

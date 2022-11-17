@@ -33,7 +33,7 @@ void main(void) {
 
   if (fract(distFromStart / (u_dashLength + u_gapLength)) > u_gapLength/(u_dashLength + u_gapLength))
     //discard;
-    outColor =  vec4(0,1,0,1);//mix(vec4(0.3 * v_color[0],0.3 * v_color[1], 0.3 * v_color[2], v_color[3]), color0, t); 
+    outColor =  mix(vec4(0.3 * v_color[0],0.3 * v_color[1], 0.3 * v_color[2], v_color[3]), color0, t); 
   else
     outColor =  mix(v_color, color0, t);
 }

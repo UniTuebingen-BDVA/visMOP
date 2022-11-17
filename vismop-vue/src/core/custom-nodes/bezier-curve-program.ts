@@ -23,16 +23,18 @@
 import { floatColor, canUse32BitsIndices } from 'sigma/utils';
 import { NodeDisplayData } from 'sigma/types';
 import { ColorfadeEdgeDisplayData } from './types';
-import vertexShaderSource from './dashed-edge-vertex-shader.glsl?raw';
-import fragmentShaderSource from './dashed-edge-fragment-shader.glsl?raw';
+import vertexShaderSource from './bezier-curve-vertex-shader.glsl?raw';
+import fragmentShaderSource from './bezier-curve-fragment-shader.glsl?raw';
 import { AbstractEdgeProgram } from 'sigma/rendering/webgl/programs/common/edge';
 import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
 
-const POINTS = 4;
+
+const bez_sample_count = 20;
+const POINTS = (bez_sample_count - 1) * 4;
 const ATTRIBUTES = 5;
 const STRIDE = POINTS * ATTRIBUTES;
 
-export default class EdgeProgram extends AbstractEdgeProgram {
+export class BezierEdgeProgram extends AbstractEdgeProgram {
   IndicesArray: Uint32ArrayConstructor | Uint16ArrayConstructor;
   indicesArray: Uint32Array | Uint16Array;
   indicesBuffer: WebGLBuffer;
@@ -170,10 +172,11 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     const indices = new this.IndicesArray(size);
 
     for (let i = 0, c = 0; i < l; i += 4) {
+      // triangle 1
       indices[c++] = i;
       indices[c++] = i + 1;
       indices[c++] = i + 2;
-
+      // triangle 2
       indices[c++] = i + 2;
       indices[c++] = i + 1;
       indices[c++] = i + 3;
@@ -189,6 +192,49 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     const gl = this.gl;
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicesArray, gl.STATIC_DRAW);
   }
+
+  fact(n: number): number {
+    var result = 1;
+    for(var i = 2; i <=n; ++i) {
+      result *= i;
+    }
+    return result;
+  }
+ 
+  // bezier functions:
+  comb(n: number, k: number): number {
+    const fact = this.fact;
+
+    return fact(n) / (fact(k) * fact(n-k))
+  }
+
+  get_bezier_curve(points: Array<Array<number>>): Function {
+    const n = points.length - 1;
+
+    return (t: number): Array<number> => {
+      var sum_x = 0;
+      var sum_y = 0;
+
+      for(var i = 0; i <= n; ++i) {
+
+        sum_x += this.comb(n,i) * t ** i * (1-t) ** (n-i) * points[i][0]
+        sum_y += this.comb(n,i) * t ** i * (1-t) ** (n-i) * points[i][1]
+      }
+      return [sum_x, sum_y];
+    }
+  }
+
+  evaluate_bezier(points: Array<Array<number>>, total: number): Array<Array<number>> {
+    const n = total -1;
+    var bezier = this.get_bezier_curve(points);
+    var new_points = [];
+    for(var i = 0; i <= n; i++) {
+      const t = i / n;
+      new_points.push(bezier(t));
+    }
+    return new_points;
+  }
+  
 
   process(
     sourceData: NodeDisplayData,
@@ -208,8 +254,11 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     const y1 = sourceData.y;
     const x2 = targetData.x;
     const y2 = targetData.y;
-    const color = floatColor(data.color);
+    const color = floatColor(data.color); 
 
+    const bezeierControlPoints = data.bezeierControlPoints;
+    
+    
     // Computing normals
     const dx = x2 - x1;
     const dy = y2 - y1;
@@ -219,43 +268,115 @@ export default class EdgeProgram extends AbstractEdgeProgram {
     let n2 = 0;
 
     if (len) {
-      len = 1 / Math.sqrt(len);
+      let inv_len = 1 / Math.sqrt(len);
 
-      n1 = -dy * len * thickness;
-      n2 = dx * len * thickness;
+      n1 = -dy * inv_len * thickness;
+      n2 = dx * inv_len * thickness;
     }
 
     let i = POINTS * ATTRIBUTES * offset;
 
     const array = this.array;
 
-    // First point
-    array[i++] = x1;
-    array[i++] = y1;
-    array[i++] = n1;
-    array[i++] = n2;
-    array[i++] = color;
+    const points = [];
 
-    // First point flipped
-    array[i++] = x1;
-    array[i++] = y1;
-    array[i++] = -n1;
-    array[i++] = -n2;
-    array[i++] = color;
+    if(bezeierControlPoints.length >= 2) {
 
-    // Second point
-    array[i++] = x2;
-    array[i++] = y2;
-    array[i++] = n1;
-    array[i++] = n2;
-    array[i++] = color;
+      const bx1 = bezeierControlPoints[0];
+      const by1 = bezeierControlPoints[1];
 
-    // Second point flipped
-    array[i++] = x2;
-    array[i++] = y2;
-    array[i++] = -n1;
-    array[i++] = -n2;
-    array[i] = color;
+      const bx2 = bezeierControlPoints[bezeierControlPoints.length - 1];
+      const by2 = bezeierControlPoints[bezeierControlPoints.length];
+
+      // Computing normals
+      const bezier_dx =  bx2 - bx1;
+      const bezier_dy =  by2 - by1;
+
+      let bezier_len = bezier_dx * bezier_dx + bezier_dy * bezier_dy;
+
+      const bezierCorrectionFactor = len / bezier_len;
+
+      //const x_offset = 
+
+
+      for(let i =0; i < bezeierControlPoints.length/2; ++i) {
+        points.push([bezeierControlPoints[i*2], bezeierControlPoints[i*2 + 1]])
+      }
+    }
+    else {
+      points.push([x1,y1],[x2,y2]);
+    }
+    console.log("control points", bezeierControlPoints);
+    console.log("start, end", [[x1,y1],[x2,y2]]);
+    /*
+    const xm1 = x1 + 0.25 * dx + n1 * len / 4;
+    const ym1 = y1 + 0.25 * dy + n2 * len / 4;
+    
+    const xm2 = x1 + 0.75 * dx - n1 * len / 4;
+    const ym2 = y1 + 0.75 * dy - n2 * len / 4;
+    points.push(
+      [xm1,ym1],
+      [xm2,ym2]
+    );
+    */
+
+    const bez_samples = this.evaluate_bezier(points, bez_sample_count);
+
+    // for each sample point pair from the bezier curve create
+    // four vertecies (to form a line segment)
+    for(var n = 0; n < bez_samples.length - 1; ++n) {
+      const p1 = bez_samples[n];
+      const p2 = bez_samples[n+1];
+
+      const p1x = p1[0];
+      const p1y = p1[1];
+
+      const p2x = p2[0];
+      const p2y = p2[1];
+
+      // Computing normals
+      const dx = p2x - p1x;
+      const dy = p2y - p1y;
+
+      let len = dx * dx + dy * dy;
+      let n1 = 0;
+      let n2 = 0;
+
+      if (len) {
+        let inv_len = 1 / Math.sqrt(len);
+
+        n1 = -dy * inv_len * thickness;
+        n2 = dx * inv_len * thickness;
+      }
+
+      // First point
+      array[i++] = p1x;
+      array[i++] = p1y;
+      array[i++] = n1;
+      array[i++] = n2;
+      array[i++] = color;
+
+      // First point flipped
+      array[i++] = p1x;
+      array[i++] = p1y;
+      array[i++] = -n1;
+      array[i++] = -n2;
+      array[i++] = color;
+
+      // Second point
+      array[i++] = p2x;
+      array[i++] = p2y;
+      array[i++] = n1;
+      array[i++] = n2;
+      array[i++] = color;
+
+      // Second point flipped
+      array[i++] = p2x;
+      array[i++] = p2y;
+      array[i++] = -n1;
+      array[i++] = -n2;
+      array[i++] = color;
+    }
   }
 
   render(params: RenderParams): void {

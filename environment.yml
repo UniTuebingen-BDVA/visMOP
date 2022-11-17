@@ -61,4 +61,4 @@ dependencies:
       - scikit-learn==1.1.1
       - scipy==1.8.0
       - reactome2py==3.0.0
-      - umap_learn==0.5.3
+      - umap_learn==0.5.3 

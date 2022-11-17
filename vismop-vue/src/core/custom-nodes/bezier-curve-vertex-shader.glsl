@@ -3,7 +3,6 @@
 
 in vec2 a_position;
 in vec2 a_normal;
-in float a_thickness;
 in vec4 a_color;
 
 uniform mat3 u_matrix;
@@ -53,6 +52,6 @@ void main() {
   v_thickness = webGLThickness / u_sqrtZoomRatio;
 
   v_normal = unitNormal;
-  v_color = vec4(0, 0, 1, 1);//a_color;
+  v_color = a_color;
   v_color.a *= bias;
 }
