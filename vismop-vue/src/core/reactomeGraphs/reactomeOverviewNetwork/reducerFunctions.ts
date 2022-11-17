@@ -201,6 +201,6 @@ export function edgeReducer(
       };
     }
 
-    return { ...data, hidden: false, color: overviewColors.edgesHighlight };
+    return { ...data, hidden: true, color: overviewColors.edgesHighlight };
   } else return data;
 }

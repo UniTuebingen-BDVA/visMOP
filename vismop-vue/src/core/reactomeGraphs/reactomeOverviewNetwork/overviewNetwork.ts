@@ -145,14 +145,6 @@ export default class OverviewGraph {
     const d = 2; // edge weight factor
 
     const graph = this.renderer.getGraph();
-    
-    const nodeKeys = this.renderer.getGraph().nodes();
-    const nodePositions : {[key:string]: {x: number, y:number}}= {};
-    nodeKeys.forEach(key => {
-      const nodeAttribs = graph.getNodeAttributes(key);
-      nodePositions[key] = {x: nodeAttribs.x , y: nodeAttribs.y};
-    });
-    
     const edgeKeys = this.renderer.getGraph().edges();
 
     edgeKeys.forEach(key => {
@@ -162,8 +154,8 @@ export default class OverviewGraph {
       const source = edgeAttribs.source;
       const target = edgeAttribs.target;
 
-      const sx = graph.getNodeAttribute(source, "x");   //nodePositions[source].x;
-      const sy = graph.getNodeAttribute(source, "y");   //nodePositions[source].y;
+      const sx = graph.getNodeAttribute(source, "x");
+      const sy = graph.getNodeAttribute(source, "y");
 
       const tx = graph.getNodeAttribute(target, "x");
       const ty = graph.getNodeAttribute(target, "y");
