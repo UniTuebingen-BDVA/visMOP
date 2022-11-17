@@ -171,7 +171,6 @@ export function drawHover(
       const endAngle = Math.atan2(endPos[1] - data.y, endPos[0] - data.x);
 
       // sort points by angle to center
-      console.log(data.label);
       const angleOrder = addAngleOrder(
         [
           [rootX1, rootY1],
@@ -248,7 +247,6 @@ export function drawHover(
             angleOrder[3].coords[0] > endPos[0]));
             */
 
-      console.log(normalized);
       //flip y aswell due to inverted coord system
 
       context.beginPath();

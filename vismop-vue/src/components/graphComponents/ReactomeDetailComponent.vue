@@ -1,13 +1,7 @@
 <template>
   <div>
-    <q-card
-      :class="[
-        minimizeButton ? 'detailComponentSmaller' : '',
-        expandButton ? 'detailComponentLarger' : '',
-        'detailComponent',
-      ]"
-    >
-      <div class="col">
+    <q-card :class="['maxWidth' + sizeClass, 'detailComponent']">
+      <div :class="['maxWidth' + sizeClass, 'col']">
         <q-select
           v-model="pathwaySelection"
           filled
@@ -33,43 +27,32 @@
             />
           </template>
         </q-select>
+        <q-btn
+          round
+          color="primary"
+          class="cycleButton"
+          :icon="sizeIcon"
+          @click="cycleSize"
+        />
         <div
           :id="contextID"
-          :class="[
-            minimizeButton ? 'webglContainerDetailSmaller' : '',
-            expandButton ? 'webglContainerDetailLarger' : '',
-            'webglContainerDetail',
-          ]"
+          :class="['svgContainerDetail' + sizeClass, 'svgContainerDetail']"
         ></div>
-        <q-card-actions>
-          <q-fab icon="keyboard_arrow_down" direction="down">
-            <q-fab-action
-              icon="mdi-arrow-expand"
-              color="primary"
-              @click="expandComponent"
-            ></q-fab-action>
-            <q-fab-action
-              icon="mdi-arrow-collapse"
-              color="primary"
-              @click="minimizeComponent"
-            ></q-fab-action>
-          </q-fab>
-        </q-card-actions>
       </div>
     </q-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import ReactomeDetailView from '../core/reactomeGraphs/reactomeDetailView';
+import ReactomeDetailView from '../../core/reactomeGraphs/reactomeDetailView';
 import {
   graphJSON,
   layoutJSON,
   foldChangesByType,
   foldChangesByID,
   reactomeEntry,
-} from '../core/reactomeGraphs/reactomeTypes';
-import { getEntryAmounts } from '../core/reactomeGraphs/reactomeUtils';
+} from '../../core/reactomeGraphs/reactomeTypes';
+import { getEntryAmounts } from '../../core/reactomeGraphs/reactomeUtils';
 import {
   computed,
   onMounted,
@@ -107,8 +90,7 @@ const mainStore = useMainStore();
 const $q = useQuasar();
 const mutationObserver: Ref<MutationObserver | undefined> = ref(undefined);
 const pathwaySelection = ref({ title: '', value: '', text: '' });
-const expandButton = ref(false);
-const minimizeButton = ref(false);
+const sizeCycleState = ref(0);
 // const currentGraphJson = ref({})
 const currentLayoutJson: Ref<layoutJSON> = ref({} as layoutJSON);
 const currentGraphJson: Ref<graphJSON> = ref({} as graphJSON);
@@ -129,6 +111,36 @@ const pathwayDropdownOptions: Ref<
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
+
+const sizeIcon = computed(() => {
+  switch (sizeCycleState.value) {
+    case 0:
+      return 'mdi-size-s';
+    case 1:
+      return 'mdi-size-m';
+    case 2:
+      return 'mdi-size-l';
+    case 3:
+      return 'fa-solid fa-minimize';
+    default:
+      return 'mdi-size-s';
+  }
+});
+
+const sizeClass = computed(() => {
+  switch (sizeCycleState.value) {
+    case 0:
+      return 'Small';
+    case 1:
+      return 'Medium';
+    case 2:
+      return 'Large';
+    case 3:
+      return 'Minimized';
+    default:
+      return 'Small';
+  }
+});
 
 watch(pathwayLayouting, () => {
   pathwayDropdownOptions.value = pathwayLayouting.value.pathwayList;
@@ -160,6 +172,10 @@ onMounted(() => {
 
 /* METHODS */
 
+const cycleSize = () => {
+  sizeCycleState.value = (sizeCycleState.value + 1) % 4;
+};
+
 const filterFunction = (val: string, update: (n: () => void) => void) => {
   update(() => {
     const tarValue = val.toLowerCase();
@@ -172,7 +188,6 @@ const filterFunction = (val: string, update: (n: () => void) => void) => {
 
 const getJsonFiles = (reactomeID: string) => {
   $q.loading.show();
-  console.log(reactomeID);
   fetch(`/get_reactome_json_files/${reactomeID}`, {
     method: 'GET',
     headers: {
@@ -367,7 +382,6 @@ const drawDetailView = () => {
     metabolomics: {},
   };
   const fcsReactomeKey: foldChangesByID = {};
-  console.log('OVERVIEW DATA', overviewData.value);
   const pathwayData = overviewData.value.find(
     (elem: { pathwayId: string }) =>
       elem.pathwayId === pathwaySelection.value.value
@@ -386,14 +400,6 @@ const drawDetailView = () => {
     fcsReactomeKey
   );
 };
-const expandComponent = () => {
-  expandButton.value = !expandButton.value;
-  minimizeButton.value = false;
-};
-const minimizeComponent = () => {
-  minimizeButton.value = !minimizeButton.value;
-  expandButton.value = false;
-};
 const refreshSize = () => {
   currentView.value?.refreshSize();
 };
@@ -401,3 +407,55 @@ const _getTotalsFromGraphJson = () => {
   // TODO get correct totals from graph json via recursion
 };
 </script>
+<style>
+.detailComponent {
+  position: absolute !important;
+  right: 2vh;
+  top: 2vh;
+  z-index: 5;
+  display: flex;
+}
+
+.svgContainerDetail {
+  display: inline-block;
+  position: relative;
+  vertical-align: top;
+  overflow: hidden;
+  z-index: 5;
+}
+.svgContainerDetailMinimized {
+  height: 7vh !important;
+  width: 38vh !important;
+}
+.svgContainerDetailSmall {
+  height: 38vh !important;
+  width: 35vh !important;
+}
+.svgContainerDetailMedium {
+  height: 55vh !important;
+  width: 65vh !important;
+}
+.svgContainerDetailLarge {
+  height: 70vh !important;
+  width: 145vh !important;
+}
+
+.maxWidthMinimized {
+  max-width: 38vh !important;
+}
+.maxWidthSmall {
+  max-width: 35vh !important;
+}
+.maxWidthMedium {
+  max-width: 65vh !important;
+}
+.maxWidthLarge {
+  max-width: 145vh !important;
+}
+.cycleButton {
+  position: absolute !important;
+  right: 0;
+  z-index: 6;
+  margin: 9px;
+}
+</style>

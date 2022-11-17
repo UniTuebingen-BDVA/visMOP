@@ -1,10 +1,11 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import MainPage from './components/MainPage.vue';
-import SideBar from './components/SideBar.vue';
+import SideBar from './components/sidebar/SideBar.vue';
 import { Quasar, Loading } from 'quasar';
 import '@quasar/extras/roboto-font/roboto-font.css';
 import '@quasar/extras/material-icons/material-icons.css';
+import '@quasar/extras/fontawesome-v6/fontawesome-v6.css';
 
 import 'quasar/src/css/index.sass';
 import { createPinia } from 'pinia';

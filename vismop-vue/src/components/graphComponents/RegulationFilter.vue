@@ -13,7 +13,7 @@
         :model-value="filterValueInternal.value"
         :min="Math.floor(filterValueInternal.limits.min)"
         :max="Math.ceil(filterValueInternal.limits.max)"
-        :step="0.1"
+        :step="stepsize"
         label
         :color="filterValueInternal.inside ? 'primary' : 'graphFilterSlider'"
         :track-color="
@@ -21,7 +21,7 @@
         "
         :disable="filterValueInternal.disable"
         @change="
-          (val) => {
+          (val: {'min': number, 'max': number}) => {
             filterValueInternal.value = val;
           }
         "

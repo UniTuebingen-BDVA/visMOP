@@ -31,7 +31,7 @@ export function generateVoronoiCells(
   for (let index = 0; index < voronoiPolys.length; index++) {
     const polygonObj = generatePolygonObj(voronoiPolys[index]);
     polygonObj.scalePolygon(0.9);
-    polygonObj.applyTransformation();
+    polygonObj.calculateColliders();
     outData[voronoiPolys[index].site.originalObject.index] = polygonObj;
   }
   return outData;

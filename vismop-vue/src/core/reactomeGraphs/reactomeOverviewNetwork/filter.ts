@@ -45,7 +45,13 @@ function filterFunction(
     return true;
   }
 }
-
+/**
+ * Returns how many Entities are regulated (i.e. have an associated fold change) in a given pathway.
+ * Using the relative parameter determine if this is an absolute or a relative measure
+ * @param relative if a relative (to all entities in a pathway) or an absoulate abundance is returned
+ * @param attributes the node attributes of the patway in question
+ * @returns abundance of summed up entity abundance
+ */
 function getRegSum(relative: boolean, attributes: overviewNodeAttr): number {
   if (relative) {
     const enumerator =
@@ -160,6 +166,12 @@ export function setAverageFilter(
   this.renderer.refresh();
 }
 
+/**
+ * Generates a filter function to act as a band-pass or band-stop filter
+ * @param filterObj filter object containing data min and max aswell as the
+ * chosen limits and if the filter should act as band-pass or stop
+ * @returns
+ */
 function filterFactory(filterObj: filterValues): (X: number) => boolean {
   if (filterObj.filterActive) {
     if (filterObj.inside) {

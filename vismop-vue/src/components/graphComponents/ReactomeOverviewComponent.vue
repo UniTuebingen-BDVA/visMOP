@@ -1,104 +1,97 @@
 <template>
-  <div>
-    <q-card :class="expandOverview ? 'overviewFullscreen' : ''">
-      <div class="col-12 q-pa-md">
-        <q-fab
-          icon="keyboard_arrow_down"
-          label="Overview Actions"
-          direction="down"
-          vertical-actions-align="left"
-        >
-          <q-fab
-            icon="keyboard_arrow_right"
-            direction="right"
-            vertical-actions-align="left"
-          >
-            <q-fab-action
+  <q-card :class="[expandOverview ? 'overviewFullscreen' : '', 'row fit']">
+    <div class="col-12">
+      <q-fab
+        icon="keyboard_arrow_down"
+        label="Overview Actions"
+        direction="down"
+        vertical-actions-align="left"
+        class="absolute q-pa-md fab-class"
+      >
+        <div class="row graphControl">
+          <div class="col-3">
+            <q-btn
               color="primary"
-              external-label
-              label-position="top"
-              label="Expand"
+              round
               icon="keyboard_arrow_left"
               @click="expandComponent"
-            ></q-fab-action>
-            <q-fab-action
+              ><q-tooltip class="bg-accent">Expand</q-tooltip></q-btn
+            >
+          </div>
+          <div class="col-3">
+            <q-btn
               color="primary"
-              external-label
-              label-position="top"
-              label="Shrink"
+              round
               icon="keyboard_arrow_right"
               @click="minimizeComponent"
-            ></q-fab-action>
-            <q-fab-action
+              ><q-tooltip class="bg-accent">Shrink</q-tooltip></q-btn
+            >
+          </div>
+          <div class="col-3">
+            <q-btn color="primary" round icon="mdi-restore" @click="resetZoom"
+              ><q-tooltip class="bg-accent">Reset</q-tooltip></q-btn
+            >
+          </div>
+          <div class="col-3">
+            <q-btn
               color="primary"
-              external-label
-              label-position="top"
-              label="Reset"
-              icon="mdi-restore"
-              @click="resetZoom"
-            ></q-fab-action>
-            <q-fab-action
-              color="primary"
-              external-label
-              label-position="top"
-              label="Deselect"
+              round
               icon="mdi-select-remove"
               @click="removeSelection"
-            ></q-fab-action>
-          </q-fab>
+              ><q-tooltip class="bg-accent">Deselect</q-tooltip></q-btn
+            >
+          </div>
+        </div>
 
-          <q-fab-action color="white" text-color="black">
-            <q-expansion-item
-              v-model="expandFilter"
-              icon="mdi-filter"
-              label="Graph Filter"
+        <q-fab-action color="white" text-color="black">
+          <q-expansion-item
+            v-model="expandFilter"
+            icon="fa-solid fa-filter"
+            label="Graph Filter"
+            @click.prevent
+          >
+            <graph-filter
+              v-model:root-negative-filter="rootNegativeFilter"
+              v-model:rootFilter="rootFilter"
+              v-model:transcriptomics="transcriptomicsFilter"
+              v-model:transcriptomics-regulated="transcriptomicsRegulatedFilter"
+              v-model:proteomics="proteomicsFilter"
+              v-model:proteomics-regulated="proteomicsRegulatedFilter"
+              v-model:metabolomics="metabolomicsFilter"
+              v-model:metabolomics-regulated="metabolomicsRegulatedFilter"
+              v-model:sumRegulated="sumRegulated"
               @click.prevent
-            >
-              <graph-filter
-                v-model:root-negative-filter="rootNegativeFilter"
-                v-model:rootFilter="rootFilter"
-                v-model:transcriptomics="transcriptomicsFilter"
-                v-model:transcriptomics-regulated="
-                  transcriptomicsRegulatedFilter
-                "
-                v-model:proteomics="proteomicsFilter"
-                v-model:proteomics-regulated="proteomicsRegulatedFilter"
-                v-model:metabolomics="metabolomicsFilter"
-                v-model:metabolomics-regulated="metabolomicsRegulatedFilter"
-                v-model:sumRegulated="sumRegulated"
-                @click.prevent
-              ></graph-filter>
-            </q-expansion-item>
-          </q-fab-action>
-          <q-fab-action color="white" text-color="black">
-            <q-expansion-item
-              v-model="expandFa2Controls"
-              icon="mdi-graph"
-              label="FA2 Controls"
+            ></graph-filter>
+          </q-expansion-item>
+        </q-fab-action>
+        <q-fab-action color="white" text-color="black">
+          <q-expansion-item
+            v-model="expandFa2Controls"
+            icon="fa-solid fa-diagram-project"
+            label="FA2 Controls"
+            @click.prevent
+          >
+            <fa2-params
+              v-model:fa2LayoutParams="fa2LayoutParams"
               @click.prevent
-            >
-              <fa2-params
-                v-model:fa2LayoutParams="fa2LayoutParams"
-                @click.prevent
-              ></fa2-params>
-            </q-expansion-item>
-          </q-fab-action>
-        </q-fab>
-        <div
-          :id="contextID"
-          :class="[expandOverview ? '' : '', 'webglContainer']"
-        ></div>
-      </div>
-    </q-card>
-  </div>
+            ></fa2-params>
+          </q-expansion-item>
+        </q-fab-action>
+      </q-fab>
+      <div
+        :id="contextID"
+        :class="[expandOverview ? '' : '', 'webglContainer']"
+      ></div>
+    </div>
+  </q-card>
 </template>
 
 <script setup lang="ts">
-import OverviewGraph from '../core/reactomeGraphs/reactomeOverviewNetwork/overviewNetwork';
+import OverviewGraph from '../../core/reactomeGraphs/reactomeOverviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
-import { generateGraphData } from '../core/reactomeGraphs/reactomeOverviewGraphPreparation';
-import { generateGlyphDataReactome } from '../core/overviewGlyphs/glyphDataPreparation';
-import { generateGlyphs } from '../core/overviewGlyphs/generator';
+import { generateGraphData } from '../../core/reactomeGraphs/reactomeOverviewGraphPreparation';
+import { generateGlyphDataReactome } from '../../core/overviewGlyphs/glyphDataPreparation';
+import { generateGlyphs } from '../../core/overviewGlyphs/generator';
 import { computed, PropType, Ref, ref, watch, defineProps } from 'vue';
 import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphData } from '@/core/generalTypes';
@@ -249,7 +242,6 @@ watch(
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );
-    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -272,9 +264,7 @@ watch(
       const pathwaysContaining =
         pathwayLayouting.value.nodePathwayDictionary[symbol];
       if (pathwaysContaining) foundPathways.push(pathwaysContaining);
-      console.log('foundPathways', pathwaysContaining);
     });
-    console.log('foundPathways', foundPathways);
     const intersection =
       foundPathways.length > 0
         ? foundPathways.reduce((a, b) => a.filter((c) => b.includes(c)))
@@ -298,7 +288,6 @@ watch(
         const symbol = element[usedSymbolCols.value.metabolomics];
 
         let chebiIDs = keggChebiTranslate.value[symbol];
-        console.log('CHEBI SELECT', chebiIDs);
         if (chebiIDs) {
           chebiIDs.forEach((element) => {
             try {
@@ -334,10 +323,8 @@ watch(pathwayDropdown, () => {
 });
 watch(overviewData, () => {
   if (props.isActive) {
-    console.log(props.contextID);
     drawNetwork();
   } else {
-    console.log(props.contextID, 'outstanding draw');
     outstandingDraw.value = true;
   }
 });
@@ -511,7 +498,6 @@ watch(
     sumRegulated.value,
   ],
   () => {
-    console.log('change Filter');
     networkGraph?.value?.setAverageFilter(
       transcriptomicsFilter.value,
       transcriptomicsRegulatedFilter.value,
@@ -552,7 +538,6 @@ const drawNetwork = () => {
   // const fcExtents = fcQuantiles
   glyphDataVar.value = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphDataVar.value);
-  console.log('GLYPH DATA', glyphDataVar.value);
   const generatedGlyphs = generateGlyphs(glyphDataVar.value, HighDetailGlyph);
   const generatedGlyphsHighRes = generateGlyphs(
     glyphDataVar.value,
@@ -565,20 +550,14 @@ const drawNetwork = () => {
     128
   );
   mainStore.setGlyphs(generatedGlyphs);
-  console.log('GLYPHs', mainStore.glyphs);
   //const moduleAreas = mainStore.moduleAreas;
-  //console.log('moduleAreas', moduleAreas);
-  console.log('overviewData.value', overviewData.value);
+
   //get module areas here!!!
   const clusterWeights = mainStore.modules.map((elem) => elem.length);
   const polygons = generateVoronoiCells(
     250,
     clusterWeights,
     mainStore.moduleCenters
-  );
-  console.log(
-    'Rando Test',
-    polygons[parseInt(Object.keys(polygons)[2])].pointInPolygonCoords(10, 10)
   );
   const positionMapping = nodePolygonMapping(mainStore.modules, polygons);
   const polygonsArrays: [number, number][][] = [];
@@ -596,7 +575,6 @@ const drawNetwork = () => {
     polygons,
     positionMapping
   );
-  console.log('base dat', networkData);
   networkGraph.value = new OverviewGraph(
     props.contextID ? props.contextID : '',
     networkData,
@@ -605,3 +583,25 @@ const drawNetwork = () => {
   );
 };
 </script>
+<style>
+.fab-class {
+  z-index: 4;
+}
+.graphControl {
+  min-width: 10vw;
+}
+.webglContainer {
+  height: 100%;
+  min-height: 100%;
+  z-index: 2;
+}
+.overviewFullscreen {
+  z-index: 3;
+  position: fixed !important;
+  top: 7vh;
+  right: 1vh;
+  bottom: 1vh;
+  left: 1vh;
+  max-width: 100vw;
+}
+</style>

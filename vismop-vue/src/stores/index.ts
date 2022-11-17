@@ -10,11 +10,18 @@ interface State {
   sideBarExpand: boolean;
   overviewData: { [key: string]: entry } | reactomeEntry[];
   targetDatabase: string;
-  transcriptomicsTableHeaders: ColType[];
-  transcriptomicsTableData: { [key: string]: string | number }[];
 
-  proteomicsTableHeaders: ColType[];
-  proteomicsTableData: { [key: string]: string | number }[];
+  tableHeaders: {
+    transcriptomics: ColType[];
+    proteomics: ColType[];
+    metabolomics: ColType[];
+  };
+  tableData: {
+    transcriptomics: { [key: string]: string | number }[];
+    proteomics: { [key: string]: string | number }[];
+    metabolomics: { [key: string]: string | number }[];
+  };
+
   clickedNodes: {
     id: string;
     name: string;
@@ -23,8 +30,6 @@ interface State {
     delete: unknown;
   }[];
 
-  metabolomicsTableHeaders: ColType[];
-  metabolomicsTableData: { [key: string]: string | number }[];
   usedSymbolCols: {
     transcriptomics: string;
     proteomics: string;
@@ -70,7 +75,7 @@ interface State {
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
-  pathwayCompare: string[];
+  pathwayCompare: { id: number; pathway: string }[];
   glyphData: {
     [key: string]: glyphData;
   };
@@ -88,21 +93,16 @@ interface State {
 export const useMainStore = defineStore('mainStore', {
   state: (): State => ({
     sideBarExpand: true,
-    overviewData: null,
+    overviewData: {},
     targetDatabase: 'reactome',
-    transcriptomicsTableHeaders: [],
-    transcriptomicsTableData: [],
-    proteomicsTableHeaders: [],
-    proteomicsTableData: [],
     clickedNodes: [],
-    metabolomicsTableHeaders: [],
-    metabolomicsTableData: [],
+    tableHeaders: { transcriptomics: [], proteomics: [], metabolomics: [] },
+    tableData: { transcriptomics: [], proteomics: [], metabolomics: [] },
     usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
     graphData: {
       attributes: {},
       nodes: [],
       edges: [],
-      cluster_rects: [[]],
       options: null,
     },
     fcs: {},
@@ -146,6 +146,9 @@ export const useMainStore = defineStore('mainStore', {
     keggChebiTranslate: {},
   }),
   actions: {
+    resetStore() {
+      this.resetPathwayCompare();
+    },
     addClickedNode(val: { queryID: string; name: string }) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       // TODO multiIDs will not work at the moment
@@ -218,14 +221,11 @@ export const useMainStore = defineStore('mainStore', {
       this.interactionGraphData = val;
     },
     removeClickedNode(val: string) {
-      console.log('removedNode', val);
-
       const indexNode = this.clickedNodes
         .map((row) => {
           return row.id;
         })
         .indexOf(val);
-      console.log('removedNode', indexNode);
       if (indexNode > -1) {
         this.clickedNodes.splice(indexNode, 1);
       }
@@ -237,46 +237,70 @@ export const useMainStore = defineStore('mainStore', {
       this.overviewData = val;
     },
 
-    setOmicsTableHeaders(payload: ColType[], omicsType: string) {
-      if (omicsType == 'Transcriptomics') {
-        this.transcriptomicsTableHeaders = payload;
-      } else if (omicsType == 'Proteomics') {
-        this.proteomicsTableHeaders = payload;
-      } else if (omicsType == 'Metabolomics') {
-        this.metabolomicsTableHeaders = payload;
-      }
+    setOmicsTableHeaders(
+      payload: ColType[],
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      this.tableHeaders[omicsType] = payload;
     },
 
     setOmicsTableData(
       payload: { [x: string]: string | number }[],
-      omicsType: string
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
     ) {
-      if (omicsType == 'Transcriptomics') {
-        this.transcriptomicsTableData = payload;
-      } else if (omicsType == 'Proteomics') {
-        this.proteomicsTableData = payload;
-      } else if (omicsType == 'Metabolomics') {
-        this.metabolomicsTableData = payload;
-      }
+      this.tableData[omicsType] = payload;
     },
-    setTranscriptomicsTableHeaders(val: ColType[]) {
-      this.transcriptomicsTableHeaders = val;
+
+    setAvailables(
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      let available = 0;
+      let total = 0;
+
+      this.tableData[omicsType].forEach(
+        (row: { [key: string]: string | number }) => {
+          total += 1;
+          const symbol = row[this.usedSymbolCols[omicsType]];
+          let pathwaysContaining: string[] = [];
+          if (omicsType === 'metabolomics') {
+            pathwaysContaining = [];
+            const keggChebiConvert =
+              Object.keys(this.keggChebiTranslate).length > 0;
+
+            if (keggChebiConvert) {
+              const chebiIDs = this.keggChebiTranslate[symbol];
+              if (chebiIDs) {
+                chebiIDs.forEach((element: string) => {
+                  try {
+                    pathwaysContaining.push(
+                      ...this.pathwayLayouting.nodePathwayDictionary[element]
+                    );
+                  } catch (error) {
+                    //
+                  }
+                });
+              }
+            } else {
+              pathwaysContaining =
+                this.pathwayLayouting.nodePathwayDictionary[symbol];
+            }
+          } else {
+            pathwaysContaining =
+              this.pathwayLayouting.nodePathwayDictionary[symbol];
+          }
+          row._reserved_available = pathwaysContaining
+            ? pathwaysContaining.length
+            : 0;
+          if (pathwaysContaining) available += 1;
+        }
+      );
+      this.tableHeaders[omicsType].forEach((entry: ColType) => {
+        if (entry?.name === '_reserved_available') {
+          entry.label = `available (${available} of ${total})`;
+        }
+      });
     },
-    setTranscriptomicsTableData(val: { [x: string]: string | number }[]) {
-      this.transcriptomicsTableData = val;
-    },
-    setProteomicsTableHeaders(val: ColType[]) {
-      this.proteomicsTableHeaders = val;
-    },
-    setProteomicsTableData(val: { [x: string]: string | number }[]) {
-      this.proteomicsTableData = val;
-    },
-    setMetabolomicsTableHeaders(val: ColType[]) {
-      this.metabolomicsTableHeaders = val;
-    },
-    setMetabolomicsTableData(val: { [x: string]: string | number }[]) {
-      this.metabolomicsTableData = val;
-    },
+
     setUsedSymbolCols(val: {
       transcriptomics: string;
       proteomics: string;
@@ -307,7 +331,6 @@ export const useMainStore = defineStore('mainStore', {
       };
     }) {
       this.fcs = val;
-      console.log('fcs', val);
       const fcsTranscriptomics: number[] = [];
       const fcsProteomics: number[] = [];
       const fcsMetabolomics: number[] = [];
@@ -396,7 +419,6 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: { [key: string]: number };
     }) {
       this.fcsReactome = val;
-      console.log('fcs', val);
       const fcsTranscriptomicsAsc = Object.values(val.transcriptomics).sort(
         (a, b) => a - b
       );
@@ -406,7 +428,6 @@ export const useMainStore = defineStore('mainStore', {
       const fcsMetabolomicsAsc = Object.values(val.metabolomics).sort(
         (a, b) => a - b
       );
-      console.log('metafc', fcsMetabolomicsAsc);
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
         const pos = (arr.length - 1) * q;
@@ -497,16 +518,31 @@ export const useMainStore = defineStore('mainStore', {
     }) {
       this.pathwayDropdown = val;
     },
+
     selectPathwayCompare(val: string[]) {
       val.forEach((element) => {
         const valClean = element.replace('path:', '');
-        if (!this.pathwayCompare.includes(valClean))
-          this.pathwayCompare.unshift(valClean);
+        let id = 0;
+        for (let index = 0; index <= this.pathwayCompare.length; index++) {
+          if (!this.pathwayCompare.some((elem) => elem.id == index)) {
+            id = index;
+            break;
+          }
+        }
+        if (!this.pathwayCompare.some((elem) => elem.pathway == valClean))
+          this.pathwayCompare.unshift({ id: id, pathway: valClean });
       });
     },
+    resortPathwayCompare(from: number, to: number) {
+      const tarPathway = this.pathwayCompare.splice(from, 1)[0];
+      this.pathwayCompare.splice(to, 0, tarPathway);
+    },
     removePathwayCompare(val: string) {
-      const idx = this.pathwayCompare.indexOf(val);
+      const idx = this.pathwayCompare.findIndex((elem) => elem.pathway == val);
       this.pathwayCompare.splice(idx, 1);
+    },
+    resetPathwayCompare() {
+      this.pathwayCompare = [];
     },
     setKeggChebiTranslate(val: { [key: string]: string[] }) {
       this.keggChebiTranslate = val;

@@ -6,7 +6,7 @@
         :header-inset-level="0.5"
         :content-inset-level="0.5"
         expand-separator
-        icon="mdi-filter"
+        icon="fa-solid fa-filter"
         label="General"
         @click.prevent
       >

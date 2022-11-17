@@ -75,15 +75,15 @@
               "
             >
             </q-range>
-        </div>
-        <div class="col-2">
-          <q-toggle
-            v-model="slidersInternal[variable.text].inside"
-            checked-icon="mdi-arrow-collapse-horizontal"
-            color="primary"
-            unchecked-icon="mdi-arrow-split-vertical"
-          />
-        </div>
+          </div>
+          <div class="col-2">
+            <q-toggle
+              v-model="slidersInternal[variable.text].inside"
+              checked-icon="mdi-arrow-collapse-horizontal"
+              color="primary"
+              unchecked-icon="mdi-arrow-split-vertical"
+            />
+          </div>
         </div>
       </q-card-section>
     </q-card>
@@ -105,7 +105,7 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps<{
-  omicsType: string;
+  omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics';
   tableHeaders: ColType[];
   tableData: {
     [x: string]: string | number;
@@ -114,7 +114,11 @@ const props = defineProps<{
   valueCol: ColType;
   recievedOmicsData: boolean;
   sliderVals: {
-    [key: string]: { vals: { min: number; max: number }; empties: boolean; inside: boolean };
+    [key: string]: {
+      vals: { min: number; max: number };
+      empties: boolean;
+      inside: boolean;
+    };
   };
 }>();
 
@@ -183,9 +187,8 @@ const slider = computed(() => {
         } else amtNonNum += 1;
       });
       if (amtNonNum / (amtNum + amtNonNum) <= 0.25) {
-        console.log(element.field, numArr);
-        const min = Math.floor(Math.min(...numArr)*10)/10;
-        const max = Math.ceil(Math.max(...numArr)*10)/10;
+        const min = Math.floor(Math.min(...numArr) * 10) / 10;
+        const max = Math.ceil(Math.max(...numArr) * 10) / 10;
         outObj[element.field] = {
           min: min,
           max: max,
@@ -207,7 +210,7 @@ watch(slider, () => {
         slidersInternal.value[element.text] = {
           vals: { min: element.min, max: element.max },
           empties: true,
-          inside:true
+          inside: true,
         };
       }
     }
@@ -251,7 +254,6 @@ const fetchOmicsTable = (fileInput: File | null) => {
   } else {
     // more errorhandling?
     recievedOmicsDataInternal.value = false;
-    console.log('Transcriptomics file Cleared');
   }
 };
 
@@ -263,7 +265,7 @@ const sheetRules = ref([
 ]);
 </script>
 <style lang="css">
-  .text-graphFilterSlider {
-    color: rgba(187, 187, 187) !important;
-  }
-  </style>
+.text-graphFilterSlider {
+  color: rgba(187, 187, 187) !important;
+}
+</style>

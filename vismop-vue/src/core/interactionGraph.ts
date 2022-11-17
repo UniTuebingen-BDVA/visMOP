@@ -41,12 +41,10 @@ export function generateInteractionGraphData(
   nodeLink: networkxNodeLink
 ): graphData {
   const svgURLs = generatePieCharts(nodeLink.graph.identities);
-  console.log('interactionData', nodeLink);
   const graph = {
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
-    cluster_rects: [[]],
     options: [],
   } as graphData;
   let index = 0;
@@ -119,8 +117,6 @@ export function generateInteractionGraph(
   const elem = document.getElementById(elemID) as HTMLElement;
   const graph = MultiGraph.from(graphData);
   // random.assign(graph)
-  console.log('NODES', graph.nodes());
-  console.log('TARDIV PPI', elem, elemID);
   const inferredSettings = forceAtlas2.inferSettings(graph);
   const start = Date.now();
   forceAtlas2.assign(graph, { iterations: 1000, settings: inferredSettings });
@@ -135,7 +131,6 @@ export function generateInteractionGraph(
       colorFade: ColorFadeEdgeProgram,
     },
   });
-  console.log(`layoutDuration: ${duration} S`);
   return renderer;
 }
 /**

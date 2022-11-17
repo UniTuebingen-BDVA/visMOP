@@ -70,6 +70,7 @@ export class HighDetailGlyph {
   private labelRegTexts: string[] = [];
   private labelTextOffset: string[] = [];
   private colorScales;
+  private omicsAverages: string[] = [];
 
   constructor(
     glyphData: glyphData,
@@ -126,6 +127,7 @@ export class HighDetailGlyph {
     this.labelArcData = [];
     this.labelTexts = [];
     this.labelRegTexts = [];
+    this.omicsAverages = [];
     this.labelTextOffset = [];
     this.totalNodes = 0;
     this.addedElements = 0;
@@ -148,7 +150,8 @@ export class HighDetailGlyph {
   generateGlyphSvg(): SVGElement {
     const mainStore = useMainStore();
     let svg;
-    let g;
+    let labelG;
+    let glyphG;
     const textSmallThreshold = 5;
     const textTinyThreshold = 12;
 
@@ -158,13 +161,15 @@ export class HighDetailGlyph {
         .attr('viewBox', `0 0 ${this.width} ${this.height}`)
         .attr('width', this.pathwayCompare ? '100%' : '200px')
         .attr('height', this.pathwayCompare ? '100%' : '200px');
-      g = svg
+      labelG = svg
         .append('g')
         .attr('class', 'glyph')
         .attr('id', `glyph${this.glyphIdx}`)
         .attr('transform', `translate(${this.width / 2},${this.height / 2})`);
+      glyphG = labelG.append('g');
       // DOMMouseScroll seems to work in FF
-      g.on('mouseenter', (_event, _dat) => {
+      glyphG.on('mouseenter', (event, _dat) => {
+        event.preventDefault();
         const amtElems = d3
           .select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')
@@ -194,7 +199,7 @@ export class HighDetailGlyph {
             } else return 0.2;
           });
       });
-      g.on('mouseleave', (_event, _dat) => {
+      glyphG.on('mouseleave', (event, _dat) => {
         this.highlightSection = 0;
         d3.select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')
@@ -209,7 +214,9 @@ export class HighDetailGlyph {
             return 1.0;
           });
       });
-      g.on('wheel.zoom', (event, _dat) => {
+      glyphG.on('wheel.zoom', (event, _dat) => {
+        event.preventDefault();
+        event.stopPropagation();
         const amtElems = d3
           .select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')
@@ -242,7 +249,6 @@ export class HighDetailGlyph {
               return 1.0;
             } else return 0.2;
           });
-        event.stopPropagation();
       });
     } else {
       svg = d3
@@ -250,9 +256,10 @@ export class HighDetailGlyph {
         .attr('width', this.width)
         .attr('height', this.height);
 
-      g = svg
+      labelG = svg
         .append('g')
         .attr('transform', `translate(${this.width / 2},${this.height / 2})`);
+      glyphG = labelG.append('g');
     }
     const arcOuter = d3
       .arc<PieArcDatum<number>>()
@@ -264,7 +271,7 @@ export class HighDetailGlyph {
       .innerRadius(this.secondLayer)
       .outerRadius(this.firstLayer);
 
-    const arcSeg = g
+    const arcSeg = glyphG
       .selectAll('g')
       .data(this.outerArcDat)
       .enter()
@@ -281,7 +288,7 @@ export class HighDetailGlyph {
     }
 
     arcSeg.append('title').text((d) => d.name + '\n' + d.fc.toFixed(3));
-    const _graySegments = g
+    const _graySegments = glyphG
       .selectAll('g')
       .data(this.innerArcDat)
       .enter()
@@ -290,29 +297,27 @@ export class HighDetailGlyph {
       .attr('fill', (_d, i) => this.innerColors[i])
       .attr('stroke-width', -2);
 
-    g.selectAll('g')
-      .data(this.backroundArcDat)
-      .enter()
-      .append('path')
-      .attr('d', arcOuter)
-      .attr('fill', (d) => d.color)
-      .attr('stroke', '#404040')
-      .attr(
-        'stroke-width',
-        this.drawLabels ? this.diameter / 45 : this.diameter / 45
-      );
-
-    g.selectAll('g')
+    glyphG
+      .selectAll('g')
       .data(this.backroundArcDat)
       .enter()
       .append('path')
       .attr('d', arcMiddle)
       .attr('fill', 'none')
       .attr('stroke', '#404040')
-      .attr(
-        'stroke-width',
-        this.drawLabels ? this.diameter / 45 : this.diameter / 45
-      );
+      .attr('stroke-width', this.diameter / 45);
+
+    glyphG
+      .selectAll('g')
+      .data(this.backroundArcDat)
+      .enter()
+      .append('path')
+      .attr('d', arcOuter)
+      .attr('id', (d, i) => `omicsArc${i}`)
+      .attr('fill', (d) => d.color)
+      .attr('stroke', '#404040')
+      .attr('stroke-width', this.diameter / 45);
+
     if (this.drawLabels) {
       const labelArcOmics = d3
         .arc<PieArcDatum<number>>()
@@ -323,7 +328,8 @@ export class HighDetailGlyph {
         .innerRadius((this.firstLayer + this.secondLayer) * 0.5)
         .outerRadius((this.firstLayer + this.secondLayer) * 0.5);
 
-      g.selectAll('labels')
+      labelG
+        .selectAll('labels')
         .data(this.labelArcData)
         .enter()
         .append('path')
@@ -331,7 +337,8 @@ export class HighDetailGlyph {
         .attr('d', labelArcRegulated)
         .style('fill', 'none');
 
-      g.selectAll('labels')
+      labelG
+        .selectAll('labels')
         .data(this.labelArcData)
         .enter()
         .append('text')
@@ -342,15 +349,18 @@ export class HighDetailGlyph {
         .attr('class', 'glyphText')
         .attr('href', (_d, i) => `#labelArcReg${i}`);
 
-      g.selectAll('labels')
+      labelG
+        .selectAll('labels')
         .data(this.labelArcData)
         .enter()
         .append('path')
+        .attr('class', 'labelArcOmics')
         .attr('id', (_d, i) => `labelArc${i}`)
         .attr('d', labelArcOmics)
         .style('fill', 'none');
 
-      g.selectAll('labels')
+      const omicLabel = labelG
+        .selectAll('labels')
         .data(this.labelArcData)
         .enter()
         .append('text')
@@ -360,7 +370,33 @@ export class HighDetailGlyph {
         .attr('class', 'glyphText')
         .attr('href', (_d, i) => `#labelArc${i}`);
 
-      const text = g.append('text');
+      omicLabel.on('mouseenter', (event, dat) => {
+        event.stopPropagation();
+        event.preventDefault();
+        const index = dat.index;
+        d3.select(`#glyph${this.glyphIdx}`)
+          .select(`#labelArc${index}`)
+          .attr('fill-opacity', (_d, _i) => {
+            d3.select(`#glyph${this.glyphIdx}`)
+              .select('#tspan1')
+              .attr('class', 'glyphText')
+              .text('Avg:');
+            d3.select(`#glyph${this.glyphIdx}`)
+              .select('#tspan2')
+              .text(this.omicsAverages[index]);
+            d3.select(`#glyph${this.glyphIdx}`)
+              .select(`#omicsArc${index}`)
+              .attr('stroke', '#fc0d0d');
+            return 1.0;
+          });
+      });
+      omicLabel.on('mouseleave', (event, dat) => {
+        this.removeHighlight(dat);
+      });
+      omicLabel.on('wheel.zoom', (event, dat) => {
+        this.removeHighlight(dat);
+      });
+      const text = labelG.append('text');
 
       text
         .append('tspan')
@@ -380,6 +416,33 @@ export class HighDetailGlyph {
     }
     return svg.node() as SVGElement;
   }
+
+  removeHighlight(dat: {
+    data?: number;
+    value?: number;
+    index: any;
+    startAngle?: number;
+    endAngle?: number;
+    padAngle?: number;
+  }) {
+    const index = dat.index;
+    d3.select(`#glyph${this.glyphIdx}`)
+      .select(`#labelArc${index}`)
+      .attr('fill-opacity', (_d, _i) => {
+        d3.select(`#glyph${this.glyphIdx}`)
+          .select('#tspan1')
+          .attr('class', 'glyphText')
+          .text('Total:');
+        d3.select(`#glyph${this.glyphIdx}`)
+          .select('#tspan2')
+          .text(this.totalNodes);
+        d3.select(`#glyph${this.glyphIdx}`)
+          .select(`#omicsArc${index}`)
+          .attr('stroke', '#404040');
+        return 1.0;
+      });
+  }
+
   prepareOmics(
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
@@ -391,7 +454,9 @@ export class HighDetailGlyph {
     this.outerColors.push(...omicsColors);
     const startAngleVal =
       this.addedElements * this.thirdCircle + this.circlePadding;
-
+    this.omicsAverages.push(
+      this.glyphData[omicsType].meanFoldchange.toFixed(3)
+    );
     const angleFCs = _.range(
       startAngleVal,
       startAngleVal +
@@ -457,7 +522,7 @@ export class HighDetailGlyph {
         this.labelArcData.push({
           data: 1,
           value: 1,
-          index: 0,
+          index: this.addedElements,
           startAngle: startAngleVal + this.thirdCircleElement,
           endAngle: startAngleVal,
           padAngle: 0,
@@ -470,7 +535,7 @@ export class HighDetailGlyph {
         this.labelArcData.push({
           data: 1,
           value: 1,
-          index: 0,
+          index: this.addedElements,
           startAngle: startAngleVal,
           endAngle: startAngleVal + this.thirdCircleElement,
           padAngle: 0,

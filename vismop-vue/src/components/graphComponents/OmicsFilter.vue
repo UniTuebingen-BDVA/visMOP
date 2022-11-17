@@ -32,7 +32,7 @@
             :track-color="omicsFilter.inside ? 'graphFilterSlider' : 'primary'"
             :disable="omicsFilter.disable"
             @change="
-              (val) => {
+              (val: {'min': number, 'max': number}) => {
                 omicsFilter.value = val;
               }
             "

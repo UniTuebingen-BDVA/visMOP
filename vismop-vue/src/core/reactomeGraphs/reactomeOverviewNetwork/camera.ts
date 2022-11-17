@@ -58,7 +58,6 @@ export function zoomLod(this: OverviewGraph): void {
             ? OverviewGraph.ROOT_DEFAULT_SIZE
             : OverviewGraph.DEFAULT_SIZE,
         };
-        console.log(tarPositions[node]);
       }
     });
     this.cancelCurrentAnimation = animateNodes(this.graph, tarPositions, {

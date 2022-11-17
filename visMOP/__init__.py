@@ -173,7 +173,7 @@ transcriptomics table recieve
 """
 
 
-@app.route("/Transcriptomics_table", methods=["POST"])
+@app.route("/transcriptomics_table", methods=["POST"])
 def transcriptomics_table_recieve():
     json_data = table_request(request, cache, "transcriptomics_df_global")
     return json_data
@@ -184,7 +184,7 @@ protein recieve
 """
 
 
-@app.route("/Proteomics_table", methods=["POST"])
+@app.route("/proteomics_table", methods=["POST"])
 def prot_table_recieve():
     json_data = table_request(request, cache, "prot_table_global")
     return json_data
@@ -195,7 +195,7 @@ metabolomics table recieve
 """
 
 
-@app.route("/Metabolomics_table", methods=["POST"])
+@app.route("/metabolomics_table", methods=["POST"])
 def metabolomics_table_recieve():
     json_data = table_request(request, cache, "metabolomics_df_global")
     return json_data
@@ -606,6 +606,16 @@ def reactome_overview():
             },
         }
     )
+
+
+@app.route("/get_root_search/<pathway>", methods=["GET"])
+def get_root_search(pathway):
+    hierarchy = cache.get("reactome_hierarchy")
+    pathway_entry = hierarchy[pathway]
+    parents = pathway_entry.parents
+    children = pathway_entry.children
+    print(parents, children)
+    return 0
 
 
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])

@@ -104,7 +104,6 @@ function adjustHullPoints(
       //outList.push(newPushedOutPoint);
       outList.push([currPoint[0], currPoint[1]]);
     } else {
-      console.log('else');
       const newPushedOutPoint = [
         currPoint[0] + moveVec[0] * halfPushLen,
         currPoint[1] + moveVec[1] * halfPushLen,

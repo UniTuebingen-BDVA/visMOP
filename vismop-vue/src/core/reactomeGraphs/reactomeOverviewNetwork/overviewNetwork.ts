@@ -35,6 +35,7 @@ import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 import FilterData from './filterData';
 import { graphExtent, createNormalizationFunction } from 'sigma/utils';
 import { Coordinates } from 'sigma/types';
+import { Loading } from 'quasar';
 
 export default class OverviewGraph {
   // constants
@@ -310,9 +311,6 @@ export default class OverviewGraph {
     });
 
     renderer.on('clickNode', ({ node, event }) => {
-      console.log('clicking Node: ', node);
-      console.log('clicking event', event);
-
       if (this.graph.getNodeAttribute(node, 'nodeType') != 'moduleNode') {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
@@ -346,11 +344,11 @@ export default class OverviewGraph {
           this.highlightedNodesClick = new Set(this.graph.neighbors(node));
           this.highlightedEdgesClick = new Set(this.graph.edges(node));
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
+          //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
         }
       } else {
         const defocus = this.lastClickedClusterNode == parseInt(node);
-        console.log('MODULE CLICK', this.graph.getNodeAttributes(node));
         this.graph.forEachNode((_, attributes) => {
           if (
             !defocus &&
@@ -684,5 +682,20 @@ export default class OverviewGraph {
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;
     this.renderer.refresh();
+  }
+
+  getRoot(reactomeID: string): void {
+    Loading.show();
+    fetch(`/get_root_search/${reactomeID}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((content) => {
+        console.log(content);
+        Loading.hide();
+      });
   }
 }
