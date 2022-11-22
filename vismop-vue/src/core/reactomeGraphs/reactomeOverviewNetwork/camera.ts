@@ -51,12 +51,10 @@ export function zoomLod(this: OverviewGraph): void {
         tarPositions[node] = {
           x: attributes.moduleFixed ? attributes.x : attributes.layoutX,
           y: attributes.moduleFixed ? attributes.y : attributes.layoutY,
-          size: attributes.isRoot
-            ? OverviewGraph.ROOT_DEFAULT_SIZE
-            : OverviewGraph.DEFAULT_SIZE,
+          size: attributes.isRoot ? this.ROOT_DEFAULT_SIZE : this.DEFAULT_SIZE,
           nonHoverSize: attributes.isRoot
-            ? OverviewGraph.ROOT_DEFAULT_SIZE
-            : OverviewGraph.DEFAULT_SIZE,
+            ? this.ROOT_DEFAULT_SIZE
+            : this.DEFAULT_SIZE,
         };
       }
     });
