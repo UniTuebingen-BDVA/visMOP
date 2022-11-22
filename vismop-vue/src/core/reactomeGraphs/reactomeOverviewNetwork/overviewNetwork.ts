@@ -555,7 +555,7 @@ export default class OverviewGraph {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 0.7;
       this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
       this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
-    } else if (windowWidth < 1500) {
+    } else if (windowWidth < 1950) {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 1;
       this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
       this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
