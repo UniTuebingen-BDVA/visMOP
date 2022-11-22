@@ -12,4 +12,5 @@ type fa2LayoutParams = {
   strongGravity: boolean;
   slowDown: number;
   barnesHutTheta: number;
+  clusterSizeScalingFactor: number
 };

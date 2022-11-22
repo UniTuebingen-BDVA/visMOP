@@ -189,6 +189,24 @@
           </q-slider>
         </div>
       </div>
+      <div class="row flex-center" justify="space-between" align="center">
+        <div class="col-12">
+          <div class="col-12 text-caption text-grey-9">clusterSizeScalingFactor</div>
+          <q-slider
+            :model-value="fa2LayoutParams.clusterSizeScalingFactor"
+            :min="1"
+            :max="10"
+            :step="0.1"
+            label
+            @change="
+              (val) => {
+                fa2LayoutParams.clusterSizeScalingFactor = val;
+              }
+            "
+          >
+          </q-slider>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -212,6 +230,7 @@ const props = defineProps({
       barnesHutTheta: number;
       slowDown: number;
       linLog: boolean;
+      clusterSizeScalingFactor: number
     }>,
     required: true,
   },

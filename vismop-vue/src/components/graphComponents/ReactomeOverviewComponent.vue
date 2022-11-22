@@ -179,16 +179,17 @@ const fa2LayoutParams = ref({
   iterations: 750,
   weightShared: 3.8,
   weightDefault: 0.0,
-  gravity: 11.0,
+  gravity: 1.0,
   edgeWeightInfluence: 2.5,
   scalingRatio: 9.0,
   adjustSizes: true,
   outboundAttractionDistribution: true,
   barnesHut: true,
   linLog: false,
-  strongGravity: false,
+  strongGravity: true,
   slowDown: 1,
   barnesHutTheta: 0.5,
+  clusterSizeScalingFactor: 1
 });
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
@@ -519,6 +520,7 @@ watch(rootNegativeFilter.value, () => {
 
 watch(fa2LayoutParams.value, () => {
   networkGraph?.value?.relayoutGraph(fa2LayoutParams.value);
+  console.log(fa2LayoutParams.value)
 });
 
 const expandComponent = () => {
@@ -564,6 +566,7 @@ const drawNetwork = () => {
   for (let index = 0; index < Object.keys(polygons).length; index++) {
     polygonsArrays.push(polygons[index].verticesToArray(true));
   }
+  
   const networkData = generateGraphData(
     overviewData.value,
     generatedGlyphs.url,
@@ -579,6 +582,7 @@ const drawNetwork = () => {
     props.contextID ? props.contextID : '',
     networkData,
     polygons,
+    clusterWeights,
     fa2LayoutParams.value
   );
 };
