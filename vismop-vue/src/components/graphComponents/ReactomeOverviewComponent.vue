@@ -64,6 +64,7 @@
             ></graph-filter>
           </q-expansion-item>
         </q-fab-action>
+
         <q-fab-action color="white" text-color="black">
           <q-expansion-item
             v-model="expandFa2Controls"
@@ -75,6 +76,21 @@
               v-model:fa2LayoutParams="fa2LayoutParams"
               @click.prevent
             ></fa2-params>
+          </q-expansion-item>
+        </q-fab-action>
+
+        <q-fab-action color="white" text-color="black">
+          <q-expansion-item
+            v-model="bundlingControl"
+            icon="fa-solid fa-diagram-project"
+            label="Bundling Controls"
+            @click.prevent
+          >
+            <bundling-controls
+              v-model:bundlingParams="bundlingParams"
+              @generateNewBundling ="generateNewBundling"
+              @click.prevent
+            ></bundling-controls>
           </q-expansion-item>
         </q-fab-action>
       </q-fab>
@@ -103,7 +119,11 @@ import {
   nodePolygonMapping,
 } from '@/core/layouting/voronoiLayout';
 import Fa2Params from './Fa2Params.vue';
+import BundlingControls from './BundlingControls.vue';
 import FilterData from '@/core/reactomeGraphs/reactomeOverviewNetwork/filterData';
+import { useQuasar } from 'quasar';
+
+const $q = useQuasar();
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -130,6 +150,7 @@ const mainStore = useMainStore();
 const expandOverview = ref(false);
 const expandFilter = ref(false);
 const expandFa2Controls = ref(false);
+const bundlingControl = ref(false);
 const outstandingDraw = ref(false);
 const networkGraph: Ref<OverviewGraph | undefined> = ref(undefined);
 const transcriptomicsIntersection: Ref<string[]> = ref([]);
@@ -190,6 +211,26 @@ const fa2LayoutParams = ref({
   slowDown: 1,
   barnesHutTheta: 0.5,
 });
+
+
+const bundlingParams = ref({
+      maximumDistortion: 2,
+      edgeWeightFactor: 2,
+      showAllEdges: false,
+      showBundling: true,
+});
+watch(bundlingParams.value, () => {
+  networkGraph.value?.setShowAllEdges(bundlingParams.value.showAllEdges);
+})
+watch(bundlingParams.value, () => {
+  networkGraph.value?.setShowBundling(bundlingParams.value.showBundling);
+})
+const generateNewBundling = () => {
+  $q.loading.show();
+  networkGraph.value?.generateBezierControlPoints(bundlingParams.value.maximumDistortion, bundlingParams.value.edgeWeightFactor);
+  $q.loading.hide();
+};
+
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);

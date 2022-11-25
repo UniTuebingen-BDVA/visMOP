@@ -61,6 +61,8 @@ export default class OverviewGraph {
   // renderer and camera
   protected renderer;
   protected camera;
+  protected showAllEdges = false;
+  protected showBundling = true;
   protected prevFrameZoom;
   protected graph;
   protected clusterData;
@@ -132,17 +134,31 @@ export default class OverviewGraph {
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
     this.relayoutGraph(this.initialFa2Params);
-
     this.generateBezierControlPoints();
 
     this.refreshCurrentPathway();
   }
-  
-  generateBezierControlPoints() {
 
-    // hyper parameters
-    const k = 2; // maximum distortion
-    const d = 2; // edge weight factor
+  setShowAllEdges(val: boolean) {
+    this.showAllEdges = val;
+    this.renderer.refresh();
+  }
+  getShowBundling() {
+    return this.showBundling;
+  }
+  setShowBundling(val: boolean) {
+    this.showBundling = val;
+
+    const graph = this.renderer.getGraph();
+    const edgeKeys = this.renderer.getGraph().edges();
+    edgeKeys.forEach(key => {
+      graph.setEdgeAttribute(key, "showBundling", val);
+    });
+
+    this.renderer.refresh();
+  }
+  
+  generateBezierControlPoints(k: number = 2, d: number = 2) {
 
     const graph = this.renderer.getGraph();
     const edgeKeys = this.renderer.getGraph().edges();
@@ -216,6 +232,7 @@ export default class OverviewGraph {
 
       graph.setEdgeAttribute(edgeKey, "bezeierControlPoints", vertecies);
     });
+    
   }
 
   pathLength(path: string[]): number {
@@ -255,6 +272,7 @@ export default class OverviewGraph {
         edgeProgramClasses: {
           ...DEFAULT_SETTINGS.edgeProgramClasses,
           dashed: BezierEdgeProgram,
+          line: BezierEdgeProgram,
         },
         nodeProgramClasses: {
           ...DEFAULT_SETTINGS.nodeProgramClasses,

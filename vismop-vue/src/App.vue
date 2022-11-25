@@ -35,7 +35,7 @@ import svgIcon from './assets/vmod_icon.svg';
 
 export default {
   setup() {
-    const leftDrawerOpen = ref(false);
+    const leftDrawerOpen = ref(true);
     return {
       leftDrawerOpen,
       svgIcon,

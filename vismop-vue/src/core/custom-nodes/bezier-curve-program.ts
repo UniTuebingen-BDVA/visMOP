@@ -1,23 +1,16 @@
 /**
- * Adapted from sigma source
+ * Adapted from dashed edge program
  * TODO: LICENSE
  */
 
 /**
- * Sigma.js WebGL Renderer Edge Program
+ * Bezier Curve Program
  * =====================================
  *
- * Program rendering edges as thick lines using four points translated
- * orthogonally from the source & target's centers by half thickness.
+ * Program rendering edges as thick bezier curves.
  *
  * Rendering two triangles by using only four points is made possible through
  * the use of indices.
- *
- * This method should be faster than the 6 points / 2 triangles approach and
- * should handle thickness better than with gl.LINES.
- *
- * This version of the shader balances geometry computation evenly between
- * the CPU & GPU (normals are computed on the CPU side).
  * @module
  */
 import { floatColor, canUse32BitsIndices } from 'sigma/utils';
@@ -31,7 +24,7 @@ import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
 
 const bez_sample_count = 20;
 const POINTS = (bez_sample_count - 1) * 4;
-const ATTRIBUTES = 5;
+const ATTRIBUTES = 6;
 const STRIDE = POINTS * ATTRIBUTES;
 
 export class BezierEdgeProgram extends AbstractEdgeProgram {
@@ -43,6 +36,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
   positionLocation: GLint;
   colorLocation: GLint;
   normalLocation: GLint;
+  dashedLocation: GLint;
   matrixLocation: WebGLUniformLocation;
   sqrtZoomRatioLocation: WebGLUniformLocation;
   correctionRatioLocation: WebGLUniformLocation;
@@ -63,6 +57,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     this.positionLocation = gl.getAttribLocation(this.program, 'a_position');
     this.colorLocation = gl.getAttribLocation(this.program, 'a_color');
     this.normalLocation = gl.getAttribLocation(this.program, 'a_normal');
+    this.dashedLocation = gl.getAttribLocation(this.program, 'a_dashed');
 
     const matrixLocation = gl.getUniformLocation(this.program, 'u_matrix');
     if (matrixLocation === null)
@@ -139,6 +134,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     gl.enableVertexAttribArray(this.positionLocation);
     gl.enableVertexAttribArray(this.normalLocation);
     gl.enableVertexAttribArray(this.colorLocation);
+    gl.enableVertexAttribArray(this.dashedLocation);
 
     gl.vertexAttribPointer(
       this.positionLocation,
@@ -163,6 +159,14 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
       true,
       ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
       16
+    );
+    gl.vertexAttribPointer(
+      this.dashedLocation,
+      1,
+      gl.FLOAT,
+      false,
+      ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
+      20
     );
   }
 
@@ -224,6 +228,8 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     }
   }
 
+  // input: control points, number of samples
+  // returns: [[x1,y1],...[xn,yn]] points along the curve
   evaluate_bezier(points: Array<Array<number>>, total: number): Array<Array<number>> {
     const n = total -1;
     var bezier = this.get_bezier_curve(points);
@@ -254,10 +260,9 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     const y1 = sourceData.y;
     const x2 = targetData.x;
     const y2 = targetData.y;
-    const color = floatColor(data.color); 
-
+    const color = floatColor(data.color);
+    const dashed = data.type === 'dashed' ? 1 : 0;
     const bezeierControlPoints = data.bezeierControlPoints;
-    
     
     // Computing normals
     const dx = x2 - x1;
@@ -280,7 +285,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
 
     const points = [];
 
-    if(bezeierControlPoints.length >= 2) {
+    if(bezeierControlPoints.length >= 2 && data.showBundling) {
 
       const bx1 = bezeierControlPoints[0];
       const by1 = bezeierControlPoints[1];
@@ -296,8 +301,6 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
 
       const bezierCorrectionFactor = len / bezier_len;
 
-      //const x_offset = 
-
 
       for(let i =0; i < bezeierControlPoints.length/2; ++i) {
         points.push([bezeierControlPoints[i*2], bezeierControlPoints[i*2 + 1]])
@@ -306,20 +309,6 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     else {
       points.push([x1,y1],[x2,y2]);
     }
-    console.log("control points", bezeierControlPoints);
-    console.log("start, end", [[x1,y1],[x2,y2]]);
-    /*
-    const xm1 = x1 + 0.25 * dx + n1 * len / 4;
-    const ym1 = y1 + 0.25 * dy + n2 * len / 4;
-    
-    const xm2 = x1 + 0.75 * dx - n1 * len / 4;
-    const ym2 = y1 + 0.75 * dy - n2 * len / 4;
-    points.push(
-      [xm1,ym1],
-      [xm2,ym2]
-    );
-    */
-
     const bez_samples = this.evaluate_bezier(points, bez_sample_count);
 
     // for each sample point pair from the bezier curve create
@@ -355,6 +344,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
       array[i++] = n1;
       array[i++] = n2;
       array[i++] = color;
+      array[i++] = dashed;
 
       // First point flipped
       array[i++] = p1x;
@@ -362,6 +352,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
       array[i++] = -n1;
       array[i++] = -n2;
       array[i++] = color;
+      array[i++] = dashed;
 
       // Second point
       array[i++] = p2x;
@@ -369,6 +360,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
       array[i++] = n1;
       array[i++] = n2;
       array[i++] = color;
+      array[i++] = dashed;
 
       // Second point flipped
       array[i++] = p2x;
@@ -376,6 +368,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
       array[i++] = -n1;
       array[i++] = -n2;
       array[i++] = color;
+      array[i++] = dashed;
     }
   }
 

@@ -13,4 +13,6 @@ export interface ColorfadeEdgeDisplayData extends EdgeDisplayData {
   sourceColor: string;
   targetColor: string;
   bezeierControlPoints: number[];
+  showBundling: boolean;
+  type: string;
 }

@@ -6,6 +6,7 @@ precision mediump float;
 in vec4 v_color;
 in vec2 v_normal;
 in float v_thickness;
+flat in float v_dashed;
 
 in vec3 vertexPos;
 flat in vec3 startPos;
@@ -31,7 +32,9 @@ void main(void) {
     dist
   );
 
-  if (fract(distFromStart / (u_dashLength + u_gapLength)) > u_gapLength/(u_dashLength + u_gapLength))
+  bool dashed = v_dashed == 1.0;
+
+  if ((fract(distFromStart / (u_dashLength + u_gapLength)) > u_gapLength/(u_dashLength + u_gapLength)) && dashed)
     //discard;
     outColor =  mix(vec4(0.3 * v_color[0],0.3 * v_color[1], 0.3 * v_color[2], v_color[3]), color0, t); 
   else

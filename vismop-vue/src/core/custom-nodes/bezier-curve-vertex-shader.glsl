@@ -4,6 +4,7 @@
 in vec2 a_position;
 in vec2 a_normal;
 in vec4 a_color;
+in float a_dashed;
 
 uniform mat3 u_matrix;
 uniform float u_sqrtZoomRatio;
@@ -12,6 +13,7 @@ uniform float u_correctionRatio;
 out vec4 v_color;
 out vec2 v_normal;
 out float v_thickness;
+flat out float v_dashed;
 
 out vec3 vertexPos;
 flat out vec3 startPos;
@@ -54,4 +56,5 @@ void main() {
   v_normal = unitNormal;
   v_color = a_color;
   v_color.a *= bias;
+  v_dashed = a_dashed;
 }

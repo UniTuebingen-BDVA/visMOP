@@ -12,6 +12,7 @@ import OverviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
 import { useMainStore } from '@/stores';
 import { ConvexPolygon } from '../layouting/ConvexPolygon';
+import { over } from 'lodash';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -226,9 +227,10 @@ function generateForceGraphEdge(
       source: entry1,
       target: entry2,
       bezeierControlPoints: [],
+      showBundling: true,
       zIndex: 0,
       hidden: true,
-      type: "dashed",//type === 'maplink' ? 'dashed' : 'line',
+      type: type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'
           ? overviewColors.edgeMaplink

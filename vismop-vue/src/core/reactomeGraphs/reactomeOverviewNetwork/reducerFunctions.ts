@@ -164,6 +164,7 @@ export function nodeReducer(
  * @returns reduced attributes
  */
 
+
 export function edgeReducer(
   this: OverviewGraph,
   edge: string,
@@ -201,6 +202,6 @@ export function edgeReducer(
       };
     }
 
-    return { ...data, hidden: true, color: overviewColors.edgesHighlight };
+    return { ...data, hidden: !this.showAllEdges, color: overviewColors.edgesHighlight };
   } else return data;
 }
