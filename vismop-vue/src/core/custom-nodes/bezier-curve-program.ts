@@ -285,6 +285,9 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
 
     const points = [];
 
+    // source node
+    points.push([x1,y1]);
+
     if(bezeierControlPoints.length >= 2 && data.showBundling) {
 
       const bx1 = bezeierControlPoints[0];
@@ -301,14 +304,17 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
 
       const bezierCorrectionFactor = len / bezier_len;
 
-
-      for(let i =0; i < bezeierControlPoints.length/2; ++i) {
+      // add all control-points to points except the first and the last
+      // the first and the last are added with "points.push([x1,y1]);" and "points.push([x2,y2]);"
+      // before and after this code block
+      for(let i =1; i < bezeierControlPoints.length/2 - 1; ++i) {
         points.push([bezeierControlPoints[i*2], bezeierControlPoints[i*2 + 1]])
       }
     }
-    else {
-      points.push([x1,y1],[x2,y2]);
-    }
+
+    // target node
+    points.push([x2,y2]);
+
     const bez_samples = this.evaluate_bezier(points, bez_sample_count);
 
     // for each sample point pair from the bezier curve create

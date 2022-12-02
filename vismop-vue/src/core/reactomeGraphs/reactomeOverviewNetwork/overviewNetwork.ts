@@ -10,6 +10,7 @@ import {
 import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { BezierEdgeProgram } from '@/core/custom-nodes/bezier-curve-program';
+import { DontRender } from '@/core/custom-nodes/dont-render';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
@@ -134,6 +135,7 @@ export default class OverviewGraph {
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
     this.relayoutGraph(this.initialFa2Params);
+    this.generateHelperEdges();
     this.generateBezierControlPoints();
 
     this.refreshCurrentPathway();
@@ -157,7 +159,61 @@ export default class OverviewGraph {
 
     this.renderer.refresh();
   }
+
+  // for each cluster:
+  // picks the last node in the cluster,
+  // makes a helper-edge between that node
+  // and every other node in the cluster
+  generateHelperEdges() {
+    const graph = this.renderer.getGraph();
+    console.log("number of edges:", graph.edges().length);
+    const cluster = this.getModuleNodeIds();
+
+    const clusterKeys = Object.keys(cluster);
+
+    clusterKeys.forEach(clusterKey => {
+      const currCluster = cluster[clusterKey];
+      const currNodes = currCluster.ids;
+      const centerNode = currNodes.pop();
+      currNodes.forEach(node => {
+        this.addHelperEdge(centerNode, node);
+      });
+    });
+    console.log("number of edges:", graph.edges().length);
+  }
+
+  // generates a helper-edge that won't be rendered
+  addHelperEdge(
+    sourceID: string,
+    targetID: string,
+  ) {
+    const entry1 = sourceID;
+    const entry2 = targetID;
+    const edge = {
+      key: `${sourceID}+${targetID}`,
+      source: entry1,
+      target: entry2,
+      undirected: true,
+      attributes: {
+        weight: 0,
+        len: 0,
+        lock: false,
+        skip: false,
+        source: entry1,
+        target: entry2,
+        bezeierControlPoints: [],
+        showBundling: true,
+        zIndex: 0,
+        hidden: true,
+        type: "line",
+        color: overviewColors.edgeHierarchy,
+      }
+    }
+    this.renderer.getGraph().addEdgeWithKey(edge.key, edge.source, edge.target, edge.attributes);
+  }
   
+  
+  // generates bezier control points based on the edge-path bundling algorithm
   generateBezierControlPoints(k: number = 2, d: number = 2) {
 
     const graph = this.renderer.getGraph();
@@ -217,7 +273,6 @@ export default class OverviewGraph {
       path.forEach(pathEdge => {
         graph.setEdgeAttribute(pathEdge, "lock", true);
       })
-
       
       const nodeExtent = graphExtent(graph);
       const normalizationFunction = createNormalizationFunction(nodeExtent); 
@@ -273,6 +328,7 @@ export default class OverviewGraph {
           ...DEFAULT_SETTINGS.edgeProgramClasses,
           dashed: BezierEdgeProgram,
           line: BezierEdgeProgram,
+          //helper: DontRender,
         },
         nodeProgramClasses: {
           ...DEFAULT_SETTINGS.nodeProgramClasses,
