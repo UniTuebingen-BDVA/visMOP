@@ -13,7 +13,7 @@ export function generateVoronoiCells(
   weights: number[],
   centers: [number, number][]
 ): { [key: number]: ConvexPolygon } {
-  // // https://github.com/Kcnarf/d3-voronoi-map
+  // https://github.com/Kcnarf/d3-voronoi-map
   const outData: { [key: number]: ConvexPolygon } = {};
   const inputData = [];
   for (let index = 0; index < weights.length; index++) {
@@ -84,7 +84,7 @@ export function nodePolygonMapping(
  */
 function generateVoronoiPolygons(inputData: clusterData, radius: number) {
   const circle = [];
-  // one has to take care that the initial cluster centers are completely inside the circle, otherwise they will get movbed around very weirdly
+  // one has to take care that the initial cluster centers are completely inside the circle, otherwise they will get moved around very weirdly
   for (let val = 0; val < 2 * Math.PI; val += Math.PI / 30) {
     const x = radius * Math.cos(val);
     const y = radius * Math.sin(val);

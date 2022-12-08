@@ -225,7 +225,7 @@ const fetchOmicsTable = (fileInput: File | null) => {
   mainStore.setOmicsTableHeaders([], props.omicsType);
   mainStore.setOmicsTableData([], props.omicsType);
   slidersInternal.value = {};
-  if (fileInput !== null) {
+  if (fileInput !== null && sheetVal.value) {
     $q.loading.show();
     const formData = new FormData();
     formData.append('dataTable', fileInput);

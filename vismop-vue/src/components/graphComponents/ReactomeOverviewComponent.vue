@@ -1,5 +1,5 @@
 <template>
-  <q-card :class="[expandOverview ? 'overviewFullscreen' : '', 'row fit']">
+  <q-card :class="[expandOverview ? 'overviewFullscreen' : '', 'row fit ']">
     <div class="col-12">
       <q-fab
         icon="keyboard_arrow_down"
@@ -176,19 +176,20 @@ const metabolomicsRegulatedFilter = ref({
 });
 
 const fa2LayoutParams = ref({
-  iterations: 750,
-  weightShared: 3.8,
-  weightDefault: 0.0,
-  gravity: 11.0,
-  edgeWeightInfluence: 2.5,
-  scalingRatio: 9.0,
+  iterations: 1050,
+  weightShared: 9.2,
+  weightDefault: 0.6,
+  gravity: 3.0,
+  edgeWeightInfluence: 3.5,
+  scalingRatio: 58,
   adjustSizes: true,
   outboundAttractionDistribution: true,
   barnesHut: true,
   linLog: false,
-  strongGravity: false,
-  slowDown: 1,
+  strongGravity: true,
+  slowDown: 3,
   barnesHutTheta: 0.5,
+  clusterSizeScalingFactor: 1,
 });
 
 const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
@@ -196,6 +197,8 @@ const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
+
+const width = computed(() => window.innerWidth);
 
 const combinedIntersection = computed((): string[] => {
   const combinedElements = [];
@@ -221,6 +224,10 @@ const combinedUnion = computed((): string[] => {
       ...metabolomicsUnion.value,
     ]),
   ];
+});
+
+watch(width, () => {
+  networkGraph.value?.setSize(width.value);
 });
 watch(combinedIntersection, () => {
   networkGraph.value?.setPathwaysContainingIntersecion(
@@ -519,6 +526,7 @@ watch(rootNegativeFilter.value, () => {
 
 watch(fa2LayoutParams.value, () => {
   networkGraph?.value?.relayoutGraph(fa2LayoutParams.value);
+  console.log(fa2LayoutParams.value);
 });
 
 const expandComponent = () => {
@@ -549,6 +557,7 @@ const drawNetwork = () => {
     LowDetailGlyph,
     128
   );
+  console.log(generatedGlyphsHighRes, generatedGlyphsLowZoom);
   mainStore.setGlyphs(generatedGlyphs);
   //const moduleAreas = mainStore.moduleAreas;
 
@@ -564,6 +573,7 @@ const drawNetwork = () => {
   for (let index = 0; index < Object.keys(polygons).length; index++) {
     polygonsArrays.push(polygons[index].verticesToArray(true));
   }
+
   const networkData = generateGraphData(
     overviewData.value,
     generatedGlyphs.url,
@@ -579,11 +589,13 @@ const drawNetwork = () => {
     props.contextID ? props.contextID : '',
     networkData,
     polygons,
-    fa2LayoutParams.value
+    fa2LayoutParams.value,
+    clusterWeights,
+    width.value
   );
 };
 </script>
-<style>
+<style lang="scss">
 .fab-class {
   z-index: 4;
 }
@@ -595,13 +607,29 @@ const drawNetwork = () => {
   min-height: 100%;
   z-index: 2;
 }
+.overviewFit {
+  width: 100% !important;
+  height: 100% !important;
+}
 .overviewFullscreen {
   z-index: 3;
   position: fixed !important;
-  top: 7vh;
   right: 1vh;
   bottom: 1vh;
   left: 1vh;
-  max-width: 100vw;
+  max-width: 99%;
+}
+@media (max-width: 1920px) {
+  .overviewFullscreen {
+    top: 7vh !important;
+    height: 92vh !important;
+  }
+}
+@media (min-width: 1921px) {
+  .overviewFullscreen {
+    top: 3vh !important;
+    height: 96vh !important;
+    font-size: 16px;
+  }
 }
 </style>

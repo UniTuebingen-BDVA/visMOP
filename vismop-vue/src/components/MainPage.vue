@@ -49,16 +49,16 @@
                   class="column no-wrap q-pa-none"
                 >
                   <omics-data-table-vue
+                    v-model:selected-entries="selectedTranscriptomics"
                     omics-type="transcriptomics"
-                    :selected-entries="selectedTranscriptomics"
                     :search-query="tableSearch"
                   />
                 </q-tab-panel>
 
                 <q-tab-panel name="proteomics" class="column no-wrap q-pa-none">
                   <omics-data-table-vue
+                    v-model:selected-entries="selectedProteomics"
                     omics-type="proteomics"
-                    :selected-entries="selectedProteomics"
                     :search-query="tableSearch"
                   />
                 </q-tab-panel>

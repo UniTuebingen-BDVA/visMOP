@@ -146,6 +146,9 @@ export const useMainStore = defineStore('mainStore', {
     keggChebiTranslate: {},
   }),
   actions: {
+    resetStore() {
+      this.resetPathwayCompare();
+    },
     addClickedNode(val: { queryID: string; name: string }) {
       // TODO atm uniprot IDs will be used when no transcriptomics id is saved
       // TODO multiIDs will not work at the moment
@@ -537,6 +540,9 @@ export const useMainStore = defineStore('mainStore', {
     removePathwayCompare(val: string) {
       const idx = this.pathwayCompare.findIndex((elem) => elem.pathway == val);
       this.pathwayCompare.splice(idx, 1);
+    },
+    resetPathwayCompare() {
+      this.pathwayCompare = [];
     },
     setKeggChebiTranslate(val: { [key: string]: string[] }) {
       this.keggChebiTranslate = val;

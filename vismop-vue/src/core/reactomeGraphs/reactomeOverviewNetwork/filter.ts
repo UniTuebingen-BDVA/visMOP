@@ -22,19 +22,22 @@ function filterFunction(
     this.filterFuncTrans(attributes.averageTranscriptomics as number) &&
     this.filterFuncAmtAbsTrans(attributes.transcriptomicsNodeState.regulated) &&
     this.filterFuncAmtRelTrans(
-      attributes.transcriptomicsNodeState.regulated /
-        attributes.transcriptomicsNodeState.total
+      (attributes.transcriptomicsNodeState.regulated /
+        attributes.transcriptomicsNodeState.total) *
+        100
     ) &&
     this.filterFuncProt(attributes.averageProteomics as number) &&
     this.filterFuncAmtAbsProt(attributes.proteomicsNodeState.regulated) &&
     this.filterFuncAmtRelProt(
-      attributes.proteomicsNodeState.regulated /
-        attributes.proteomicsNodeState.total
+      (attributes.proteomicsNodeState.regulated /
+        attributes.proteomicsNodeState.total) *
+        100
     ) &&
     this.filterFuncAmtAbsMeta(attributes.metabolomicsNodeState.regulated) &&
     this.filterFuncAmtRelMeta(
-      attributes.metabolomicsNodeState.regulated /
-        attributes.metabolomicsNodeState.total
+      (attributes.metabolomicsNodeState.regulated /
+        attributes.metabolomicsNodeState.total) *
+        100
     ) &&
     this.filterFuncMeta(attributes.averageMetabolomics as number) &&
     this.filterFuncAmtAbsSum(getRegSum(false, attributes)) &&

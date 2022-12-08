@@ -35,10 +35,15 @@ import { Loading } from 'quasar';
 
 export default class OverviewGraph {
   // constants
-  static readonly DEFAULT_SIZE = 3 * 2;
-  static readonly ROOT_DEFAULT_SIZE = 7.5 * 2;
-  static readonly MODULE_DEFAULT_SIZE = 7.5 * 3;
-  static readonly FOCUS_NODE_SIZE = 5 * 2;
+  static readonly DEFAULT_SIZE = 6;
+  static readonly ROOT_DEFAULT_SIZE = 15;
+  static readonly MODULE_DEFAULT_SIZE = 15;
+  static readonly FOCUS_NODE_SIZE = 10;
+
+  protected DEFAULT_SIZE = 6;
+  protected ROOT_DEFAULT_SIZE = 15;
+  protected MODULE_DEFAULT_SIZE = 15;
+  protected FOCUS_NODE_SIZE = 10;
 
   // data structures for reducers
   protected shortestPathClick: string[] = [];
@@ -60,6 +65,7 @@ export default class OverviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected clusterData;
+  protected windowWidth = 1080;
   protected lodRatio = 1.3;
   protected lastClickedClusterNode = -1;
   protected additionalData!: additionalData;
@@ -112,22 +118,31 @@ export default class OverviewGraph {
   };
   polygons: { [key: number]: ConvexPolygon };
   initialFa2Params: fa2LayoutParams;
+  clusterWeights: number[];
+  maxClusterWeight: number;
+  clusterSizeScalingFactor: number;
 
   constructor(
     containerID: string,
     graphData: overviewGraphData,
     polygons: { [key: number]: ConvexPolygon },
-    layoutParams: fa2LayoutParams
+    layoutParams: fa2LayoutParams,
+    clusterWeights: number[],
+    windowWidth: number
   ) {
     this.graph = UndirectedGraph.from(graphData);
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
+    this.clusterWeights = clusterWeights;
+    this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
+    this.maxClusterWeight = Math.max(...clusterWeights);
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
     this.relayoutGraph(this.initialFa2Params);
+    this.setSize(windowWidth);
 
     this.refreshCurrentPathway();
   }
@@ -258,8 +273,8 @@ export default class OverviewGraph {
             attributes.y = attributes.yOnClusterFocus;
             attributes.moduleFixed = true;
             attributes.zoomHidden = false;
-            attributes.size = OverviewGraph.FOCUS_NODE_SIZE; // size behavíour is strange!
-            attributes.nonHoverSize = OverviewGraph.FOCUS_NODE_SIZE;
+            attributes.size = this.FOCUS_NODE_SIZE; // size behavíour is strange!
+            attributes.nonHoverSize = this.FOCUS_NODE_SIZE;
           } else if (!defocus && !attributes.isRoot) {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
@@ -275,15 +290,15 @@ export default class OverviewGraph {
             attributes.moduleFixed = false;
             attributes.moduleHidden = false;
             attributes.size = attributes.isRoot
-              ? OverviewGraph.ROOT_DEFAULT_SIZE
+              ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'moduleNode'
-              ? OverviewGraph.MODULE_DEFAULT_SIZE
-              : OverviewGraph.DEFAULT_SIZE;
+              ? this.MODULE_DEFAULT_SIZE
+              : this.DEFAULT_SIZE;
             attributes.nonHoverSize = attributes.isRoot
-              ? OverviewGraph.ROOT_DEFAULT_SIZE
+              ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'moduleNode'
-              ? OverviewGraph.MODULE_DEFAULT_SIZE
-              : OverviewGraph.DEFAULT_SIZE;
+              ? this.MODULE_DEFAULT_SIZE
+              : this.DEFAULT_SIZE;
           }
         });
 
@@ -337,6 +352,7 @@ export default class OverviewGraph {
       barnesHutTheta: number;
       slowDown: number;
       linLog: boolean;
+      clusterSizeScalingFactor: number;
     }
   ) {
     const maxExt = 250;
@@ -375,6 +391,10 @@ export default class OverviewGraph {
         }
       });
       const settings = fa2.inferSettings(currentSubgraph);
+      const areaScaling =
+        (this.clusterWeights[polygonIdx] / this.maxClusterWeight) *
+        this.clusterSizeScalingFactor;
+      console.log(areaScaling, this.clusterSizeScalingFactor);
       const currentPositions = fa2(
         currentSubgraph,
         {
@@ -387,9 +407,11 @@ export default class OverviewGraph {
             barnesHutTheta: layoutParams.barnesHutTheta,
             slowDown: layoutParams.slowDown,
             strongGravityMode: layoutParams.strongGravity,
-            gravity: layoutParams.gravity,
+            gravity: layoutParams.gravity * areaScaling,
             edgeWeightInfluence: layoutParams.edgeWeightInfluence,
-            scalingRatio: layoutParams.scalingRatio,
+            scalingRatio:
+              layoutParams.scalingRatio *
+              (this.clusterSizeScalingFactor + 0.1 - areaScaling),
             adjustSizes: layoutParams.adjustSizes,
             outboundAttractionDistribution:
               layoutParams.outboundAttractionDistribution,
@@ -502,9 +524,9 @@ export default class OverviewGraph {
         isRoot: false,
         zIndex: 1,
         color: overviewColors.modules,
-        size: OverviewGraph.MODULE_DEFAULT_SIZE,
+        size: this.MODULE_DEFAULT_SIZE,
         nodeType: 'moduleNode',
-        nonHoverSize: OverviewGraph.MODULE_DEFAULT_SIZE,
+        nonHoverSize: this.MODULE_DEFAULT_SIZE,
         fixed: false,
         up: { x: xPos, y: yPos, gamma: 0 },
         type: 'image',
@@ -529,6 +551,47 @@ export default class OverviewGraph {
       };
       this.graph.addNode(key, moduleNode);
     }
+  }
+
+  setSize(windowWidth: number) {
+    this.windowWidth = windowWidth;
+    console.log('Window Size', windowWidth);
+    if (windowWidth < 1000) {
+      this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 0.7;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
+      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
+    } else if (windowWidth < 1950) {
+      this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 1;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
+      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
+    } else {
+      this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 2.5;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 2.5;
+      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 2.5;
+    }
+    this.applySize();
+  }
+
+  applySize() {
+    this.renderer.getGraph().forEachNode((node, attr) => {
+      switch (attr.nodeType) {
+        case 'regular':
+          attr.size = this.DEFAULT_SIZE;
+          attr.nonHoverSize = this.DEFAULT_SIZE;
+          break;
+        case 'root':
+          attr.size = this.ROOT_DEFAULT_SIZE;
+          attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
+          break;
+        case 'moduleNode':
+          attr.size = this.MODULE_DEFAULT_SIZE;
+          attr.nonHoverSize = this.MODULE_DEFAULT_SIZE;
+          break;
+        default:
+          attr.size = this.DEFAULT_SIZE;
+          attr.nonHoverSize = this.DEFAULT_SIZE;
+      }
+    });
   }
 
   public resetZoom = resetZoom;

@@ -206,6 +206,25 @@ const appendGlyph = (pathway: string) => {
   background: rgba(0, 0, 0, 0);
 }
 
+@media (max-width: 1920px) {
+  .positionCardTitle:after {
+    top: 4.4em;
+    height: 2.5em;
+  }
+}
+@media (min-width: 1921px) {
+  .positionCardTitle {
+    font-size: 20px;
+  }
+  .positionCardTitle:after {
+    top: 3.5em;
+    height: 2.5em;
+  }
+  .doc-link {
+    font-size: 20px;
+  }
+}
+
 .positionCardTitle:hover {
   overflow: visible;
   z-index: 9999;

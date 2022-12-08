@@ -45,7 +45,6 @@ export function generateInteractionGraphData(
     attributes: { name: 'BaseNetwork' },
     nodes: [],
     edges: [],
-    cluster_rects: [[]],
     options: [],
   } as graphData;
   let index = 0;

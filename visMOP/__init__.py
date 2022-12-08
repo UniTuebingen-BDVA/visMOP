@@ -134,7 +134,11 @@ def get_layout_settings(settings, omics_recieved):
         limits.append(omic_limits)
         if recieved and omic != "not related to specific omic ":
             attribute_boolean = [
-                att in layout_settings["attributes"] for att in possible_omic_attributes
+                (
+                    (layout_settings["attributes"] is not None)
+                    and att in layout_settings["attributes"]
+                )
+                for att in possible_omic_attributes
             ]
             attributes += attribute_boolean
 
