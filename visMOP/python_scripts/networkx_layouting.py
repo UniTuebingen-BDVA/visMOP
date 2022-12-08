@@ -1,5 +1,6 @@
 import networkx as nx
-#rom fa2 import ForceAtlas2
+
+# rom fa2 import ForceAtlas2
 import time
 
 
@@ -17,20 +18,22 @@ def generate_networkx_dict(global_nodes):
     attribute_dict = {}
 
     for key, entry in global_nodes.items():
-        adj_node = {}
-        attr_node = {"size": 20}
-        for out_edge in entry["outgoingEdges"]:
-            adj_node[out_edge["target"]] = {}
+        if entry["isCentral"]:
+            adj_node = {}
+            attr_node = {"size": 20}
+            for out_edge in entry["outgoingEdges"]:
+                adj_node[out_edge["target"]] = {}
 
-        try:
-            for test_edge in entry["outgoingOnceRemoved"]:
-                adj_node[test_edge["target"]] = {}
-        except:
-            pass
-        attribute_dict[key] = attr_node
-        adjacency_dict[key] = adj_node
+            try:
+                for test_edge in entry["outgoingOnceRemoved"]:
+                    adj_node[test_edge["target"]] = {}
+            except:
+                pass
+            attribute_dict[key] = attr_node
+            adjacency_dict[key] = adj_node
 
     return adjacency_dict, attribute_dict
+
 
 def get_spring_layout_pos(node_dict, init_scale=20000):
     """calculates spring layout from NetworkX as a initials starting point for live-layouting

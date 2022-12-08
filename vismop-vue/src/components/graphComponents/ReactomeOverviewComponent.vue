@@ -560,7 +560,6 @@ const drawNetwork = () => {
   console.log(generatedGlyphsHighRes, generatedGlyphsLowZoom);
   mainStore.setGlyphs(generatedGlyphs);
   //const moduleAreas = mainStore.moduleAreas;
-
   //get module areas here!!!
   const clusterWeights = mainStore.modules.map((elem) => elem.length);
   const polygons = generateVoronoiCells(

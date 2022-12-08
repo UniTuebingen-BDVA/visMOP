@@ -185,6 +185,7 @@ class Module_layout:
     def __init__(
         self,
         data_table,
+        layout_targets,
         graph_dict,
         up_down_reg_means,
         reactome_roots,
@@ -206,6 +207,7 @@ class Module_layout:
 
         # drop reatcome root ids so that thex are not used for calculating missing values and clusters
         self.data_table = data_table.drop(reactome_root_ids)
+        self.data_table = data_table.loc[layout_targets]
         self.full_graph = nx.Graph(networkx_adjacency_dict)
         nx.set_node_attributes(self.full_graph, networkx_attribute_dict)
 
@@ -544,9 +546,9 @@ class Module_layout:
             new_num_side_smaller,
         )
 
-    # defold values per omic and pos
+    # default values per omic and pos
     def fill_missing_values_with_neighbor_mean(
-        self, graph_dict, defaul_means, root_ids
+        self, graph_dict, default_means, root_ids
     ):
         node_names = list(self.data_table.index)
         new_data = {}
@@ -557,7 +559,7 @@ class Module_layout:
                 list(self.data_table.columns), self.data_table.loc[node_name]
             ):
                 default_val = (
-                    0 if any(s in ind for s in default_val_0) else defaul_means[ind[0]]
+                    0 if any(s in ind for s in default_val_0) else default_means[ind[0]]
                 )
                 new_val = val
                 if math.isnan(val):
@@ -567,13 +569,14 @@ class Module_layout:
                     calc_node_val = 0
                     for node_info in neighbor_nodes:
                         neighbor_name = node_info["target"]
-                        neighbor_val = self.data_table.loc[neighbor_name][ind]
-                        if (
-                            not math.isnan(neighbor_val)
-                            and neighbor_name not in root_ids
-                        ):
-                            calc_node_val += neighbor_val
-                            node_vals_not_none += 1
+                        if graph_dict[neighbor_name]["isCentral"]:
+                            neighbor_val = self.data_table.loc[neighbor_name][ind]
+                            if (
+                                not math.isnan(neighbor_val)
+                                and neighbor_name not in root_ids
+                            ):
+                                calc_node_val += neighbor_val
+                                node_vals_not_none += 1
                     new_val = (
                         calc_node_val / node_vals_not_none
                         if node_vals_not_none != 0

@@ -55,6 +55,7 @@ export function generateGraphData(
   let maxModuleNum = 0;
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey];
+    console.log(entry);
     const name = entry.pathwayName;
     const id = entry.pathwayId ? entry.pathwayId : 'noID';
     const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
@@ -79,6 +80,7 @@ export function generateGraphData(
         zoomHidden: false,
         moduleHidden: false,
         moduleFixed: false,
+        hierarchyHidden: !entry.isCentral,
         color:
           entry.rootId === entry.pathwayId
             ? overviewColors.roots
@@ -115,7 +117,12 @@ export function generateGraphData(
         rootId: entry.rootId,
         zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
-        nodeType: entry.rootId === entry.pathwayId ? 'root' : 'regular',
+        nodeType:
+          entry.rootId === entry.pathwayId
+            ? 'root'
+            : entry.isCentral
+            ? 'regular'
+            : 'hierarchical',
         size:
           entry.rootId === entry.pathwayId
             ? OverviewGraph.ROOT_DEFAULT_SIZE

@@ -1,6 +1,6 @@
-def get_overview_reactome(displayed_pathways):
+def get_overview_reactome(displayed_pathways, central_nodes):
     # at the moment only maplinks are considered
-    print("+++++NOTE: pathways that are not in global_dict_entries are NOT USED!!+++++")
+    # print("+++++NOTE: pathways that are not in global_dict_entries are NOT USED!!+++++")
     # Get pathways from dropdown menu --> main pathways for overview
 
     pathway_connection_dict = {}  # same format as with_init_pos #pathwayName
@@ -14,6 +14,7 @@ def get_overview_reactome(displayed_pathways):
             "outgoingEdges": [],
             "outgoingOnceRemoved": [],
             "entryType": "pathway",
+            "isCentral": pathwayKey in central_nodes,
             "isempty": False,
             "name": [pathwayKey],
             "pathwayID": pathwayKey,

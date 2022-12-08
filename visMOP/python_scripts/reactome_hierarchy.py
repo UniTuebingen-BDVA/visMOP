@@ -591,10 +591,16 @@ class PathwayHierarchy(dict):
             List of contained hierarchy nodes
         """
         out_data = []
+        central_nodes_out = []
+        central_nodes = []
         # pathway_ids = self.levels[level]
         pathway_ids = []
         for root in self.levels[0]:
-            pathway_ids.extend(self.get_subtree_non_overview(root))
+            central_nodes.extend(self.get_subtree_non_overview(root))
+        central_nodes.extend(self.levels[0])
+        central_nodes = list(set(central_nodes))
+        for root in self.levels[0]:
+            pathway_ids.extend(self.get_subtree_target(root))
         pathway_ids.extend(self.levels[0])
         pathway_ids = list(set(pathway_ids))
         query_pathway_dict = {}
@@ -613,6 +619,7 @@ class PathwayHierarchy(dict):
                     pathway_summary_data,
                 ) = generate_overview_pathway_entry(
                     entry,
+                    pathway in central_nodes,
                     pathway,
                     query_pathway_dict,
                     verbose,
@@ -621,6 +628,8 @@ class PathwayHierarchy(dict):
                 )
                 pathway_dropdown.append(dropdown_entry)
                 out_data.append(pathway_dict)
+                if pathway in central_nodes:
+                    central_nodes_out.append(pathway)
                 root_ids.append(entry.root_id)
                 pathways_root_names[entry.reactome_sID] = [self[entry.root_id].name]
                 # pathways_root_names[entry.reactome_sID].append(hierarchical_roots)
@@ -643,6 +652,7 @@ class PathwayHierarchy(dict):
         stat_vals_colnames.append("pathway size")
         return (
             out_data,
+            central_nodes_out,
             query_pathway_dict,
             pathway_dropdown,
             list(set(root_ids)),
@@ -670,6 +680,7 @@ class PathwayHierarchy(dict):
 
 def generate_overview_pathway_entry(
     entry,
+    is_central,
     pathway_Id,
     query_pathway_dict,
     verbose,
@@ -692,6 +703,7 @@ def generate_overview_pathway_entry(
         "pathwayName": "",
         "pathwayId": "",
         "rootId": "",
+        "isCentral": is_central,
         "maplinks": [],
         "subtreeIds": [],
         "insetPathwayEntryIDs": {

@@ -17,7 +17,11 @@ export function nodeReducer(
   if (this.renderer) {
     // handle lod detail
 
-    const hidden = data.filterHidden || data.zoomHidden || data.moduleHidden;
+    const hidden =
+      data.filterHidden ||
+      data.zoomHidden ||
+      data.moduleHidden ||
+      data.hierarchyHidden;
     let lodCondition = false;
     let xDisplay: number | undefined = -100;
     let yDisplay: number | undefined = -100;

@@ -69,6 +69,7 @@ type overviewNodeAttr = baseNodeAttr & {
   imageHighRes: string;
   imageLowZoom: string;
   hidden: boolean;
+  hierarchyHidden: boolean;
   filterHidden: boolean;
   zoomHidden: boolean;
   moduleHidden: boolean;

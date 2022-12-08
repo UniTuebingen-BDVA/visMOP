@@ -28,6 +28,7 @@ type reactomeEntry = {
     metabolomics: omicsEntry;
   };
   pathwayId: string;
+  isCentral: boolean;
   moduleNum: number;
   up: upDatedPos;
   rootId: string;

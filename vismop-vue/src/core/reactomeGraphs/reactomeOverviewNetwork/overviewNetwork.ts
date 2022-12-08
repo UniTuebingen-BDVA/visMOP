@@ -362,7 +362,7 @@ export default class OverviewGraph {
         return (
           attr.modNum == polygonIdx &&
           attr.isRoot == false &&
-          attr.nodeType !== 'moduleNode'
+          attr.nodeType == 'regular'
         );
       });
       currentSubgraph.clearEdges();
@@ -536,6 +536,7 @@ export default class OverviewGraph {
         imageHighRes: glyphs[key],
         imageLowZoom: glyphs[key],
         hidden: this.camera.ratio >= this.lodRatio ? false : true,
+        hierarchyHidden: false,
         filterHidden: false,
         zoomHidden: this.camera.ratio >= this.lodRatio ? true : true,
         moduleHidden: false,
