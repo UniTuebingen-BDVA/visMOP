@@ -706,6 +706,8 @@ def generate_overview_pathway_entry(
         "isCentral": is_central,
         "maplinks": [],
         "subtreeIds": [],
+        "parents": [],
+        "children": [],
         "insetPathwayEntryIDs": {
             "proteomics": {},
             "transcriptomics": {},
@@ -727,6 +729,8 @@ def generate_overview_pathway_entry(
     pathway_dict["rootId"] = entry.root_id
     pathway_dict["maplinks"] = entry.maplinks
     pathway_dict["subtreeIds"] = entry.subtree_ids
+    pathway_dict["parents"] = entry.parents
+    pathway_dict["children"] = entry.children
     pathway_dict["ownMeasuredEntryIDs"]["proteomics"] = entry.own_measured_proteins
     pathway_dict["ownMeasuredEntryIDs"]["transcriptomics"] = entry.own_measured_genes
     pathway_dict["ownMeasuredEntryIDs"]["metabolomics"] = entry.own_measured_metabolites

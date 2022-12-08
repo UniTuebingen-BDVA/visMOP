@@ -11,6 +11,7 @@ import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
+import { animateNodes } from 'sigma/utils/animate';
 import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
@@ -32,6 +33,8 @@ import _ from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 import FilterData from './filterData';
 import { Loading } from 'quasar';
+import { PlainObject } from 'sigma/types';
+import { vec2 } from 'gl-matrix';
 
 export default class OverviewGraph {
   // constants
@@ -138,6 +141,7 @@ export default class OverviewGraph {
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
     this.maxClusterWeight = Math.max(...clusterWeights);
     this.renderer = this.mainGraph(containerID);
+    this.layoutRoots();
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
@@ -188,18 +192,6 @@ export default class OverviewGraph {
       },
       this.additionalData
     );
-    const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
-      return attr.isRoot;
-    });
-    const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
-    const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
-    // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
-
-    const rootPositions = orderedCircularLayout(rootSubgraph, {
-      scale: width / 1.8,
-      center: 0.5,
-    }) as LayoutMapping<{ [dimension: string]: number }>;
-    assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
 
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
@@ -259,6 +251,7 @@ export default class OverviewGraph {
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
           //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
+          this.hierachyLayout(node);
         }
       } else {
         const defocus = this.lastClickedClusterNode == parseInt(node);
@@ -330,6 +323,66 @@ export default class OverviewGraph {
     this.highlightedNodesClick.clear();
     useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
     this.renderer.refresh();
+  }
+  /**
+   * Layouts roots as a circle
+   */
+  layoutRoots(animate = false) {
+    const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
+    const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
+    // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
+
+    const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
+      return attr.isRoot;
+    });
+    const rootPositions = orderedCircularLayout(rootSubgraph, {
+      scale: width / 1.8,
+      center: 0.5,
+    }) as LayoutMapping<{ [dimension: string]: number }>;
+    if (animate) {
+      this.cancelCurrentAnimation = animateNodes(this.graph, rootPositions, {
+        duration: 2000,
+        easing: 'quadraticOut',
+      });
+    } else {
+      assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
+    }
+  }
+
+  hierachyLayout(tarRoot: string) {
+    const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
+      return attr.isRoot;
+    });
+    if (!this.renderer.getCustomBBox())
+      this.renderer.setCustomBBox(this.renderer.getBBox());
+    const tarPositions: PlainObject<PlainObject<number>> = {};
+    rootSubgraph.forEachNode((node, attributes) => {
+      const fromCenter = vec2.normalize(
+        vec2.create(),
+        vec2.sub(
+          vec2.create(),
+          vec2.fromValues(attributes.x, attributes.y),
+          vec2.fromValues(0, 0)
+        )
+      );
+      tarPositions[node] = {
+        x: fromCenter[0] * 400,
+        y: fromCenter[1] * 400,
+      };
+    });
+    this.cancelCurrentAnimation = animateNodes(
+      this.graph,
+      tarPositions,
+      {
+        duration: 2000,
+        easing: 'quadraticOut',
+      },
+      () => {
+        rootSubgraph.forEachNode((node, _attributes) => {
+          this.graph.setNodeAttribute(node, 'hierarchyHidden', node != tarRoot);
+        });
+      }
+    );
   }
 
   /**
