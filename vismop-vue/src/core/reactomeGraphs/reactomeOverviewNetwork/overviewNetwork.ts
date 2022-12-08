@@ -118,8 +118,8 @@ export default class OverviewGraph {
   };
   polygons: { [key: number]: ConvexPolygon };
   initialFa2Params: fa2LayoutParams;
-  clusterWeights: number [] ;
-  maxClusterWeight: number ; 
+  clusterWeights: number[];
+  maxClusterWeight: number;
   clusterSizeScalingFactor: number;
 
   constructor(
@@ -127,15 +127,16 @@ export default class OverviewGraph {
     graphData: overviewGraphData,
     polygons: { [key: number]: ConvexPolygon },
     layoutParams: fa2LayoutParams,
+    clusterWeights: number[],
     windowWidth: number
   ) {
     this.graph = UndirectedGraph.from(graphData);
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
-    this.clusterWeights = clusterWeights ;
+    this.clusterWeights = clusterWeights;
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
-    this.maxClusterWeight = Math.max(...clusterWeights) ;
+    this.maxClusterWeight = Math.max(...clusterWeights);
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
@@ -390,8 +391,10 @@ export default class OverviewGraph {
         }
       });
       const settings = fa2.inferSettings(currentSubgraph);
-      const areaScaling = this.clusterWeights[polygonIdx]/this.maxClusterWeight * this.clusterSizeScalingFactor;
-      console.log(areaScaling, this.clusterSizeScalingFactor)
+      const areaScaling =
+        (this.clusterWeights[polygonIdx] / this.maxClusterWeight) *
+        this.clusterSizeScalingFactor;
+      console.log(areaScaling, this.clusterSizeScalingFactor);
       const currentPositions = fa2(
         currentSubgraph,
         {
@@ -406,7 +409,9 @@ export default class OverviewGraph {
             strongGravityMode: layoutParams.strongGravity,
             gravity: layoutParams.gravity * areaScaling,
             edgeWeightInfluence: layoutParams.edgeWeightInfluence,
-            scalingRatio: layoutParams.scalingRatio * (this.clusterSizeScalingFactor + 0.1 - areaScaling),
+            scalingRatio:
+              layoutParams.scalingRatio *
+              (this.clusterSizeScalingFactor + 0.1 - areaScaling),
             adjustSizes: layoutParams.adjustSizes,
             outboundAttractionDistribution:
               layoutParams.outboundAttractionDistribution,

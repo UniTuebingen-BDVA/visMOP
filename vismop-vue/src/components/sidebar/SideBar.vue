@@ -262,7 +262,7 @@ const availableOmics = [
 const layoutSettings = ref({
   'Transcriptomics ': {
     attributes: allOmicLayoutAttributes,
-    limits: [-1.3, 1.3],
+    limits: [0.8, 1.2],
   },
   'Proteomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
   'Metabolomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
