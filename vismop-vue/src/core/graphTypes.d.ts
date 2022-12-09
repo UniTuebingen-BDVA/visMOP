@@ -82,6 +82,8 @@ type overviewNodeAttr = baseNodeAttr & {
   proteomicsNodeState: { regulated: number; total: number };
   metabolomicsNodeState: { regulated: number; total: number };
   rootId: string;
+  parents: string[];
+  children: string[];
 };
 
 type CartesianVector = {

@@ -117,6 +117,8 @@ export function generateGraphData(
         rootId: entry.rootId,
         zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
+        parents: entry.parents,
+        children: entry.children,
         nodeType:
           entry.rootId === entry.pathwayId
             ? 'root'

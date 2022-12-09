@@ -68,6 +68,7 @@ export default class OverviewGraph {
   protected prevFrameZoom;
   protected graph;
   protected clusterData;
+  protected graphWidth = 0;
   protected windowWidth = 1080;
   protected lodRatio = 1.3;
   protected lastClickedClusterNode = -1;
@@ -141,10 +142,11 @@ export default class OverviewGraph {
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
     this.maxClusterWeight = Math.max(...clusterWeights);
     this.renderer = this.mainGraph(containerID);
-    this.layoutRoots();
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
+    this.calculateGraphWidth();
+    this.layoutRoots();
     this.relayoutGraph(this.initialFa2Params);
     this.setSize(windowWidth);
 
@@ -251,7 +253,9 @@ export default class OverviewGraph {
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
           //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
-          this.hierachyLayout(node);
+          if (this.graph.getNodeAttribute(node, 'nodeType') != 'regular') {
+            this.hierachyLayout(node);
+          }
         }
       } else {
         const defocus = this.lastClickedClusterNode == parseInt(node);
@@ -324,19 +328,21 @@ export default class OverviewGraph {
     useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
     this.renderer.refresh();
   }
+  calculateGraphWidth() {
+    const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
+    this.graphWidth = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
+  }
   /**
    * Layouts roots as a circle
    */
   layoutRoots(animate = false) {
-    const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
-    const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
     // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
 
     const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
       return attr.isRoot;
     });
     const rootPositions = orderedCircularLayout(rootSubgraph, {
-      scale: width / 1.8,
+      scale: this.graphWidth / 1.8,
       center: 0.5,
     }) as LayoutMapping<{ [dimension: string]: number }>;
     if (animate) {
@@ -366,8 +372,8 @@ export default class OverviewGraph {
         )
       );
       tarPositions[node] = {
-        x: fromCenter[0] * 400,
-        y: fromCenter[1] * 400,
+        x: fromCenter[0] * this.graphWidth * (node == tarRoot ? 0.7 : 1.3),
+        y: fromCenter[1] * this.graphWidth * (node == tarRoot ? 0.7 : 1.3),
       };
     });
     this.cancelCurrentAnimation = animateNodes(
@@ -381,6 +387,33 @@ export default class OverviewGraph {
         rootSubgraph.forEachNode((node, _attributes) => {
           this.graph.setNodeAttribute(node, 'hierarchyHidden', node != tarRoot);
         });
+        this.layoutSubpathways(tarRoot);
+      }
+    );
+  }
+
+  layoutSubpathways(parentNode: string) {
+    const subPathwaysIds = this.graph.getNodeAttribute(parentNode, 'children');
+    console.log('subpathwayIDs', subPathwaysIds);
+    const subPathways = subgraph(this.graph, function (nodeID, attr) {
+      return subPathwaysIds.includes(nodeID) && attr.nodeType == 'hierarchical';
+    });
+    console.log('subpathways', subPathways);
+
+    subPathways.forEachNode((node, _attributes) => {
+      this.graph.setNodeAttribute(node, 'hierarchyHidden', false);
+      this.graph.setNodeAttribute(node, 'hidden', false);
+    });
+    const subPathwayPositions = orderedCircularLayout(subPathways, {
+      scale: this.graphWidth / 1.8,
+      center: 0.5,
+    }) as LayoutMapping<{ [dimension: string]: number }>;
+    this.cancelCurrentAnimation = animateNodes(
+      this.graph,
+      subPathwayPositions,
+      {
+        duration: 2000,
+        easing: 'quadraticOut',
       }
     );
   }
@@ -602,6 +635,8 @@ export default class OverviewGraph {
         proteomicsNodeState: { regulated: 0, total: 0 },
         metabolomicsNodeState: { regulated: 0, total: 0 },
         rootId: '',
+        parents: [],
+        children: [],
       };
       this.graph.addNode(key, moduleNode);
     }

@@ -37,6 +37,9 @@ type reactomeEntry = {
   pathwayName: string;
   maplinks: { [key: string]: { own_id: number; toplevel_id: number } };
   subtreeIds: string[];
+  parents: string[];
+  children: string[];
+  is_root: boolean;
   ownMeasuredEntryIDs: {
     proteomics: string[];
     transcriptomics: string[];
