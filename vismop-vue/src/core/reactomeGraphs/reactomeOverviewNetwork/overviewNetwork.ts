@@ -125,6 +125,7 @@ export default class OverviewGraph {
   clusterWeights: number[];
   maxClusterWeight: number;
   clusterSizeScalingFactor: number;
+  rootOrder: number;
 
   constructor(
     containerID: string,
@@ -138,6 +139,7 @@ export default class OverviewGraph {
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
+    this.rootOrder = 0;
     this.clusterWeights = clusterWeights;
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
     this.maxClusterWeight = Math.max(...clusterWeights);
@@ -341,9 +343,13 @@ export default class OverviewGraph {
     const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
       return attr.isRoot;
     });
+    this.rootOrder = rootSubgraph.order;
+
     const rootPositions = orderedCircularLayout(rootSubgraph, {
       scale: this.graphWidth / 1.8,
       center: 0.5,
+      startAngle: Math.PI / 2,
+      minDivisions: 0,
     }) as LayoutMapping<{ [dimension: string]: number }>;
     if (animate) {
       this.cancelCurrentAnimation = animateNodes(this.graph, rootPositions, {
@@ -394,11 +400,14 @@ export default class OverviewGraph {
 
   layoutSubpathways(parentNode: string) {
     const subPathwaysIds = this.graph.getNodeAttribute(parentNode, 'children');
-    console.log('subpathwayIDs', subPathwaysIds);
     const subPathways = subgraph(this.graph, function (nodeID, attr) {
       return subPathwaysIds.includes(nodeID) && attr.nodeType == 'hierarchical';
     });
-    console.log('subpathways', subPathways);
+    const parentAttribs = this.graph.getNodeAttributes(parentNode);
+    const divisions =
+      subPathways.order < this.rootOrder ? this.rootOrder : subPathways.order;
+    const angleOffset = ((subPathways.order - 1) / divisions) * Math.PI;
+    const parentAngle = Math.atan2(parentAttribs.y, parentAttribs.x);
 
     subPathways.forEachNode((node, _attributes) => {
       this.graph.setNodeAttribute(node, 'hierarchyHidden', false);
@@ -407,6 +416,8 @@ export default class OverviewGraph {
     const subPathwayPositions = orderedCircularLayout(subPathways, {
       scale: this.graphWidth / 1.8,
       center: 0.5,
+      startAngle: parentAngle + angleOffset,
+      minDivisions: this.rootOrder,
     }) as LayoutMapping<{ [dimension: string]: number }>;
     this.cancelCurrentAnimation = animateNodes(
       this.graph,
