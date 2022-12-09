@@ -81,6 +81,7 @@ class ReactomePathway:
         self.reactome_sID = reactome_sID
         self.db_Id = ""
         self.children = []
+        self.children_with_data = []
         self.subtree_ids = []
         self.diagram_entry = ""
         self.own_measured_proteins = []
@@ -99,6 +100,7 @@ class ReactomePathway:
         self.total_metabolites = {}
         self.maplinks = {}
         self.parents = []
+        self.parents_with_data = []
         self.level = -1
         self.root_id = ""
 
@@ -183,6 +185,17 @@ class PathwayHierarchy(dict):
         leafs = len([v for k, v in self.items() if v.is_leaf])
         roots = len([v for k, v in self.items() if v.is_root])
         return {"size": entries, "leafs": leafs, "roots": roots}
+
+    def generate_parents_children_with_data(self):
+        for entry in self.values():
+            for parent_entry in entry.parents:
+                entryObject = self[parent_entry]
+                if entryObject.has_data:
+                    entry.parents_with_data.append(parent_entry)
+            for child_entry in entry.children:
+                entryObject = self[child_entry]
+                if entryObject.has_data:
+                    entry.children_with_data.append(child_entry)
 
     def add_json_data(self, json_path):
         """Adds json data to the pathways
@@ -609,6 +622,7 @@ class PathwayHierarchy(dict):
         root_ids = []
         pathways_root_names = {}
         pathway_summary_stats_dict = {}
+        self.generate_parents_children_with_data()
         for pathway in pathway_ids:
             entry = self[pathway]
             hierarchical_roots = self.get_hierachical_superpathways(entry)
@@ -729,8 +743,8 @@ def generate_overview_pathway_entry(
     pathway_dict["rootId"] = entry.root_id
     pathway_dict["maplinks"] = entry.maplinks
     pathway_dict["subtreeIds"] = entry.subtree_ids
-    pathway_dict["parents"] = entry.parents
-    pathway_dict["children"] = entry.children
+    pathway_dict["parents"] = entry.parents_with_data
+    pathway_dict["children"] = entry.children_with_data
     pathway_dict["ownMeasuredEntryIDs"]["proteomics"] = entry.own_measured_proteins
     pathway_dict["ownMeasuredEntryIDs"]["transcriptomics"] = entry.own_measured_genes
     pathway_dict["ownMeasuredEntryIDs"]["metabolomics"] = entry.own_measured_metabolites

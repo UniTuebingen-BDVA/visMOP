@@ -598,7 +598,7 @@ def reactome_overview():
         # x_y_pos = module_node_pos[pathway["pathwayId"]]
         pathway["initialPosX"] = random()  # x_y_pos[0]
         pathway["initialPosY"] = random()  # x_y_pos[1]
-        pathway["moduleNum"] = randint(0, len(modules) - 1)  # x_y_pos[2]
+        pathway["moduleNum"] = 0  # x_y_pos[2]
     modules = [elem.tolist() for elem in modules]
     return json.dumps(
         {
@@ -615,16 +615,6 @@ def reactome_overview():
             },
         }
     )
-
-
-@app.route("/get_root_search/<pathway>", methods=["GET"])
-def get_root_search(pathway):
-    hierarchy = cache.get("reactome_hierarchy")
-    pathway_entry = hierarchy[pathway]
-    parents = pathway_entry.parents
-    children = pathway_entry.children
-    print(parents, children)
-    return 0
 
 
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])

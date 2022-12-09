@@ -51,6 +51,17 @@ export function generateGraphData(
     options: [],
   };
   const addedEdges: string[] = [];
+  const addedNodes: string[] = [];
+  function addEdge(source: string, target: string, type: string): void {
+    const currentEdge = generateForceGraphEdge(source, target, type);
+    if (
+      !addedEdges.includes(currentEdge.key) &&
+      !addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`)
+    ) {
+      graph.edges.push(currentEdge);
+      addedEdges.push(currentEdge.key);
+    }
+  }
   let index = 0;
   let maxModuleNum = 0;
   for (const entryKey in nodeList) {
@@ -125,30 +136,27 @@ export function generateGraphData(
             : entry.isCentral
             ? 'regular'
             : 'hierarchical',
-        size:
-          entry.rootId === entry.pathwayId
-            ? OverviewGraph.ROOT_DEFAULT_SIZE
-            : OverviewGraph.DEFAULT_SIZE,
-        nonHoverSize:
-          entry.rootId === entry.pathwayId
-            ? OverviewGraph.ROOT_DEFAULT_SIZE
-            : OverviewGraph.DEFAULT_SIZE,
+        size: !entry.isCentral
+          ? OverviewGraph.ROOT_DEFAULT_SIZE
+          : OverviewGraph.DEFAULT_SIZE,
+        nonHoverSize: !entry.isCentral
+          ? OverviewGraph.ROOT_DEFAULT_SIZE
+          : OverviewGraph.DEFAULT_SIZE,
         fixed: false, // fixed property on nodes excludes nodes from layouting
       },
     };
     graph.nodes.push(currentNode);
-    const currentEdge = generateForceGraphEdge(
-      entry.rootId,
-      entry.pathwayId,
-      'hierarchical'
-    );
-    if (
-      !addedEdges.includes(currentEdge.key) &&
-      !addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`)
-    ) {
-      graph.edges.push(currentEdge);
-      addedEdges.push(currentEdge.key);
-    }
+    addedNodes.push(currentNode.key);
+    // Root Edge
+    addEdge(entry.rootId, entry.pathwayId, 'rootEdge');
+    // Hierarchical Edges:
+    entry.parents.forEach((element) => {
+      addEdge(element, entry.pathwayId, 'hierarchical');
+    });
+    entry.children.forEach((element) => {
+      addEdge(element, entry.pathwayId, 'hierarchical');
+    });
+
     for (const [maplink] of Object.entries(entry.maplinks)) {
       if (!rootIds.includes(entry.pathwayId)) {
         for (const entryKey in nodeList) {
@@ -176,7 +184,6 @@ export function generateGraphData(
     }
     index += 1;
   }
-
   const maxExt = 250;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
@@ -230,6 +237,7 @@ function generateForceGraphEdge(
     attributes: {
       zIndex: 0,
       hidden: true,
+      edgeType: type,
       type: type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'

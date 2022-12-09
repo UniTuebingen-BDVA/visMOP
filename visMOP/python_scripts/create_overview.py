@@ -14,6 +14,8 @@ def get_overview_reactome(displayed_pathways, central_nodes):
             "outgoingEdges": [],
             "outgoingOnceRemoved": [],
             "entryType": "pathway",
+            "parents": pathway["parents"],
+            "children": pathway["children"],
             "isCentral": pathwayKey in central_nodes,
             "isempty": False,
             "name": [pathwayKey],

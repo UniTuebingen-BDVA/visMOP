@@ -35,6 +35,7 @@ import FilterData from './filterData';
 import { Loading } from 'quasar';
 import { PlainObject } from 'sigma/types';
 import { vec2 } from 'gl-matrix';
+import { use } from 'chai';
 
 export default class OverviewGraph {
   // constants
@@ -59,6 +60,7 @@ export default class OverviewGraph {
   protected highlighedEdgesHover = new Set();
   protected highlightedCenterHover = '';
   protected currentPathway = '';
+  protected currentHierarchySelection = '';
   protected pathwaysContainingIntersection: string[] = [];
   protected pathwaysContainingUnion: string[] = [];
 
@@ -196,6 +198,10 @@ export default class OverviewGraph {
       },
       this.additionalData
     );
+    renderer.on('beforeRender', () => {
+      zoomLod.bind(this)();
+      filterElements.bind(this)();
+    });
 
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
@@ -205,11 +211,6 @@ export default class OverviewGraph {
       this.highlightedCenterHover = node;
       this.highlighedEdgesHover = new Set(this.graph.edges(node));
       renderer.refresh();
-    });
-
-    renderer.on('beforeRender', () => {
-      zoomLod.bind(this)();
-      filterElements.bind(this)();
     });
 
     renderer.on('leaveNode', () => {
@@ -256,6 +257,7 @@ export default class OverviewGraph {
           //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
           if (this.graph.getNodeAttribute(node, 'nodeType') != 'regular') {
+            this.currentHierarchySelection = node;
             this.hierachyLayout(node);
           }
         }
@@ -327,12 +329,58 @@ export default class OverviewGraph {
   clearSelection() {
     this.highlightedEdgesClick.clear();
     this.highlightedNodesClick.clear();
+
+    this.resetHierarchyNodes();
     useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
     this.renderer.refresh();
+    this.currentHierarchySelection = '';
   }
   calculateGraphWidth() {
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     this.graphWidth = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
+  }
+  resetHierarchyNodes() {
+    if (this.currentHierarchySelection) {
+      const subPathwaysIds = this.graph.getNodeAttribute(
+        this.currentHierarchySelection,
+        'children'
+      );
+
+      const subPathways = subgraph(this.graph, function (nodeID, attr) {
+        return (
+          subPathwaysIds.includes(nodeID) && attr.nodeType == 'hierarchical'
+        );
+      });
+      const parentAttribs = this.graph.getNodeAttributes(
+        this.currentHierarchySelection
+      );
+
+      const tarPositions: PlainObject<PlainObject<number>> = {};
+      subPathways.forEachNode((node, _attributes) => {
+        tarPositions[node] = {
+          x: parentAttribs.x,
+          y: parentAttribs.y,
+        };
+      });
+      this.cancelCurrentAnimation = animateNodes(
+        this.graph,
+        tarPositions,
+        {
+          duration: 2000,
+          easing: 'quadraticOut',
+        },
+        () => {
+          subPathways.forEachNode((node, _attributes) => {
+            this.graph.setNodeAttribute(node, 'hierarchyHidden', true);
+            this.graph.setNodeAttribute(node, 'hidden', true);
+          });
+          this.graph.forEachEdge((edge, attributes) => {
+            if (attributes.edgeType == 'hierarchical') attributes.hidden = true;
+          });
+          this.layoutRoots(true);
+        }
+      );
+    }
   }
   /**
    * Layouts roots as a circle
@@ -344,7 +392,9 @@ export default class OverviewGraph {
       return attr.isRoot;
     });
     this.rootOrder = rootSubgraph.order;
-
+    rootSubgraph.forEachNode((node, _attributes) => {
+      this.graph.setNodeAttribute(node, 'hierarchyHidden', false);
+    });
     const rootPositions = orderedCircularLayout(rootSubgraph, {
       scale: this.graphWidth / 1.8,
       center: 0.5,
@@ -378,8 +428,8 @@ export default class OverviewGraph {
         )
       );
       tarPositions[node] = {
-        x: fromCenter[0] * this.graphWidth * (node == tarRoot ? 0.7 : 1.3),
-        y: fromCenter[1] * this.graphWidth * (node == tarRoot ? 0.7 : 1.3),
+        x: fromCenter[0] * this.graphWidth * (node == tarRoot ? 0.7 : 0.7), // change here to increase distance for non tar nodes
+        y: fromCenter[1] * this.graphWidth * (node == tarRoot ? 0.7 : 0.7),
       };
     });
     this.cancelCurrentAnimation = animateNodes(
@@ -390,9 +440,9 @@ export default class OverviewGraph {
         easing: 'quadraticOut',
       },
       () => {
-        rootSubgraph.forEachNode((node, _attributes) => {
-          this.graph.setNodeAttribute(node, 'hierarchyHidden', node != tarRoot);
-        });
+        // rootSubgraph.forEachNode((node, _attributes) => {
+        //   this.graph.setNodeAttribute(node, 'hierarchyHidden', false); //node != tarRoot);
+        // });
         this.layoutSubpathways(tarRoot);
       }
     );
@@ -410,9 +460,13 @@ export default class OverviewGraph {
     const parentAngle = Math.atan2(parentAttribs.y, parentAttribs.x);
 
     subPathways.forEachNode((node, _attributes) => {
+      this.graph.setNodeAttribute(node, 'x', parentAttribs.x);
+      this.graph.setNodeAttribute(node, 'y', parentAttribs.y);
       this.graph.setNodeAttribute(node, 'hierarchyHidden', false);
       this.graph.setNodeAttribute(node, 'hidden', false);
     });
+    this.renderer.refresh();
+
     const subPathwayPositions = orderedCircularLayout(subPathways, {
       scale: this.graphWidth / 1.8,
       center: 0.5,
@@ -425,6 +479,20 @@ export default class OverviewGraph {
       {
         duration: 2000,
         easing: 'quadraticOut',
+      },
+      () => {
+        subPathways.forEachNode((node, _attributes) => {
+          let hasHierarchicalEdge = false;
+          this.graph.forEachEdge(node, (edge, attributes) => {
+            if (attributes.edgeType == 'hierarchical')
+              attributes.hidden = false;
+            hasHierarchicalEdge = true;
+          });
+          this.graph.forEachEdge(node, (edge, attributes) => {
+            if (attributes.edgeType != 'hierarchical && hasHierarchicalEdge')
+              attributes.hidden = true;
+          });
+        });
       }
     );
   }
@@ -680,6 +748,10 @@ export default class OverviewGraph {
           attr.nonHoverSize = this.DEFAULT_SIZE;
           break;
         case 'root':
+          attr.size = this.ROOT_DEFAULT_SIZE;
+          attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
+          break;
+        case 'hierarchical':
           attr.size = this.ROOT_DEFAULT_SIZE;
           attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
           break;

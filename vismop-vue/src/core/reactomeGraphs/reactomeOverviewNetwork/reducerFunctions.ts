@@ -204,7 +204,9 @@ export function edgeReducer(
         hidden: false,
       };
     }
-
+    if (data.edgeType == 'hierarchical') {
+      return data;
+    }
     return { ...data, hidden: true };
   } else return data;
 }
