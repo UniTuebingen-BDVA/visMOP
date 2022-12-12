@@ -35,7 +35,6 @@ import FilterData from './filterData';
 import { Loading } from 'quasar';
 import { PlainObject } from 'sigma/types';
 import { vec2 } from 'gl-matrix';
-import { use } from 'chai';
 
 export default class OverviewGraph {
   // constants
@@ -63,7 +62,7 @@ export default class OverviewGraph {
   protected currentHierarchySelection = '';
   protected pathwaysContainingIntersection: string[] = [];
   protected pathwaysContainingUnion: string[] = [];
-
+  protected hierarchyNodes: string[] = [];
   // renderer and camera
   protected renderer;
   protected camera;
@@ -331,6 +330,7 @@ export default class OverviewGraph {
     this.highlightedNodesClick.clear();
 
     this.resetHierarchyNodes();
+    this.hierarchyNodes = [];
     useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
     this.renderer.refresh();
     this.currentHierarchySelection = '';
@@ -345,10 +345,10 @@ export default class OverviewGraph {
         this.currentHierarchySelection,
         'children'
       );
-
+      const hierarchyNodes = this.hierarchyNodes;
       const subPathways = subgraph(this.graph, function (nodeID, attr) {
         return (
-          subPathwaysIds.includes(nodeID) && attr.nodeType == 'hierarchical'
+          hierarchyNodes.includes(nodeID) && attr.nodeType == 'hierarchical'
         );
       });
       const parentAttribs = this.graph.getNodeAttributes(
@@ -375,7 +375,11 @@ export default class OverviewGraph {
             this.graph.setNodeAttribute(node, 'hidden', true);
           });
           this.graph.forEachEdge((edge, attributes) => {
-            if (attributes.edgeType == 'hierarchical') attributes.hidden = true;
+            if (attributes.edgeType == 'hierarchical') {
+              attributes.hierarchyHidden = true;
+            } else {
+              attributes.hierarchyHidden = false;
+            }
           });
           this.layoutRoots(true);
         }
@@ -411,25 +415,24 @@ export default class OverviewGraph {
     }
   }
 
-  hierachyLayout(tarRoot: string) {
-    const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
-      return attr.isRoot;
+  hierachyLayout(tarNode: string) {
+    const hierarchyNodes = this.hierarchyNodes;
+    const rootSubgraph = subgraph(this.graph, function (nodeID, attr) {
+      return attr.isRoot || hierarchyNodes.includes(nodeID);
     });
     if (!this.renderer.getCustomBBox())
       this.renderer.setCustomBBox(this.renderer.getBBox());
     const tarPositions: PlainObject<PlainObject<number>> = {};
     rootSubgraph.forEachNode((node, attributes) => {
-      const fromCenter = vec2.normalize(
+      const fromCenter = vec2.sub(
         vec2.create(),
-        vec2.sub(
-          vec2.create(),
-          vec2.fromValues(attributes.x, attributes.y),
-          vec2.fromValues(0, 0)
-        )
+        vec2.fromValues(attributes.x, attributes.y),
+        vec2.fromValues(0, 0)
       );
+      const fromCenterNormalized = vec2.normalize(vec2.create(), fromCenter);
       tarPositions[node] = {
-        x: fromCenter[0] * this.graphWidth * (node == tarRoot ? 0.7 : 0.7), // change here to increase distance for non tar nodes
-        y: fromCenter[1] * this.graphWidth * (node == tarRoot ? 0.7 : 0.7),
+        x: fromCenter[0] + fromCenterNormalized[0] * this.graphWidth * 0.2, // change here to increase distance for non tar nodes
+        y: fromCenter[1] + fromCenterNormalized[1] * this.graphWidth * 0.2,
       };
     });
     this.cancelCurrentAnimation = animateNodes(
@@ -440,16 +443,46 @@ export default class OverviewGraph {
         easing: 'quadraticOut',
       },
       () => {
-        // rootSubgraph.forEachNode((node, _attributes) => {
-        //   this.graph.setNodeAttribute(node, 'hierarchyHidden', false); //node != tarRoot);
-        // });
-        this.layoutSubpathways(tarRoot);
+        const rootAttribs = this.graph.getNodeAttributes(
+          this.graph.getNodeAttribute(tarNode, 'rootId')
+        );
+        const tarPositions: PlainObject<PlainObject<number>> = {};
+        hierarchyNodes.forEach((node) => {
+          if (node != tarNode) {
+            tarPositions[node] = {
+              x: rootAttribs.x, // change here to increase distance for non tar nodes
+              y: rootAttribs.y,
+            };
+          }
+          // rootSubgraph.forEachNode((node, _attributes) => {
+          //   this.graph.setNodeAttribute(node, 'hierarchyHidden', false); //node != tarRoot);
+          // });
+        });
+
+        this.cancelCurrentAnimation = animateNodes(
+          this.graph,
+          tarPositions,
+          {
+            duration: 500,
+            easing: 'quadraticOut',
+          },
+          () => {
+            hierarchyNodes.forEach((node) => {
+              this.graph.setNodeAttribute(
+                node,
+                'hierarchyHidden',
+                node != tarNode
+              );
+            });
+            this.layoutSubpathways(tarNode);
+          }
+        );
       }
     );
   }
-
   layoutSubpathways(parentNode: string) {
     const subPathwaysIds = this.graph.getNodeAttribute(parentNode, 'children');
+    this.hierarchyNodes.push(...subPathwaysIds);
     const subPathways = subgraph(this.graph, function (nodeID, attr) {
       return subPathwaysIds.includes(nodeID) && attr.nodeType == 'hierarchical';
     });
@@ -481,16 +514,24 @@ export default class OverviewGraph {
         easing: 'quadraticOut',
       },
       () => {
-        subPathways.forEachNode((node, _attributes) => {
+        const centralNodes: string[] = [];
+        subPathways.forEachNode((node, attributesNode) => {
+          centralNodes.push(...attributesNode.children);
+        });
+
+        centralNodes.forEach((node) => {
           let hasHierarchicalEdge = false;
           this.graph.forEachEdge(node, (edge, attributes) => {
-            if (attributes.edgeType == 'hierarchical')
+            if (attributes.edgeType == 'hierarchical') {
+              attributes.hierarchyHidden = false;
               attributes.hidden = false;
-            hasHierarchicalEdge = true;
+              hasHierarchicalEdge = true;
+            }
           });
           this.graph.forEachEdge(node, (edge, attributes) => {
-            if (attributes.edgeType != 'hierarchical && hasHierarchicalEdge')
-              attributes.hidden = true;
+            if (attributes.edgeType == 'rootEdge') {
+              attributes.hierarchyHidden = hasHierarchicalEdge;
+            }
           });
         });
       }

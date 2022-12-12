@@ -66,7 +66,6 @@ export function generateGraphData(
   let maxModuleNum = 0;
   for (const entryKey in nodeList) {
     const entry = nodeList[entryKey];
-    console.log(entry);
     const name = entry.pathwayName;
     const id = entry.pathwayId ? entry.pathwayId : 'noID';
     const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
@@ -148,13 +147,14 @@ export function generateGraphData(
     graph.nodes.push(currentNode);
     addedNodes.push(currentNode.key);
     // Root Edge
-    addEdge(entry.rootId, entry.pathwayId, 'rootEdge');
-    // Hierarchical Edges:
+    if (!entry.is_root) {
+      addEdge(entry.pathwayId, entry.rootId, 'rootEdge');
+    } // Hierarchical Edges:
     entry.parents.forEach((element) => {
       addEdge(element, entry.pathwayId, 'hierarchical');
     });
     entry.children.forEach((element) => {
-      addEdge(element, entry.pathwayId, 'hierarchical');
+      addEdge(entry.pathwayId, element, 'hierarchical');
     });
 
     for (const [maplink] of Object.entries(entry.maplinks)) {
@@ -238,6 +238,7 @@ function generateForceGraphEdge(
       zIndex: 0,
       hidden: true,
       edgeType: type,
+      hierarchyHidden: false,
       type: type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'

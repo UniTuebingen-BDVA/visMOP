@@ -201,12 +201,9 @@ export function edgeReducer(
         color: overviewColors.edgesHighlight,
         size: 1,
         zIndex: 1,
-        hidden: false,
+        hidden: data.hierarchyHidden,
       };
     }
-    if (data.edgeType == 'hierarchical') {
-      return data;
-    }
-    return { ...data, hidden: true };
+    return { ...data, hidden: data.hierarchyHidden ? true : data.hidden };
   } else return data;
 }
