@@ -96,7 +96,7 @@ export function generateGraphData(
             ? overviewColors.roots
             : overviewColors.default,
         label: `${_.escape(name)}`,
-        forceLabel: entry.rootId === entry.pathwayId ? true : false,
+        forceLabel: !entry.isCentral,
         averageTranscriptomics: glyphData[id].transcriptomics.available
           ? glyphData[id].transcriptomics.meanFoldchange
           : NaN,

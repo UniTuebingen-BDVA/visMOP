@@ -463,7 +463,7 @@ export default class OverviewGraph {
           this.graph,
           tarPositions,
           {
-            duration: 500,
+            duration: Object.keys(tarPositions).length > 0 ? 2000 : 0,
             easing: 'quadraticOut',
           },
           () => {
@@ -516,7 +516,7 @@ export default class OverviewGraph {
       () => {
         const centralNodes: string[] = [];
         subPathways.forEachNode((node, attributesNode) => {
-          centralNodes.push(...attributesNode.children);
+          centralNodes.push(...attributesNode.children, node);
         });
 
         centralNodes.forEach((node) => {

@@ -610,7 +610,7 @@ class PathwayHierarchy(dict):
         pathway_ids = []
         for root in self.levels[0]:
             central_nodes.extend(self.get_subtree_non_overview(root))
-        central_nodes.extend(self.levels[0])
+        # central_nodes.extend(self.levels[0])
         central_nodes = list(set(central_nodes))
         for root in self.levels[0]:
             pathway_ids.extend(self.get_subtree_target(root))
