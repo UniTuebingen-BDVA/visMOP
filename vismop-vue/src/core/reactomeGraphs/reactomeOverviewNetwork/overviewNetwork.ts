@@ -12,7 +12,6 @@ import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { animateNodes } from 'sigma/utils/animate';
-import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
 import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
@@ -58,7 +57,7 @@ export default class OverviewGraph {
   protected highlighedEdgesHover = new Set();
   protected highlightedCenterHover = '';
   protected currentPathway = '';
-  protected currentHierarchySelection = '';
+  protected hierarchyClickStack: string[] = [];
   protected pathwaysContainingIntersection: string[] = [];
   protected pathwaysContainingUnion: string[] = [];
   protected hierarchyNodes: string[] = [];
@@ -74,7 +73,13 @@ export default class OverviewGraph {
   protected lodRatio = 1.3;
   protected lastClickedClusterNode = -1;
   protected additionalData!: additionalData;
-  protected animationCache: PlainObject<PlainObject<number>> = {};
+  protected animationStack: PlainObject<PlainObject<number>> = {};
+  protected nodeAttributeStack: {
+    [key: string]: { [key: string]: string | number | boolean };
+  } = {};
+  protected edgeAttributeStack: {
+    [key: string]: { [key: string]: string | number | boolean };
+  } = {};
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -257,8 +262,6 @@ export default class OverviewGraph {
           //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
           if (this.graph.getNodeAttribute(node, 'nodeType') != 'regular') {
-            this.currentHierarchySelection = node;
-            //this.hierachyLayout(node);
             this.hierarchyLayoutClickfunc(node);
           }
         }
@@ -335,16 +338,16 @@ export default class OverviewGraph {
     this.hierarchyNodes = [];
     useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
     this.renderer.refresh();
-    this.currentHierarchySelection = '';
+    this.hierarchyClickStack = [];
   }
   calculateGraphWidth() {
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     this.graphWidth = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
   }
   resetHierarchyNodes() {
-    if (this.currentHierarchySelection) {
+    if (this.hierarchyClickStack) {
       const subPathwaysIds = this.graph.getNodeAttribute(
-        this.currentHierarchySelection,
+        this.hierarchyClickStack,
         'children'
       );
       const hierarchyNodes = this.hierarchyNodes;
@@ -354,7 +357,7 @@ export default class OverviewGraph {
         );
       });
       const parentAttribs = this.graph.getNodeAttributes(
-        this.currentHierarchySelection
+        this.hierarchyClickStack
       );
 
       const tarPositions: PlainObject<PlainObject<number>> = {};
@@ -483,9 +486,12 @@ export default class OverviewGraph {
     );
   }
 
-  pushOuterHierarchyForward(nodeLayer: string[]) {
+  pushNodeLayer(nodeLayer: string[], direction: 'in' | 'out') {
     const layerSubgraph = subgraph(this.graph, (nodeID, attr) => {
-      return attr.isRoot || nodeLayer.includes(nodeID);
+      return (
+        attr.nodeType != 'regular' &&
+        (attr.isRoot || nodeLayer.includes(nodeID))
+      );
     });
     if (!this.renderer.getCustomBBox())
       this.renderer.setCustomBBox(this.renderer.getBBox());
@@ -496,37 +502,106 @@ export default class OverviewGraph {
         vec2.fromValues(0, 0)
       );
       const fromCenterNormalized = vec2.normalize(vec2.create(), fromCenter);
-      this.animationCache[node] = {
-        x: fromCenter[0] + fromCenterNormalized[0] * this.graphWidth * 0.2, // change here to increase distance for non tar nodes
-        y: fromCenter[1] + fromCenterNormalized[1] * this.graphWidth * 0.2,
+      const xOffset = fromCenterNormalized[0] * this.graphWidth * 0.2;
+      const yOffset = fromCenterNormalized[1] * this.graphWidth * 0.2;
+      this.animationStack[node] = {
+        x:
+          direction == 'out'
+            ? fromCenter[0] + xOffset
+            : fromCenter[0] - xOffset, // change here to increase distance for non tar nodes
+        y:
+          direction == 'out'
+            ? fromCenter[1] + yOffset
+            : fromCenter[1] - yOffset,
       };
     });
   }
 
-  hierarchyStepBack() {
-    return;
+  hierarchyStepOut(targetNode: string) {
+    const subPathwaysIds = this.graph.getNodeAttribute(targetNode, 'children');
+    // check if any upcoming nodes are hierarchy nodes
+    let anyHierarchyNodes = false;
+    subPathwaysIds.forEach((node) => {
+      const nodeType = this.graph.getNodeAttribute(node, 'nodeType');
+      if (nodeType == 'hierarchical') anyHierarchyNodes = true;
+    });
+    if (anyHierarchyNodes) {
+      if (Object.keys(this.hierarchyLevels).length == 0) {
+        this.hierarchyLevels[0] = [targetNode];
+      }
+      const currentLevels = Object.keys(this.hierarchyLevels).length;
+      this.hierarchyLevels[currentLevels] = subPathwaysIds;
+      for (
+        let idx = 0;
+        idx < Object.keys(this.hierarchyLevels).length - 1;
+        idx++
+      ) {
+        const currentLevel = this.hierarchyLevels[idx];
+        this.pushNodeLayer(currentLevel, 'out');
+      }
+      this.layoutNewHierarchyLevel(targetNode);
+      this.applyAnimationStack(undefined, () => {
+        this.collapseHierarchyLevel(
+          this.graph.getNodeAttribute(targetNode, 'rootId'),
+          Object.keys(this.hierarchyLevels).length - 2
+        );
+        this.applyAnimationStack(undefined, () => {
+          this.applyNodeAttributeStack();
+        });
+      });
+    }
   }
 
-  collapseOldHierarchyLevel(targetNode: string) {
-    const currentLevel =
-      this.hierarchyLevels[Object.keys(this.hierarchyLevels).length - 2];
+  hierarchyStepIn() {
+    const collapseTarget = this.hierarchyClickStack.pop();
+
+    if (collapseTarget) {
+      this.collapseHierarchyLevel(
+        collapseTarget,
+        Object.keys(this.hierarchyLevels).length - 1
+      );
+      this.applyAnimationStack(undefined, () => {
+        this.applyNodeAttributeStack();
+        for (
+          let idx = 0;
+          idx < Object.keys(this.hierarchyLevels).length - 1;
+          idx++
+        ) {
+          const currentLevel = this.hierarchyLevels[idx];
+          this.pushNodeLayer(currentLevel, 'in');
+        }
+        this.layoutNewHierarchyLevel(
+          this.hierarchyClickStack[this.hierarchyClickStack.length - 1]
+        );
+
+        this.applyAnimationStack(undefined, () => {
+          delete this.hierarchyLevels[
+            Object.keys(this.hierarchyLevels).length - 1
+          ];
+        });
+      });
+    }
+  }
+
+  collapseHierarchyLevel(targetNode: string, levelIdx: number) {
+    const currentLevel = this.hierarchyLevels[levelIdx];
+    const lastClickedNode =
+      this.hierarchyClickStack[this.hierarchyClickStack.length - 1];
     const currentLevelGraph = subgraph(this.graph, function (nodeID, attr) {
       return (
         currentLevel.includes(nodeID) &&
         attr.nodeType == 'hierarchical' &&
-        nodeID != targetNode
+        nodeID != lastClickedNode
       );
     });
-    const rootAttribs = this.graph.getNodeAttributes(
-      this.graph.getNodeAttribute(targetNode, 'rootId')
-    );
+    const targetAttribs = this.graph.getNodeAttributes(targetNode);
     currentLevelGraph.forEachNode((node) => {
-      this.animationCache[node] = {
-        x: rootAttribs.x, // change here to increase distance for non tar nodes
-        y: rootAttribs.y,
+      this.animationStack[node] = {
+        x: targetAttribs.x, // change here to increase distance for non tar nodes
+        y: targetAttribs.y,
       };
+      this.addNodeAttributeStack(node, { hierarchyHidden: true });
     });
-    return currentLevelGraph;
   }
 
   layoutNewHierarchyLevel(targetNode: string) {
@@ -560,7 +635,65 @@ export default class OverviewGraph {
       startAngle: parentAngle + angleOffset,
       minDivisions: this.rootOrder,
     }) as LayoutMapping<{ [dimension: string]: number }>;
-    this.animationCache = { ...this.animationCache, ...currentLevelPositions };
+    this.animationStack = { ...this.animationStack, ...currentLevelPositions };
+  }
+
+  applyNodeAttributeStack() {
+    const nodeKeys = Object.keys(this.nodeAttributeStack);
+    nodeKeys.forEach((node) => {
+      this.graph.updateNodeAttributes(node, (attr) => {
+        return {
+          ...attr,
+          ...this.nodeAttributeStack[node],
+        };
+      });
+    });
+    this.nodeAttributeStack = {};
+  }
+
+  applyEdgeAttributeStack() {
+    const edgeKeys = Object.keys(this.edgeAttributeStack);
+    edgeKeys.forEach((edge) => {
+      this.graph.updateEdgeAttributes(edge, (attr) => {
+        return {
+          ...attr,
+          ...this.edgeAttributeStack[edge],
+        };
+      });
+    });
+    this.edgeAttributeStack = {};
+  }
+
+  applyAnimationStack(
+    animationOptions = {
+      duration: 2000,
+      easing: 'quadraticOut',
+    },
+    callback?: () => void
+  ) {
+    this.cancelCurrentAnimation = animateNodes(
+      this.graph,
+      this.animationStack,
+      animationOptions,
+      () => {
+        this.animationStack = {};
+        callback?.call(this);
+      }
+    );
+  }
+
+  addNodeAttributeStack(
+    nodeID: string,
+    attrs: { [key: string]: string | number | boolean }
+  ): void {
+    if (Object.prototype.hasOwnProperty.call(this.nodeAttributeStack, nodeID)) {
+      this.nodeAttributeStack[nodeID] = {
+        ...this.nodeAttributeStack[nodeID],
+        ...attrs,
+      };
+    } else {
+      this.nodeAttributeStack[nodeID] = attrs;
+    }
   }
 
   hierarchyLayoutClickfunc(targetNode: string) {
@@ -569,61 +702,11 @@ export default class OverviewGraph {
       Object.keys(this.hierarchyLevels).length > 0 &&
       targetNode == this.hierarchyLevels[0][0]
     ) {
-      this.hierarchyStepBack();
+      this.hierarchyStepIn();
     } else {
-      // else we determine the next layer
-      const subPathwaysIds = this.graph.getNodeAttribute(
-        targetNode,
-        'children'
-      );
-      // check if any upcoming nodes are hierarchy nodes
-      let anyHierarchyNodes = false;
-      subPathwaysIds.forEach((node) => {
-        const nodeType = this.graph.getNodeAttribute(node, 'nodeType');
-        if (nodeType == 'hierarchical') anyHierarchyNodes = true;
-      });
-      if (anyHierarchyNodes) {
-        if (Object.keys(this.hierarchyLevels).length == 0) {
-          this.hierarchyLevels[0] = [targetNode];
-        }
-        const currentLevels = Object.keys(this.hierarchyLevels).length;
-        this.hierarchyLevels[currentLevels] = subPathwaysIds;
-        for (
-          let idx = 0;
-          idx < Object.keys(this.hierarchyLevels).length - 1;
-          idx++
-        ) {
-          const currentLevel = this.hierarchyLevels[idx];
-          this.pushOuterHierarchyForward(currentLevel);
-        }
-        this.layoutNewHierarchyLevel(targetNode);
-        this.cancelCurrentAnimation = animateNodes(
-          this.graph,
-          this.animationCache,
-          {
-            duration: 2000,
-            easing: 'quadraticOut',
-          },
-          () => {
-            this.animationCache = {};
-            const collapsedNodes = this.collapseOldHierarchyLevel(targetNode);
-            this.cancelCurrentAnimation = animateNodes(
-              this.graph,
-              this.animationCache,
-              {
-                duration: 2000,
-                easing: 'quadraticOut',
-              },
-              () => {
-                this.animationCache = {};
-                collapsedNodes.forEachNode((node) => {
-                  this.graph.setNodeAttribute(node, 'hierarchyHidden', true);
-                });
-              }
-            );
-          }
-        );
-      }
+      this.hierarchyClickStack.push(targetNode);
+      console.log('clickstack Push', this.hierarchyClickStack);
+      this.hierarchyStepOut(targetNode);
     }
   }
 
