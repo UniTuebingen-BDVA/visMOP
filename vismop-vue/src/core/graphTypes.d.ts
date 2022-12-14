@@ -62,7 +62,7 @@ type overviewNodeAttr = baseNodeAttr & {
   modNum: number;
   up: upDatedPos;
   isRoot: boolean;
-  nodeType: string;
+  nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster';
   nonHoverSize: number;
   image: string;
   imageLowRes: string;
@@ -84,6 +84,7 @@ type overviewNodeAttr = baseNodeAttr & {
   rootId: string;
   parents: string[];
   children: string[];
+  subtreeIds: string[];
 };
 
 type CartesianVector = {

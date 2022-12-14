@@ -8,7 +8,7 @@ import { Loading } from 'quasar';
 
 interface State {
   sideBarExpand: boolean;
-  overviewData: { [key: string]: entry } | reactomeEntry[];
+  overviewData: { [key: string]: reactomeEntry };
   targetDatabase: string;
 
   tableHeaders: {
@@ -233,7 +233,7 @@ export const useMainStore = defineStore('mainStore', {
     setTargetDatabase(val: string) {
       this.targetDatabase = val;
     },
-    setOverviewData(val: { [key: string]: entry }) {
+    setOverviewData(val: { [key: string]: reactomeEntry }) {
       this.overviewData = val;
     },
 

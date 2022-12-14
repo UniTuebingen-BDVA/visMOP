@@ -717,6 +717,7 @@ def generate_overview_pathway_entry(
         "pathwayName": "",
         "pathwayId": "",
         "rootId": "",
+        "nodeType": "",
         "isCentral": is_central,
         "maplinks": [],
         "subtreeIds": [],
@@ -741,6 +742,9 @@ def generate_overview_pathway_entry(
     pathway_dict["pathwayName"] = entry.name
     pathway_dict["pathwayId"] = entry.reactome_sID
     pathway_dict["rootId"] = entry.root_id
+    pathway_dict["nodeType"] = (
+        "root" if entry.is_root else "regular" if is_central else "hierarchical"
+    )
     pathway_dict["maplinks"] = entry.maplinks
     pathway_dict["subtreeIds"] = entry.subtree_ids
     pathway_dict["parents"] = entry.parents_with_data

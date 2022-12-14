@@ -192,7 +192,7 @@ const fa2LayoutParams = ref({
   clusterSizeScalingFactor: 1,
 });
 
-const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
+const overviewData = computed(() => mainStore.overviewData);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);

@@ -226,7 +226,7 @@ export default class OverviewGraph {
     });
 
     renderer.on('clickNode', ({ node, event }) => {
-      if (this.graph.getNodeAttribute(node, 'nodeType') != 'moduleNode') {
+      if (this.graph.getNodeAttribute(node, 'nodeType') != 'cluster') {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
         } else if (event.original.altKey) {
@@ -296,12 +296,12 @@ export default class OverviewGraph {
             attributes.moduleHidden = false;
             attributes.size = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
-              : attributes.nodeType == 'moduleNode'
+              : attributes.nodeType == 'cluster'
               ? this.MODULE_DEFAULT_SIZE
               : this.DEFAULT_SIZE;
             attributes.nonHoverSize = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
-              : attributes.nodeType == 'moduleNode'
+              : attributes.nodeType == 'cluster'
               ? this.MODULE_DEFAULT_SIZE
               : this.DEFAULT_SIZE;
           }
@@ -380,7 +380,10 @@ export default class OverviewGraph {
             this.graph.setNodeAttribute(node, 'hidden', true);
           });
           this.graph.forEachEdge((edge, attributes) => {
-            if (attributes.edgeType == 'hierarchical') {
+            if (
+              attributes.edgeType == 'hierarchicalRoot' ||
+              attributes.edgeType == 'hierarchicalRegular'
+            ) {
               attributes.hierarchyHidden = true;
             } else {
               attributes.hierarchyHidden = false;
@@ -518,7 +521,7 @@ export default class OverviewGraph {
             collapseTarget
           );
         } else {
-          this.resetHierarchyHidden();
+          //this.resetHierarchyHidden();
         }
         this.applyNodeAttributeStack();
         this.applyEdgeAttributeStack();
@@ -544,7 +547,7 @@ export default class OverviewGraph {
         x: targetAttribs.x, // change here to increase distance for non tar nodes
         y: targetAttribs.y,
       };
-      this.addNodeAttributeStack(node, { hierarchyHidden: true });
+      this.addNodeAttributeStack(node, { hierarchyHidden: true, hidden: true });
     });
   }
 
@@ -577,6 +580,7 @@ export default class OverviewGraph {
       }
     });
     this.renderer.refresh();
+    this.applyNodeAttributeStack();
 
     const currentLevelPositions = orderedCircularLayout(currentLevelGraph, {
       scale: this.graphWidth / 1.8,
@@ -588,6 +592,7 @@ export default class OverviewGraph {
     this.hierarchyEdgeAttributes(currentLevelGraph);
   }
 
+  //TODO: broken! e.g. wrong edge types
   resetHierarchyHidden() {
     this.graph.forEachEdge((edge, attributes) => {
       if (attributes.edgeType == 'hierarchical') {
@@ -599,33 +604,81 @@ export default class OverviewGraph {
   }
 
   hierarchyEdgeAttributes(graph: Graph) {
-    this.resetHierarchyHidden();
-    const centralNodes: string[] = [];
-    graph.forEachNode((node, attributesNode) => {
-      centralNodes.push(...attributesNode.children, node);
-    });
-    centralNodes.forEach((node) => {
-      let hasHierarchicalEdge = false;
-      this.graph.forEachEdge(node, (edge, attributes) => {
-        if (attributes.edgeType == 'hierarchical') {
+    //this.resetHierarchyHidden();
+    // hide rootRegular edges which are there as
+    const checkNodes: string[] = [];
+    const clickedNode =
+      this.hierarchyClickStack[this.hierarchyClickStack.length - 1];
+    checkNodes.push(
+      ...this.graph
+        .getNodeAttribute(clickedNode, 'subtreeIds')
+        .filter((item) => item !== clickedNode)
+    );
+    console.log('checkNodes', checkNodes);
+    checkNodes.forEach((node) => {
+      if (node === 'R-MMU-200425') {
+        console.log('test');
+      }
+      let currentParentNode = this.graph.getNodeAttribute(node, 'parents')[0];
+      let notFoundVisibleParent = true;
+      while (notFoundVisibleParent) {
+        const parentHidden = this.graph.getNodeAttribute(
+          currentParentNode,
+          'hidden'
+        );
+        const parentHierarchyHidden = this.graph.getNodeAttribute(
+          currentParentNode,
+          'hierarchyHidden'
+        );
+        if (!parentHidden || !parentHierarchyHidden) {
+          notFoundVisibleParent = false;
+        } else {
+          currentParentNode = this.graph.getNodeAttribute(
+            currentParentNode,
+            'parents'
+          )[0];
+        }
+      }
+      this.graph.findUndirectedEdge(node, (edge, attr, source, target) => {
+        if (source == currentParentNode || target == currentParentNode) {
           const edgeAttribs = {
             hierarchyHidden: false,
             hidden: false,
           };
           this.addEdgeAttributeStack(edge, edgeAttribs);
+        } /* else if (
+          attr.edgeType != 'mapLink' &&
+          !(edge in this.edgeAttributeStack)
+        ) {
+          console.log('hide condition');
+          const edgeAttribs = {
+            hierarchyHidden: true,
+            hidden: true,
+          };
+          this.addEdgeAttributeStack(edge, edgeAttribs);
+        } */
+      });
+      /*
+      let hasHierarchicalEdge = false;
+      this.graph.forEachEdge(node, (edge, attributes) => {
+        if (attributes.edgeType == 'hierarchicalRegular') {
           hasHierarchicalEdge = true;
+          const edgeAttribs = {
+            hierarchyHidden: false,
+            hidden: false,
+          };
+          this.addEdgeAttributeStack(edge, edgeAttribs);
         }
       });
-      if (Object.keys(this.hierarchyLevels)) {
-        this.graph.forEachEdge(node, (edge, attributes) => {
-          if (attributes.edgeType == 'rootEdge') {
-            this.addEdgeAttributeStack(edge, {
-              hierarchyHidden: hasHierarchicalEdge,
-            });
-            attributes.hierarchyHidden = hasHierarchicalEdge;
-          }
-        });
-      }
+      this.graph.forEachEdge(node, (edge, attributes) => {
+        if (attributes.edgeType == 'rootRegular') {
+          this.addEdgeAttributeStack(edge, {
+            hierarchyHidden: hasHierarchicalEdge,
+            hidden: hasHierarchicalEdge,
+          });
+        }
+      });
+      */
     });
   }
 
@@ -803,7 +856,7 @@ export default class OverviewGraph {
       this.graph,
       tarPositions,
       {
-        duration: 2000,
+        duration: 1000,
         easing: 'quadraticOut',
       },
       () => {
@@ -895,7 +948,7 @@ export default class OverviewGraph {
       //causes cluster nodes to vanish
       // ALSO: clusternodes seem to be at the wrong position
       currentSubgraph.forEachNode((node, attributes) => {
-        if (attributes.nodeType !== 'moduleNode') {
+        if (attributes.nodeType !== 'cluster') {
           attributes.x = attributes.preFa2X;
           attributes.y = attributes.preFa2Y;
           attributes.layoutX = attributes.preFa2X;
@@ -906,7 +959,6 @@ export default class OverviewGraph {
       const areaScaling =
         (this.clusterWeights[polygonIdx] / this.maxClusterWeight) *
         this.clusterSizeScalingFactor;
-      console.log(areaScaling, this.clusterSizeScalingFactor);
       const currentPositions = fa2(
         currentSubgraph,
         {
@@ -938,7 +990,7 @@ export default class OverviewGraph {
       // });
     });
     this.graph.forEachNode((node, attributes) => {
-      if (attributes.nodeType !== 'moduleNode') {
+      if (attributes.nodeType !== 'cluster') {
         attributes.layoutX = attributes.x;
         attributes.layoutY = attributes.y;
       }
@@ -1037,7 +1089,7 @@ export default class OverviewGraph {
         zIndex: 1,
         color: overviewColors.modules,
         size: this.MODULE_DEFAULT_SIZE,
-        nodeType: 'moduleNode',
+        nodeType: 'cluster',
         nonHoverSize: this.MODULE_DEFAULT_SIZE,
         fixed: false,
         up: { x: xPos, y: yPos, gamma: 0 },
@@ -1063,6 +1115,7 @@ export default class OverviewGraph {
         rootId: '',
         parents: [],
         children: [],
+        subtreeIds: [],
       };
       this.graph.addNode(key, moduleNode);
     }
@@ -1102,7 +1155,7 @@ export default class OverviewGraph {
           attr.size = this.ROOT_DEFAULT_SIZE;
           attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
           break;
-        case 'moduleNode':
+        case 'cluster':
           attr.size = this.MODULE_DEFAULT_SIZE;
           attr.nonHoverSize = this.MODULE_DEFAULT_SIZE;
           break;

@@ -600,10 +600,14 @@ def reactome_overview():
         pathway["initialPosY"] = random()  # x_y_pos[1]
         pathway["moduleNum"] = 0  # x_y_pos[2]
     modules = [elem.tolist() for elem in modules]
+    # temporary?
+
+    out_data_dict = {elem["pathwayId"]: elem for elem in out_data}
+
     return json.dumps(
         {
             "exitState": 0,
-            "overviewData": out_data,
+            "overviewData": out_data_dict,
             "modules": modules,
             "moduleCenters": module_centers,
             "noiseClusterExists": noiseClusterExists,

@@ -60,7 +60,7 @@ export function zoomLod(this: OverviewGraph): void {
     });
     this.graph.forEachNode((node, attributes) => {
       attributes.zoomHidden =
-        attributes.nodeType !== 'moduleNode' ? false : !attributes.moduleFixed;
+        attributes.nodeType !== 'cluster' ? false : !attributes.moduleFixed;
     });
   }
   if (this.prevFrameZoom < this.lodRatio && this.camera.ratio > this.lodRatio) {
@@ -91,8 +91,7 @@ export function zoomLod(this: OverviewGraph): void {
             !attributes.moduleFixed
           )
             attributes.zoomHidden = true;
-          if (attributes.nodeType == 'moduleNode')
-            attributes.zoomHidden = false;
+          if (attributes.nodeType == 'cluster') attributes.zoomHidden = false;
         });
       }
     );

@@ -39,7 +39,7 @@ type reactomeEntry = {
   subtreeIds: string[];
   parents: string[];
   children: string[];
-  is_root: boolean;
+  nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster';
   ownMeasuredEntryIDs: {
     proteomics: string[];
     transcriptomics: string[];

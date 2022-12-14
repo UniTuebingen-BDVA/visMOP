@@ -14,7 +14,7 @@ function filterFunction(
   node: string,
   attributes: overviewNodeAttr
 ): boolean {
-  if (attributes.isRoot || attributes.nodeType == 'moduleNode') {
+  if (attributes.isRoot || attributes.nodeType == 'cluster') {
     return false;
   } else if (
     this.filterFuncNegativeRoot(node) &&
@@ -91,7 +91,7 @@ export function filterElements(this: OverviewGraph) {
     this.graph.forEachNode((node, attributes) => {
       if (
         filterFunction.bind(this)(node, attributes) &&
-        attributes.nodeType !== 'moduleNode'
+        attributes.nodeType !== 'cluster'
       ) {
         tarPositions[node] = {
           x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),

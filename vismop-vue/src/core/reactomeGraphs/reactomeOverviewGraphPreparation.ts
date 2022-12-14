@@ -14,11 +14,11 @@ import { useMainStore } from '@/stores';
 import { ConvexPolygon } from '../layouting/ConvexPolygon';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
- * @param nodeList list of node data
+ * @param nodeData list of node data
  * @returns
  */
 export function generateGraphData(
-  nodeList: reactomeEntry[],
+  nodeData: { [key: string]: reactomeEntry },
   glyphs: { [key: string]: string },
   glyphsHighres: { [key: string]: string },
   glyphsLowZoom: { [key: string]: string },
@@ -64,8 +64,8 @@ export function generateGraphData(
   }
   let index = 0;
   let maxModuleNum = 0;
-  for (const entryKey in nodeList) {
-    const entry = nodeList[entryKey];
+  for (const entryKey in nodeData) {
+    const entry = nodeData[entryKey];
     const name = entry.pathwayName;
     const id = entry.pathwayId ? entry.pathwayId : 'noID';
     const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
@@ -85,7 +85,7 @@ export function generateGraphData(
         imageLowZoom: glyphsLowZoom[id],
         name: _.escape(name),
         id: id,
-        hidden: false,
+        hidden: !entry.isCentral,
         filterHidden: false,
         zoomHidden: false,
         moduleHidden: false,
@@ -129,6 +129,7 @@ export function generateGraphData(
         isRoot: entry.rootId === entry.pathwayId,
         parents: entry.parents,
         children: entry.children,
+        subtreeIds: entry.subtreeIds.filter((value) => value in nodeData), //RODO sort this out in python
         nodeType:
           entry.rootId === entry.pathwayId
             ? 'root'
@@ -147,41 +148,40 @@ export function generateGraphData(
     graph.nodes.push(currentNode);
     addedNodes.push(currentNode.key);
     // Root Edge
-    if (!entry.is_root) {
-      addEdge(entry.pathwayId, entry.rootId, 'rootEdge');
+    if (!currentNode.attributes.isRoot) {
+      const edgeType = determineEdgeType(
+        entry.nodeType,
+        nodeData[entry.rootId].nodeType
+      );
+      addEdge(entry.pathwayId, entry.rootId, edgeType);
     } // Hierarchical Edges:
     entry.parents.forEach((element) => {
-      addEdge(element, entry.pathwayId, 'hierarchical');
+      const parentNodeType = nodeData[element].nodeType;
+      const ownNodeType = entry.nodeType;
+      const edgeType = determineEdgeType(parentNodeType, ownNodeType);
+      addEdge(element, entry.pathwayId, edgeType);
     });
-    entry.children.forEach((element) => {
-      addEdge(entry.pathwayId, element, 'hierarchical');
+    entry.subtreeIds.forEach((element) => {
+      if (element in nodeData) {
+        const childrenNodeType = nodeData[element].nodeType;
+        const ownNodeType = entry.nodeType;
+        const edgeType = determineEdgeType(childrenNodeType, ownNodeType);
+        addEdge(entry.pathwayId, element, edgeType);
+      }
     });
-
+    /*
     for (const [maplink] of Object.entries(entry.maplinks)) {
       if (!rootIds.includes(entry.pathwayId)) {
-        for (const entryKey in nodeList) {
-          const loopEntry = nodeList[entryKey];
+        for (const entryKey in nodeData) {
+          const loopEntry = nodeData[entryKey];
           if (!rootIds.includes(loopEntry.pathwayId)) {
             if (loopEntry.subtreeIds.includes(maplink)) {
-              const currentEdge = generateForceGraphEdge(
-                entry.pathwayId,
-                loopEntry.pathwayId,
-                'maplink'
-              );
-              if (
-                !addedEdges.includes(currentEdge.key) &&
-                !addedEdges.includes(
-                  `${currentEdge.target}+${currentEdge.source}`
-                )
-              ) {
-                graph.edges.push(currentEdge);
-                addedEdges.push(currentEdge.key);
-              }
+              addEdge(entry.pathwayId, loopEntry.pathwayId, 'maplink');
             }
           }
         }
       }
-    }
+    } */
     index += 1;
   }
   const maxExt = 250;
@@ -217,6 +217,33 @@ export function generateGraphData(
   return graph;
 }
 
+function determineEdgeType(
+  type1: 'root' | 'regular' | 'hierarchical' | 'cluster',
+  type2: 'root' | 'regular' | 'hierarchical' | 'cluster'
+) {
+  if (
+    (type1 === 'root' && type2 === 'regular') ||
+    (type1 === 'regular' && type2 === 'root')
+  ) {
+    return 'rootEdge';
+  }
+  if (
+    (type1 === 'hierarchical' && type2 === 'regular') ||
+    (type1 === 'regular' && type2 === 'hierarchical')
+  ) {
+    return 'hierarchicalRegular';
+  }
+  if (type1 === 'hierarchical' && type2 === 'hierarchical') {
+    return 'hierarchicalHierachical';
+  }
+  if (
+    (type1 === 'root' && type2 === 'hierarchical') ||
+    (type1 === 'hierarchical' && type2 === 'root')
+  ) {
+    return 'rootHierarchical';
+  } else return 'rootEdge';
+}
+
 /**
  * Parses a graph relation into an edge representation
  * @param {relation} relation object
@@ -238,7 +265,7 @@ function generateForceGraphEdge(
       zIndex: 0,
       hidden: true,
       edgeType: type,
-      hierarchyHidden: false,
+      hierarchyHidden: true,
       type: type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'
