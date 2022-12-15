@@ -440,7 +440,11 @@ export default class OverviewGraph {
     }
   }
 
-  hierarchyStepIn(resetMode = false) {
+  hierarchyStepIn(
+    resetMode = false,
+    callbackMode = false,
+    callback?: () => void
+  ) {
     const collapseTarget = this.hierarchyClickStack.pop();
 
     if (collapseTarget) {
@@ -480,11 +484,19 @@ export default class OverviewGraph {
           this.applyEdgeAttributeStack();
           this.applyAnimationStack(
             resetMode ? { duration: 500 } : undefined,
-            resetMode ? this.hierarchyStepIn : undefined,
-            resetMode ? [this.hierarchyClickStack.length > 0] : undefined
+            resetMode
+              ? this.hierarchyStepIn
+              : callbackMode
+              ? callback
+              : undefined,
+            resetMode
+              ? [this.hierarchyClickStack.length > 0, callbackMode, callback]
+              : [undefined]
           );
         }
       );
+    } else if (callbackMode) {
+      if (callback) callback();
     }
   }
 
@@ -683,8 +695,25 @@ export default class OverviewGraph {
     ) {
       this.hierarchyStepIn();
     } else {
-      this.hierarchyClickStack.push(targetNode);
-      this.hierarchyStepOut(targetNode);
+      // reset the hierarchy if the clicked node is a root node other than the current root node
+      // if targetNode is a root node and not the current root node
+      const targetNodeType = this.graph.getNodeAttribute(
+        targetNode,
+        'nodeType'
+      );
+      if (
+        Object.keys(this.hierarchyLevels).length > 0 &&
+        targetNodeType == 'root' &&
+        targetNode != this.hierarchyLevels[0][0]
+      ) {
+        this.hierarchyStepIn(true, true, () => {
+          this.hierarchyClickStack.push(targetNode);
+          this.hierarchyStepOut(targetNode);
+        });
+      } else {
+        this.hierarchyClickStack.push(targetNode);
+        this.hierarchyStepOut(targetNode);
+      }
     }
   }
 
