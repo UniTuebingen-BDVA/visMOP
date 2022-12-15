@@ -250,7 +250,6 @@ export default class OverviewGraph {
           //     this.shortestPathClick = [];
           //   }
           // }
-        } else {
           this.shortestPathClick = [];
           this.shortestPathNodes = [];
           this.shortestPathEdges = [];
@@ -259,8 +258,8 @@ export default class OverviewGraph {
           this.highlightedNodesClick = new Set(this.graph.neighbors(node));
           this.highlightedEdgesClick = new Set(this.graph.edges(node));
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
-          //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
+        } else {
           if (this.graph.getNodeAttribute(node, 'nodeType') != 'regular') {
             this.hierarchyLayoutClickfunc(node);
           }
@@ -334,65 +333,15 @@ export default class OverviewGraph {
     this.highlightedEdgesClick.clear();
     this.highlightedNodesClick.clear();
 
-    this.resetHierarchyNodes();
+    this.hierarchyStepIn(true);
     this.hierarchyNodes = [];
     useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
     this.renderer.refresh();
-    this.hierarchyClickStack = [];
+    //this.hierarchyClickStack = [];
   }
   calculateGraphWidth() {
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     this.graphWidth = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
-  }
-  resetHierarchyNodes() {
-    if (this.hierarchyClickStack) {
-      const subPathwaysIds = this.graph.getNodeAttribute(
-        this.hierarchyClickStack,
-        'children'
-      );
-      const hierarchyNodes = this.hierarchyNodes;
-      const subPathways = subgraph(this.graph, function (nodeID, attr) {
-        return (
-          hierarchyNodes.includes(nodeID) && attr.nodeType == 'hierarchical'
-        );
-      });
-      const parentAttribs = this.graph.getNodeAttributes(
-        this.hierarchyClickStack
-      );
-
-      const tarPositions: PlainObject<PlainObject<number>> = {};
-      subPathways.forEachNode((node, _attributes) => {
-        tarPositions[node] = {
-          x: parentAttribs.x,
-          y: parentAttribs.y,
-        };
-      });
-      this.cancelCurrentAnimation = animateNodes(
-        this.graph,
-        tarPositions,
-        {
-          duration: 2000,
-          easing: 'quadraticOut',
-        },
-        () => {
-          subPathways.forEachNode((node, _attributes) => {
-            this.graph.setNodeAttribute(node, 'hierarchyHidden', true);
-            this.graph.setNodeAttribute(node, 'hidden', true);
-          });
-          this.graph.forEachEdge((edge, attributes) => {
-            if (
-              attributes.edgeType == 'hierarchicalRoot' ||
-              attributes.edgeType == 'hierarchicalRegular'
-            ) {
-              attributes.hierarchyHidden = true;
-            } else {
-              attributes.hierarchyHidden = false;
-            }
-          });
-          this.layoutRoots(true);
-        }
-      );
-    }
   }
   /**
    * Layouts roots as a circle
@@ -491,7 +440,7 @@ export default class OverviewGraph {
     }
   }
 
-  hierarchyStepIn() {
+  hierarchyStepIn(resetMode = false) {
     const collapseTarget = this.hierarchyClickStack.pop();
 
     if (collapseTarget) {
@@ -499,34 +448,43 @@ export default class OverviewGraph {
         collapseTarget,
         Object.keys(this.hierarchyLevels).length - 1
       );
-      this.applyAnimationStack(undefined, () => {
-        this.applyNodeAttributeStack();
-        for (
-          let idx = 0;
-          idx < Object.keys(this.hierarchyLevels).length - 1;
-          idx++
-        ) {
-          const currentLevel = this.hierarchyLevels[idx];
-          this.pushNodeLayer(currentLevel, 'in');
-        }
-        delete this.hierarchyLevels[
-          Object.keys(this.hierarchyLevels).length - 1
-        ];
-        if (Object.keys(this.hierarchyLevels).length == 1) {
-          delete this.hierarchyLevels[0];
-        }
-        if (Object.keys(this.hierarchyLevels).length > 1) {
-          this.layoutNewHierarchyLevel(
-            this.hierarchyClickStack[this.hierarchyClickStack.length - 1],
-            collapseTarget
+      this.applyAnimationStack(
+        resetMode ? { duration: 500 } : undefined,
+        () => {
+          this.applyNodeAttributeStack();
+          for (
+            let idx = 0;
+            idx < Object.keys(this.hierarchyLevels).length - 1;
+            idx++
+          ) {
+            const currentLevel = this.hierarchyLevels[idx];
+            this.pushNodeLayer(currentLevel, 'in');
+          }
+          delete this.hierarchyLevels[
+            Object.keys(this.hierarchyLevels).length - 1
+          ];
+          if (Object.keys(this.hierarchyLevels).length == 1) {
+            delete this.hierarchyLevels[0];
+          }
+          if (Object.keys(this.hierarchyLevels).length > 1) {
+            this.layoutNewHierarchyLevel(
+              this.hierarchyClickStack[this.hierarchyClickStack.length - 1],
+              collapseTarget
+            );
+          } else {
+            this.resetHierarchyHidden();
+            this.hierarchyLevels = {};
+            this.hierarchyClickStack = [];
+          }
+          this.applyNodeAttributeStack();
+          this.applyEdgeAttributeStack();
+          this.applyAnimationStack(
+            resetMode ? { duration: 500 } : undefined,
+            resetMode ? this.hierarchyStepIn : undefined,
+            resetMode ? [this.hierarchyClickStack.length > 0] : undefined
           );
-        } else {
-          //this.resetHierarchyHidden();
         }
-        this.applyNodeAttributeStack();
-        this.applyEdgeAttributeStack();
-        this.applyAnimationStack(undefined);
-      });
+      );
     }
   }
 
@@ -595,12 +553,12 @@ export default class OverviewGraph {
   //TODO: broken! e.g. wrong edge types
   resetHierarchyHidden() {
     this.graph.forEachEdge((edge, attributes) => {
-      if (attributes.edgeType == 'hierarchical') {
-        this.addEdgeAttributeStack(edge, { hierarchyHidden: true });
-      } else {
-        this.addEdgeAttributeStack(edge, { hierarchyHidden: false });
-      }
+      this.addEdgeAttributeStack(edge, {
+        hierarchyHidden: true,
+        hidden: true,
+      });
     });
+    this.applyEdgeAttributeStack();
   }
 
   hierarchyEdgeAttributes(graph: Graph) {
@@ -614,11 +572,7 @@ export default class OverviewGraph {
         .getNodeAttribute(clickedNode, 'subtreeIds')
         .filter((item) => item !== clickedNode)
     );
-    console.log('checkNodes', checkNodes);
     checkNodes.forEach((node) => {
-      if (node === 'R-MMU-200425') {
-        console.log('test');
-      }
       let currentParentNode = this.graph.getNodeAttribute(node, 'parents')[0];
       let notFoundVisibleParent = true;
       while (notFoundVisibleParent) {
@@ -646,39 +600,8 @@ export default class OverviewGraph {
             hidden: false,
           };
           this.addEdgeAttributeStack(edge, edgeAttribs);
-        } /* else if (
-          attr.edgeType != 'mapLink' &&
-          !(edge in this.edgeAttributeStack)
-        ) {
-          console.log('hide condition');
-          const edgeAttribs = {
-            hierarchyHidden: true,
-            hidden: true,
-          };
-          this.addEdgeAttributeStack(edge, edgeAttribs);
-        } */
-      });
-      /*
-      let hasHierarchicalEdge = false;
-      this.graph.forEachEdge(node, (edge, attributes) => {
-        if (attributes.edgeType == 'hierarchicalRegular') {
-          hasHierarchicalEdge = true;
-          const edgeAttribs = {
-            hierarchyHidden: false,
-            hidden: false,
-          };
-          this.addEdgeAttributeStack(edge, edgeAttribs);
         }
       });
-      this.graph.forEachEdge(node, (edge, attributes) => {
-        if (attributes.edgeType == 'rootRegular') {
-          this.addEdgeAttributeStack(edge, {
-            hierarchyHidden: hasHierarchicalEdge,
-            hidden: hasHierarchicalEdge,
-          });
-        }
-      });
-      */
     });
   }
 
@@ -709,19 +632,17 @@ export default class OverviewGraph {
   }
 
   applyAnimationStack(
-    animationOptions = {
-      duration: 2000,
-      easing: 'quadraticOut',
-    },
-    callback?: () => void
+    animationOptions?: { [key: string]: string | number | boolean },
+    callback?: (...args: any[]) => void,
+    callbackArgs: any[] = []
   ) {
     this.cancelCurrentAnimation = animateNodes(
       this.graph,
       this.animationStack,
-      animationOptions,
+      { duration: 1000, easing: 'quadraticOut', ...animationOptions },
       () => {
         this.animationStack = {};
-        callback?.call(this);
+        callback?.call(this, ...callbackArgs);
       }
     );
   }
@@ -767,136 +688,6 @@ export default class OverviewGraph {
     }
   }
 
-  layoutSubpathways(parentNode: string) {
-    const subPathwaysIds = this.graph.getNodeAttribute(parentNode, 'children');
-    if (Object.keys(this.hierarchyLevels).length == 0) {
-      this.hierarchyLevels[0] = [parentNode];
-    }
-    const currentLevels = Object.keys(this.hierarchyLevels).length;
-    this.hierarchyLevels[currentLevels] = subPathwaysIds;
-    this.hierarchyNodes.push(...subPathwaysIds);
-    const subPathways = subgraph(this.graph, function (nodeID, attr) {
-      return subPathwaysIds.includes(nodeID) && attr.nodeType == 'hierarchical';
-    });
-
-    /**
-     * Calculate the position of the nodes in the hierarchy
-     */
-    const parentAttribs = this.graph.getNodeAttributes(parentNode);
-    const divisions =
-      subPathways.order < this.rootOrder ? this.rootOrder : subPathways.order;
-    const angleOffset = ((subPathways.order - 1) / divisions) * Math.PI;
-    const parentAngle = Math.atan2(parentAttribs.y, parentAttribs.x);
-
-    subPathways.forEachNode((node, _attributes) => {
-      this.graph.setNodeAttribute(node, 'x', parentAttribs.x);
-      this.graph.setNodeAttribute(node, 'y', parentAttribs.y);
-      this.graph.setNodeAttribute(node, 'hierarchyHidden', false);
-      this.graph.setNodeAttribute(node, 'hidden', false);
-    });
-    this.renderer.refresh();
-
-    const subPathwayPositions = orderedCircularLayout(subPathways, {
-      scale: this.graphWidth / 1.8,
-      center: 0.5,
-      startAngle: parentAngle + angleOffset,
-      minDivisions: this.rootOrder,
-    }) as LayoutMapping<{ [dimension: string]: number }>;
-    this.cancelCurrentAnimation = animateNodes(
-      this.graph,
-      subPathwayPositions,
-      {
-        duration: 2000,
-        easing: 'quadraticOut',
-      },
-      () => {
-        const centralNodes: string[] = [];
-        subPathways.forEachNode((node, attributesNode) => {
-          centralNodes.push(...attributesNode.children, node);
-        });
-        centralNodes.forEach((node) => {
-          let hasHierarchicalEdge = false;
-          this.graph.forEachEdge(node, (edge, attributes) => {
-            if (attributes.edgeType == 'hierarchical') {
-              attributes.hierarchyHidden = false;
-              attributes.hidden = false;
-              hasHierarchicalEdge = true;
-            }
-          });
-          this.graph.forEachEdge(node, (edge, attributes) => {
-            if (attributes.edgeType == 'rootEdge') {
-              attributes.hierarchyHidden = hasHierarchicalEdge;
-            }
-          });
-        });
-      }
-    );
-  }
-  hierachyLayout(tarNode: string) {
-    const hierarchyNodes = this.hierarchyNodes;
-    const rootSubgraph = subgraph(this.graph, function (nodeID, attr) {
-      return attr.isRoot || hierarchyNodes.includes(nodeID);
-    });
-    if (!this.renderer.getCustomBBox())
-      this.renderer.setCustomBBox(this.renderer.getBBox());
-    const tarPositions: PlainObject<PlainObject<number>> = {};
-    rootSubgraph.forEachNode((node, attributes) => {
-      const fromCenter = vec2.sub(
-        vec2.create(),
-        vec2.fromValues(attributes.x, attributes.y),
-        vec2.fromValues(0, 0)
-      );
-      const fromCenterNormalized = vec2.normalize(vec2.create(), fromCenter);
-      tarPositions[node] = {
-        x: fromCenter[0] + fromCenterNormalized[0] * this.graphWidth * 0.2, // change here to increase distance for non tar nodes
-        y: fromCenter[1] + fromCenterNormalized[1] * this.graphWidth * 0.2,
-      };
-    });
-    this.cancelCurrentAnimation = animateNodes(
-      this.graph,
-      tarPositions,
-      {
-        duration: 1000,
-        easing: 'quadraticOut',
-      },
-      () => {
-        const rootAttribs = this.graph.getNodeAttributes(
-          this.graph.getNodeAttribute(tarNode, 'rootId')
-        );
-        const tarPositions: PlainObject<PlainObject<number>> = {};
-        hierarchyNodes.forEach((node) => {
-          if (node != tarNode) {
-            tarPositions[node] = {
-              x: rootAttribs.x, // change here to increase distance for non tar nodes
-              y: rootAttribs.y,
-            };
-          }
-          // rootSubgraph.forEachNode((node, _attributes) => {
-          //   this.graph.setNodeAttribute(node, 'hierarchyHidden', false); //node != tarRoot);
-          // });
-        });
-
-        this.cancelCurrentAnimation = animateNodes(
-          this.graph,
-          tarPositions,
-          {
-            duration: Object.keys(tarPositions).length > 0 ? 2000 : 0,
-            easing: 'quadraticOut',
-          },
-          () => {
-            hierarchyNodes.forEach((node) => {
-              this.graph.setNodeAttribute(
-                node,
-                'hierarchyHidden',
-                node != tarNode
-              );
-            });
-            this.layoutSubpathways(tarNode);
-          }
-        );
-      }
-    );
-  }
   /**
    * relayouts graph with the supplied FA2 settings, influencing the layouting inside the clusters themselves
    * @param layoutParams
@@ -1215,20 +1006,5 @@ export default class OverviewGraph {
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;
     this.renderer.refresh();
-  }
-
-  getRoot(reactomeID: string): void {
-    Loading.show();
-    fetch(`/get_root_search/${reactomeID}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((content) => {
-        console.log(content);
-        Loading.hide();
-      });
   }
 }

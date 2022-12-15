@@ -201,7 +201,7 @@ export function edgeReducer(
         color: overviewColors.edgesHighlight,
         size: 1,
         zIndex: 1,
-        hidden: data.hierarchyHidden,
+        hidden: false,
       };
     }
     return { ...data, hidden: data.hierarchyHidden ? true : data.hidden };
