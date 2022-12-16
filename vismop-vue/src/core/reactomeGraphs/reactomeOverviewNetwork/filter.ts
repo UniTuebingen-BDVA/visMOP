@@ -91,13 +91,16 @@ export function filterElements(this: OverviewGraph) {
     this.graph.forEachNode((node, attributes) => {
       if (
         filterFunction.bind(this)(node, attributes) &&
-        attributes.nodeType !== 'cluster'
+        attributes.nodeType == 'regular'
       ) {
+        const visibleParentNode = this.getVisibleParent(node);
+        const parentAttributes =
+          this.graph.getNodeAttributes(visibleParentNode);
         tarPositions[node] = {
-          x: this.graph.getNodeAttribute(attributes.rootId, 'layoutX'),
-          y: this.graph.getNodeAttribute(attributes.rootId, 'layoutY'),
+          x: parentAttributes['x'],
+          y: parentAttributes['y'],
         };
-      } else {
+      } else if (attributes.nodeType == 'regular') {
         tarPositions[node] = {
           x: attributes.layoutX,
           y: attributes.layoutY,
@@ -113,10 +116,15 @@ export function filterElements(this: OverviewGraph) {
       },
       () => {
         this.graph.forEachNode((node, attributes) => {
-          filterFunction.bind(this)(node, attributes)
-            ? (attributes.filterHidden = true)
-            : (attributes.filterHidden = false);
+          if (attributes.nodeType == 'regular') {
+            filterFunction.bind(this)(node, attributes)
+              ? (attributes.filterHidden = true)
+              : (attributes.filterHidden = false);
+          }
         });
+        this.renderer.refresh();
+        this.setVisibleSubtree();
+        this.renderer.refresh();
       }
     );
   }

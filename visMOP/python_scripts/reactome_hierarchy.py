@@ -747,6 +747,7 @@ def generate_overview_pathway_entry(
     )
     pathway_dict["maplinks"] = entry.maplinks
     pathway_dict["subtreeIds"] = entry.subtree_ids
+    pathway_dict["isOverview"] = entry.is_overview
     pathway_dict["parents"] = entry.parents_with_data
     pathway_dict["children"] = entry.children_with_data
     pathway_dict["ownMeasuredEntryIDs"]["proteomics"] = entry.own_measured_proteins

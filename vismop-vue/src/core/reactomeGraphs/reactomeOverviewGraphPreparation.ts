@@ -127,15 +127,18 @@ export function generateGraphData(
         rootId: entry.rootId,
         zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
-        parents: entry.parents,
-        children: entry.children,
-        subtreeIds: entry.subtreeIds.filter((value) => value in nodeData), //RODO sort this out in python
+        parents: entry.parents.filter((value) => value in nodeData),
+        children: entry.children.filter((value) => value in nodeData),
+        subtreeIds: entry.subtreeIds.filter((value) => value in nodeData),
+        visibleSubtree: true, //RODO sort this out in python
         nodeType:
           entry.rootId === entry.pathwayId
             ? 'root'
             : entry.isCentral
             ? 'regular'
-            : 'hierarchical',
+            : entry.isOverview
+            ? 'hierarchical'
+            : 'other',
         size: !entry.isCentral
           ? OverviewGraph.ROOT_DEFAULT_SIZE
           : OverviewGraph.DEFAULT_SIZE,
@@ -218,8 +221,8 @@ export function generateGraphData(
 }
 
 function determineEdgeType(
-  type1: 'root' | 'regular' | 'hierarchical' | 'cluster',
-  type2: 'root' | 'regular' | 'hierarchical' | 'cluster'
+  type1: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other',
+  type2: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other'
 ) {
   if (
     (type1 === 'root' && type2 === 'regular') ||

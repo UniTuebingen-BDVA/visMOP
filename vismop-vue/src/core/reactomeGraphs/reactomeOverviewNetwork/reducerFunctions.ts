@@ -56,6 +56,14 @@ export function nodeReducer(
 
     // shortest Path
     if (this.shortestPathNodes?.length > 0) {
+      if (!data.visibleSubtree) {
+        return {
+          ...data,
+          hidden: hidden,
+          image: lodImage,
+          color: overviewColors.noVisibleSubtree,
+        };
+      }
       if (this.shortestPathClick.includes(node)) {
         return {
           ...data,

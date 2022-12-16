@@ -28,7 +28,7 @@ import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
 import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
-import _ from 'lodash';
+import _, { curryRight } from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 import FilterData from './filterData';
 import { Loading } from 'quasar';
@@ -376,6 +376,7 @@ export default class OverviewGraph {
     const layerSubgraph = subgraph(this.graph, (nodeID, attr) => {
       return (
         attr.nodeType != 'regular' &&
+        attr.nodeType != 'other' &&
         (attr.isRoot || nodeLayer.includes(nodeID))
       );
     });
@@ -573,6 +574,73 @@ export default class OverviewGraph {
     this.applyEdgeAttributeStack();
   }
 
+  getVisibleParent(nodeID: string): string {
+    let currentParentNode = this.graph.getNodeAttribute(nodeID, 'parents')[0];
+    let notFoundVisibleParent = true;
+    while (notFoundVisibleParent) {
+      const parentHidden = this.graph.getNodeAttribute(
+        currentParentNode,
+        'hidden'
+      );
+      const parentHierarchyHidden = this.graph.getNodeAttribute(
+        currentParentNode,
+        'hierarchyHidden'
+      );
+      if (!parentHidden || !parentHierarchyHidden) {
+        notFoundVisibleParent = false;
+      } else {
+        currentParentNode = this.graph.getNodeAttribute(
+          currentParentNode,
+          'parents'
+        )[0];
+      }
+    }
+    return currentParentNode;
+  }
+
+  setVisibleSubtree(): void {
+    const nonRegularNodes: string[] = [];
+    this.graph.forEachNode((node) => {
+      const nodeType = this.graph.getNodeAttribute(node, 'nodeType');
+      if (nodeType === 'root' || nodeType == 'hierarchical') {
+        nonRegularNodes.push(node);
+      }
+    });
+    console.log('filterNODEs', nonRegularNodes);
+
+    nonRegularNodes.forEach((node) => {
+      const visibleSubtree = this.hasVisibleSubtreeNodes(node);
+      if (!visibleSubtree) {
+        this.addNodeAttributeStack(node, {
+          visibleSubtree: false,
+        });
+      }
+    });
+    this.applyNodeAttributeStack();
+  }
+
+  hasVisibleSubtreeNodes(nodeID: string): boolean {
+    const subtreeIds = [
+      ...this.graph
+        .getNodeAttribute(nodeID, 'subtreeIds')
+        .filter((item) => item !== nodeID),
+    ];
+    console.log('nodeID', nodeID);
+    console.log('subtreeIDs', subtreeIds);
+    const visibleNodeFound = subtreeIds.some((node) => {
+      const currentAttributes = this.graph.getNodeAttributes(node);
+      return !(
+        currentAttributes.filterHidden ||
+        currentAttributes.zoomHidden ||
+        currentAttributes.moduleHidden ||
+        currentAttributes.hierarchyHidden
+      );
+    });
+    console.log('visibleNodeFound', visibleNodeFound);
+
+    return visibleNodeFound;
+  }
+
   hierarchyEdgeAttributes(graph: Graph) {
     //this.resetHierarchyHidden();
     // hide rootRegular edges which are there as
@@ -585,28 +653,9 @@ export default class OverviewGraph {
         .filter((item) => item !== clickedNode)
     );
     checkNodes.forEach((node) => {
-      let currentParentNode = this.graph.getNodeAttribute(node, 'parents')[0];
-      let notFoundVisibleParent = true;
-      while (notFoundVisibleParent) {
-        const parentHidden = this.graph.getNodeAttribute(
-          currentParentNode,
-          'hidden'
-        );
-        const parentHierarchyHidden = this.graph.getNodeAttribute(
-          currentParentNode,
-          'hierarchyHidden'
-        );
-        if (!parentHidden || !parentHierarchyHidden) {
-          notFoundVisibleParent = false;
-        } else {
-          currentParentNode = this.graph.getNodeAttribute(
-            currentParentNode,
-            'parents'
-          )[0];
-        }
-      }
+      const visibleParentNode = this.getVisibleParent(node);
       this.graph.findUndirectedEdge(node, (edge, attr, source, target) => {
-        if (source == currentParentNode || target == currentParentNode) {
+        if (source == visibleParentNode || target == visibleParentNode) {
           const edgeAttribs = {
             hierarchyHidden: false,
             hidden: false,
@@ -936,6 +985,7 @@ export default class OverviewGraph {
         parents: [],
         children: [],
         subtreeIds: [],
+        visibleSubtree: true,
       };
       this.graph.addNode(key, moduleNode);
     }
