@@ -606,8 +606,6 @@ export default class OverviewGraph {
         nonRegularNodes.push(node);
       }
     });
-    console.log('filterNODEs', nonRegularNodes);
-
     nonRegularNodes.forEach((node) => {
       const visibleSubtree = this.hasVisibleSubtreeNodes(node);
       if (!visibleSubtree) {
@@ -625,8 +623,6 @@ export default class OverviewGraph {
         .getNodeAttribute(nodeID, 'subtreeIds')
         .filter((item) => item !== nodeID),
     ];
-    console.log('nodeID', nodeID);
-    console.log('subtreeIDs', subtreeIds);
     const visibleNodeFound = subtreeIds.some((node) => {
       const currentAttributes = this.graph.getNodeAttributes(node);
       return !(
@@ -636,8 +632,6 @@ export default class OverviewGraph {
         currentAttributes.hierarchyHidden
       );
     });
-    console.log('visibleNodeFound', visibleNodeFound);
-
     return visibleNodeFound;
   }
 
@@ -938,7 +932,6 @@ export default class OverviewGraph {
     const mainStore = useMainStore();
     const moduleNodeMapping = this.getModuleNodeIds();
     const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
-    console.log('ModuleGlyphs', glyphs);
     for (const key in Object.keys(moduleNodeMapping)) {
       const xPos = this.polygons[key].getCenter()[0]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
       const yPos = this.polygons[key].getCenter()[1]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
