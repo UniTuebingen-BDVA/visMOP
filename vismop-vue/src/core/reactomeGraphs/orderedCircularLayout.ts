@@ -26,6 +26,8 @@ export type CircularLayoutOptions = {
   dimensions?: string[];
   center?: number;
   scale?: number;
+  startAngle?: number;
+  minDivisions?: number;
 };
 
 type LayoutMapping = { [node: string]: { [dimension: string]: number } };
@@ -47,6 +49,8 @@ const DEFAULTS = {
   dimensions: ['x', 'y'],
   center: 0.5,
   scale: 1,
+  startAngle: 0,
+  minDivisions: 0,
 };
 
 /**
@@ -77,10 +81,11 @@ function genericCircularLayout(
 
   const center = options.center;
   const scale = options.scale;
-  const tau = Math.PI * 2;
+  const startAngle = options.startAngle;
+  const minDivisions = options.minDivisions;
 
   const offset = (center - 0.5) * scale;
-  const l = graph.order;
+  const l = graph.order < minDivisions ? minDivisions : graph.order;
 
   const x = dimensions[0];
   const y = dimensions[1];
@@ -91,8 +96,13 @@ function genericCircularLayout(
       [dimension: string]: number;
     }
   ) {
-    target[x] = scale * Math.cos(((-i + l / 4) * tau) / l) + offset;
-    target[y] = scale * Math.sin(((-i + l / 4) * tau) / l) + offset;
+    console.log('startAngle', startAngle);
+    const angle = (Math.PI * 2 * -i) / l + startAngle;
+    target[x] = scale * Math.cos(angle) + offset;
+    target[y] = scale * Math.sin(angle) + offset;
+
+    //= scale * Math.cos(((-i + l / 4) * tau) / l) + offset;
+    //= scale * Math.sin(((-i + l / 4) * tau) / l) + offset;
 
     return target;
   }

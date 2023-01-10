@@ -28,6 +28,7 @@ type reactomeEntry = {
     metabolomics: omicsEntry;
   };
   pathwayId: string;
+  isCentral: boolean;
   moduleNum: number;
   up: upDatedPos;
   rootId: string;
@@ -36,6 +37,10 @@ type reactomeEntry = {
   pathwayName: string;
   maplinks: { [key: string]: { own_id: number; toplevel_id: number } };
   subtreeIds: string[];
+  parents: string[];
+  children: string[];
+  isOverview: boolean;
+  nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster';
   ownMeasuredEntryIDs: {
     proteomics: string[];
     transcriptomics: string[];

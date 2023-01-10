@@ -12,8 +12,9 @@ export function generateGlyphDataReactome(): { [key: string]: glyphData } {
 
   // contains pathway lists
   const omicsRecieved = mainStore.omicsRecieved;
-  const overviewData = mainStore.overviewData as reactomeEntry[];
-  for (const pathway of overviewData) {
+  const overviewData = mainStore.overviewData;
+  for (const pathwayID in overviewData) {
+    const pathway = overviewData[pathwayID];
     const transcriptomicsData: omicsData = {
       available: omicsRecieved.transcriptomics,
       foldChanges: [],

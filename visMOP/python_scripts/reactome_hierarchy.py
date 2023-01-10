@@ -81,6 +81,7 @@ class ReactomePathway:
         self.reactome_sID = reactome_sID
         self.db_Id = ""
         self.children = []
+        self.children_with_data = []
         self.subtree_ids = []
         self.diagram_entry = ""
         self.own_measured_proteins = []
@@ -99,6 +100,7 @@ class ReactomePathway:
         self.total_metabolites = {}
         self.maplinks = {}
         self.parents = []
+        self.parents_with_data = []
         self.level = -1
         self.root_id = ""
 
@@ -183,6 +185,17 @@ class PathwayHierarchy(dict):
         leafs = len([v for k, v in self.items() if v.is_leaf])
         roots = len([v for k, v in self.items() if v.is_root])
         return {"size": entries, "leafs": leafs, "roots": roots}
+
+    def generate_parents_children_with_data(self):
+        for entry in self.values():
+            for parent_entry in entry.parents:
+                entryObject = self[parent_entry]
+                if entryObject.has_data:
+                    entry.parents_with_data.append(parent_entry)
+            for child_entry in entry.children:
+                entryObject = self[child_entry]
+                if entryObject.has_data:
+                    entry.children_with_data.append(child_entry)
 
     def add_json_data(self, json_path):
         """Adds json data to the pathways
@@ -591,10 +604,16 @@ class PathwayHierarchy(dict):
             List of contained hierarchy nodes
         """
         out_data = []
+        central_nodes_out = []
+        central_nodes = []
         # pathway_ids = self.levels[level]
         pathway_ids = []
         for root in self.levels[0]:
-            pathway_ids.extend(self.get_subtree_non_overview(root))
+            central_nodes.extend(self.get_subtree_non_overview(root))
+        # central_nodes.extend(self.levels[0])
+        central_nodes = list(set(central_nodes))
+        for root in self.levels[0]:
+            pathway_ids.extend(self.get_subtree_target(root))
         pathway_ids.extend(self.levels[0])
         pathway_ids = list(set(pathway_ids))
         query_pathway_dict = {}
@@ -603,6 +622,7 @@ class PathwayHierarchy(dict):
         root_ids = []
         pathways_root_names = {}
         pathway_summary_stats_dict = {}
+        self.generate_parents_children_with_data()
         for pathway in pathway_ids:
             entry = self[pathway]
             hierarchical_roots = self.get_hierachical_superpathways(entry)
@@ -613,6 +633,7 @@ class PathwayHierarchy(dict):
                     pathway_summary_data,
                 ) = generate_overview_pathway_entry(
                     entry,
+                    pathway in central_nodes,
                     pathway,
                     query_pathway_dict,
                     verbose,
@@ -621,6 +642,8 @@ class PathwayHierarchy(dict):
                 )
                 pathway_dropdown.append(dropdown_entry)
                 out_data.append(pathway_dict)
+                if pathway in central_nodes:
+                    central_nodes_out.append(pathway)
                 root_ids.append(entry.root_id)
                 pathways_root_names[entry.reactome_sID] = [self[entry.root_id].name]
                 # pathways_root_names[entry.reactome_sID].append(hierarchical_roots)
@@ -643,6 +666,7 @@ class PathwayHierarchy(dict):
         stat_vals_colnames.append("pathway size")
         return (
             out_data,
+            central_nodes_out,
             query_pathway_dict,
             pathway_dropdown,
             list(set(root_ids)),
@@ -670,6 +694,7 @@ class PathwayHierarchy(dict):
 
 def generate_overview_pathway_entry(
     entry,
+    is_central,
     pathway_Id,
     query_pathway_dict,
     verbose,
@@ -692,8 +717,12 @@ def generate_overview_pathway_entry(
         "pathwayName": "",
         "pathwayId": "",
         "rootId": "",
+        "nodeType": "",
+        "isCentral": is_central,
         "maplinks": [],
         "subtreeIds": [],
+        "parents": [],
+        "children": [],
         "insetPathwayEntryIDs": {
             "proteomics": {},
             "transcriptomics": {},
@@ -713,8 +742,14 @@ def generate_overview_pathway_entry(
     pathway_dict["pathwayName"] = entry.name
     pathway_dict["pathwayId"] = entry.reactome_sID
     pathway_dict["rootId"] = entry.root_id
+    pathway_dict["nodeType"] = (
+        "root" if entry.is_root else "regular" if is_central else "hierarchical"
+    )
     pathway_dict["maplinks"] = entry.maplinks
     pathway_dict["subtreeIds"] = entry.subtree_ids
+    pathway_dict["isOverview"] = entry.is_overview
+    pathway_dict["parents"] = entry.parents_with_data
+    pathway_dict["children"] = entry.children_with_data
     pathway_dict["ownMeasuredEntryIDs"]["proteomics"] = entry.own_measured_proteins
     pathway_dict["ownMeasuredEntryIDs"]["transcriptomics"] = entry.own_measured_genes
     pathway_dict["ownMeasuredEntryIDs"]["metabolomics"] = entry.own_measured_metabolites

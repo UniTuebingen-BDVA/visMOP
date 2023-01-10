@@ -70,7 +70,7 @@ export function drawLabel(
   context.fillStyle = '#000';
   context.font = `${weight} ${size}px ${font}`;
   labelText.text.forEach((row, i) => {
-    if (data.isRoot) {
+    if (data.nodeType != 'regular' && data.nodeType != 'other') {
       const rotatedPos = vec2.rotate(
         vec2.create(),
         vec2.fromValues(data.x + data.size + 12, data.y),
@@ -88,7 +88,9 @@ export function drawLabel(
     } else {
       context.fillText(
         row,
-        data.layoutX < 0 && data.isRoot
+        data.layoutX < 0 &&
+          data.nodeType != 'regular' &&
+          data.nodeType != 'other'
           ? data.x - labelText.maxWidth - data.size - 3
           : data.x + data.size + 3,
         data.y + size / 3 + (i - (labelText.text.length / 2 - 0.5)) * size
@@ -145,7 +147,7 @@ export function drawHover(
     const xDeltaCoord = Math.sqrt(
       Math.abs(Math.pow(radius, 2) - Math.pow(boxHeight / 2, 2))
     );
-    if (data.isRoot) {
+    if (data.nodeType != 'regular' && data.nodeType != 'other') {
       const rootX1 =
         rotatedPos[0] -
         (Math.abs(angleToX) / Math.PI) * labelText.maxWidth -

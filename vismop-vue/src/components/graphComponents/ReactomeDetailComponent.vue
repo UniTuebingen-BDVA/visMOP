@@ -110,7 +110,9 @@ const pathwayDropdownOptions: Ref<
 
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
-const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
+const overviewData = computed(
+  () => mainStore.overviewData as { [key: string]: reactomeEntry }
+);
 
 const sizeIcon = computed(() => {
   switch (sizeCycleState.value) {
@@ -382,10 +384,7 @@ const drawDetailView = () => {
     metabolomics: {},
   };
   const fcsReactomeKey: foldChangesByID = {};
-  const pathwayData = overviewData.value.find(
-    (elem: { pathwayId: string }) =>
-      elem.pathwayId === pathwaySelection.value.value
-  );
+  const pathwayData = overviewData.value[pathwaySelection.value.value];
   if (pathwayData) {
     prepareFcs(pathwayData, fcs, fcsReactomeKey, 'proteomics');
     prepareFcs(pathwayData, fcs, fcsReactomeKey, 'transcriptomics');

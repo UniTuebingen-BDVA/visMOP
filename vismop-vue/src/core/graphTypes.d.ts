@@ -62,13 +62,14 @@ type overviewNodeAttr = baseNodeAttr & {
   modNum: number;
   up: upDatedPos;
   isRoot: boolean;
-  nodeType: string;
+  nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other';
   nonHoverSize: number;
   image: string;
   imageLowRes: string;
   imageHighRes: string;
   imageLowZoom: string;
   hidden: boolean;
+  hierarchyHidden: boolean;
   filterHidden: boolean;
   zoomHidden: boolean;
   moduleHidden: boolean;
@@ -81,6 +82,10 @@ type overviewNodeAttr = baseNodeAttr & {
   proteomicsNodeState: { regulated: number; total: number };
   metabolomicsNodeState: { regulated: number; total: number };
   rootId: string;
+  parents: string[];
+  children: string[];
+  subtreeIds: string[];
+  visibleSubtree: boolean;
 };
 
 type CartesianVector = {

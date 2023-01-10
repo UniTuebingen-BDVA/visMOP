@@ -17,7 +17,11 @@ export function nodeReducer(
   if (this.renderer) {
     // handle lod detail
 
-    const hidden = data.filterHidden || data.zoomHidden || data.moduleHidden;
+    const hidden =
+      data.filterHidden ||
+      data.zoomHidden ||
+      data.moduleHidden ||
+      data.hierarchyHidden;
     let lodCondition = false;
     let xDisplay: number | undefined = -100;
     let yDisplay: number | undefined = -100;
@@ -52,6 +56,14 @@ export function nodeReducer(
 
     // shortest Path
     if (this.shortestPathNodes?.length > 0) {
+      if (!data.visibleSubtree) {
+        return {
+          ...data,
+          hidden: hidden,
+          image: lodImage,
+          color: overviewColors.noVisibleSubtree,
+        };
+      }
       if (this.shortestPathClick.includes(node)) {
         return {
           ...data,
@@ -200,7 +212,6 @@ export function edgeReducer(
         hidden: false,
       };
     }
-
-    return { ...data, hidden: true };
+    return { ...data, hidden: data.hierarchyHidden ? true : data.hidden };
   } else return data;
 }

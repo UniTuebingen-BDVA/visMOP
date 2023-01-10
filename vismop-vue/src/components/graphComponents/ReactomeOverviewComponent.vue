@@ -192,7 +192,7 @@ const fa2LayoutParams = ref({
   clusterSizeScalingFactor: 1,
 });
 
-const overviewData = computed(() => mainStore.overviewData as reactomeEntry[]);
+const overviewData = computed(() => mainStore.overviewData);
 const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
@@ -560,7 +560,6 @@ const drawNetwork = () => {
   console.log(generatedGlyphsHighRes, generatedGlyphsLowZoom);
   mainStore.setGlyphs(generatedGlyphs);
   //const moduleAreas = mainStore.moduleAreas;
-
   //get module areas here!!!
   const clusterWeights = mainStore.modules.map((elem) => elem.length);
   const polygons = generateVoronoiCells(

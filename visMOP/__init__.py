@@ -52,6 +52,7 @@ cache = Cache(app)
 
 def getModuleLayout(
     omics_recieved,
+    layout_targets,
     up_down_reg_limits,
     data_col_used,
     statistic_data_complete,
@@ -93,12 +94,14 @@ def getModuleLayout(
     try:
         module_layout = Module_layout(
             statistic_data_user,
+            layout_targets,
             pathway_connection_dict,
             up_down_reg_means,
             reactome_roots,
             pathways_root_names,
         )
-    except ValueError:
+    except ValueError as e:
+        print("LayoutError", e)
         return -1, -1
     # module_node_pos = module_layout.initial_node_pos
     # outcommented for test of voronoi layout
@@ -562,6 +565,7 @@ def reactome_overview():
 
     (
         out_data,
+        central_nodes,
         pathway_dict,
         dropdown_data,
         root_ids,
@@ -570,7 +574,7 @@ def reactome_overview():
         statistic_data_complete,
         omics_recieved,
     ) = reactome_hierarchy.generate_overview_data(layout_limits, False)
-    pathway_connection_dict = get_overview_reactome(out_data)
+    pathway_connection_dict = get_overview_reactome(out_data, central_nodes)
     # network_overview = generate_networkx_dict(pathway_connection_dict)
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
@@ -578,6 +582,7 @@ def reactome_overview():
     # module_node_pos, module_areas = getModuleLayout(
     modules, module_centers, noiseClusterExists = getModuleLayout(
         omics_recieved,
+        central_nodes,
         layout_limits,
         layout_attributes_used,
         statistic_data_complete,
@@ -593,12 +598,16 @@ def reactome_overview():
         # x_y_pos = module_node_pos[pathway["pathwayId"]]
         pathway["initialPosX"] = random()  # x_y_pos[0]
         pathway["initialPosY"] = random()  # x_y_pos[1]
-        pathway["moduleNum"] = randint(0, len(modules) - 1)  # x_y_pos[2]
+        pathway["moduleNum"] = 0  # x_y_pos[2]
     modules = [elem.tolist() for elem in modules]
+    # temporary?
+
+    out_data_dict = {elem["pathwayId"]: elem for elem in out_data}
+
     return json.dumps(
         {
             "exitState": 0,
-            "overviewData": out_data,
+            "overviewData": out_data_dict,
             "modules": modules,
             "moduleCenters": module_centers,
             "noiseClusterExists": noiseClusterExists,
@@ -610,16 +619,6 @@ def reactome_overview():
             },
         }
     )
-
-
-@app.route("/get_root_search/<pathway>", methods=["GET"])
-def get_root_search(pathway):
-    hierarchy = cache.get("reactome_hierarchy")
-    pathway_entry = hierarchy[pathway]
-    parents = pathway_entry.parents
-    children = pathway_entry.children
-    print(parents, children)
-    return 0
 
 
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])

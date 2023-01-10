@@ -14,11 +14,11 @@ import { useMainStore } from '@/stores';
 import { ConvexPolygon } from '../layouting/ConvexPolygon';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
- * @param nodeList list of node data
+ * @param nodeData list of node data
  * @returns
  */
 export function generateGraphData(
-  nodeList: reactomeEntry[],
+  nodeData: { [key: string]: reactomeEntry },
   glyphs: { [key: string]: string },
   glyphsHighres: { [key: string]: string },
   glyphsLowZoom: { [key: string]: string },
@@ -51,10 +51,21 @@ export function generateGraphData(
     options: [],
   };
   const addedEdges: string[] = [];
+  const addedNodes: string[] = [];
+  function addEdge(source: string, target: string, type: string): void {
+    const currentEdge = generateForceGraphEdge(source, target, type);
+    if (
+      !addedEdges.includes(currentEdge.key) &&
+      !addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`)
+    ) {
+      graph.edges.push(currentEdge);
+      addedEdges.push(currentEdge.key);
+    }
+  }
   let index = 0;
   let maxModuleNum = 0;
-  for (const entryKey in nodeList) {
-    const entry = nodeList[entryKey];
+  for (const entryKey in nodeData) {
+    const entry = nodeData[entryKey];
     const name = entry.pathwayName;
     const id = entry.pathwayId ? entry.pathwayId : 'noID';
     const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
@@ -74,17 +85,18 @@ export function generateGraphData(
         imageLowZoom: glyphsLowZoom[id],
         name: _.escape(name),
         id: id,
-        hidden: false,
+        hidden: !entry.isCentral,
         filterHidden: false,
         zoomHidden: false,
         moduleHidden: false,
         moduleFixed: false,
+        hierarchyHidden: !entry.isCentral,
         color:
           entry.rootId === entry.pathwayId
             ? overviewColors.roots
             : overviewColors.default,
         label: `${_.escape(name)}`,
-        forceLabel: entry.rootId === entry.pathwayId ? true : false,
+        forceLabel: !entry.isCentral,
         averageTranscriptomics: glyphData[id].transcriptomics.available
           ? glyphData[id].transcriptomics.meanFoldchange
           : NaN,
@@ -115,59 +127,66 @@ export function generateGraphData(
         rootId: entry.rootId,
         zIndex: 0,
         isRoot: entry.rootId === entry.pathwayId,
-        nodeType: entry.rootId === entry.pathwayId ? 'root' : 'regular',
-        size:
+        parents: entry.parents.filter((value) => value in nodeData),
+        children: entry.children.filter((value) => value in nodeData),
+        subtreeIds: entry.subtreeIds.filter((value) => value in nodeData),
+        visibleSubtree: true, //RODO sort this out in python
+        nodeType:
           entry.rootId === entry.pathwayId
-            ? OverviewGraph.ROOT_DEFAULT_SIZE
-            : OverviewGraph.DEFAULT_SIZE,
-        nonHoverSize:
-          entry.rootId === entry.pathwayId
-            ? OverviewGraph.ROOT_DEFAULT_SIZE
-            : OverviewGraph.DEFAULT_SIZE,
+            ? 'root'
+            : entry.isCentral
+            ? 'regular'
+            : entry.isOverview
+            ? 'hierarchical'
+            : 'other',
+        size: !entry.isCentral
+          ? OverviewGraph.ROOT_DEFAULT_SIZE
+          : OverviewGraph.DEFAULT_SIZE,
+        nonHoverSize: !entry.isCentral
+          ? OverviewGraph.ROOT_DEFAULT_SIZE
+          : OverviewGraph.DEFAULT_SIZE,
         fixed: false, // fixed property on nodes excludes nodes from layouting
       },
     };
     graph.nodes.push(currentNode);
-    const currentEdge = generateForceGraphEdge(
-      entry.rootId,
-      entry.pathwayId,
-      'hierarchical'
-    );
-    if (
-      !addedEdges.includes(currentEdge.key) &&
-      !addedEdges.includes(`${currentEdge.target}+${currentEdge.source}`)
-    ) {
-      graph.edges.push(currentEdge);
-      addedEdges.push(currentEdge.key);
-    }
+    addedNodes.push(currentNode.key);
+    // Root Edge
+    if (!currentNode.attributes.isRoot) {
+      const edgeType = determineEdgeType(
+        entry.nodeType,
+        nodeData[entry.rootId].nodeType
+      );
+      addEdge(entry.pathwayId, entry.rootId, edgeType);
+    } // Hierarchical Edges:
+    entry.parents.forEach((element) => {
+      const parentNodeType = nodeData[element].nodeType;
+      const ownNodeType = entry.nodeType;
+      const edgeType = determineEdgeType(parentNodeType, ownNodeType);
+      addEdge(element, entry.pathwayId, edgeType);
+    });
+    entry.subtreeIds.forEach((element) => {
+      if (element in nodeData) {
+        const childrenNodeType = nodeData[element].nodeType;
+        const ownNodeType = entry.nodeType;
+        const edgeType = determineEdgeType(childrenNodeType, ownNodeType);
+        addEdge(entry.pathwayId, element, edgeType);
+      }
+    });
+    /*
     for (const [maplink] of Object.entries(entry.maplinks)) {
       if (!rootIds.includes(entry.pathwayId)) {
-        for (const entryKey in nodeList) {
-          const loopEntry = nodeList[entryKey];
+        for (const entryKey in nodeData) {
+          const loopEntry = nodeData[entryKey];
           if (!rootIds.includes(loopEntry.pathwayId)) {
             if (loopEntry.subtreeIds.includes(maplink)) {
-              const currentEdge = generateForceGraphEdge(
-                entry.pathwayId,
-                loopEntry.pathwayId,
-                'maplink'
-              );
-              if (
-                !addedEdges.includes(currentEdge.key) &&
-                !addedEdges.includes(
-                  `${currentEdge.target}+${currentEdge.source}`
-                )
-              ) {
-                graph.edges.push(currentEdge);
-                addedEdges.push(currentEdge.key);
-              }
+              addEdge(entry.pathwayId, loopEntry.pathwayId, 'maplink');
             }
           }
         }
       }
-    }
+    } */
     index += 1;
   }
-
   const maxExt = 250;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
@@ -201,6 +220,33 @@ export function generateGraphData(
   return graph;
 }
 
+function determineEdgeType(
+  type1: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other',
+  type2: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other'
+) {
+  if (
+    (type1 === 'root' && type2 === 'regular') ||
+    (type1 === 'regular' && type2 === 'root')
+  ) {
+    return 'rootEdge';
+  }
+  if (
+    (type1 === 'hierarchical' && type2 === 'regular') ||
+    (type1 === 'regular' && type2 === 'hierarchical')
+  ) {
+    return 'hierarchicalRegular';
+  }
+  if (type1 === 'hierarchical' && type2 === 'hierarchical') {
+    return 'hierarchicalHierachical';
+  }
+  if (
+    (type1 === 'root' && type2 === 'hierarchical') ||
+    (type1 === 'hierarchical' && type2 === 'root')
+  ) {
+    return 'rootHierarchical';
+  } else return 'rootEdge';
+}
+
 /**
  * Parses a graph relation into an edge representation
  * @param {relation} relation object
@@ -221,6 +267,8 @@ function generateForceGraphEdge(
     attributes: {
       zIndex: 0,
       hidden: true,
+      edgeType: type,
+      hierarchyHidden: true,
       type: type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'

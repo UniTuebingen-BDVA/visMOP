@@ -1,4 +1,4 @@
-import { UndirectedGraph } from 'graphology';
+import Graph, { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
 import {
   additionalData,
@@ -11,7 +11,7 @@ import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
-import { bidirectional, edgePathFromNodePath } from 'graphology-shortest-path';
+import { animateNodes } from 'sigma/utils/animate';
 import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
@@ -28,11 +28,12 @@ import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
 import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
-import _ from 'lodash';
+import _, { curryRight } from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 import FilterData from './filterData';
 import { Loading } from 'quasar';
-
+import { PlainObject } from 'sigma/types';
+import { vec2 } from 'gl-matrix';
 export default class OverviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 6;
@@ -56,19 +57,29 @@ export default class OverviewGraph {
   protected highlighedEdgesHover = new Set();
   protected highlightedCenterHover = '';
   protected currentPathway = '';
+  protected hierarchyClickStack: string[] = [];
   protected pathwaysContainingIntersection: string[] = [];
   protected pathwaysContainingUnion: string[] = [];
-
+  protected hierarchyNodes: string[] = [];
+  protected hierarchyLevels: { [key: number]: string[] } = {};
   // renderer and camera
   protected renderer;
   protected camera;
   protected prevFrameZoom;
   protected graph;
   protected clusterData;
+  protected graphWidth = 0;
   protected windowWidth = 1080;
   protected lodRatio = 1.3;
   protected lastClickedClusterNode = -1;
   protected additionalData!: additionalData;
+  protected animationStack: PlainObject<PlainObject<number>> = {};
+  protected nodeAttributeStack: {
+    [key: string]: { [key: string]: string | number | boolean };
+  } = {};
+  protected edgeAttributeStack: {
+    [key: string]: { [key: string]: string | number | boolean };
+  } = {};
   protected cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
@@ -121,6 +132,7 @@ export default class OverviewGraph {
   clusterWeights: number[];
   maxClusterWeight: number;
   clusterSizeScalingFactor: number;
+  rootOrder: number;
 
   constructor(
     containerID: string,
@@ -134,6 +146,7 @@ export default class OverviewGraph {
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
+    this.rootOrder = 0;
     this.clusterWeights = clusterWeights;
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
     this.maxClusterWeight = Math.max(...clusterWeights);
@@ -141,6 +154,8 @@ export default class OverviewGraph {
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
     this.addModuleOverviewNodes();
+    this.calculateGraphWidth();
+    this.layoutRoots();
     this.relayoutGraph(this.initialFa2Params);
     this.setSize(windowWidth);
 
@@ -188,18 +203,10 @@ export default class OverviewGraph {
       },
       this.additionalData
     );
-    const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
-      return attr.isRoot;
+    renderer.on('beforeRender', () => {
+      zoomLod.bind(this)();
+      filterElements.bind(this)();
     });
-    const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
-    const width = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
-    // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
-
-    const rootPositions = orderedCircularLayout(rootSubgraph, {
-      scale: width / 1.8,
-      center: 0.5,
-    }) as LayoutMapping<{ [dimension: string]: number }>;
-    assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
 
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
@@ -211,11 +218,6 @@ export default class OverviewGraph {
       renderer.refresh();
     });
 
-    renderer.on('beforeRender', () => {
-      zoomLod.bind(this)();
-      filterElements.bind(this)();
-    });
-
     renderer.on('leaveNode', () => {
       this.highlighedNodesHover.clear();
       this.highlighedEdgesHover.clear();
@@ -224,7 +226,7 @@ export default class OverviewGraph {
     });
 
     renderer.on('clickNode', ({ node, event }) => {
-      if (this.graph.getNodeAttribute(node, 'nodeType') != 'moduleNode') {
+      if (this.graph.getNodeAttribute(node, 'nodeType') != 'cluster') {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
         } else if (event.original.altKey) {
@@ -248,7 +250,6 @@ export default class OverviewGraph {
           //     this.shortestPathClick = [];
           //   }
           // }
-        } else {
           this.shortestPathClick = [];
           this.shortestPathNodes = [];
           this.shortestPathEdges = [];
@@ -257,8 +258,11 @@ export default class OverviewGraph {
           this.highlightedNodesClick = new Set(this.graph.neighbors(node));
           this.highlightedEdgesClick = new Set(this.graph.edges(node));
           const nodeLabel = this.graph.getNodeAttribute(node, 'label');
-          //this.getRoot(node);
           mainStore.focusPathwayViaOverview({ nodeID: node, label: nodeLabel });
+        } else {
+          if (this.graph.getNodeAttribute(node, 'nodeType') != 'regular') {
+            this.hierarchyLayoutClickfunc(node);
+          }
         }
       } else {
         const defocus = this.lastClickedClusterNode == parseInt(node);
@@ -291,12 +295,12 @@ export default class OverviewGraph {
             attributes.moduleHidden = false;
             attributes.size = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
-              : attributes.nodeType == 'moduleNode'
+              : attributes.nodeType == 'cluster'
               ? this.MODULE_DEFAULT_SIZE
               : this.DEFAULT_SIZE;
             attributes.nonHoverSize = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
-              : attributes.nodeType == 'moduleNode'
+              : attributes.nodeType == 'cluster'
               ? this.MODULE_DEFAULT_SIZE
               : this.DEFAULT_SIZE;
           }
@@ -328,8 +332,432 @@ export default class OverviewGraph {
   clearSelection() {
     this.highlightedEdgesClick.clear();
     this.highlightedNodesClick.clear();
+
+    this.hierarchyStepIn(true);
+    this.hierarchyNodes = [];
     useMainStore().focusPathwayViaDropdown({ title: '', value: '', text: '' });
     this.renderer.refresh();
+    //this.hierarchyClickStack = [];
+  }
+  calculateGraphWidth() {
+    const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
+    this.graphWidth = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
+  }
+  /**
+   * Layouts roots as a circle
+   */
+  layoutRoots(animate = false) {
+    // const center = (nodeXyExtent['x'][1] + nodeXyExtent['x'][0]) / 2;
+
+    const rootSubgraph = subgraph(this.graph, function (_nodeID, attr) {
+      return attr.isRoot;
+    });
+    this.rootOrder = rootSubgraph.order;
+    rootSubgraph.forEachNode((node, _attributes) => {
+      this.graph.setNodeAttribute(node, 'hierarchyHidden', false);
+    });
+    const rootPositions = orderedCircularLayout(rootSubgraph, {
+      scale: this.graphWidth / 1.8,
+      center: 0.5,
+      startAngle: Math.PI / 2,
+      minDivisions: 0,
+    }) as LayoutMapping<{ [dimension: string]: number }>;
+    if (animate) {
+      this.cancelCurrentAnimation = animateNodes(this.graph, rootPositions, {
+        duration: 2000,
+        easing: 'quadraticOut',
+      });
+    } else {
+      assignLayout(this.graph, rootPositions, { dimensions: ['x', 'y'] });
+    }
+  }
+
+  pushNodeLayer(nodeLayer: string[], direction: 'in' | 'out') {
+    const layerSubgraph = subgraph(this.graph, (nodeID, attr) => {
+      return (
+        attr.nodeType != 'regular' &&
+        attr.nodeType != 'other' &&
+        (attr.isRoot || nodeLayer.includes(nodeID))
+      );
+    });
+    if (!this.renderer.getCustomBBox())
+      this.renderer.setCustomBBox(this.renderer.getBBox());
+    layerSubgraph.forEachNode((node, attributes) => {
+      const fromCenter = vec2.sub(
+        vec2.create(),
+        vec2.fromValues(attributes.x, attributes.y),
+        vec2.fromValues(0, 0)
+      );
+      const fromCenterNormalized = vec2.normalize(vec2.create(), fromCenter);
+      const xOffset = fromCenterNormalized[0] * this.graphWidth * 0.2;
+      const yOffset = fromCenterNormalized[1] * this.graphWidth * 0.2;
+      this.animationStack[node] = {
+        x:
+          direction == 'out'
+            ? fromCenter[0] + xOffset
+            : fromCenter[0] - xOffset, // change here to increase distance for non tar nodes
+        y:
+          direction == 'out'
+            ? fromCenter[1] + yOffset
+            : fromCenter[1] - yOffset,
+      };
+    });
+  }
+
+  hierarchyStepOut(targetNode: string) {
+    const subPathwaysIds = this.graph.getNodeAttribute(targetNode, 'children');
+    // check if any upcoming nodes are hierarchy nodes
+    let anyHierarchyNodes = false;
+    subPathwaysIds.forEach((node) => {
+      const nodeType = this.graph.getNodeAttribute(node, 'nodeType');
+      if (nodeType == 'hierarchical') anyHierarchyNodes = true;
+    });
+    if (anyHierarchyNodes) {
+      if (Object.keys(this.hierarchyLevels).length == 0) {
+        this.hierarchyLevels[0] = [targetNode];
+      }
+      const currentLevels = Object.keys(this.hierarchyLevels).length;
+      this.hierarchyLevels[currentLevels] = subPathwaysIds;
+      for (
+        let idx = 0;
+        idx < Object.keys(this.hierarchyLevels).length - 1;
+        idx++
+      ) {
+        const currentLevel = this.hierarchyLevels[idx];
+        this.pushNodeLayer(currentLevel, 'out');
+      }
+      this.layoutNewHierarchyLevel(targetNode);
+      this.applyNodeAttributeStack();
+      this.applyEdgeAttributeStack();
+      this.applyAnimationStack(undefined, () => {
+        this.collapseHierarchyLevel(
+          this.graph.getNodeAttribute(targetNode, 'rootId'),
+          Object.keys(this.hierarchyLevels).length - 2
+        );
+        this.applyAnimationStack(undefined, () => {
+          this.applyNodeAttributeStack();
+        });
+      });
+    }
+  }
+
+  hierarchyStepIn(
+    resetMode = false,
+    callbackMode = false,
+    callback?: () => void
+  ) {
+    const collapseTarget = this.hierarchyClickStack.pop();
+
+    if (collapseTarget) {
+      this.collapseHierarchyLevel(
+        collapseTarget,
+        Object.keys(this.hierarchyLevels).length - 1
+      );
+      this.applyAnimationStack(
+        resetMode ? { duration: 500 } : undefined,
+        () => {
+          this.applyNodeAttributeStack();
+          for (
+            let idx = 0;
+            idx < Object.keys(this.hierarchyLevels).length - 1;
+            idx++
+          ) {
+            const currentLevel = this.hierarchyLevels[idx];
+            this.pushNodeLayer(currentLevel, 'in');
+          }
+          delete this.hierarchyLevels[
+            Object.keys(this.hierarchyLevels).length - 1
+          ];
+          if (Object.keys(this.hierarchyLevels).length == 1) {
+            delete this.hierarchyLevels[0];
+          }
+          if (Object.keys(this.hierarchyLevels).length > 1) {
+            this.layoutNewHierarchyLevel(
+              this.hierarchyClickStack[this.hierarchyClickStack.length - 1],
+              collapseTarget
+            );
+          } else {
+            this.resetHierarchyHidden();
+            this.hierarchyLevels = {};
+            this.hierarchyClickStack = [];
+          }
+          this.applyNodeAttributeStack();
+          this.applyEdgeAttributeStack();
+          this.applyAnimationStack(
+            resetMode ? { duration: 500 } : undefined,
+            resetMode
+              ? this.hierarchyStepIn
+              : callbackMode
+              ? callback
+              : undefined,
+            resetMode
+              ? [this.hierarchyClickStack.length > 0, callbackMode, callback]
+              : [undefined]
+          );
+        }
+      );
+    } else if (callbackMode) {
+      if (callback) callback();
+    }
+  }
+
+  collapseHierarchyLevel(targetNode: string, levelIdx: number) {
+    const currentLevel = this.hierarchyLevels[levelIdx];
+    const lastClickedNode =
+      this.hierarchyClickStack[this.hierarchyClickStack.length - 1];
+    const currentLevelGraph = subgraph(this.graph, function (nodeID, attr) {
+      return (
+        currentLevel.includes(nodeID) &&
+        attr.nodeType == 'hierarchical' &&
+        nodeID != lastClickedNode
+      );
+    });
+    const targetAttribs = this.graph.getNodeAttributes(targetNode);
+    currentLevelGraph.forEachNode((node) => {
+      this.animationStack[node] = {
+        x: targetAttribs.x, // change here to increase distance for non tar nodes
+        y: targetAttribs.y,
+      };
+      this.addNodeAttributeStack(node, { hierarchyHidden: true, hidden: true });
+    });
+  }
+
+  layoutNewHierarchyLevel(targetNode: string, skipNode = '') {
+    /**
+     * Calculate the position of the nodes in the hierarchy
+     */
+    const currentLevel =
+      this.hierarchyLevels[Object.keys(this.hierarchyLevels).length - 1];
+    const currentLevelGraph = subgraph(this.graph, function (nodeID, attr) {
+      return currentLevel.includes(nodeID) && attr.nodeType == 'hierarchical';
+    });
+    const parentAttribs = this.graph.getNodeAttributes(targetNode);
+    const divisions =
+      currentLevelGraph.order < this.rootOrder
+        ? this.rootOrder
+        : currentLevelGraph.order;
+    const angleOffset = ((currentLevelGraph.order - 1) / divisions) * Math.PI;
+    const parentAngle = Math.atan2(parentAttribs.y, parentAttribs.x);
+
+    currentLevelGraph.forEachNode((node, _attributes) => {
+      if (node != skipNode) {
+        const nodeNewAttrs = {
+          x: parentAttribs.x,
+          y: parentAttribs.y,
+          hierarchyHidden: false,
+          hidden: false,
+        };
+        this.addNodeAttributeStack(node, nodeNewAttrs);
+      }
+    });
+    this.renderer.refresh();
+    this.applyNodeAttributeStack();
+
+    const currentLevelPositions = orderedCircularLayout(currentLevelGraph, {
+      scale: this.graphWidth / 1.8,
+      center: 0.5,
+      startAngle: parentAngle + angleOffset,
+      minDivisions: this.rootOrder,
+    }) as LayoutMapping<{ [dimension: string]: number }>;
+    this.animationStack = { ...this.animationStack, ...currentLevelPositions };
+    this.hierarchyEdgeAttributes(currentLevelGraph);
+  }
+
+  //TODO: broken! e.g. wrong edge types
+  resetHierarchyHidden() {
+    this.graph.forEachEdge((edge, attributes) => {
+      this.addEdgeAttributeStack(edge, {
+        hierarchyHidden: true,
+        hidden: true,
+      });
+    });
+    this.applyEdgeAttributeStack();
+  }
+
+  getVisibleParent(nodeID: string): string {
+    let currentParentNode = this.graph.getNodeAttribute(nodeID, 'parents')[0];
+    let notFoundVisibleParent = true;
+    while (notFoundVisibleParent) {
+      const parentHidden = this.graph.getNodeAttribute(
+        currentParentNode,
+        'hidden'
+      );
+      const parentHierarchyHidden = this.graph.getNodeAttribute(
+        currentParentNode,
+        'hierarchyHidden'
+      );
+      if (!parentHidden || !parentHierarchyHidden) {
+        notFoundVisibleParent = false;
+      } else {
+        currentParentNode = this.graph.getNodeAttribute(
+          currentParentNode,
+          'parents'
+        )[0];
+      }
+    }
+    return currentParentNode;
+  }
+
+  setVisibleSubtree(): void {
+    const nonRegularNodes: string[] = [];
+    this.graph.forEachNode((node) => {
+      const nodeType = this.graph.getNodeAttribute(node, 'nodeType');
+      if (nodeType === 'root' || nodeType == 'hierarchical') {
+        nonRegularNodes.push(node);
+      }
+    });
+    nonRegularNodes.forEach((node) => {
+      const visibleSubtree = this.hasVisibleSubtreeNodes(node);
+      if (!visibleSubtree) {
+        this.addNodeAttributeStack(node, {
+          visibleSubtree: false,
+        });
+      }
+    });
+    this.applyNodeAttributeStack();
+  }
+
+  hasVisibleSubtreeNodes(nodeID: string): boolean {
+    const subtreeIds = [
+      ...this.graph
+        .getNodeAttribute(nodeID, 'subtreeIds')
+        .filter((item) => item !== nodeID),
+    ];
+    const visibleNodeFound = subtreeIds.some((node) => {
+      const currentAttributes = this.graph.getNodeAttributes(node);
+      return !(
+        currentAttributes.filterHidden ||
+        currentAttributes.zoomHidden ||
+        currentAttributes.moduleHidden ||
+        currentAttributes.hierarchyHidden
+      );
+    });
+    return visibleNodeFound;
+  }
+
+  hierarchyEdgeAttributes(graph: Graph) {
+    //this.resetHierarchyHidden();
+    // hide rootRegular edges which are there as
+    const checkNodes: string[] = [];
+    const clickedNode =
+      this.hierarchyClickStack[this.hierarchyClickStack.length - 1];
+    checkNodes.push(
+      ...this.graph
+        .getNodeAttribute(clickedNode, 'subtreeIds')
+        .filter((item) => item !== clickedNode)
+    );
+    checkNodes.forEach((node) => {
+      const visibleParentNode = this.getVisibleParent(node);
+      this.graph.findUndirectedEdge(node, (edge, attr, source, target) => {
+        if (source == visibleParentNode || target == visibleParentNode) {
+          const edgeAttribs = {
+            hierarchyHidden: false,
+            hidden: false,
+          };
+          this.addEdgeAttributeStack(edge, edgeAttribs);
+        }
+      });
+    });
+  }
+
+  applyNodeAttributeStack() {
+    const nodeKeys = Object.keys(this.nodeAttributeStack);
+    nodeKeys.forEach((node) => {
+      this.graph.updateNodeAttributes(node, (attr) => {
+        return {
+          ...attr,
+          ...this.nodeAttributeStack[node],
+        };
+      });
+    });
+    this.nodeAttributeStack = {};
+  }
+
+  applyEdgeAttributeStack() {
+    const edgeKeys = Object.keys(this.edgeAttributeStack);
+    edgeKeys.forEach((edge) => {
+      this.graph.updateEdgeAttributes(edge, (attr) => {
+        return {
+          ...attr,
+          ...this.edgeAttributeStack[edge],
+        };
+      });
+    });
+    this.edgeAttributeStack = {};
+  }
+
+  applyAnimationStack(
+    animationOptions?: { [key: string]: string | number | boolean },
+    callback?: (...args: any[]) => void,
+    callbackArgs: any[] = []
+  ) {
+    this.cancelCurrentAnimation = animateNodes(
+      this.graph,
+      this.animationStack,
+      { duration: 1000, easing: 'quadraticOut', ...animationOptions },
+      () => {
+        this.animationStack = {};
+        callback?.call(this, ...callbackArgs);
+      }
+    );
+  }
+
+  addNodeAttributeStack(
+    nodeID: string,
+    attrs: { [key: string]: string | number | boolean }
+  ): void {
+    if (Object.prototype.hasOwnProperty.call(this.nodeAttributeStack, nodeID)) {
+      this.nodeAttributeStack[nodeID] = {
+        ...this.nodeAttributeStack[nodeID],
+        ...attrs,
+      };
+    } else {
+      this.nodeAttributeStack[nodeID] = attrs;
+    }
+  }
+
+  addEdgeAttributeStack(
+    edgeID: string,
+    attrs: { [key: string]: string | number | boolean }
+  ): void {
+    if (Object.prototype.hasOwnProperty.call(this.edgeAttributeStack, edgeID)) {
+      this.edgeAttributeStack[edgeID] = {
+        ...this.edgeAttributeStack[edgeID],
+        ...attrs,
+      };
+    } else {
+      this.edgeAttributeStack[edgeID] = attrs;
+    }
+  }
+
+  hierarchyLayoutClickfunc(targetNode: string) {
+    // if we click the root node when the hierarchy is partly built, we take a step back in the hierarchy
+    if (
+      Object.keys(this.hierarchyLevels).length > 0 &&
+      targetNode == this.hierarchyLevels[0][0]
+    ) {
+      this.hierarchyStepIn();
+    } else {
+      // reset the hierarchy if the clicked node is a root node other than the current root node
+      // if targetNode is a root node and not the current root node
+      const targetNodeType = this.graph.getNodeAttribute(
+        targetNode,
+        'nodeType'
+      );
+      if (
+        Object.keys(this.hierarchyLevels).length > 0 &&
+        targetNodeType == 'root' &&
+        targetNode != this.hierarchyLevels[0][0]
+      ) {
+        this.hierarchyStepIn(true, true, () => {
+          this.hierarchyClickStack.push(targetNode);
+          this.hierarchyStepOut(targetNode);
+        });
+      } else {
+        this.hierarchyClickStack.push(targetNode);
+        this.hierarchyStepOut(targetNode);
+      }
+    }
   }
 
   /**
@@ -362,7 +790,7 @@ export default class OverviewGraph {
         return (
           attr.modNum == polygonIdx &&
           attr.isRoot == false &&
-          attr.nodeType !== 'moduleNode'
+          attr.nodeType == 'regular'
         );
       });
       currentSubgraph.clearEdges();
@@ -383,7 +811,7 @@ export default class OverviewGraph {
       //causes cluster nodes to vanish
       // ALSO: clusternodes seem to be at the wrong position
       currentSubgraph.forEachNode((node, attributes) => {
-        if (attributes.nodeType !== 'moduleNode') {
+        if (attributes.nodeType !== 'cluster') {
           attributes.x = attributes.preFa2X;
           attributes.y = attributes.preFa2Y;
           attributes.layoutX = attributes.preFa2X;
@@ -394,7 +822,6 @@ export default class OverviewGraph {
       const areaScaling =
         (this.clusterWeights[polygonIdx] / this.maxClusterWeight) *
         this.clusterSizeScalingFactor;
-      console.log(areaScaling, this.clusterSizeScalingFactor);
       const currentPositions = fa2(
         currentSubgraph,
         {
@@ -426,7 +853,7 @@ export default class OverviewGraph {
       // });
     });
     this.graph.forEachNode((node, attributes) => {
-      if (attributes.nodeType !== 'moduleNode') {
+      if (attributes.nodeType !== 'cluster') {
         attributes.layoutX = attributes.x;
         attributes.layoutY = attributes.y;
       }
@@ -505,7 +932,6 @@ export default class OverviewGraph {
     const mainStore = useMainStore();
     const moduleNodeMapping = this.getModuleNodeIds();
     const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
-    console.log('ModuleGlyphs', glyphs);
     for (const key in Object.keys(moduleNodeMapping)) {
       const xPos = this.polygons[key].getCenter()[0]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
       const yPos = this.polygons[key].getCenter()[1]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
@@ -525,7 +951,7 @@ export default class OverviewGraph {
         zIndex: 1,
         color: overviewColors.modules,
         size: this.MODULE_DEFAULT_SIZE,
-        nodeType: 'moduleNode',
+        nodeType: 'cluster',
         nonHoverSize: this.MODULE_DEFAULT_SIZE,
         fixed: false,
         up: { x: xPos, y: yPos, gamma: 0 },
@@ -536,6 +962,7 @@ export default class OverviewGraph {
         imageHighRes: glyphs[key],
         imageLowZoom: glyphs[key],
         hidden: this.camera.ratio >= this.lodRatio ? false : true,
+        hierarchyHidden: false,
         filterHidden: false,
         zoomHidden: this.camera.ratio >= this.lodRatio ? true : true,
         moduleHidden: false,
@@ -548,6 +975,10 @@ export default class OverviewGraph {
         proteomicsNodeState: { regulated: 0, total: 0 },
         metabolomicsNodeState: { regulated: 0, total: 0 },
         rootId: '',
+        parents: [],
+        children: [],
+        subtreeIds: [],
+        visibleSubtree: true,
       };
       this.graph.addNode(key, moduleNode);
     }
@@ -583,7 +1014,11 @@ export default class OverviewGraph {
           attr.size = this.ROOT_DEFAULT_SIZE;
           attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
           break;
-        case 'moduleNode':
+        case 'hierarchical':
+          attr.size = this.ROOT_DEFAULT_SIZE;
+          attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
+          break;
+        case 'cluster':
           attr.size = this.MODULE_DEFAULT_SIZE;
           attr.nonHoverSize = this.MODULE_DEFAULT_SIZE;
           break;
@@ -643,20 +1078,5 @@ export default class OverviewGraph {
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;
     this.renderer.refresh();
-  }
-
-  getRoot(reactomeID: string): void {
-    Loading.show();
-    fetch(`/get_root_search/${reactomeID}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((content) => {
-        console.log(content);
-        Loading.hide();
-      });
   }
 }
