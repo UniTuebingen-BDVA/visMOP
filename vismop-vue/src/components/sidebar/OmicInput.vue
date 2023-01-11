@@ -36,14 +36,32 @@
         ></q-select>
 
         <q-separator />
-
-        <q-select
-          v-model="valueColInternal"
-          :options="dropdownHeaders"
-          option-label="label"
-          option-value="name"
-          label="Value Col."
-        ></q-select>
+        <div
+          v-for="timepoint in [...Array(amtValueCols).keys()]"
+          :key="timepoint"
+        >
+          <q-select
+            v-model="valueColInternal[timepoint]"
+            :options="dropdownHeaders"
+            option-label="label"
+            option-value="name"
+            :label="'Value Col.' + timepoint"
+          ></q-select>
+        </div>
+        <div class="row">
+          <q-btn
+            flat
+            color="primary"
+            icon="fa-solid fa-plus"
+            @click="changeValueColAmt('+')"
+          />
+          <q-btn
+            flat
+            color="primary"
+            icon="fa-solid fa-minus"
+            @click="changeValueColAmt('-')"
+          />
+        </div>
         <q-separator />
         Input Filter:
         <div v-for="variable in slider" :key="variable.text" class="row">
@@ -111,7 +129,7 @@ const props = defineProps<{
     [x: string]: string | number;
   }[];
   symbolCol: ColType;
-  valueCol: ColType;
+  valueCol: ColType[];
   recievedOmicsData: boolean;
   sliderVals: {
     [key: string]: {
@@ -127,6 +145,7 @@ const mainStore = useMainStore();
 const $q = useQuasar();
 const omicsFile: Ref<File | null> = ref(null);
 const sheetVal = ref('0');
+const amtValueCols = ref(1);
 const dropdownHeaders = computed(() => {
   return props.tableHeaders.filter(
     (elem) =>
@@ -220,6 +239,23 @@ watch(slider, () => {
 watch(sheetVal, () => {
   fetchOmicsTable(omicsFile.value);
 });
+
+const changeValueColAmt = (type: '+' | '-') => {
+  if (type === '+') {
+    valueColInternal.value = [
+      ...valueColInternal.value,
+      {
+        field: '',
+        label: '',
+        name: '',
+        align: undefined,
+      },
+    ];
+    amtValueCols.value += 1;
+  } else if (type === '-' && amtValueCols.value > 1) {
+    amtValueCols.value -= 1;
+  }
+};
 
 const fetchOmicsTable = (fileInput: File | null) => {
   mainStore.setOmicsTableHeaders([], props.omicsType);

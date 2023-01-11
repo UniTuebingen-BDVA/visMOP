@@ -210,12 +210,14 @@ const transcriptomicsSymbolCol: Ref<ColType> = ref({
   field: '',
   align: undefined,
 });
-const transcriptomicsValueCol: Ref<ColType> = ref({
-  field: '',
-  label: '',
-  name: '',
-  align: undefined,
-});
+const transcriptomicsValueCol: Ref<ColType[]> = ref([
+  {
+    field: '',
+    label: '',
+    name: '',
+    align: undefined,
+  },
+]);
 
 const proteomicsSymbolCol: Ref<ColType> = ref({
   name: '',
@@ -223,12 +225,14 @@ const proteomicsSymbolCol: Ref<ColType> = ref({
   field: '',
   align: undefined,
 });
-const proteomicsValueCol: Ref<ColType> = ref({
-  field: '',
-  label: '',
-  name: '',
-  align: undefined,
-});
+const proteomicsValueCol: Ref<ColType[]> = ref([
+  {
+    field: '',
+    label: '',
+    name: '',
+    align: undefined,
+  },
+]);
 
 const metabolomicsSymbolCol: Ref<ColType> = ref({
   name: '',
@@ -236,12 +240,14 @@ const metabolomicsSymbolCol: Ref<ColType> = ref({
   field: '',
   align: undefined,
 });
-const metabolomicsValueCol: Ref<ColType> = ref({
-  field: '',
-  label: '',
-  name: '',
-  align: undefined,
-});
+const metabolomicsValueCol: Ref<ColType[]> = ref([
+  {
+    field: '',
+    label: '',
+    name: '',
+    align: undefined,
+  },
+]);
 const allOmicLayoutAttributes = [
   'Number of values',
   'Mean expression above limit',
@@ -337,19 +343,24 @@ const queryReactome = () => {
   const payload = {
     targetOrganism: targetOrganism.value,
     transcriptomics: {
+      amtTimesteps: transcriptomicsValueCol.value.map((entry) => entry.field)
+        .length,
       recieved: recievedTranscriptomicsData.value,
       symbol: transcriptomicsSymbolCol.value.field,
-      value: transcriptomicsValueCol.value.field,
+      value: transcriptomicsValueCol.value.map((entry) => entry.field),
     },
     proteomics: {
+      amtTimesteps: proteomicsValueCol.value.map((entry) => entry.field).length,
       recieved: recievedProteomicsData.value,
       symbol: proteomicsSymbolCol.value.field,
-      value: proteomicsValueCol.value.field,
+      value: proteomicsValueCol.value.map((entry) => entry.field),
     },
     metabolomics: {
+      amtTimesteps: metabolomicsValueCol.value.map((entry) => entry.field)
+        .length,
       recieved: recievedMetabolomicsData.value,
       symbol: metabolomicsSymbolCol.value.field,
-      value: metabolomicsValueCol.value.field,
+      value: metabolomicsValueCol.value.map((entry) => entry.field),
     },
     sliderVals: {
       transcriptomics: sliderValsTranscriptomics.value,
