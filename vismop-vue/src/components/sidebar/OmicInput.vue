@@ -254,6 +254,7 @@ const changeValueColAmt = (type: '+' | '-') => {
     amtValueCols.value += 1;
   } else if (type === '-' && amtValueCols.value > 1) {
     amtValueCols.value -= 1;
+    valueColInternal.value.pop();
   }
 };
 
