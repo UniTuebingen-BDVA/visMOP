@@ -1,3 +1,4 @@
+import math
 from random import randint, random
 from flask import Flask, render_template, send_from_directory, request
 from visMOP.python_scripts.utils import kegg_to_chebi
@@ -320,7 +321,15 @@ def reactome_parsing():
         proteomics["recieved"],
         metabolomics["recieved"],
     ]
-    reactome_hierarchy = PathwayHierarchy()
+    amt_timesteps = math.inf
+    if transcriptomics["recieved"] and transcriptomics["amtTimesteps"] < amt_timesteps:
+        amt_timesteps = transcriptomics["amtTimesteps"]
+    if proteomics["recieved"] and proteomics["amtTimesteps"] < amt_timesteps:
+        amt_timesteps = proteomics["amtTimesteps"]
+    if metabolomics["recieved"] and metabolomics["amtTimesteps"] < amt_timesteps:
+        amt_timesteps = metabolomics["amtTimesteps"]
+
+    reactome_hierarchy = PathwayHierarchy(amt_timesteps)
     reactome_hierarchy.load_data(data_path / "reactome_data", target_db.upper())
     reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
     reactome_hierarchy.set_omics_recieved(omics_recieved)
@@ -345,7 +354,7 @@ def reactome_parsing():
                 proteomics_query_data_tuples.append(
                     (
                         {"ID": ID_number, "table_id": ID_number},
-                        entry[proteomics["value"]],
+                        [entry[valCol] for valCol in proteomics["value"]],
                     )
                 )
 
@@ -420,7 +429,10 @@ def reactome_parsing():
                     metabolomics_query_data_tuples.append(
                         (
                             {"ID": entry, "table_id": k},
-                            metabolomics_dict[k][metabolomics["value"]],
+                            [
+                                metabolomics_dict[k][valCol]
+                                for valCol in metabolomics["value"]
+                            ],
                         )
                     )
         else:
@@ -430,7 +442,10 @@ def reactome_parsing():
                 metabolomics_query_data_tuples.append(
                     (
                         {"ID": ID_number, "table_id": ID_number},
-                        metabolomics_dict[ID_entry][metabolomics["value"]],
+                        [
+                            metabolomics_dict[ID_entry][valCol]
+                            for valCol in metabolomics["value"]
+                        ],
                     )
                 )
 
@@ -495,7 +510,10 @@ def reactome_parsing():
             transcriptomics_query_data_tuples.append(
                 (
                     {"ID": ID_number, "table_id": ID_number},
-                    transcriptomics_dict[ID_number][transcriptomics["value"]],
+                    [
+                        transcriptomics_dict[ID_number][valCol]
+                        for valCol in transcriptomics["value"]
+                    ],
                 )
             )
 
