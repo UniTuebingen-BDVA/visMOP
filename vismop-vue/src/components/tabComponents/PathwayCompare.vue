@@ -30,12 +30,13 @@
                 <a
                   class="doc-link"
                   :href="
-                    'https://reactome.org/content/detail/' + element.pathway
+                    'https://reactome.org/content/detail/' +
+                    element.pathway.split('_')[0]
                   "
                   target="_blank"
                   rel="noopener"
                 >
-                  {{ element.pathway }}
+                  {{ element.pathway.split('_')[0] }}
                   <q-icon name="fa-solid fa-arrow-up-right-from-square" />
                 </a>
               </div>
@@ -45,8 +46,10 @@
             <div class="positionCardTitle">
               {{
                 pathwayLayouting.pathwayList.find(
-                  (elem) => elem.value === element.pathway
-                )?.title
+                  (elem) => elem.value === element.pathway.split('_')[0]
+                )?.title +
+                ' Timepoint ' +
+                element.pathway.split('_')[0]
               }}
             </div>
           </div>

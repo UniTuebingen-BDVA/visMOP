@@ -25,6 +25,30 @@ from sklearn import metrics
 from visMOP.python_scripts.forceDir_layouting import get_adjusted_force_dir_node_pos
 from visMOP.python_scripts.networkx_layouting import generate_networkx_dict
 from multiprocessing import Process
+import pandas as pd
+
+
+def timepoint_analysis(input_lists):
+    in_same_cluster = []
+    in_different_cluster = []
+
+    for cluster in input_lists:
+        cleaned_cluster = [elem.split("_")[0] for elem in cluster]
+        series = pd.Series(cleaned_cluster)
+        duplicate_mask = series.duplicated()
+        duplicates = series[duplicate_mask]
+        non_duplicates = series[~duplicate_mask]
+        in_same_cluster.extend(list(duplicates))
+        in_different_cluster.extend(list(non_duplicates))
+
+    in_same_cluster = list(set(in_same_cluster))
+    in_different_cluster = list(set(in_different_cluster))
+    print("Stayed in Same Cluster: ", in_same_cluster)
+    print("In Different Cluster: ", in_different_cluster)
+    print(
+        "Swap Percentage: ",
+        len(in_different_cluster) / (len(in_different_cluster) + len(in_same_cluster)),
+    )
 
 
 def most_frequent(List):

@@ -20,9 +20,7 @@ import pandas as pd
 import pathlib
 import os
 import json
-from visMOP.python_scripts.module_layouting import (
-    Module_layout,
-)
+from visMOP.python_scripts.module_layouting import Module_layout, timepoint_analysis
 from numpy.core.fromnumeric import mean
 
 import secrets
@@ -618,6 +616,7 @@ def reactome_overview():
         pathway["initialPosY"] = random()  # x_y_pos[1]
         pathway["moduleNum"] = 0  # x_y_pos[2]
     modules = [elem.tolist() for elem in modules]
+    timepoint_analysis(modules)
     # temporary?
 
     out_data_dict = {elem["pathwayId"]: elem for elem in out_data}
