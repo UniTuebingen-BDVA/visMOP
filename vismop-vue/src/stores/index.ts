@@ -38,15 +38,15 @@ interface State {
   graphData: graphData;
   fcs: {
     [key: string]: {
-      transcriptomics: number;
-      proteomics: number;
-      metabolomics: number;
+      transcriptomics: number[];
+      proteomics: number[];
+      metabolomics: number[];
     };
   };
   fcsReactome: {
-    transcriptomics: { [key: string]: number };
-    proteomics: { [key: string]: number };
-    metabolomics: { [key: string]: number };
+    transcriptomics: { [key: string]: number[] };
+    proteomics: { [key: string]: number[] };
+    metabolomics: { [key: string]: number[] };
   };
   fcQuantiles: {
     transcriptomics: number[];
@@ -325,9 +325,9 @@ export const useMainStore = defineStore('mainStore', {
     },
     setFCS(val: {
       [x: string]: {
-        transcriptomics: number;
-        proteomics: number;
-        metabolomics: number;
+        transcriptomics: number[];
+        proteomics: number[];
+        metabolomics: number[];
       };
     }) {
       this.fcs = val;
@@ -414,20 +414,20 @@ export const useMainStore = defineStore('mainStore', {
       };
     },
     setFCSReactome(val: {
-      transcriptomics: { [key: string]: number };
-      proteomics: { [key: string]: number };
-      metabolomics: { [key: string]: number };
+      transcriptomics: { [key: string]: number[] };
+      proteomics: { [key: string]: number[] };
+      metabolomics: { [key: string]: number[] };
     }) {
       this.fcsReactome = val;
-      const fcsTranscriptomicsAsc = Object.values(val.transcriptomics).sort(
-        (a, b) => a - b
-      );
-      const fcsProteomicsAsc = Object.values(val.proteomics).sort(
-        (a, b) => a - b
-      );
-      const fcsMetabolomicsAsc = Object.values(val.metabolomics).sort(
-        (a, b) => a - b
-      );
+      const fcsTranscriptomicsAsc = Object.values(val.transcriptomics)
+        .flat()
+        .sort((a, b) => a - b);
+      const fcsProteomicsAsc = Object.values(val.proteomics)
+        .flat()
+        .sort((a, b) => a - b);
+      const fcsMetabolomicsAsc = Object.values(val.metabolomics)
+        .flat()
+        .sort((a, b) => a - b);
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
         const pos = (arr.length - 1) * q;
