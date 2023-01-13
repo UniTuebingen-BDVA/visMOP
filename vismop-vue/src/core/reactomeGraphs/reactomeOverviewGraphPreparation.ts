@@ -172,6 +172,23 @@ export function generateGraphData(
         addEdge(entry.pathwayId, element, edgeType);
       }
     });
+
+    if (useMainStore().amtTimepoints > 1) {
+      const pathwayIdSplit = entry.pathwayId.split('_');
+      const pathwayBaseId = pathwayIdSplit[0];
+      const timePoint = pathwayIdSplit[1];
+
+      if (parseInt(timePoint) == 0) {
+        for (let idx = 0; idx < useMainStore().amtTimepoints - 1; idx++) {
+          addEdge(
+            pathwayBaseId + '_' + idx,
+            pathwayBaseId + '_' + (idx + 1),
+            'temporal'
+          );
+        }
+      }
+    }
+
     /*
     for (const [maplink] of Object.entries(entry.maplinks)) {
       if (!rootIds.includes(entry.pathwayId)) {
@@ -266,9 +283,9 @@ function generateForceGraphEdge(
     undirected: true,
     attributes: {
       zIndex: 0,
-      hidden: true,
+      hidden: type === 'temporal' ? false : true,
       edgeType: type,
-      hierarchyHidden: true,
+      hierarchyHidden: type === 'temporal' ? false : true,
       type: type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'

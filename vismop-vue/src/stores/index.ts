@@ -72,6 +72,7 @@ interface State {
     transcriptomics: boolean;
     metabolomics: boolean;
   };
+  amtTimepoints: number;
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
@@ -135,6 +136,7 @@ export const useMainStore = defineStore('mainStore', {
       proteomics: false,
       metabolomics: false,
     },
+    amtTimepoints: 0,
     pathayAmountDict: {},
     pathwayCompare: [],
     glyphData: {},
@@ -236,7 +238,9 @@ export const useMainStore = defineStore('mainStore', {
     setOverviewData(val: { [key: string]: reactomeEntry }) {
       this.overviewData = val;
     },
-
+    setAmtTimepoints(val: number) {
+      this.amtTimepoints = val;
+    },
     setOmicsTableHeaders(
       payload: ColType[],
       omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'

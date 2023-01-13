@@ -625,6 +625,7 @@ def reactome_overview():
         {
             "exitState": 0,
             "overviewData": out_data_dict,
+            "amtTimepoints": reactome_hierarchy.amt_timesteps,
             "modules": modules,
             "moduleCenters": module_centers,
             "noiseClusterExists": noiseClusterExists,

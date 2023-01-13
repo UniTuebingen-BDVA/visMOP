@@ -301,10 +301,9 @@ watch(currentLayoutOmic, () => {
     currentLayoutOmic.value === 'not related to specific omic'
       ? allNoneOmicAttributes
       : allOmicLayoutAttributes;
-  chosenLayoutAttributes.value =
-    layoutSettings.value[
-      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-    ].attributes;
+  chosenLayoutAttributes.value = layoutSettings.value[
+    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
+  ].attributes.slice(1, 5);
   // change limits
   const limits =
     layoutSettings.value[
@@ -405,6 +404,7 @@ const getReactomeData = () => {
       mainStore.setOverviewData(dataContent.overviewData);
       //for voronoiTest
       //mainStore.setModuleAreas(dataContent.moduleAreas);
+      mainStore.setAmtTimepoints(dataContent.amtTimepoints);
       mainStore.setModules(dataContent.modules);
       mainStore.setNoiseClusterExists(dataContent.noiseClusterExists);
       mainStore.setModuleCenters(dataContent.moduleCenters);
