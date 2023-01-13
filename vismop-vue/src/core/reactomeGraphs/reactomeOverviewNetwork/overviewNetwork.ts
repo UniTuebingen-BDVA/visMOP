@@ -5,8 +5,8 @@ import {
   overviewGraphData,
   overviewNodeAttr,
 } from '@/core/graphTypes';
-//import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
-import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
+import getNodeProgramImage from '@/core/custom-nodes/custom-image-node-program';
+//import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
@@ -174,7 +174,6 @@ export default class OverviewGraph {
         greyValues: this.clusterData.greyValues,
       },
     };
-
     const mainStore = useMainStore();
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
@@ -194,7 +193,7 @@ export default class OverviewGraph {
         },
         nodeProgramClasses: {
           ...DEFAULT_SETTINGS.nodeProgramClasses,
-          image: getNodeImageProgram(),
+          image: getNodeProgramImage(),
         },
         hoverRenderer: drawHover,
         labelRenderer: drawLabel,
