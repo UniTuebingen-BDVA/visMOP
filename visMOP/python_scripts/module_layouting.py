@@ -35,7 +35,7 @@ def timepoint_analysis(input_lists):
     for cluster in input_lists:
         cleaned_cluster = [elem.split("_")[0] for elem in cluster]
         series = pd.Series(cleaned_cluster)
-        duplicate_mask = series.duplicated()
+        duplicate_mask = series.duplicated(keep=False)
         duplicates = series[duplicate_mask]
         non_duplicates = series[~duplicate_mask]
         in_same_cluster.extend(list(duplicates))
