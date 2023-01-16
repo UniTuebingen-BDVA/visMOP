@@ -156,22 +156,30 @@ export default function getNodeImageProgram(): typeof AbstractNodeImageProgram {
      */
     const drawRow = (pendingImages: PendingImage[]) => {
       // update canvas size before drawing
-      if (canvas.width < totalWidth || canvas.height < totalHeight) {
-        textureImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
+      /* if (canvas.width < totalWidth || canvas.height < totalHeight) {
         if (canvas.width < totalWidth) {
           canvas.width = Math.min(MAX_CANVAS_WIDTH, totalWidth * 2);
         }
 
         if (canvas.height < totalHeight) {
-          canvas.height = Math.min(totalHeight * 2, MAX_CANVAS_WIDTH);
+          canvas.height = totalHeight * 1.2;
         }
         // draw previous texture into resized canvas
         if (hasReceivedImages) {
           ctx.putImageData(textureImage, 0, 0);
         }
       }
+ */
 
+      if (canvas.width !== totalWidth || canvas.height !== totalHeight) {
+        canvas.width = Math.min(MAX_CANVAS_WIDTH, totalWidth);
+        canvas.height = totalHeight;
+
+        // draw previous texture into resized canvas
+        if (hasReceivedImages) {
+          ctx.putImageData(textureImage, 0, 0);
+        }
+      }
       pendingImages.forEach(({ id, image, size }) => {
         const imageSizeInTexture = Math.min(MAX_TEXTURE_SIZE, size);
 
@@ -208,6 +216,11 @@ export default function getNodeImageProgram(): typeof AbstractNodeImageProgram {
       });
 
       hasReceivedImages = true;
+      textureImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // const img = canvas.toBlob((blob) => {
+      //   const url = URL.createObjectURL(blob);
+      //   console.log(url);
+      // });
     };
 
     let rowImages: PendingImage[] = [];
@@ -244,11 +257,12 @@ export default function getNodeImageProgram(): typeof AbstractNodeImageProgram {
     totalWidth = Math.max(writePositionX, totalWidth);
     totalHeight = Math.max(writePositionY + writeRowHeight, totalHeight);
     drawRow(rowImages);
-    textureImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     rowImages = [];
-
-    rebindTextureFns.forEach((fn) => fn());
+    writeRowHeight = 0;
+    if (pendingImages.length > 0) {
+      rebindTextureFns.forEach((fn) => fn());
+    }
   }
 
   return class NodeImageProgram extends AbstractNodeProgram {
@@ -262,7 +276,7 @@ export default function getNodeImageProgram(): typeof AbstractNodeImageProgram {
 
       rebindTextureFns.push(() => {
         if (this && this.rebindTexture) this.rebindTexture();
-        if (renderer && renderer.refresh) renderer.refresh();
+        if (renderer && renderer.scheduleRefresh) renderer.scheduleRefresh();
       });
 
       textureImage = new ImageData(1, 1);
