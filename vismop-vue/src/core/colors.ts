@@ -8,7 +8,7 @@ export const overviewColors = {
 
   default: 'rgba(255,255,255)',
 
-  edgesHighlight: 'rgba(255,0,0,0.7)',
+  edgesHighlight: 'rgba(255,0,0,0.5)',
   edgeHierarchy: 'rgba(60,60,60,0.0)',
   edgeMaplink: 'rgba(60,60,60,0.0)',
 

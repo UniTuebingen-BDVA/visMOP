@@ -22,7 +22,7 @@ import { AbstractEdgeProgram } from 'sigma/rendering/webgl/programs/common/edge'
 import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
 
 
-const bez_sample_count = 20;
+const bez_sample_count = 30;
 const POINTS = (bez_sample_count - 1) * 4;
 const ATTRIBUTES = 6;
 const STRIDE = POINTS * ATTRIBUTES;

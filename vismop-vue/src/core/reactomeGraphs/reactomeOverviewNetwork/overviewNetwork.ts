@@ -2,6 +2,7 @@ import { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
 import {
   additionalData,
+  baseEdgeAttr,
   edge,
   overviewGraphData,
   overviewNodeAttr,
@@ -37,6 +38,7 @@ import FilterData from './filterData';
 import { graphExtent, createNormalizationFunction } from 'sigma/utils';
 import { Coordinates } from 'sigma/types';
 import { Loading } from 'quasar';
+import { node } from 'graphology-metrics';
 
 export default class OverviewGraph {
   // constants
@@ -165,8 +167,9 @@ export default class OverviewGraph {
   // makes a helper-edge between that node
   // and every other node in the cluster
   generateHelperEdges() {
-    const graph = this.renderer.getGraph();
-    console.log("number of edges:", graph.edges().length);
+    
+    const graph = this.renderer.getGraph ();
+    
     const cluster = this.getModuleNodeIds();
 
     const clusterKeys = Object.keys(cluster);
@@ -174,13 +177,44 @@ export default class OverviewGraph {
     clusterKeys.forEach(clusterKey => {
       const currCluster = cluster[clusterKey];
       const currNodes = currCluster.ids;
-      const centerNode = currNodes.pop();
+      const centerNode = currNodes.pop() as string;
+
+      const subClusters : {[key: string] : string[]} = {};
+
+      // find sub-clusters
       currNodes.forEach(node => {
-        this.addHelperEdge(centerNode, node);
+        if(subClusters[graph.getNodeAttribute(node, "rootId")] === undefined) {
+          subClusters[graph.getNodeAttribute(node, "rootId")] = [];
+        }
+        subClusters[graph.getNodeAttribute(node, "rootId")].push(node);
+      });
+
+      // in each sub-cluster
+      Object.keys(subClusters).forEach(subClustersKey => {
+        const subCluster = subClusters[subClustersKey];
+        const centerSubCluster = subCluster.pop() as string;
+
+        // connect all nodes to the center
+        subCluster.forEach(node => {
+          if(!graph.hasEdge(centerSubCluster, node)) {
+            this.addHelperEdge(centerSubCluster, node);
+          }
+        });
       });
     });
-    console.log("number of edges:", graph.edges().length);
   }
+
+  dropHelperEdges() {
+    const graph = this.renderer.getGraph ();
+    const edges = graph.edges();
+
+    edges.forEach(edge => {
+      const type = graph.getEdgeAttribute(edge, "type")
+      if (type === "helper") {
+        graph.dropEdge(edge);
+      }
+    });
+  };
 
   // generates a helper-edge that won't be rendered
   addHelperEdge(
@@ -205,8 +239,8 @@ export default class OverviewGraph {
         showBundling: true,
         zIndex: 0,
         hidden: true,
-        type: "line",
-        color: overviewColors.edgeHierarchy,
+        type: "helper",
+        color: 'rgba(0,0,0,0.0)',
       }
     }
     this.renderer.getGraph().addEdgeWithKey(edge.key, edge.source, edge.target, edge.attributes);
@@ -215,9 +249,11 @@ export default class OverviewGraph {
   
   // generates bezier control points based on the edge-path bundling algorithm
   generateBezierControlPoints(k: number = 2, d: number = 2) {
+    this.generateHelperEdges();
 
     const graph = this.renderer.getGraph();
     const edgeKeys = this.renderer.getGraph().edges();
+    const skip : {edgeKey: string, source: string, target: string, attributes: unknown}[] = [];
 
     edgeKeys.forEach(key => {
       const edgeAttribs = graph.getEdgeAttributes(key);
@@ -252,24 +288,32 @@ export default class OverviewGraph {
       const source = edge.source;
       const target = edge.target;
 
-      graph.dropEdge(edgeKey); // remove edge before dijkstra
-
+      skip.push({edgeKey: edgeKey, source: source, target: target, attributes: graph.getEdgeAttributes(edgeKey)});
+      skip.forEach(edgeDict => {
+        graph.dropEdge(edgeDict.edgeKey);
+      })
       const nodePath = dijkstra.bidirectional(graph, source, target, "weight");
+      // restore edges dropped for skip
+      skip.forEach(edgeDict => {
+        graph.addEdgeWithKey(edgeDict.edgeKey, edgeDict.source, edgeDict.target, edgeDict.attributes);
+      })
+
       let path = null;
       if(nodePath != null) {
         path = edgePathFromNodePath(graph, nodePath);
       }
 
-      graph.addEdgeWithKey(edgeKey, edge.source, edge.target, edge); // add edge again after dijkstra
-
       if (path === null) {
         graph.setEdgeAttribute(edgeKey, "skip", false);
+        skip.pop();
         return;
       }
       if (this.pathLength(path) > k * edge.len) {
         graph.setEdgeAttribute(edgeKey, "skip", false);
+        skip.pop();
         return;
       }
+      
       path.forEach(pathEdge => {
         graph.setEdgeAttribute(pathEdge, "lock", true);
       })
@@ -287,7 +331,9 @@ export default class OverviewGraph {
 
       graph.setEdgeAttribute(edgeKey, "bezeierControlPoints", vertecies);
     });
-    
+
+
+    this.dropHelperEdges();
   }
 
   pathLength(path: string[]): number {
@@ -328,7 +374,7 @@ export default class OverviewGraph {
           ...DEFAULT_SETTINGS.edgeProgramClasses,
           dashed: BezierEdgeProgram,
           line: BezierEdgeProgram,
-          //helper: DontRender,
+          helper: DontRender,
         },
         nodeProgramClasses: {
           ...DEFAULT_SETTINGS.nodeProgramClasses,

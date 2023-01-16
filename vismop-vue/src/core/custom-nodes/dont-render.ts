@@ -4,7 +4,7 @@ import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
 
 export class DontRender extends AbstractEdgeProgram {
     constructor(gl: WebGLRenderingContext)  {
-        super(gl, "", "", 0, 0);
+        super(gl, "void main() {}", "void main() {}", 0, 0);
         this.bind();
     };
     bind(): void {};
