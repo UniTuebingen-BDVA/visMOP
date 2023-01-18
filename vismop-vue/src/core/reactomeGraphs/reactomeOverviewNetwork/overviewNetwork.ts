@@ -171,9 +171,10 @@ export default class OverviewGraph {
     this.additionalData = {
       clusterAreas: {
         hullPoints: this.clusterData.normalHullPoints,
-        greyValues: this.clusterData.greyValues,
+        clusterColors: this.clusterData.clusterColors,
       },
     };
+    console.log('addData', this.additionalData);
     const mainStore = useMainStore();
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
@@ -309,13 +310,13 @@ export default class OverviewGraph {
           ? Object.assign(this.additionalData, {
               clusterAreas: {
                 hullPoints: this.clusterData.normalHullPoints,
-                greyValues: this.clusterData.greyValues,
+                clusterColors: this.clusterData.clusterColors,
               },
             })
           : Object.assign(this.additionalData, {
               clusterAreas: {
                 hullPoints: [this.clusterData.focusHullPoints[parseInt(node)]],
-                greyValues: [this.clusterData.greyValues[parseInt(node)]],
+                clusterColors: [this.clusterData.clusterColors[parseInt(node)]],
               },
             });
         this.lastClickedClusterNode = defocus ? -1 : parseInt(node);

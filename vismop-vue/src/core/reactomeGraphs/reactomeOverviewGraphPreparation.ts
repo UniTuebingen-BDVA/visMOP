@@ -46,7 +46,7 @@ export function generateGraphData(
     clusterData: {
       normalHullPoints: [[[]]],
       focusHullPoints: [[[]]],
-      greyValues: [],
+      clusterColors: [],
     },
     options: [],
   };
@@ -208,7 +208,7 @@ export function generateGraphData(
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
-  const greyValues = [] as number[];
+  const clusterColors: [number, number, number, number][] = [];
   const firstNoneNoiseCluster = useMainStore().noiseClusterExists ? 1 : 0;
   // const totalNumHulls = moduleAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
@@ -220,7 +220,7 @@ export function generateGraphData(
         maxExt
       );
       const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
-      greyValues.push(greyValue);
+      clusterColors.push([greyValue, greyValue, greyValue, 1.0]);
       clusterHulls.push(hullAdjustment.finalHullNodes);
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
     }
@@ -230,7 +230,7 @@ export function generateGraphData(
 
   graph.clusterData.normalHullPoints = clusterHulls;
   graph.clusterData.focusHullPoints = focusClusterHulls;
-  graph.clusterData.greyValues = greyValues;
+  graph.clusterData.clusterColors = clusterColors;
 
   //graph.nodes = norm_node_pos;
 

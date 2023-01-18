@@ -3,10 +3,13 @@ import { ConvexPolygon } from './ConvexPolygon';
 
 export function getRightResultFormForRectangle(
   clusterRectangles: [number[]]
-): [{ hullPoints: number[][]; greyValues: number[] }, number[][]] {
+): [
+  { hullPoints: number[][]; clusterColors: [number, number, number, number][] },
+  number[][]
+] {
   const focusClusterHulls = [];
   const max_ext = 20;
-  const greyValues = [];
+  const clusterColors: [number, number, number, number][] = [];
   const firstNoneNoiseCluster = clusterRectangles[0].length > 1 ? 1 : 0;
   if (clusterRectangles[0].length <= 1) {
     clusterRectangles.shift();
@@ -19,7 +22,7 @@ export function getRightResultFormForRectangle(
             (215 - 80) +
           80
         : 255;
-    greyValues.push(greyVal);
+    clusterColors.push([greyVal, greyVal, greyVal, 1.0]);
 
     const allPos = clusterRectangles[i].flat();
     const minPos = Math.min(...allPos);
@@ -35,7 +38,7 @@ export function getRightResultFormForRectangle(
     focusClusterHulls.push(focusHullPoints);
   }
   return [
-    { hullPoints: clusterRectangles, greyValues: greyValues },
+    { hullPoints: clusterRectangles, clusterColors: clusterColors },
     focusClusterHulls,
   ];
 }
