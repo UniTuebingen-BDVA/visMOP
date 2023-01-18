@@ -48,9 +48,6 @@ export default class OverviewGraph {
   protected FOCUS_NODE_SIZE = 10;
 
   // data structures for reducers
-  protected shortestPathClick: string[] = [];
-  protected shortestPathNodes: string[] = [];
-  protected shortestPathEdges: string[] = [];
   protected highlightedEdgesClick = new Set();
   protected highlightedNodesClick = new Set();
   //from events SIGMA2 example, initialze sets for highlight on hover:
@@ -231,29 +228,6 @@ export default class OverviewGraph {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
         } else if (event.original.altKey) {
-          // TODO Get working again
-          // if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
-          // this.shortestPathClick.push(node);
-          // if (this.shortestPathClick.length === 2) {
-          //   this.shortestPathNodes = bidirectional(
-          //     this.graph,
-          //     this.shortestPathClick[0],
-          //     this.shortestPathClick[1]
-          //   ) as string[];
-          //   if (this.shortestPathNodes?.length > 0) {
-          //     this.shortestPathEdges = edgePathFromNodePath(
-          //       this.graph,
-          //       this.shortestPathNodes as string[]
-          //     );
-          //     console.log('shortest Path edges', this.shortestPathEdges);
-          //     mainStore.selectPathwayCompare(this.shortestPathNodes);
-          //   } else {
-          //     this.shortestPathClick = [];
-          //   }
-          // }
-          this.shortestPathClick = [];
-          this.shortestPathNodes = [];
-          this.shortestPathEdges = [];
           this.highlightedEdgesClick.clear();
           this.highlightedNodesClick.clear();
           this.highlightedNodesClick = new Set(this.graph.neighbors(node));
@@ -1043,9 +1017,6 @@ export default class OverviewGraph {
   public refreshCurrentPathway() {
     const mainStore = useMainStore();
     this.currentPathway = mainStore.pathwayDropdown.value;
-    this.shortestPathClick = [];
-    this.shortestPathNodes = [];
-    this.shortestPathEdges = [];
     this.highlightedEdgesClick.clear();
     this.highlightedNodesClick.clear();
     if (this.currentPathway) {

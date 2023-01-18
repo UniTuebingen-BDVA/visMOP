@@ -54,55 +54,6 @@ export function nodeReducer(
         ? data.nonHoverSize + 4
         : data.nonHoverSize;
 
-    // shortest Path
-    if (this.shortestPathNodes?.length > 0) {
-      if (!data.visibleSubtree) {
-        return {
-          ...data,
-          hidden: hidden,
-          image: lodImage,
-          color: overviewColors.noVisibleSubtree,
-        };
-      }
-      if (this.shortestPathClick.includes(node)) {
-        return {
-          ...data,
-          color: overviewColors.shortestPathClick,
-          zindex: 1,
-          size: data.size + 2,
-          image: lodImage,
-          hidden: hidden,
-        };
-      }
-      if (this.shortestPathNodes.includes(node)) {
-        return {
-          ...data,
-          color: overviewColors.onShortestPath,
-          zindex: 1,
-          size: data.nonHoverSize,
-          image: lodImage,
-          hidden: hidden,
-        };
-      } else {
-        return {
-          ...data,
-          color: overviewColors.default,
-          size: data.nonHoverSize - 2,
-          image: lodImage,
-          hidden: hidden,
-        };
-      }
-    }
-    if (this.shortestPathClick.includes(node)) {
-      return {
-        ...data,
-        color: overviewColors.shortestPathClick,
-        zindex: 1,
-        size: data.nonHoverSize + 2,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
     if (
       this.currentPathway === node.replace('path:', '') ||
       this.highlightedCenterHover === node
@@ -182,18 +133,6 @@ export function edgeReducer(
   data: Attributes
 ): Attributes {
   if (this.renderer) {
-    if (this.shortestPathNodes?.length > 0) {
-      if (this.shortestPathEdges?.includes(edge)) {
-        return {
-          ...data,
-          color: overviewColors.edgeShortestPath,
-          zIndex: 1,
-          size: 4,
-        };
-      } else {
-        return { ...data, size: 1 };
-      }
-    }
     if (this.highlighedEdgesHover.has(edge)) {
       return {
         ...data,
