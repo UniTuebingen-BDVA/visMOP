@@ -505,7 +505,7 @@ watch(
     sumRegulated.value,
   ],
   () => {
-    networkGraph?.value?.setAverageFilter(
+    networkGraph?.value?.filter.setAverageFilter(
       transcriptomicsFilter.value,
       transcriptomicsRegulatedFilter.value,
       proteomicsFilter.value,
@@ -517,11 +517,11 @@ watch(
   }
 );
 watch(rootFilter.value, () => {
-  networkGraph?.value?.setRootFilter(rootFilter.value);
+  networkGraph?.value?.filter.setRootFilter(rootFilter.value);
 });
 
 watch(rootNegativeFilter.value, () => {
-  networkGraph?.value?.setRootNegativeFilter(rootNegativeFilter.value);
+  networkGraph?.value?.filter.setRootNegativeFilter(rootNegativeFilter.value);
 });
 
 watch(fa2LayoutParams.value, () => {

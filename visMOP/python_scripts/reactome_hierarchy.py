@@ -780,9 +780,13 @@ def generate_overview_pathway_entry(
     ] = entry.subdiagrams_measured_metabolites
 
     pathway_dropdown_entry = {
-        "text": entry.reactome_sID + ": " + entry.name,
-        "value": entry.reactome_sID,
-        "title": entry.name,
+        "text": entry.reactome_sID
+        + ": "
+        + entry.name
+        + " Time: "
+        + str(timepoint_index),
+        "value": entry.reactome_sID + "_" + str(timepoint_index),
+        "title": entry.name + " Time: " + str(timepoint_index),
     }
 
     pathway_dict["entries"]["proteomics"]["total"] = (

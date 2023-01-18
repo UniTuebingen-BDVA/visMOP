@@ -46,7 +46,7 @@
             <div class="positionCardTitle">
               {{
                 pathwayLayouting.pathwayList.find(
-                  (elem) => elem.value === element.pathway.split('_')[0]
+                  (elem) => elem.value === element.pathway
                 )?.title +
                 ' Timepoint ' +
                 element.pathway.split('_')[0]

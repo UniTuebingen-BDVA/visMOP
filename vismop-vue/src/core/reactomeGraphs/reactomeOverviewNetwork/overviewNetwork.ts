@@ -12,15 +12,9 @@ import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { animateNodes } from 'sigma/utils/animate';
-import { filterValues } from '../../generalTypes';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
-import {
-  filterElements,
-  setAverageFilter,
-  setRootNegativeFilter,
-  setRootFilter,
-} from './filter';
+import OverviewFilter from './filter';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
@@ -28,10 +22,7 @@ import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
 import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
-import _, { curryRight } from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
-import FilterData from './filterData';
-import { Loading } from 'quasar';
 import { PlainObject } from 'sigma/types';
 import { vec2 } from 'gl-matrix';
 export default class OverviewGraph {
@@ -48,83 +39,42 @@ export default class OverviewGraph {
   protected FOCUS_NODE_SIZE = 10;
 
   // data structures for reducers
-  protected highlightedEdgesClick = new Set();
-  protected highlightedNodesClick = new Set();
+  highlightedEdgesClick = new Set();
+  highlightedNodesClick = new Set();
   //from events SIGMA2 example, initialze sets for highlight on hover:
-  protected highlighedNodesHover = new Set();
-  protected highlighedEdgesHover = new Set();
-  protected highlightedCenterHover = '';
-  protected currentPathway = '';
-  protected hierarchyClickStack: string[] = [];
-  protected pathwaysContainingIntersection: string[] = [];
-  protected pathwaysContainingUnion: string[] = [];
-  protected hierarchyNodes: string[] = [];
-  protected hierarchyLevels: { [key: number]: string[] } = {};
+  highlighedNodesHover = new Set();
+  highlighedEdgesHover = new Set();
+  highlightedCenterHover = '';
+  currentPathway = '';
+  hierarchyClickStack: string[] = [];
+  pathwaysContainingIntersection: string[] = [];
+  pathwaysContainingUnion: string[] = [];
+  hierarchyNodes: string[] = [];
+  hierarchyLevels: { [key: number]: string[] } = {};
   // renderer and camera
-  protected renderer;
-  protected camera;
-  protected prevFrameZoom;
-  protected graph;
-  protected clusterData;
-  protected graphWidth = 0;
-  protected windowWidth = 1080;
-  protected lodRatio = 1.3;
-  protected lastClickedClusterNode = -1;
-  protected additionalData!: additionalData;
-  protected animationStack: PlainObject<PlainObject<number>> = {};
-  protected nodeAttributeStack: {
+  renderer;
+  camera;
+  prevFrameZoom;
+  graph;
+  clusterData;
+  graphWidth = 0;
+  windowWidth = 1080;
+  lodRatio = 1.3;
+  lastClickedClusterNode = -1;
+  additionalData!: additionalData;
+  animationStack: PlainObject<PlainObject<number>> = {};
+  nodeAttributeStack: {
     [key: string]: { [key: string]: string | number | boolean };
   } = {};
-  protected edgeAttributeStack: {
+  edgeAttributeStack: {
     [key: string]: { [key: string]: string | number | boolean };
   } = {};
-  protected cancelCurrentAnimation: (() => void) | null = null;
+  cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
-  protected filtersChanged = false;
-  protected filterFuncNegativeRoot: (x: string) => boolean = (_x: string) =>
-    true;
-  protected filterFuncRoot: (x: string) => boolean = (_x: string) => true;
-  protected filterFuncTrans: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsTrans: (x: number) => boolean = (_x: number) =>
-    true;
-  protected filterFuncAmtRelTrans: (x: number) => boolean = (_x: number) =>
-    true;
-  protected filterFuncProt: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsProt: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtRelProt: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncMeta: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsMeta: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtRelMeta: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtRelSum: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsSum: (x: number) => boolean = (_x: number) => true;
 
-  protected regulateFilterTrans = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
-  protected regulateFilterProt = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
-  protected regulateFilterMeta = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
+  filter = new OverviewFilter(this);
 
-  protected regulatedFilter = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
-  protected averageFilter: {
-    transcriptomics: filterValues;
-    proteomics: filterValues;
-    metabolomics: filterValues;
-  } = {
-    transcriptomics: new FilterData(),
-    proteomics: new FilterData(),
-    metabolomics: new FilterData(),
-  };
   polygons: { [key: number]: ConvexPolygon };
   initialFa2Params: fa2LayoutParams;
   clusterWeights: number[];
@@ -203,7 +153,7 @@ export default class OverviewGraph {
     );
     renderer.on('beforeRender', () => {
       zoomLod.bind(this)();
-      filterElements.bind(this)();
+      this.filter.filterElements();
     });
 
     // TODO: from events example:
@@ -1008,9 +958,7 @@ export default class OverviewGraph {
   }
 
   public resetZoom = resetZoom;
-  public setAverageFilter = setAverageFilter;
-  public setRootFilter = setRootFilter;
-  public setRootNegativeFilter = setRootNegativeFilter;
+
   /**
    * Refresehes sets current pathway to the version selected in the store
    */
