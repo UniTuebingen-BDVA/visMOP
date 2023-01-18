@@ -24,8 +24,8 @@
         <div class="col-8">
           <q-range
             :model-value="omicsFilter.value"
-            :min="Math.floor(omicsFilter.limits.min)"
-            :max="Math.ceil(omicsFilter.limits.max)"
+            :min="Math.round(omicsFilter.limits.min * 10) / 10"
+            :max="Math.ceil(omicsFilter.limits.max * 10) / 10"
             :step="0.1"
             label
             :color="omicsFilter.inside ? 'primary' : 'graphFilterSlider'"
