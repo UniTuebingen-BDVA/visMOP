@@ -32,12 +32,12 @@ export class ModuleSummaryGlyph {
   private colorScales;
   glyphId: string;
 
-  constructor(glyphData: glyphData, glyphId: string, diameter: number) {
+  constructor(glyphData: glyphData, glyphId: string, imgWidth: number) {
     const mainStore = useMainStore();
 
     this.glyphData = glyphData;
     this.glyphId = glyphId;
-    this.diameter = diameter;
+    this.diameter = imgWidth - imgWidth / 10 - (this.drawLabels ? 7 : 0);
 
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;
     if (this.glyphData.proteomics.available) this.availableOmics += 1;
@@ -46,8 +46,8 @@ export class ModuleSummaryGlyph {
     this.thirdCircle = 2 * (Math.PI / this.availableOmics);
     this.thirdCircleElement = 1.8 * (Math.PI / this.availableOmics);
     this.circlePadding = 0.1 * (Math.PI / this.availableOmics);
-    this.width = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
+    this.width = imgWidth;
+    this.height = imgWidth;
     this.radius = this.diameter / 2;
     this.colorScales = mainStore.fcScales;
     if (this.glyphData.transcriptomics.available) {

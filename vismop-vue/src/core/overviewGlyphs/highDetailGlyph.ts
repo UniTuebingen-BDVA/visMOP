@@ -76,7 +76,7 @@ export class HighDetailGlyph {
     glyphData: glyphData,
     drawLabels: boolean,
     glyphIdx: number,
-    diameter: number,
+    imgWidth: number,
     pathwayCompare = true
   ) {
     const mainStore = useMainStore();
@@ -85,7 +85,7 @@ export class HighDetailGlyph {
     this.drawLabels = drawLabels;
     this.pathwayCompare = pathwayCompare;
     this.glyphIdx = glyphIdx;
-    this.diameter = diameter;
+    this.diameter = imgWidth - imgWidth / 10 - (this.drawLabels ? 7 : 0);
 
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;
     if (this.glyphData.proteomics.available) this.availableOmics += 1;
@@ -95,8 +95,8 @@ export class HighDetailGlyph {
     this.thirdCircleElement = 1.8 * (Math.PI / this.availableOmics);
     this.circlePadding = 0.1 * (Math.PI / this.availableOmics);
     this.layerWidth = this.diameter / 7;
-    this.width = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
+    this.width = imgWidth;
+    this.height = imgWidth;
     this.outermostRadius = this.diameter / 2;
     this.firstLayer = this.outermostRadius - this.layerWidth;
     this.secondLayer = this.firstLayer - this.layerWidth;

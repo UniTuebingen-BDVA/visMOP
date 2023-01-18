@@ -546,7 +546,11 @@ const drawNetwork = () => {
   // const fcExtents = fcQuantiles
   glyphDataVar.value = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphDataVar.value);
-  const generatedGlyphs = generateGlyphs(glyphDataVar.value, HighDetailGlyph);
+  const generatedGlyphs = generateGlyphs(
+    glyphDataVar.value,
+    HighDetailGlyph,
+    128
+  );
   const generatedGlyphsHighRes = generateGlyphs(
     glyphDataVar.value,
     HighDetailGlyph,
