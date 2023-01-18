@@ -65,9 +65,8 @@ type overviewNodeAttr = baseNodeAttr & {
   nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other';
   nonHoverSize: number;
   image: string;
-  imageLowRes: string;
-  imageHighRes: string;
-  imageLowZoom: string;
+  imageHighDetail: string;
+  imageLowDetail: string;
   hidden: boolean;
   hierarchyHidden: boolean;
   filterHidden: boolean;

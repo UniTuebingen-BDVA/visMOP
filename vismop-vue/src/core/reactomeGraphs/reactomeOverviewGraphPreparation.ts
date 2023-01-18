@@ -19,9 +19,8 @@ import { ConvexPolygon } from '../layouting/ConvexPolygon';
  */
 export function generateGraphData(
   nodeData: { [key: string]: reactomeEntry },
-  glyphs: { [key: string]: string },
-  glyphsHighres: { [key: string]: string },
-  glyphsLowZoom: { [key: string]: string },
+  glyphHighDetail: { [key: string]: string },
+  glyphsLowDetail: { [key: string]: string },
   glyphData: {
     [key: string]: glyphData;
   },
@@ -79,10 +78,9 @@ export function generateGraphData(
       attributes: {
         type: 'image',
         modNum: modNum,
-        image: glyphs[id],
-        imageLowRes: glyphs[id],
-        imageHighRes: glyphsHighres[id],
-        imageLowZoom: glyphsLowZoom[id],
+        image: glyphHighDetail[id],
+        imageHighDetail: glyphHighDetail[id],
+        imageLowDetail: glyphsLowDetail[id],
         name: _.escape(name),
         id: id,
         hidden: !entry.isCentral,

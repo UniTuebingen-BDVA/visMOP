@@ -546,23 +546,18 @@ const drawNetwork = () => {
   // const fcExtents = fcQuantiles
   glyphDataVar.value = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphDataVar.value);
-  const generatedGlyphs = generateGlyphs(
+  const generatedGlyphsHighDetail = generateGlyphs(
     glyphDataVar.value,
     HighDetailGlyph,
-    128
+    OverviewGraph.GLYPH_SIZE
   );
-  const generatedGlyphsHighRes = generateGlyphs(
-    glyphDataVar.value,
-    HighDetailGlyph,
-    128
-  );
-  const generatedGlyphsLowZoom = generateGlyphs(
+  const generatedGlyphsLowDetail = generateGlyphs(
     glyphDataVar.value,
     LowDetailGlyph,
-    128
+    OverviewGraph.GLYPH_SIZE
   );
-  console.log(generatedGlyphsHighRes, generatedGlyphsLowZoom);
-  mainStore.setGlyphs(generatedGlyphs);
+  console.log(generatedGlyphsHighDetail, generatedGlyphsLowDetail);
+  mainStore.setGlyphs(generatedGlyphsHighDetail);
   //const moduleAreas = mainStore.moduleAreas;
   //get module areas here!!!
   const clusterWeights = mainStore.modules.map((elem) => elem.length);
@@ -579,9 +574,8 @@ const drawNetwork = () => {
 
   const networkData = generateGraphData(
     overviewData.value,
-    generatedGlyphs.url,
-    generatedGlyphsHighRes.url,
-    generatedGlyphsLowZoom.url,
+    generatedGlyphsHighDetail.url,
+    generatedGlyphsLowDetail.url,
     glyphDataVar.value,
     pathwayLayouting.value.rootIds,
     [[1, 1, 1, 1]],

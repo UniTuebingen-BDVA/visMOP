@@ -40,6 +40,7 @@ export default class OverviewGraph {
   static readonly ROOT_DEFAULT_SIZE = 15;
   static readonly MODULE_DEFAULT_SIZE = 15;
   static readonly FOCUS_NODE_SIZE = 10;
+  static readonly GLYPH_SIZE = 64;
 
   protected DEFAULT_SIZE = 6;
   protected ROOT_DEFAULT_SIZE = 15;
@@ -931,7 +932,11 @@ export default class OverviewGraph {
   addModuleOverviewNodes() {
     const mainStore = useMainStore();
     const moduleNodeMapping = this.getModuleNodeIds();
-    const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
+    const glyphs = generateGlyphs(
+      mainStore.glyphData,
+      OverviewGraph.GLYPH_SIZE,
+      moduleNodeMapping
+    );
     for (const key in Object.keys(moduleNodeMapping)) {
       const xPos = this.polygons[key].getCenter()[0]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
       const yPos = this.polygons[key].getCenter()[1]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
@@ -958,9 +963,8 @@ export default class OverviewGraph {
         type: 'image',
         label: `Cluster: ${key}`,
         image: glyphs[key],
-        imageLowRes: glyphs[key],
-        imageHighRes: glyphs[key],
-        imageLowZoom: glyphs[key],
+        imageHighDetail: glyphs[key],
+        imageLowDetail: glyphs[key],
         hidden: this.camera.ratio >= this.lodRatio ? false : true,
         hierarchyHidden: false,
         filterHidden: false,
