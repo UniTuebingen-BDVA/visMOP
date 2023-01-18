@@ -84,8 +84,11 @@ function genericCircularLayout(
   const startAngle = options.startAngle;
   const minDivisions = options.minDivisions;
 
+  const { amtTimePoints, nodeKeysInOrder } = generateTimepointCircles(graph);
+  const nodePerTimepoint = graph.order / amtTimePoints;
+
   const offset = (center - 0.5) * scale;
-  const l = graph.order < minDivisions ? minDivisions : graph.order;
+  const l = graph.order < minDivisions ? minDivisions : nodePerTimepoint;
 
   const x = dimensions[0];
   const y = dimensions[1];
@@ -96,10 +99,12 @@ function genericCircularLayout(
       [dimension: string]: number;
     }
   ) {
-    console.log('startAngle', startAngle);
+    const additionalOffset = Math.floor(i / nodePerTimepoint) * (scale / 4);
+    console.log('additional layout factor', additionalOffset);
+
     const angle = (Math.PI * 2 * -i) / l + startAngle;
-    target[x] = scale * Math.cos(angle) + offset;
-    target[y] = scale * Math.sin(angle) + offset;
+    target[x] = (scale * 1.1 + additionalOffset) * Math.cos(angle) + offset;
+    target[y] = (scale * 1.1 + additionalOffset) * Math.sin(angle) + offset;
 
     //= scale * Math.cos(((-i + l / 4) * tau) / l) + offset;
     //= scale * Math.sin(((-i + l / 4) * tau) / l) + offset;
@@ -112,12 +117,7 @@ function genericCircularLayout(
   if (!assignFuncAvailable) {
     const positions: LayoutMapping = {};
 
-    const sortedNodes = graph.nodes().sort((a, b) => {
-      return String(graph.getNodeAttributes(a).label).localeCompare(
-        graph.getNodeAttributes(b).label
-      );
-    });
-    sortedNodes.forEach(function (node) {
+    nodeKeysInOrder.forEach(function (node) {
       positions[node] = assignPosition(i++, {});
     });
 
@@ -126,7 +126,7 @@ function genericCircularLayout(
 
   graph.updateEachNodeAttributes(
     function (_, attr) {
-      assignPosition(i++, attr);
+      attr = assignPosition(i++, attr);
       return attr;
     },
     {
@@ -144,3 +144,32 @@ const orderedCircularLayout: ICircularLayout = Object.assign(
   { assign: genericCircularLayout.bind({}, true) }
 );
 export default orderedCircularLayout;
+
+function generateTimepointCircles(graph: Graph): {
+  amtTimePoints: number;
+  nodeKeysInOrder: string[];
+} {
+  const idsByTimepoint: { [key: string]: string[] } = {};
+  const nodeIds = graph.nodes();
+  nodeIds.forEach((node) => {
+    const timepoint = node.split('_')[1];
+    idsByTimepoint[timepoint]
+      ? idsByTimepoint[timepoint].push(node)
+      : (idsByTimepoint[timepoint] = [node]);
+  });
+  let outArray: string[] = [];
+  const sortedKeys = Object.keys(idsByTimepoint).sort((a, b) =>
+    a.localeCompare(b)
+  );
+
+  sortedKeys.forEach((key) => {
+    const sortedNodes = idsByTimepoint[key].sort((a, b) => {
+      return String(graph.getNodeAttributes(a).label).localeCompare(
+        graph.getNodeAttributes(b).label
+      );
+    });
+    outArray = [...outArray, ...sortedNodes];
+  });
+
+  return { amtTimePoints: sortedKeys.length, nodeKeysInOrder: outArray };
+}
