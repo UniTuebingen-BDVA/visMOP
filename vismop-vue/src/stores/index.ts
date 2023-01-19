@@ -84,10 +84,10 @@ interface State {
     url: { [key: string]: string };
     svg: { [key: string]: SVGElement };
   };
-  moduleAreas: [number[]];
-  modules: string[][];
+  clusterAreas: [number[]];
+  clusters: string[][];
   noiseClusterExists: boolean;
-  moduleCenters: [number, number][];
+  clusterCenters: [number, number][];
   keggChebiTranslate: { [key: string]: string[] };
 }
 
@@ -141,10 +141,10 @@ export const useMainStore = defineStore('mainStore', {
     pathwayCompare: [],
     glyphData: {},
     glyphs: { url: {}, svg: {} },
-    moduleAreas: [[]],
-    modules: [],
+    clusterAreas: [[]],
+    clusters: [],
     noiseClusterExists: false,
-    moduleCenters: [],
+    clusterCenters: [],
     keggChebiTranslate: {},
   }),
   actions: {
@@ -315,17 +315,17 @@ export const useMainStore = defineStore('mainStore', {
     setGraphData(val: graphData) {
       this.graphData = val;
     },
-    setModuleAreas(val: [number[]]) {
-      this.moduleAreas = val;
+    setClusterAreas(val: [number[]]) {
+      this.clusterAreas = val;
     },
-    setModules(val: string[][]) {
-      this.modules = val;
+    setClusters(val: string[][]) {
+      this.clusters = val;
     },
     setNoiseClusterExists(val: boolean) {
       this.noiseClusterExists = val;
     },
-    setModuleCenters(val: [number, number][]) {
-      this.moduleCenters = val;
+    setClusterCenters(val: [number, number][]) {
+      this.clusterCenters = val;
     },
     setFCS(val: {
       [x: string]: {

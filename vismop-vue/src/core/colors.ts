@@ -1,6 +1,6 @@
 export const overviewColors = {
   selected: 'rgba(211,81,108,1.0)',
-  modules: 'rgba(184,86,202, 1.0)',
+  clusters: 'rgba(184,86,202, 1.0)',
   roots: 'rgba(117, 117, 117, 1)',
   noVisibleSubtree: 'rgba(0, 0, 0, 1)',
   union: '#314aecff',

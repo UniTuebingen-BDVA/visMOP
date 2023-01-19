@@ -403,11 +403,11 @@ const getReactomeData = () => {
       }
       mainStore.setOverviewData(dataContent.overviewData);
       //for voronoiTest
-      //mainStore.setModuleAreas(dataContent.moduleAreas);
+      //mainStore.setClusterAreas(dataContent.clusterAreas);
       mainStore.setAmtTimepoints(dataContent.amtTimepoints);
-      mainStore.setModules(dataContent.modules);
+      mainStore.setClusters(dataContent.clusters);
       mainStore.setNoiseClusterExists(dataContent.noiseClusterExists);
-      mainStore.setModuleCenters(dataContent.moduleCenters);
+      mainStore.setClusterCenters(dataContent.clusterCenters);
       mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
     })
     .then(

@@ -71,8 +71,8 @@ type overviewNodeAttr = baseNodeAttr & {
   hierarchyHidden: boolean;
   filterHidden: boolean;
   zoomHidden: boolean;
-  moduleHidden: boolean;
-  moduleFixed: boolean;
+  clusterHidden: boolean;
+  clusterFixed: boolean;
   forceLabel: boolean;
   averageTranscriptomics: number;
   averageProteomics: number;
@@ -173,7 +173,7 @@ type relation = {
  */
 type entry = {
   // seems Deprecated
-  moduleNum: number;
+  clusterNum: number;
   name: string;
   entryType: string;
   entryID: string;

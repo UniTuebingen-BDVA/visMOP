@@ -20,7 +20,7 @@ import pandas as pd
 import pathlib
 import os
 import json
-from visMOP.python_scripts.module_layouting import Module_layout, timepoint_analysis
+from visMOP.python_scripts.cluster_layout import Cluster_layout, timepoint_analysis
 from numpy.core.fromnumeric import mean
 
 import secrets
@@ -49,7 +49,7 @@ app.config.from_mapping(
 cache = Cache(app)
 
 
-def getModuleLayout(
+def getClusterLayout(
     omics_recieved,
     layout_targets,
     up_down_reg_limits,
@@ -91,7 +91,7 @@ def getModuleLayout(
     statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
     try:
-        module_layout = Module_layout(
+        cluster_layout = Cluster_layout(
             statistic_data_user,
             layout_targets,
             pathway_connection_dict,
@@ -102,16 +102,16 @@ def getModuleLayout(
     except ValueError as e:
         print("LayoutError", e)
         return -1, -1
-    # module_node_pos = module_layout.initial_node_pos
+    # cluster_node_pos = cluster_layout.initial_node_pos
     # outcommented for test of voronoi layout
-    # module_node_pos = module_layout.get_final_node_positions()
-    # module_areas = module_layout.get_module_areas()
-    # module_areas = []
-    # return module_node_pos, module_areas
+    # cluster_node_pos = cluster_layout.get_final_node_positions()
+    # cluster_areas = cluster_layout.get_cluster_areas()
+    # cluster_areas = []
+    # return cluster_node_pos, cluster_areas
     return (
-        module_layout.modules,
-        module_layout.modules_center,
-        module_layout.noise_cluster_exists,
+        cluster_layout.clusters,
+        cluster_layout.clusters_center,
+        cluster_layout.noise_cluster_exists,
     )
 
 
@@ -595,8 +595,8 @@ def reactome_overview():
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
-    # module_node_pos, module_areas = getModuleLayout(
-    modules, module_centers, noiseClusterExists = getModuleLayout(
+    # cluster_node_pos, cluster_areas = getClusterLayout(
+    clusters, cluster_centers, noiseClusterExists = getClusterLayout(
         omics_recieved,
         central_nodes,
         layout_limits,
@@ -607,16 +607,16 @@ def reactome_overview():
         pathways_root_names,
     )
 
-    if modules == -1:
+    if clusters == -1:
         return {"exitState": 1, "ErrorMsg": "Value Error! Correct Organism chosen?"}
-    # print("number of Clusters", len(module_areas))
+    # print("number of Clusters", len(cluster_areas))
     for pathway in out_data:
-        # x_y_pos = module_node_pos[pathway["pathwayId"]]
+        # x_y_pos = cluster_node_pos[pathway["pathwayId"]]
         pathway["initialPosX"] = random()  # x_y_pos[0]
         pathway["initialPosY"] = random()  # x_y_pos[1]
-        pathway["moduleNum"] = 0  # x_y_pos[2]
-    modules = [elem.tolist() for elem in modules]
-    timepoint_analysis(modules)
+        pathway["clusterNum"] = 0  # x_y_pos[2]
+    clusters = [elem.tolist() for elem in clusters]
+    timepoint_analysis(clusters)
     # temporary?
 
     out_data_dict = {elem["pathwayId"]: elem for elem in out_data}
@@ -626,10 +626,10 @@ def reactome_overview():
             "exitState": 0,
             "overviewData": out_data_dict,
             "amtTimepoints": reactome_hierarchy.amt_timesteps,
-            "modules": modules,
-            "moduleCenters": module_centers,
+            "clusters": clusters,
+            "clusterCenters": cluster_centers,
             "noiseClusterExists": noiseClusterExists,
-            # "moduleAreas": module_areas,
+            # "clusterAreas": cluster_areas,
             "pathwayLayouting": {
                 "pathwayList": dropdown_data,
                 "pathwayNodeDictionary": pathway_dict,

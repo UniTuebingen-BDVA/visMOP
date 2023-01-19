@@ -18,48 +18,52 @@ import { getFocusNormalizeParameter } from '@/core/layouting/convexHullsForClust
  * Executes the Push Force Scan' (PFS') algorithm on this graph
  *
  * @param {Array.<overviewNode>} nodes graph to update
- * @param {number} maxModuleNum: maximum amount of modules
- * @param {[number[]]} moduleAreas: extents to which to normalize the coordinates
+ * @param {number} maxClusterNum: maximum amount of clusters
+ * @param {[number[]]} clusterAreas: extents to which to normalize the coordinates
  * @param {object} [options] options
  * @param {number} options.padding padding to add between nodes
  */
-export function pfsPrime_modules(
+export function pfsPrime_clusters(
   allNodes: overviewNode[],
-  maxModuleNum: number,
-  moduleAreas: [number[]] = [[0, 1, 0, 1]],
+  maxClusterNum: number,
+  clusterAreas: [number[]] = [[0, 1, 0, 1]],
   options: { padding: number } = { padding: 0.45 }
 ): overviewNode[][] {
   // TODO: add padding
   const updatedNodes: overviewNode[][] = [];
   const rootNodes: overviewNode[] = [];
-  for (let curModuleNum = -1; curModuleNum <= maxModuleNum; curModuleNum++) {
-    const moduleNodes = [];
+  for (
+    let curClusterNum = -1;
+    curClusterNum <= maxClusterNum;
+    curClusterNum++
+  ) {
+    const clusterNodes = [];
     for (let index = 0; index < allNodes.length; index++) {
       const currentNode = allNodes[index];
       if (
-        currentNode.attributes.modNum === curModuleNum &&
+        currentNode.attributes.modNum === curClusterNum &&
         !currentNode.attributes.isRoot
       ) {
-        moduleNodes.push(currentNode);
+        clusterNodes.push(currentNode);
       } else if (
-        currentNode.attributes.modNum === curModuleNum &&
+        currentNode.attributes.modNum === curClusterNum &&
         currentNode.attributes.isRoot
       ) {
         rootNodes.push(currentNode);
       }
     }
-    //const pfsPrime_moduleNodes = pfsPrime(moduleNodes);
-    // const pfsPrime_moduleNodes = vpsc(moduleNodes);
-    const pfsPrime_moduleNodes = moduleNodes;
-    if (curModuleNum > -1) {
+    //const pfsPrime_clusterNodes = pfsPrime(clusterNodes);
+    // const pfsPrime_clusterNodes = vpsc(clusterNodes);
+    const pfsPrime_clusterNodes = clusterNodes;
+    if (curClusterNum > -1) {
       normInArea(
-        pfsPrime_moduleNodes,
-        moduleAreas[curModuleNum],
+        pfsPrime_clusterNodes,
+        clusterAreas[curClusterNum],
         options.padding
       );
     }
 
-    updatedNodes.push(pfsPrime_moduleNodes);
+    updatedNodes.push(pfsPrime_clusterNodes);
   }
   updatedNodes.push(rootNodes);
 

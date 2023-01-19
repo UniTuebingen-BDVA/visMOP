@@ -558,15 +558,15 @@ const drawNetwork = () => {
   );
   console.log(generatedGlyphsHighDetail, generatedGlyphsLowDetail);
   mainStore.setGlyphs(generatedGlyphsHighDetail);
-  //const moduleAreas = mainStore.moduleAreas;
-  //get module areas here!!!
-  const clusterWeights = mainStore.modules.map((elem) => elem.length);
+  //const clusterAreas = mainStore.clusterAreas;
+  //get cluster areas here!!!
+  const clusterWeights = mainStore.clusters.map((elem) => elem.length);
   const polygons = generateVoronoiCells(
     250,
     clusterWeights,
-    mainStore.moduleCenters
+    mainStore.clusterCenters
   );
-  const positionMapping = nodePolygonMapping(mainStore.modules, polygons);
+  const positionMapping = nodePolygonMapping(mainStore.clusters, polygons);
   const polygonsArrays: [number, number][][] = [];
   for (let index = 0; index < Object.keys(polygons).length; index++) {
     polygonsArrays.push(polygons[index].verticesToArray(true));

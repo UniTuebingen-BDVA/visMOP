@@ -20,7 +20,7 @@ export function nodeReducer(
     const hidden =
       data.filterHidden ||
       data.zoomHidden ||
-      data.moduleHidden ||
+      data.clusterHidden ||
       data.hierarchyHidden;
     let lodCondition = false;
     let xDisplay: number | undefined = -100;

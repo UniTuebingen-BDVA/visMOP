@@ -18,7 +18,7 @@ import OverviewFilter from './filter';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
-import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
+import { generateGlyphs } from '@/core/overviewGlyphs/clusterGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
 import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
@@ -29,14 +29,14 @@ export default class OverviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 6;
   static readonly ROOT_DEFAULT_SIZE = 15;
-  static readonly MODULE_DEFAULT_SIZE = 15;
+  static readonly CLUSTER_DEFAULT_SIZE = 15;
   static readonly FOCUS_NODE_SIZE = 10;
   static readonly GLYPH_SIZE = 64;
   static readonly CLUSTER_EXTENT = 400;
 
   protected DEFAULT_SIZE = 6;
   protected ROOT_DEFAULT_SIZE = 15;
-  protected MODULE_DEFAULT_SIZE = 15;
+  protected CLUSTER_DEFAULT_SIZE = 15;
   protected FOCUS_NODE_SIZE = 10;
 
   // data structures for reducers
@@ -102,7 +102,7 @@ export default class OverviewGraph {
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
-    this.addModuleOverviewNodes();
+    this.addClusterOverviewNodes();
     this.calculateGraphWidth();
     this.layoutRoots();
     this.relayoutGraph(this.initialFa2Params);
@@ -201,7 +201,7 @@ export default class OverviewGraph {
           ) {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
-            attributes.moduleFixed = true;
+            attributes.clusterFixed = true;
             attributes.zoomHidden = false;
             attributes.size = this.FOCUS_NODE_SIZE; // size behavíour is strange!
             attributes.nonHoverSize = this.FOCUS_NODE_SIZE;
@@ -209,25 +209,25 @@ export default class OverviewGraph {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
             if (attributes.id != node) {
-              attributes.moduleHidden = true;
+              attributes.clusterHidden = true;
             } else {
-              attributes.moduleFixed = true;
+              attributes.clusterFixed = true;
               attributes.zoomHidden = false;
             }
           } else if (!attributes.isRoot) {
             attributes.x = attributes.layoutX;
             attributes.y = attributes.layoutY;
-            attributes.moduleFixed = false;
-            attributes.moduleHidden = false;
+            attributes.clusterFixed = false;
+            attributes.clusterHidden = false;
             attributes.size = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'cluster'
-              ? this.MODULE_DEFAULT_SIZE
+              ? this.CLUSTER_DEFAULT_SIZE
               : this.DEFAULT_SIZE;
             attributes.nonHoverSize = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'cluster'
-              ? this.MODULE_DEFAULT_SIZE
+              ? this.CLUSTER_DEFAULT_SIZE
               : this.DEFAULT_SIZE;
           }
         });
@@ -554,7 +554,7 @@ export default class OverviewGraph {
       return !(
         currentAttributes.filterHidden ||
         currentAttributes.zoomHidden ||
-        currentAttributes.moduleHidden ||
+        currentAttributes.clusterHidden ||
         currentAttributes.hierarchyHidden
       );
     });
@@ -790,7 +790,7 @@ export default class OverviewGraph {
       const polygonIdx = parseInt(element);
       const currentPolygon = this.polygons[polygonIdx];
 
-      const currentNodes = useMainStore().modules[polygonIdx];
+      const currentNodes = useMainStore().clusters[polygonIdx];
 
       const polygonBB = currentPolygon.getBoundingBox();
       const minX = polygonBB.vertices[0][0];
@@ -832,8 +832,8 @@ export default class OverviewGraph {
     });
   }
 
-  getModuleNodeIds() {
-    const moduleNodeMapping: {
+  getClusterNodeIds() {
+    const clusterNodeMapping: {
       [key: string]: {
         ids: string[];
         pos: number[][];
@@ -843,35 +843,35 @@ export default class OverviewGraph {
     this.graph.forEachNode((node, attr) => {
       if (!attr.isRoot) {
         // short circuit eval. to generate the corresponding entry
-        !(attr.modNum in moduleNodeMapping) &&
-          (moduleNodeMapping[attr.modNum] = {
+        !(attr.modNum in clusterNodeMapping) &&
+          (clusterNodeMapping[attr.modNum] = {
             ids: [],
             pos: [],
             posOnClusterFocus: [],
           });
-        moduleNodeMapping[attr.modNum].ids.push(attr.id);
-        moduleNodeMapping[attr.modNum].pos.push([attr.x, attr.y]);
-        moduleNodeMapping[attr.modNum].posOnClusterFocus.push([
+        clusterNodeMapping[attr.modNum].ids.push(attr.id);
+        clusterNodeMapping[attr.modNum].pos.push([attr.x, attr.y]);
+        clusterNodeMapping[attr.modNum].posOnClusterFocus.push([
           attr.xOnClusterFocus,
           attr.yOnClusterFocus,
         ]);
       }
     });
-    return moduleNodeMapping;
+    return clusterNodeMapping;
   }
 
-  addModuleOverviewNodes() {
+  addClusterOverviewNodes() {
     const mainStore = useMainStore();
-    const moduleNodeMapping = this.getModuleNodeIds();
+    const clusterNodeMapping = this.getClusterNodeIds();
     const glyphs = generateGlyphs(
       mainStore.glyphData,
       OverviewGraph.GLYPH_SIZE,
-      moduleNodeMapping
+      clusterNodeMapping
     );
-    for (const key in Object.keys(moduleNodeMapping)) {
-      const xPos = this.polygons[key].getCenter()[0]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
-      const yPos = this.polygons[key].getCenter()[1]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
-      const moduleNode: overviewNodeAttr = {
+    for (const key in Object.keys(clusterNodeMapping)) {
+      const xPos = this.polygons[key].getCenter()[0]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[0]));
+      const yPos = this.polygons[key].getCenter()[1]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[1]));
+      const clusterNode: overviewNodeAttr = {
         name: key,
         id: key,
         x: xPos,
@@ -885,10 +885,10 @@ export default class OverviewGraph {
         modNum: parseInt(key),
         isRoot: false,
         zIndex: 1,
-        color: overviewColors.modules,
-        size: this.MODULE_DEFAULT_SIZE,
+        color: overviewColors.clusters,
+        size: this.CLUSTER_DEFAULT_SIZE,
         nodeType: 'cluster',
-        nonHoverSize: this.MODULE_DEFAULT_SIZE,
+        nonHoverSize: this.CLUSTER_DEFAULT_SIZE,
         fixed: false,
         up: { x: xPos, y: yPos, gamma: 0 },
         type: 'image',
@@ -900,8 +900,8 @@ export default class OverviewGraph {
         hierarchyHidden: false,
         filterHidden: false,
         zoomHidden: this.camera.ratio >= this.lodRatio ? true : true,
-        moduleHidden: false,
-        moduleFixed: false,
+        clusterHidden: false,
+        clusterFixed: false,
         forceLabel: false,
         averageTranscriptomics: 0,
         averageProteomics: 0,
@@ -915,7 +915,7 @@ export default class OverviewGraph {
         subtreeIds: [],
         visibleSubtree: true,
       };
-      this.graph.addNode(key, moduleNode);
+      this.graph.addNode(key, clusterNode);
     }
   }
 
@@ -924,16 +924,16 @@ export default class OverviewGraph {
     console.log('Window Size', windowWidth);
     if (windowWidth < 1000) {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 0.7;
-      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
-      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 0.7;
+      this.CLUSTER_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 0.7;
     } else if (windowWidth < 1950) {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 1;
-      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
-      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 1;
+      this.CLUSTER_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 1;
     } else {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 2.5;
-      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 2.5;
-      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 2.5;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 2.5;
+      this.CLUSTER_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 2.5;
     }
     this.applySize();
   }
@@ -954,8 +954,8 @@ export default class OverviewGraph {
           attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
           break;
         case 'cluster':
-          attr.size = this.MODULE_DEFAULT_SIZE;
-          attr.nonHoverSize = this.MODULE_DEFAULT_SIZE;
+          attr.size = this.CLUSTER_DEFAULT_SIZE;
+          attr.nonHoverSize = this.CLUSTER_DEFAULT_SIZE;
           break;
         default:
           attr.size = this.DEFAULT_SIZE;

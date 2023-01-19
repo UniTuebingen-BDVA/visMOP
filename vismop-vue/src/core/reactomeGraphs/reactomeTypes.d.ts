@@ -29,7 +29,7 @@ type reactomeEntry = {
   };
   pathwayId: string;
   isCentral: boolean;
-  moduleNum: number;
+  clusterNum: number;
   up: upDatedPos;
   rootId: string;
   initialPosX: number;

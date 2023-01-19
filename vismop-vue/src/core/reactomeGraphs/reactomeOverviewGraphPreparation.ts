@@ -25,7 +25,7 @@ export function generateGraphData(
     [key: string]: glyphData;
   },
   rootIds: string[],
-  moduleAreas: [number[]] = [[]],
+  clusterAreas: [number[]] = [[]],
   voronoiPolygons: {
     [key: number]: ConvexPolygon;
   },
@@ -62,7 +62,7 @@ export function generateGraphData(
     }
   }
   let index = 0;
-  let maxModuleNum = 0;
+  let maxClusterNum = 0;
   for (const entryKey in nodeData) {
     const entry = nodeData[entryKey];
     const name = entry.pathwayName;
@@ -70,7 +70,7 @@ export function generateGraphData(
     const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
     const initPosY = positionMapping[id] ? positionMapping[id].yInit : 0;
     const modNum = positionMapping[id] ? positionMapping[id].clusterIDx : 0;
-    maxModuleNum = Math.max(maxModuleNum, modNum);
+    maxClusterNum = Math.max(maxClusterNum, modNum);
     const currentNode: overviewNode = {
       key: id,
       index: index,
@@ -86,8 +86,8 @@ export function generateGraphData(
         hidden: !entry.isCentral,
         filterHidden: false,
         zoomHidden: false,
-        moduleHidden: false,
-        moduleFixed: false,
+        clusterHidden: false,
+        clusterFixed: false,
         hierarchyHidden: !entry.isCentral,
         color:
           entry.rootId === entry.pathwayId
@@ -207,7 +207,7 @@ export function generateGraphData(
   const focusClusterHulls = [] as number[][][];
   const clusterColors: [number, number, number, number][] = [];
   const firstNoneNoiseCluster = useMainStore().noiseClusterExists ? 1 : 0;
-  // const totalNumHulls = moduleAreas.length;
+  // const totalNumHulls = clusterAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
   _.forEach(voronoiPolygons, (polygon) => {
