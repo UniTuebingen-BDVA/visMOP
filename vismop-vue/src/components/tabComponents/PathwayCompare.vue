@@ -48,8 +48,9 @@
                 pathwayLayouting.pathwayList.find(
                   (elem) => elem.value === element.pathway
                 )?.title +
-                ' Timepoint ' +
-                element.pathway.split('_')[0]
+                ' ' +
+                formatTime(element.pathway.split('_')[1]) +
+                ' Timepoint'
               }}
             </div>
           </div>
@@ -185,6 +186,18 @@ const appendGlyph = (pathway: string) => {
   nextTick(() => {
     d3.select(`#glyph${pathway}`).append(() => glyphs.value.svg[pathway]);
   });
+};
+
+const formatTime = (time: number) => {
+  if (time == 1) {
+    return '1st';
+  } else if (time == 2) {
+    return '2nd';
+  } else if (time == 3) {
+    return '3rd';
+  } else {
+    return time + 'th';
+  }
 };
 </script>
 <style>

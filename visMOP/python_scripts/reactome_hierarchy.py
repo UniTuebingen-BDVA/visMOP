@@ -783,10 +783,10 @@ def generate_overview_pathway_entry(
         "text": entry.reactome_sID
         + ": "
         + entry.name
-        + " Time: "
+        + "; Timepoint: "
         + str(timepoint_index),
         "value": entry.reactome_sID + "_" + str(timepoint_index),
-        "title": entry.name + " Time: " + str(timepoint_index),
+        "title": entry.name,
     }
 
     pathway_dict["entries"]["proteomics"]["total"] = (

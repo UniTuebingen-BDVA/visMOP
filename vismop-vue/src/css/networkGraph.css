@@ -92,19 +92,19 @@ from: https://codepen.io/chriscoyier/pen/eYNQyPe*/
 }
 .glyphText {
   font-family: 'Roboto', sans-serif;
-  font-size: 0.18rem;
+  font-size: 0.31rem;
   text-anchor: middle;
   dominant-baseline: central;
 }
 .glyphTextSmall {
   font-family: 'Roboto', sans-serif;
-  font-size: 0.13rem;
+  font-size: 0.23rem;
   text-anchor: middle;
   dominant-baseline: central;
 }
 .glyphTextTiny {
   font-family: 'Roboto', sans-serif;
-  font-size: 0.09rem;
+  font-size: 0.14rem;
   text-anchor: middle;
   dominant-baseline: central;
 }

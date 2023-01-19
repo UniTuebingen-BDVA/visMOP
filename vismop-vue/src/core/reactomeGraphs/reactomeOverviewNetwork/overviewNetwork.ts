@@ -146,7 +146,7 @@ export default class OverviewGraph {
         },
         hoverRenderer: drawHover,
         labelRenderer: drawLabel,
-        getCameraSizeRatio: (x) => x,
+        getCameraSizeRatio: (x) => Math.pow(x, 0.7),
         clusterVis: 'ConvexHull',
       },
       this.additionalData
@@ -722,10 +722,12 @@ export default class OverviewGraph {
       currentSubgraph.forEachNode((node, attr) => {
         currentSubgraph.forEachNode((nodeInner, attrInner) => {
           if (node != nodeInner) {
+            const splitOuter = attr.rootId.split('_')[0];
+            const splitInner = attrInner.rootId.split('_')[0];
             if (!currentSubgraph.hasEdge(node, nodeInner)) {
               currentSubgraph.addEdge(node, nodeInner, {
                 weight:
-                  attr.rootId == attrInner.rootId
+                  splitOuter == splitInner
                     ? layoutParams.weightShared
                     : layoutParams.weightDefault,
               });

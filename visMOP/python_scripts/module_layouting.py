@@ -687,7 +687,11 @@ class Module_layout:
         clustering_labels = None
         ss = -1
         for result in pool.imap_unordered(
-            simplified_func, range(4, 4 + self.pool_size)
+            simplified_func,
+            range(
+                math.floor(num_pathways / 20),
+                math.floor(num_pathways / 20) + self.pool_size,
+            ),
         ):
             if result:
                 # print('ss', result[0])

@@ -682,7 +682,7 @@ export default class ReactomeDetailView {
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
-          28,
+          64,
           false
         );
         return currentGlyph.generateGlyphSvg();
@@ -827,7 +827,7 @@ export default class ReactomeDetailView {
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
-          28,
+          64,
           false
         );
         return currentGlyph.generateGlyphSvg();
@@ -932,7 +932,7 @@ export default class ReactomeDetailView {
           self.foldChangeReactome[d.reactomeId],
           true,
           d.reactomeId,
-          28,
+          64,
           false
         );
         return currentGlyph.generateGlyphSvg();

@@ -117,8 +117,8 @@ export class HighDetailGlyph {
    */
   setDrawLabels(val: boolean) {
     this.drawLabels = val;
-    this.width = this.diameter + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + (this.drawLabels ? 7 : 0);
+    this.width = this.diameter + (this.drawLabels ? 15 : 0);
+    this.height = this.diameter + (this.drawLabels ? 15 : 0);
     this.backroundArcDat = [];
     this.innerArcDat = [];
     this.outerArcDat = [];
@@ -321,8 +321,8 @@ export class HighDetailGlyph {
     if (this.drawLabels) {
       const labelArcOmics = d3
         .arc<PieArcDatum<number>>()
-        .innerRadius(this.outermostRadius + 2)
-        .outerRadius(this.outermostRadius + 2);
+        .innerRadius(this.outermostRadius + 4)
+        .outerRadius(this.outermostRadius + 4);
       const labelArcRegulated = d3
         .arc<PieArcDatum<number>>()
         .innerRadius((this.firstLayer + this.secondLayer) * 0.5)

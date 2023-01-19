@@ -380,7 +380,7 @@ export default function getNodeImageProgram(): typeof AbstractNodeImageProgram {
       const program = this.program;
       gl.useProgram(program);
 
-      gl.uniform1f(this.ratioLocation, 1 / Math.sqrt(params.ratio));
+      gl.uniform1f(this.ratioLocation, 1 / Math.pow(params.ratio, 0.7));
       gl.uniform1f(this.scaleLocation, params.scalingRatio);
       gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix);
       gl.uniform1i(this.atlasLocation, 0);
