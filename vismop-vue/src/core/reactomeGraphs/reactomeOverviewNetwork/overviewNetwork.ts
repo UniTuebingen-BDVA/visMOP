@@ -32,6 +32,7 @@ export default class OverviewGraph {
   static readonly MODULE_DEFAULT_SIZE = 15;
   static readonly FOCUS_NODE_SIZE = 10;
   static readonly GLYPH_SIZE = 64;
+  static readonly CLUSTER_EXTENT = 400;
 
   protected DEFAULT_SIZE = 6;
   protected ROOT_DEFAULT_SIZE = 15;
@@ -708,7 +709,6 @@ export default class OverviewGraph {
       clusterSizeScalingFactor: number;
     }
   ) {
-    const maxExt = 250;
     Object.keys(this.polygons).forEach((element) => {
       const polygonIdx = parseInt(element);
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
@@ -785,6 +785,7 @@ export default class OverviewGraph {
         attributes.layoutY = attributes.y;
       }
     });
+
     Object.keys(this.polygons).forEach((element) => {
       const polygonIdx = parseInt(element);
       const currentPolygon = this.polygons[polygonIdx];
@@ -806,23 +807,27 @@ export default class OverviewGraph {
         this.graph.setNodeAttribute(
           node,
           'xOnClusterFocus',
-          (maxExt * centeredX) / (maxXY - minXY)
+          (OverviewGraph.CLUSTER_EXTENT * centeredX) / (maxXY - minXY)
         );
         this.graph.setNodeAttribute(
           node,
           'yOnClusterFocus',
-          (maxExt * centeredY) / (maxXY - minXY)
+          (OverviewGraph.CLUSTER_EXTENT * centeredY) / (maxXY - minXY)
         );
       });
       this.graph.setNodeAttribute(
         polygonIdx,
         'xOnClusterFocus',
-        (maxExt * (minX - currentPolygon.getCenter()[0])) / (maxXY - minXY)
+        (OverviewGraph.CLUSTER_EXTENT *
+          (minX - currentPolygon.getCenter()[0])) /
+          (maxXY - minXY)
       );
       this.graph.setNodeAttribute(
         polygonIdx,
         'yOnClusterFocus',
-        (maxExt * (minY - currentPolygon.getCenter()[1])) / (maxXY - minXY)
+        (OverviewGraph.CLUSTER_EXTENT *
+          (minY - currentPolygon.getCenter()[1])) /
+          (maxXY - minXY)
       );
     });
   }

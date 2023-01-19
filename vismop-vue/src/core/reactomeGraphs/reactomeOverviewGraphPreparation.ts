@@ -202,7 +202,6 @@ export function generateGraphData(
     } */
     index += 1;
   }
-  const maxExt = 250;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
@@ -215,7 +214,7 @@ export function generateGraphData(
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
         polygon,
-        maxExt
+        OverviewGraph.CLUSTER_EXTENT
       );
       const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
       clusterColors.push([greyValue, greyValue, greyValue, 1.0]);
