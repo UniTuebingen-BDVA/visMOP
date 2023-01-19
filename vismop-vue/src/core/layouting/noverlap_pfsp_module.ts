@@ -41,12 +41,12 @@ export function pfsPrime_clusters(
     for (let index = 0; index < allNodes.length; index++) {
       const currentNode = allNodes[index];
       if (
-        currentNode.attributes.modNum === curClusterNum &&
+        currentNode.attributes.clusterNum === curClusterNum &&
         !currentNode.attributes.isRoot
       ) {
         clusterNodes.push(currentNode);
       } else if (
-        currentNode.attributes.modNum === curClusterNum &&
+        currentNode.attributes.clusterNum === curClusterNum &&
         currentNode.attributes.isRoot
       ) {
         rootNodes.push(currentNode);

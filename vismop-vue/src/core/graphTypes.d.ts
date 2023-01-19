@@ -59,7 +59,7 @@ type overviewNodeAttr = baseNodeAttr & {
   preFa2Y: number;
   yOnClusterFocus: number;
   xOnClusterFocus: number;
-  modNum: number;
+  clusterNum: number;
   up: upDatedPos;
   isRoot: boolean;
   nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other';

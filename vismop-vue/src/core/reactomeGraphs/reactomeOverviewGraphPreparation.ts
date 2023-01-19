@@ -69,15 +69,15 @@ export function generateGraphData(
     const id = entry.pathwayId ? entry.pathwayId : 'noID';
     const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
     const initPosY = positionMapping[id] ? positionMapping[id].yInit : 0;
-    const modNum = positionMapping[id] ? positionMapping[id].clusterIDx : 0;
-    maxClusterNum = Math.max(maxClusterNum, modNum);
+    const clusterNum = positionMapping[id] ? positionMapping[id].clusterIDx : 0;
+    maxClusterNum = Math.max(maxClusterNum, clusterNum);
     const currentNode: overviewNode = {
       key: id,
       index: index,
       // label: "",
       attributes: {
         type: 'image',
-        modNum: modNum,
+        clusterNum: clusterNum,
         image: glyphHighDetail[id],
         imageHighDetail: glyphHighDetail[id],
         imageLowDetail: glyphsLowDetail[id],

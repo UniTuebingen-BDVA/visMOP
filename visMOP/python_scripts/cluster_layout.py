@@ -103,14 +103,15 @@ def get_sorted_list_by_list_B_sorting_order(list_to_sort, sorting_list, reverse=
     return sorted_list
 
 
-def mod_center_in_area(mod_center, area):
+def cluster_center_in_area(cluster_center, area):
     """Determine if the cluster center lies in area
     Args:
-       mod_center: [x_pos, y_pos]
+       cluster_center: [x_pos, y_pos]
        area: [x_min, x_max, y_min, y_max ]
     """
     in_area = (
-        area[0] <= mod_center[0] <= area[1] and area[2] <= mod_center[1] <= area[3]
+        area[0] <= cluster_center[0] <= area[1]
+        and area[2] <= cluster_center[1] <= area[3]
     )
     return in_area
 
@@ -148,13 +149,13 @@ def normalize_value_list_in_range(points_pos, norm_range):
     return vals_all_axis_per_point
 
 
-def normalize_2D_node_pos_in_range(node_positions, x_y_ranges, with_mod_num=False):
+def normalize_2D_node_pos_in_range(node_positions, x_y_ranges, with_cluster_num=False):
     """normalize all node positions in area
 
     Args:
         node_positions: original node positions
         x_y_ranges: Value spaces in which to normalise
-        with_mod_num: add cluster number to result
+        with_cluster_num: add cluster number to result
 
     """
 
@@ -167,7 +168,7 @@ def normalize_2D_node_pos_in_range(node_positions, x_y_ranges, with_mod_num=Fals
     min_centered = min(x_centered + y_centered)
     max_centered = max(x_centered + y_centered)
 
-    if with_mod_num:
+    if with_cluster_num:
         adjusted_node_positions = {
             node: [
                 normalize_val_in_range(
@@ -261,7 +262,7 @@ class Cluster_layout:
             self.num_cluster,
             self.positions_dict_clustering,
         ) = self.get_cluster()
-        mod_length = [len(x) for x in self.clusters]
+        cluster_length = [len(x) for x in self.clusters]
         self.cluster_node_nums = [len(cluster) for cluster in self.clusters]
         total_num_nodes = sum(self.cluster_node_nums)
         self.node_num_ratio = [
@@ -294,7 +295,7 @@ class Cluster_layout:
         print("Clusters identified")
         # outcommented for test of voronoi layout
         # self.area_num_node_ratio_Pool()
-        print(mod_length)
+        print(cluster_length)
         print("Relative distances between clusters and cluster weights calculated")
         # outcommented for test of voronoi layout
         # self.final_node_pos = self.getNodePositions(pathways_root_names)
@@ -511,8 +512,8 @@ class Cluster_layout:
                 total_num_runs += 1
 
             except IndexError:
-                mod_pairs = combinations(range(len(clusters_center)), 2)
-                mod_dists = {
+                cluster_pairs = combinations(range(len(clusters_center)), 2)
+                cluster_dists = {
                     m_p: sum(
                         [
                             abs(clusters_center[m_p[0]][0] - clusters_center[m_p[1]][0])
@@ -521,11 +522,15 @@ class Cluster_layout:
                             > 0.0001,
                         ]
                     )
-                    for m_p in mod_pairs
+                    for m_p in cluster_pairs
                 }
                 none_correct_dists = list(
                     sum(
-                        [m_p for m_p, corr_dist in mod_dists.items() if corr_dist < 2],
+                        [
+                            m_p
+                            for m_p, corr_dist in cluster_dists.items()
+                            if corr_dist < 2
+                        ],
                         (),
                     )
                 )
@@ -853,7 +858,7 @@ class Cluster_layout:
 
     def find_layout_with_best_possible_rel_dists(self, clusters_center):
         distance_similarities = [0] * len(self.relative_distances)
-        cur_mod_center = clusters_center
+        cur_cluster_center = clusters_center
         run = 0
         found_better_possible_center = False
         found_perfect_center = False
@@ -864,7 +869,7 @@ class Cluster_layout:
                     mn,
                     sum(distance_similarities[p] for p in self.p_f_m[mn]),
                 )
-                for mn, cluster_center in enumerate(cur_mod_center)
+                for mn, cluster_center in enumerate(cur_cluster_center)
             ]
             new_rel_distances = self.getRealtiveDistancesBetweenClusters(
                 new_cluster_centers
@@ -878,19 +883,21 @@ class Cluster_layout:
             )
             if sum(distance_similarities_new) > sum(distance_similarities):
                 distance_similarities = distance_similarities_new
-                cur_mod_center = new_cluster_centers
+                cur_cluster_center = new_cluster_centers
                 found_better_possible_center = True
             elif run == self.num_best_dist_loops and not found_better_possible_center:
-                cur_mod_center = new_cluster_centers
+                cur_cluster_center = new_cluster_centers
             run += 1
 
-        return cur_mod_center
+        return cur_cluster_center
 
-    def getNewClusterCenter(self, cluster_center, mod_num, distance_similarities_value):
+    def getNewClusterCenter(
+        self, cluster_center, cluster_num, distance_similarities_value
+    ):
         # je mehr die distancen stimmen desto weniger wahrscheinlich wird das cluster center erschoben
         dist_bonus = (
             distance_similarities_value / (self.num_cluster) - 0.2
-            if mod_num != 0
+            if cluster_num != 0
             else 0
         )
         change_pos = np.random.binomial(1, max(0.1, min(1, 0.1 + dist_bonus))) == 0
@@ -911,11 +918,11 @@ class Cluster_layout:
         self.l_max = l_max
 
         new_centers = [
-            [mod_center[0] * l_max, mod_center[1] * l_max]
-            for mod_center in cluster_center
+            [cluster_center[0] * l_max, cluster_center[1] * l_max]
+            for cluster_center in cluster_center
         ]
 
-        mod_id_sorted_by_num_nodes = [
+        cluster_id_sorted_by_num_nodes = [
             x
             for _, x in sorted(
                 zip(self.cluster_node_nums, list(range(len(self.cluster_node_nums)))),
@@ -929,11 +936,11 @@ class Cluster_layout:
             [0, l_max, 0, l_max],
             list(range(self.num_cluster)),
             sum(self.cluster_node_nums),
-            mod_id_sorted_by_num_nodes,
+            cluster_id_sorted_by_num_nodes,
         )
         area_list = [[]] * self.num_cluster
-        for (area, mod_num) in cluster_regions:
-            area_list[mod_num] = area
+        for (area, cluster_num) in cluster_regions:
+            area_list[cluster_num] = area
 
         final_area_size = [get_area_size(area, True, l_max) for area in area_list]
         total_area = sum([size for size, _ in final_area_size])
@@ -950,7 +957,7 @@ class Cluster_layout:
         area_to_divide,
         clusters_in_area,
         total_sum_nodes_in_area,
-        mod_id_sorted_by_num_nodes,
+        cluster_id_sorted_by_num_nodes,
     ):
         if len(clusters_in_area) == 0:
             print(
@@ -960,47 +967,53 @@ class Cluster_layout:
         if len(clusters_in_area) == 1:
             return [[area_to_divide, clusters_in_area[0]]]
 
-        mod_pair = []
-        for mod in mod_id_sorted_by_num_nodes:
-            if mod in clusters_in_area:
-                mod_pair.append(mod)
-                if len(mod_pair) == 2:
+        cluster_pair = []
+        for cluster in cluster_id_sorted_by_num_nodes:
+            if cluster in clusters_in_area:
+                cluster_pair.append(cluster)
+                if len(cluster_pair) == 2:
                     break
 
-        mod_1 = mod_pair[0]
-        mod_2 = mod_pair[1]
+        cluster_1 = cluster_pair[0]
+        cluster_2 = cluster_pair[1]
 
         max_dist = max(
-            abs(cluster_centers[mod_pair[0]][0] - cluster_centers[mod_pair[1]][0]),
-            abs(cluster_centers[mod_pair[0]][1] - cluster_centers[mod_pair[1]][1]),
+            abs(
+                cluster_centers[cluster_pair[0]][0]
+                - cluster_centers[cluster_pair[1]][0]
+            ),
+            abs(
+                cluster_centers[cluster_pair[0]][1]
+                - cluster_centers[cluster_pair[1]][1]
+            ),
         )
         # max dist is on x axis
-        x_dist = cluster_centers[mod_1][0] - cluster_centers[mod_2][0]
-        y_dist = cluster_centers[mod_1][1] - cluster_centers[mod_2][1]
+        x_dist = cluster_centers[cluster_1][0] - cluster_centers[cluster_2][0]
+        y_dist = cluster_centers[cluster_1][1] - cluster_centers[cluster_2][1]
         area_1 = deepcopy(area_to_divide)
         area_2 = deepcopy(area_to_divide)
         if 0.9 < abs(x_dist) / abs(y_dist) < 1.1:
             max_dist = abs(x_dist) if np.random.binomial(1, 0.5) else abs(y_dist)
         # change x coord
         if max_dist == abs(x_dist):
-            mod_1_area_pos_to_ad, mod_2_area_pos_to_ad, min_border_pos = (
-                [1, 0, cluster_centers[mod_1][0]]
+            cluster_1_area_pos_to_ad, cluster_2_area_pos_to_ad, min_border_pos = (
+                [1, 0, cluster_centers[cluster_1][0]]
                 if x_dist < 0
-                else [0, 1, cluster_centers[mod_2][0]]
+                else [0, 1, cluster_centers[cluster_2][0]]
             )
         # change y coord
         else:
-            y_dist = cluster_centers[mod_1][1] - cluster_centers[mod_2][1]
-            mod_1_area_pos_to_ad, mod_2_area_pos_to_ad, min_border_pos = (
-                [3, 2, cluster_centers[mod_1][1]]
+            y_dist = cluster_centers[cluster_1][1] - cluster_centers[cluster_2][1]
+            cluster_1_area_pos_to_ad, cluster_2_area_pos_to_ad, min_border_pos = (
+                [3, 2, cluster_centers[cluster_1][1]]
                 if y_dist < 0
-                else [2, 3, cluster_centers[mod_2][1]]
+                else [2, 3, cluster_centers[cluster_2][1]]
             )
 
         (
             area_1_best,
             area_2_best,
-            mods_in_area_1_best,
+            clusters_in_area_1_best,
             num_nodes_area_2,
             num_nodes_area_1_best,
             num_nodes_area_2_best,
@@ -1008,15 +1021,15 @@ class Cluster_layout:
         ) = [[], [], [], [], 0, 0, inf]
         area_t_d_size = get_area_size(area_to_divide)
         for abst in np.arange(0.0005, max_dist - 0.0005, 0.001):
-            area_1[mod_1_area_pos_to_ad] = min_border_pos + abst
-            area_2[mod_2_area_pos_to_ad] = min_border_pos + abst
-            mods_in_area_1 = [
-                mod
-                for mod in clusters_in_area
-                if mod_center_in_area(cluster_centers[mod], area_1)
+            area_1[cluster_1_area_pos_to_ad] = min_border_pos + abst
+            area_2[cluster_2_area_pos_to_ad] = min_border_pos + abst
+            clusters_in_area_1 = [
+                cluster
+                for cluster in clusters_in_area
+                if cluster_center_in_area(cluster_centers[cluster], area_1)
             ]
             num_nodes_area_1 = sum(
-                [self.cluster_node_nums[mod] for mod in mods_in_area_1]
+                [self.cluster_node_nums[cluster] for cluster in clusters_in_area_1]
             )
             num_nodes_area_2 = total_sum_nodes_in_area - num_nodes_area_1
             # score = abs(self.get_area_size(area_1)*num_nodes_area_2/total_sum_nodes_in_area -
@@ -1038,9 +1051,11 @@ class Cluster_layout:
 
             if score < score_min:
                 score_min = score
-                mods_in_area_1_best = deepcopy(mods_in_area_1)
-                mods_in_area_2_best = [
-                    mod for mod in clusters_in_area if mod not in mods_in_area_1_best
+                clusters_in_area_1_best = deepcopy(clusters_in_area_1)
+                clusters_in_area_2_best = [
+                    cluster
+                    for cluster in clusters_in_area
+                    if cluster not in clusters_in_area_1_best
                 ]
 
                 area_1_best = deepcopy(area_1)
@@ -1052,16 +1067,16 @@ class Cluster_layout:
             cluster_centers,
             # deepcopy(cluster_ia_x_y_distances),
             area_1_best,
-            mods_in_area_1_best,
+            clusters_in_area_1_best,
             num_nodes_area_1_best,
-            mod_id_sorted_by_num_nodes,
+            cluster_id_sorted_by_num_nodes,
         ) + self.divideSpaceForTwoClusters(
             cluster_centers,
             # deepcopy(cluster_ia_x_y_distances),
             area_2_best,
-            mods_in_area_2_best,
+            clusters_in_area_2_best,
             num_nodes_area_2_best,
-            mod_id_sorted_by_num_nodes,
+            cluster_id_sorted_by_num_nodes,
         )
 
     def getNodePositions(self, pathways_root_names):
@@ -1075,14 +1090,14 @@ class Cluster_layout:
         total_num_nodes = len(list(self.data_table.index))
         # with open('cluster_areas_03.pkl', "rb") as f:
         #     self.clusters_area = pickle.load(f)
-        for mod_num, (cluster, cluster_area) in enumerate(
+        for cluster_num, (cluster, cluster_area) in enumerate(
             zip(self.clusters, self.clusters_area)
         ):
             sub_graph = self.full_graph.subgraph(cluster)
             print("cluster", cluster_area)
             cluster_node_positions = get_adjusted_force_dir_node_pos(
                 sub_graph,
-                mod_num,
+                cluster_num,
                 pathways_root_names,
                 total_num_nodes,
                 self.l_max,
@@ -1101,18 +1116,18 @@ class Cluster_layout:
         node_positions = normalize_2D_node_pos_in_range(
             self.final_node_pos, [0, max_ext, 0, max_ext], True
         )
-        mod_dic = {
-            pathway: mod_num
-            for mod_num, cluster in enumerate(self.clusters)
+        cluster_dic = {
+            pathway: cluster_num
+            for cluster_num, cluster in enumerate(self.clusters)
             for pathway in cluster
         }
         for root, subpathways in self.reactome_roots.items():
             try:
-                maj_mod_num = most_frequent(
+                maj_cluster_num = most_frequent(
                     [
-                        mod_dic[pathway]
+                        cluster_dic[pathway]
                         for pathway in subpathways
-                        if pathway in mod_dic.keys()
+                        if pathway in cluster_dic.keys()
                     ]
                 )
             except:
@@ -1121,8 +1136,8 @@ class Cluster_layout:
                         root
                     )
                 )
-                maj_mod_num = -1
-            node_positions[root] = [0, 0, maj_mod_num]
+                maj_cluster_num = -1
+            node_positions[root] = [0, 0, maj_cluster_num]
 
         return node_positions
 
@@ -1134,12 +1149,12 @@ class Cluster_layout:
         min_x, max_x = [min(flatten_list[0]), max(flatten_list[1])]
         min_y, max_y = [min(flatten_list[2]), max(flatten_list[3])]
         norm_areas = [] if self.noise_cluster_exists else [[]]
-        for mod in self.clusters_area:
+        for cluster in self.clusters_area:
             norm_area = [
-                normalize_val_in_range(mod[0], min_x, max_x, [0, max_ext]),
-                normalize_val_in_range(mod[1], min_x, max_x, [0, max_ext]),
-                normalize_val_in_range(mod[2], min_y, max_y, [0, max_ext]),
-                normalize_val_in_range(mod[3], min_y, max_y, [0, max_ext]),
+                normalize_val_in_range(cluster[0], min_x, max_x, [0, max_ext]),
+                normalize_val_in_range(cluster[1], min_x, max_x, [0, max_ext]),
+                normalize_val_in_range(cluster[2], min_y, max_y, [0, max_ext]),
+                normalize_val_in_range(cluster[3], min_y, max_y, [0, max_ext]),
             ]
             norm_areas.append(norm_area)
 

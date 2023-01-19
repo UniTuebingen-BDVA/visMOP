@@ -69,8 +69,8 @@ export function zoomLod(this: OverviewGraph): void {
     this.graph.forEachNode((node, attributes) => {
       if (attributes.nodeType == 'regular' && !attributes.clusterFixed) {
         tarPositions[node] = {
-          x: this.graph.getNodeAttribute(attributes.modNum, 'layoutX'),
-          y: this.graph.getNodeAttribute(attributes.modNum, 'layoutY'),
+          x: this.graph.getNodeAttribute(attributes.clusterNum, 'layoutX'),
+          y: this.graph.getNodeAttribute(attributes.clusterNum, 'layoutY'),
           size: attributes.isRoot ? 30 : 0,
           nonHoverSize: attributes.isRoot ? 30 : 0,
         };

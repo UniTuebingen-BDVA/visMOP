@@ -196,7 +196,7 @@ export default class OverviewGraph {
           if (
             !defocus &&
             attributes.id != node &&
-            attributes.modNum == parseInt(node) &&
+            attributes.clusterNum == parseInt(node) &&
             !attributes.isRoot
           ) {
             attributes.x = attributes.xOnClusterFocus;
@@ -713,7 +713,7 @@ export default class OverviewGraph {
       const polygonIdx = parseInt(element);
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
         return (
-          attr.modNum == polygonIdx &&
+          attr.clusterNum == polygonIdx &&
           attr.isRoot == false &&
           attr.nodeType == 'regular'
         );
@@ -832,6 +832,10 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * generate a mapping of clusters to nodes
+   * @returns
+   */
   getClusterNodeIds() {
     const clusterNodeMapping: {
       [key: string]: {
@@ -843,15 +847,15 @@ export default class OverviewGraph {
     this.graph.forEachNode((node, attr) => {
       if (!attr.isRoot) {
         // short circuit eval. to generate the corresponding entry
-        !(attr.modNum in clusterNodeMapping) &&
-          (clusterNodeMapping[attr.modNum] = {
+        !(attr.clusterNum in clusterNodeMapping) &&
+          (clusterNodeMapping[attr.clusterNum] = {
             ids: [],
             pos: [],
             posOnClusterFocus: [],
           });
-        clusterNodeMapping[attr.modNum].ids.push(attr.id);
-        clusterNodeMapping[attr.modNum].pos.push([attr.x, attr.y]);
-        clusterNodeMapping[attr.modNum].posOnClusterFocus.push([
+        clusterNodeMapping[attr.clusterNum].ids.push(attr.id);
+        clusterNodeMapping[attr.clusterNum].pos.push([attr.x, attr.y]);
+        clusterNodeMapping[attr.clusterNum].posOnClusterFocus.push([
           attr.xOnClusterFocus,
           attr.yOnClusterFocus,
         ]);
@@ -860,6 +864,9 @@ export default class OverviewGraph {
     return clusterNodeMapping;
   }
 
+  /**
+   * Adds cluster overview nodes to the graph, using data from the pina storage and from class functions
+   */
   addClusterOverviewNodes() {
     const mainStore = useMainStore();
     const clusterNodeMapping = this.getClusterNodeIds();
@@ -882,7 +889,7 @@ export default class OverviewGraph {
         preFa2Y: yPos,
         xOnClusterFocus: -50,
         yOnClusterFocus: -50,
-        modNum: parseInt(key),
+        clusterNum: parseInt(key),
         isRoot: false,
         zIndex: 1,
         color: overviewColors.clusters,

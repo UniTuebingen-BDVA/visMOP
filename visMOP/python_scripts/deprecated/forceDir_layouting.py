@@ -9,7 +9,7 @@ import time
 
 # with all edges
 def get_adjusted_force_dir_node_pos(
-    G, mod_num, pathways_root_ids, total_num_nodes, l_max, extent
+    G, cluster_num, pathways_root_ids, total_num_nodes, l_max, extent
 ):
     # num_root_ids_per_pathway = [len(root_ids) for root_ids in pathways_root_ids]
     # min_num_root_ids_per_pathway, max_num_root_ids_per_pathway = (min(num_root_ids_per_pathway), max(num_root_ids_per_pathway))
@@ -34,16 +34,16 @@ def get_adjusted_force_dir_node_pos(
             G_with_weights.add_edge(nodes[i], nodes[j], weight=w)
     nx.set_node_attributes(G_with_weights, size_dict)
     pos, pos_out = get_pos_in_force_dir_layout(
-        G_with_weights, mod_num, 2, repulsive_force_par, extent
+        G_with_weights, cluster_num, 2, repulsive_force_par, extent
     )
     # nx.draw(G, pos=pos)
-    # plt.savefig("test2_" + str(mod_num) + ".png", dpi=300)
+    # plt.savefig("test2_" + str(cluster_num) + ".png", dpi=300)
     # plt.close()
     return pos_out
 
 
 def get_pos_in_force_dir_layout(
-    graph, mod_num=0, ewi=1, repulsivForceScaler=2, extent=[]
+    graph, cluster_num=0, ewi=1, repulsivForceScaler=2, extent=[]
 ):
     """
     forceatlas2 = ForceAtlas2(
@@ -78,6 +78,7 @@ def get_pos_in_force_dir_layout(
         extents=centered_extents,
     )
     pos_out = {
-        k: [v[0] + avg_x_extent, v[1] + avg_y_extent, mod_num] for k, v in pos.items()
+        k: [v[0] + avg_x_extent, v[1] + avg_y_extent, cluster_num]
+        for k, v in pos.items()
     }
     return pos, pos_out
