@@ -641,6 +641,7 @@ def reactome_overview():
 
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])
 def get_reactome_json(pathway):
+    pathway = pathway.split("_")[0]
     hierarchy = cache.get("reactome_hierarchy")
     pathway_entry = hierarchy[pathway]
     if not pathway_entry.has_diagram:
