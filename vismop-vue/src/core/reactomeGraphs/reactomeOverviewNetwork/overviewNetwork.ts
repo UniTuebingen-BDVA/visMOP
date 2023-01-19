@@ -265,6 +265,10 @@ export default class OverviewGraph {
     this.renderer.refresh();
     //this.hierarchyClickStack = [];
   }
+
+  /**
+   * Sets graphWidth to the different found in the nodes extent
+   */
   calculateGraphWidth() {
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     this.graphWidth = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
@@ -298,6 +302,11 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * Pushes a node layer in the specified direction, either radially inwards or outwards
+   * @param nodeLayer array of node ids for layer to be pushed
+   * @param direction direction in which to push
+   */
   pushNodeLayer(nodeLayer: string[], direction: 'in' | 'out') {
     const layerSubgraph = subgraph(this.graph, (nodeID, attr) => {
       return (
@@ -330,6 +339,12 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * performs the complete hierarchy step out with a given target node.
+   * moves the hierarchy level of the target node one step outwards displays the nodes one level further
+   * into the hierarchy and animates the nodes by applying the animation and attribute stack
+   * @param targetNode target for the hierarch step out
+   */
   hierarchyStepOut(targetNode: string) {
     const subPathwaysIds = this.graph.getNodeAttribute(targetNode, 'children');
     // check if any upcoming nodes are hierarchy nodes
@@ -367,6 +382,14 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * performs the complete stepout of the hierarchy collapsing lower levels and moving in the remaining layer closer the the center.
+   * Can be used with reset mode, collapsing to the initial state and in callback mode allowing additional functions to be executed after
+   * the step in.
+   * @param resetMode if reset mode should be triggered, returning the graph to its initial state
+   * @param callbackMode if callback mode should be enaled, allowing the use of a callback function to be triggered after the stepout
+   * @param callback  callback function to be called after the step out
+   */
   hierarchyStepIn(
     resetMode = false,
     callbackMode = false,
@@ -427,6 +450,11 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * collapses the hierarchy for the target node an the given level.
+   * @param targetNode target node to cllapse on
+   * @param levelIdx index of current level
+   */
   collapseHierarchyLevel(targetNode: string, levelIdx: number) {
     const currentLevel = this.hierarchyLevels[levelIdx];
     const lastClickedNode =
@@ -448,6 +476,11 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * layouts a hierarhc
+   * @param targetNode
+   * @param skipNode
+   */
   layoutNewHierarchyLevel(targetNode: string, skipNode = '') {
     /**
      * Calculate the position of the nodes in the hierarchy
