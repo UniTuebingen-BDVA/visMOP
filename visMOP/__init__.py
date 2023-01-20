@@ -578,11 +578,10 @@ def reactome_overview():
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
     print(reactome_hierarchy.layout_settings)
     # print(layout_limits, layout_attributes_used)
-
     (
         out_data,
         central_nodes,
-        pathway_dict,
+        query_pathway_dict,
         dropdown_data,
         root_ids,
         pathways_root_names,
@@ -632,7 +631,7 @@ def reactome_overview():
             # "clusterAreas": cluster_areas,
             "pathwayLayouting": {
                 "pathwayList": dropdown_data,
-                "pathwayNodeDictionary": pathway_dict,
+                "queryToPathwayDictionary": query_pathway_dict,
                 "rootIds": root_ids,
             },
         }

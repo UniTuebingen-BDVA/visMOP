@@ -69,27 +69,27 @@ export default class OverviewFilter {
     } else if (
       this.funcNegativeRoot(node) &&
       this.funcRoot(node) &&
-      this.funcTrans(attributes.averageTranscriptomics as number) &&
-      this.funcAmtAbsTrans(attributes.transcriptomicsNodeState.regulated) &&
+      this.funcTrans(attributes.fcAverages.transcriptomics as number) &&
+      this.funcAmtAbsTrans(attributes.nodeState.transcriptomics.regulated) &&
       this.funcAmtRelTrans(
-        (attributes.transcriptomicsNodeState.regulated /
-          attributes.transcriptomicsNodeState.total) *
+        (attributes.nodeState.transcriptomics.regulated /
+          attributes.nodeState.transcriptomics.total) *
           100
       ) &&
-      this.funcProt(attributes.averageProteomics as number) &&
-      this.funcAmtAbsProt(attributes.proteomicsNodeState.regulated) &&
+      this.funcProt(attributes.fcAverages.proteomics as number) &&
+      this.funcAmtAbsProt(attributes.nodeState.proteomics.regulated) &&
       this.funcAmtRelProt(
-        (attributes.proteomicsNodeState.regulated /
-          attributes.proteomicsNodeState.total) *
+        (attributes.nodeState.proteomics.regulated /
+          attributes.nodeState.proteomics.total) *
           100
       ) &&
-      this.funcAmtAbsMeta(attributes.metabolomicsNodeState.regulated) &&
+      this.funcAmtAbsMeta(attributes.nodeState.metabolomics.regulated) &&
       this.funcAmtRelMeta(
-        (attributes.metabolomicsNodeState.regulated /
-          attributes.metabolomicsNodeState.total) *
+        (attributes.nodeState.metabolomics.regulated /
+          attributes.nodeState.metabolomics.total) *
           100
       ) &&
-      this.funcMeta(attributes.averageMetabolomics as number) &&
+      this.funcMeta(attributes.fcAverages.metabolomics as number) &&
       this.funcAmtAbsSum(getRegSum(false, attributes)) &&
       this.funcAmtRelSum(getRegSum(true, attributes))
     ) {
@@ -253,21 +253,21 @@ export default class OverviewFilter {
 function getRegSum(relative: boolean, attributes: overviewNodeAttr): number {
   if (relative) {
     const enumerator =
-      attributes.transcriptomicsNodeState.regulated +
-      attributes.proteomicsNodeState.regulated +
-      attributes.metabolomicsNodeState.regulated;
+      attributes.nodeState.transcriptomics.regulated +
+      attributes.nodeState.proteomics.regulated +
+      attributes.nodeState.metabolomics.regulated;
 
     const divisor =
-      attributes.transcriptomicsNodeState.total +
-      attributes.proteomicsNodeState.total +
-      attributes.metabolomicsNodeState.total;
+      attributes.nodeState.transcriptomics.total +
+      attributes.nodeState.proteomics.total +
+      attributes.nodeState.metabolomics.total;
     const val = (enumerator / divisor) * 100;
     return val;
   } else {
     const val =
-      attributes.transcriptomicsNodeState.regulated +
-      attributes.proteomicsNodeState.regulated +
-      attributes.metabolomicsNodeState.regulated;
+      attributes.nodeState.transcriptomics.regulated +
+      attributes.nodeState.proteomics.regulated +
+      attributes.nodeState.metabolomics.regulated;
     return val;
   }
 }

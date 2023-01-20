@@ -60,7 +60,6 @@ type overviewNodeAttr = baseNodeAttr & {
   yOnClusterFocus: number;
   xOnClusterFocus: number;
   clusterNum: number;
-  up: upDatedPos;
   isRoot: boolean;
   nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other';
   nonHoverSize: number;
@@ -74,32 +73,22 @@ type overviewNodeAttr = baseNodeAttr & {
   clusterHidden: boolean;
   clusterFixed: boolean;
   forceLabel: boolean;
-  averageTranscriptomics: number;
-  averageProteomics: number;
-  averageMetabolomics: number;
-  transcriptomicsNodeState: { regulated: number; total: number };
-  proteomicsNodeState: { regulated: number; total: number };
-  metabolomicsNodeState: { regulated: number; total: number };
+  fcAverages: {
+    transcriptomics: number;
+    proteomics: number;
+    metabolomics: number;
+  };
+  nodeState: {
+    transcriptomics: { regulated: number; total: number };
+    proteomics: { regulated: number; total: number };
+    metabolomics: { regulated: number; total: number };
+  };
   rootId: string;
   parents: string[];
   children: string[];
   subtreeIds: string[];
   visibleSubtree: boolean;
 };
-
-type CartesianVector = {
-  x: number;
-  y: number;
-};
-/**
- * Defines a updated node position
- */
-type upDatedPos = {
-  x: number;
-  y: number;
-  gamma: number;
-};
-
 /**
  * Defines a node
  */

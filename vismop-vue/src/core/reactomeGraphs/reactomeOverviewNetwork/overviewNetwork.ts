@@ -897,7 +897,6 @@ export default class OverviewGraph {
         nodeType: 'cluster',
         nonHoverSize: this.CLUSTER_DEFAULT_SIZE,
         fixed: false,
-        up: { x: xPos, y: yPos, gamma: 0 },
         type: 'image',
         label: `Cluster: ${key}`,
         image: glyphs[key],
@@ -910,12 +909,16 @@ export default class OverviewGraph {
         clusterHidden: false,
         clusterFixed: false,
         forceLabel: false,
-        averageTranscriptomics: 0,
-        averageProteomics: 0,
-        averageMetabolomics: 0,
-        transcriptomicsNodeState: { regulated: 0, total: 0 },
-        proteomicsNodeState: { regulated: 0, total: 0 },
-        metabolomicsNodeState: { regulated: 0, total: 0 },
+        fcAverages: {
+          transcriptomics: 0,
+          proteomics: 0,
+          metabolomics: 0,
+        },
+        nodeState: {
+          transcriptomics: { regulated: 0, total: 0 },
+          proteomics: { regulated: 0, total: 0 },
+          metabolomics: { regulated: 0, total: 0 },
+        },
         rootId: '',
         parents: [],
         children: [],
@@ -988,7 +991,7 @@ export default class OverviewGraph {
    */
   public refreshCurrentPathway() {
     const mainStore = useMainStore();
-    this.currentPathway = mainStore.pathwayDropdown.value;
+    this.currentPathway = mainStore.selectedPathway;
     this.highlightedEdgesClick.clear();
     this.highlightedNodesClick.clear();
     if (this.currentPathway) {

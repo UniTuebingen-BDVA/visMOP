@@ -94,27 +94,30 @@ export function generateGraphData(
             : overviewColors.default,
         label: `${_.escape(name)}`,
         forceLabel: !entry.isCentral,
-        averageTranscriptomics: glyphData[id].transcriptomics.available
-          ? glyphData[id].transcriptomics.meanFoldchange
-          : NaN,
-        averageProteomics: glyphData[id].proteomics.available
-          ? glyphData[id].proteomics.meanFoldchange
-          : NaN,
-        averageMetabolomics: glyphData[id].metabolomics.available
-          ? glyphData[id].metabolomics.meanFoldchange
-          : NaN,
-        transcriptomicsNodeState: glyphData[id].transcriptomics.available
-          ? glyphData[id].transcriptomics.nodeState
-          : { regulated: 0, total: 0 },
-        proteomicsNodeState: glyphData[id].proteomics.available
-          ? glyphData[id].proteomics.nodeState
-          : { regulated: 0, total: 0 },
-        metabolomicsNodeState: glyphData[id].metabolomics.available
-          ? glyphData[id].metabolomics.nodeState
-          : { regulated: 0, total: 0 },
+        fcAverages: {
+          transcriptomics: glyphData[id].transcriptomics.available
+            ? glyphData[id].transcriptomics.meanFoldchange
+            : NaN,
+          proteomics: glyphData[id].proteomics.available
+            ? glyphData[id].proteomics.meanFoldchange
+            : NaN,
+          metabolomics: glyphData[id].metabolomics.available
+            ? glyphData[id].metabolomics.meanFoldchange
+            : NaN,
+        },
+        nodeState: {
+          transcriptomics: glyphData[id].transcriptomics.available
+            ? glyphData[id].transcriptomics.nodeState
+            : { regulated: 0, total: 0 },
+          proteomics: glyphData[id].proteomics.available
+            ? glyphData[id].proteomics.nodeState
+            : { regulated: 0, total: 0 },
+          metabolomics: glyphData[id].metabolomics.available
+            ? glyphData[id].metabolomics.nodeState
+            : { regulated: 0, total: 0 },
+        },
         x: initPosX, // Math.random() * 20,
         y: initPosY,
-        up: { x: initPosX, y: initPosY, gamma: 0 },
         layoutX: initPosX,
         layoutY: initPosX,
         preFa2X: initPosX,

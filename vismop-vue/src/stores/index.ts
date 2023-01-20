@@ -44,12 +44,12 @@ interface State {
   };
   pathwayLayouting: {
     pathwayList: [{ text: string; value: string; title: string }];
-    pathwayNodeDictionary: { [key: string]: string[] };
+    queryToPathwayDictionary: { [key: string]: string[] };
     nodePathwayDictionary: { [key: string]: string[] };
-    pathwayNodeDictionaryClean: { [key: string]: (string | number)[] };
     rootIds: string[];
   };
-  pathwayDropdown: { title: string; value: string; text: string };
+  selectedPathway: string;
+  detailDropdown: string;
   omicsRecieved: {
     proteomics: boolean;
     transcriptomics: boolean;
@@ -101,12 +101,12 @@ export const useMainStore = defineStore('mainStore', {
     },
     pathwayLayouting: {
       pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
-      pathwayNodeDictionary: {},
+      queryToPathwayDictionary: {},
       nodePathwayDictionary: {},
-      pathwayNodeDictionaryClean: {},
       rootIds: [],
     },
-    pathwayDropdown: { title: '', value: '', text: '' },
+    selectedPathway: '',
+    detailDropdown: '',
     omicsRecieved: {
       transcriptomics: false,
       proteomics: false,
@@ -302,30 +302,26 @@ export const useMainStore = defineStore('mainStore', {
     },
     setPathwayLayouting(val: {
       pathwayList: [{ text: string; value: string; title: string }];
-      pathwayNodeDictionary: { [key: string]: string[] };
+      queryToPathwayDictionary: { [key: string]: string[] };
       rootIds: string[];
     }) {
       this.pathwayLayouting = {
         ...val,
-        nodePathwayDictionary: val.pathwayNodeDictionary,
-        pathwayNodeDictionaryClean: val.pathwayNodeDictionary,
+        nodePathwayDictionary: val.queryToPathwayDictionary,
         rootIds: val.rootIds,
       };
     },
     focusPathwayViaOverview(val: { nodeID: string; label: string }) {
-      const valClean = val.nodeID.replace('path:', '');
-      this.pathwayDropdown = {
-        title: val.label,
-        value: valClean,
-        text: `${valClean}: ${val.label}`,
-      };
+      this.selectedPathway = val.nodeID.split('_')[0];
+      this.detailDropdown = val.nodeID;
     },
     focusPathwayViaDropdown(val: {
       title: string;
       value: string;
       text: string;
     }) {
-      this.pathwayDropdown = val;
+      this.selectedPathway = val.value.split('_')[0];
+      this.detailDropdown = val.value;
     },
 
     selectPathwayCompare(val: string[]) {

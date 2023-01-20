@@ -5,7 +5,7 @@
         <q-select
           v-model="pathwaySelection"
           filled
-          :options="pathwayDropdownOptions"
+          :options="selectedPathwayOptions"
           label="Focus Pathway"
           use-input
           input-debounce="0"
@@ -104,11 +104,12 @@ const currentInsetPathwaysTotals = ref(
   }
 );
 const currentView: Ref<ReactomeDetailView | undefined> = ref(undefined);
-const pathwayDropdownOptions: Ref<
+const selectedPathwayOptions: Ref<
   { title: string; value: string; text: string }[]
 > = ref([]);
 
-const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
+const selectedPathway = computed(() => mainStore.selectedPathway);
+const detailDropdown = computed(() => mainStore.detailDropdown);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const overviewData = computed(
   () => mainStore.overviewData as { [key: string]: reactomeEntry }
@@ -145,7 +146,7 @@ const sizeClass = computed(() => {
 });
 
 watch(pathwayLayouting, () => {
-  pathwayDropdownOptions.value = pathwayLayouting.value.pathwayList;
+  selectedPathwayOptions.value = pathwayLayouting.value.pathwayList;
 });
 watch(pathwaySelection, () => {
   if (pathwaySelection.value) {
@@ -158,9 +159,14 @@ watch(pathwaySelection, () => {
     mainStore.focusPathwayViaDropdown(pathwaySelection.value);
   }
 });
-watch(pathwayDropdown, () => {
-  if (pathwayDropdown.value) {
-    pathwaySelection.value = pathwayDropdown.value;
+watch(detailDropdown, () => {
+  if (detailDropdown.value) {
+    const optionEntry = selectedPathwayOptions.value.find(
+      (elem) => elem.value === detailDropdown.value
+    );
+    pathwaySelection.value = optionEntry
+      ? optionEntry
+      : { text: '', title: '', value: '' };
   }
 });
 
@@ -181,7 +187,7 @@ const cycleSize = () => {
 const filterFunction = (val: string, update: (n: () => void) => void) => {
   update(() => {
     const tarValue = val.toLowerCase();
-    pathwayDropdownOptions.value = pathwayLayouting.value.pathwayList.filter(
+    selectedPathwayOptions.value = pathwayLayouting.value.pathwayList.filter(
       (v: { text: string; value: string; title: string }) =>
         v.text.toLowerCase().indexOf(tarValue) > -1
     );

@@ -193,7 +193,7 @@ const fa2LayoutParams = ref({
 });
 
 const overviewData = computed(() => mainStore.overviewData);
-const pathwayDropdown = computed(() => mainStore.pathwayDropdown);
+const selectedPathway = computed(() => mainStore.selectedPathway);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
@@ -325,7 +325,7 @@ watch(
     // networkGraph?.setPathwaysContainingSelection(intersection)
   }
 );
-watch(pathwayDropdown, () => {
+watch(selectedPathway, () => {
   networkGraph.value?.refreshCurrentPathway();
 });
 watch(overviewData, () => {

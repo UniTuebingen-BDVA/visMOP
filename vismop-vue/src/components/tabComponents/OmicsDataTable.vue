@@ -49,7 +49,7 @@ const tableData = computed(() => mainStore.tableData[props.omicsType]);
 const tableHeaders = computed(() => mainStore.tableHeaders[props.omicsType]);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
-const selectedPathway = computed(() => mainStore.pathwayDropdown);
+const selectedPathway = computed(() => mainStore.selectedPathway);
 const targetDatabase = computed(() => mainStore.targetDatabase);
 
 /* watchers */
@@ -71,9 +71,9 @@ watch(selectedPathway, () => {
               chebiIDs.forEach((element) => {
                 try {
                   includedInSelectedPathway = selectedPathway.value
-                    ? pathwayLayouting.value.pathwayNodeDictionary[
+                    ? pathwayLayouting.value.queryToPathwayDictionary[
                         element
-                      ].includes(selectedPathway.value.value)
+                      ].includes(selectedPathway.value)
                     : false;
                 } catch (error) {
                   //
@@ -82,15 +82,15 @@ watch(selectedPathway, () => {
             }
           } else {
             includedInSelectedPathway = selectedPathway.value
-              ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                  selectedPathway.value.value
-                )
+              ? pathwayLayouting.value.queryToPathwayDictionary[
+                  symbol
+                ].includes(selectedPathway.value)
               : false;
           }
         } else {
           includedInSelectedPathway = selectedPathway.value
-            ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                selectedPathway.value.value
+            ? pathwayLayouting.value.queryToPathwayDictionary[symbol].includes(
+                selectedPathway.value
               )
             : false;
         }
