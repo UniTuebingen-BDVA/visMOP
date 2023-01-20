@@ -823,7 +823,7 @@ export default class OverviewGraph {
       const polygonIdx = parseInt(element);
       const currentPolygon = this.polygons[polygonIdx];
 
-      const currentNodes = useMainStore().clusters[polygonIdx];
+      const currentNodes = useMainStore().clusterData.clusters[polygonIdx];
 
       const polygonBB = currentPolygon.getBoundingBox();
       const minX = polygonBB.vertices[0][0];
@@ -873,9 +873,9 @@ export default class OverviewGraph {
     const glyphs = generateGlyphs(
       mainStore.glyphData,
       OverviewGraph.GLYPH_SIZE,
-      mainStore.clusters
+      mainStore.clusterData.clusters
     );
-    for (const key in mainStore.clusters) {
+    for (const key in mainStore.clusterData.clusters) {
       const xPos = this.polygons[key].getCenter()[0]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[0]));
       const yPos = this.polygons[key].getCenter()[1]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[1]));
       const clusterNode: overviewNodeAttr = {

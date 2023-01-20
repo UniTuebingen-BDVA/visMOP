@@ -402,13 +402,13 @@ const getReactomeData = () => {
         return Promise.reject(dataContent.ErrorMsg);
       }
       mainStore.setOverviewData(dataContent.overviewData);
-      //for voronoiTest
-      //mainStore.setClusterAreas(dataContent.clusterAreas);
       mainStore.setAmtTimepoints(dataContent.amtTimepoints);
-      mainStore.setClusters(dataContent.clusters);
-      mainStore.setNoiseClusterExists(dataContent.noiseClusterExists);
-      mainStore.setClusterCenters(dataContent.clusterCenters);
-      mainStore.setPathwayLayouting(dataContent.pathwayLayouting);
+      mainStore.setClusterData(dataContent.clusterData);
+      mainStore.setPathwayList(dataContent.pathwayList);
+      mainStore.setQueryToPathwayDictionary(
+        dataContent.queryToPathwayDictionary
+      );
+      mainStore.setRootIds(dataContent.rootIds);
     })
     .then(
       () => $q.loading.hide(),

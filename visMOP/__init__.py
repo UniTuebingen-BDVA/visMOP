@@ -625,15 +625,14 @@ def reactome_overview():
             "exitState": 0,
             "overviewData": out_data_dict,
             "amtTimepoints": reactome_hierarchy.amt_timesteps,
-            "clusters": clusters,
-            "clusterCenters": cluster_centers,
-            "noiseClusterExists": noiseClusterExists,
-            # "clusterAreas": cluster_areas,
-            "pathwayLayouting": {
-                "pathwayList": dropdown_data,
-                "queryToPathwayDictionary": query_pathway_dict,
-                "rootIds": root_ids,
+            "clusterData": {
+                "clusters": clusters,
+                "clusterCenters": cluster_centers,
+                "noiseClusterExists": noiseClusterExists,
             },
+            "pathwayList": dropdown_data,
+            "queryToPathwayDictionary": query_pathway_dict,
+            "rootIds": root_ids,
         }
     )
 

@@ -44,7 +44,9 @@ const selectedEntriesComp = computed({
 });
 
 /* Store Variables */
-const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
+const queryToPathwayDictionary = computed(
+  () => mainStore.queryToPathwayDictionary
+);
 const tableData = computed(() => mainStore.tableData[props.omicsType]);
 const tableHeaders = computed(() => mainStore.tableHeaders[props.omicsType]);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
@@ -71,9 +73,9 @@ watch(selectedPathway, () => {
               chebiIDs.forEach((element) => {
                 try {
                   includedInSelectedPathway = selectedPathway.value
-                    ? pathwayLayouting.value.queryToPathwayDictionary[
-                        element
-                      ].includes(selectedPathway.value)
+                    ? queryToPathwayDictionary.value[element].includes(
+                        selectedPathway.value
+                      )
                     : false;
                 } catch (error) {
                   //
@@ -82,14 +84,14 @@ watch(selectedPathway, () => {
             }
           } else {
             includedInSelectedPathway = selectedPathway.value
-              ? pathwayLayouting.value.queryToPathwayDictionary[
-                  symbol
-                ].includes(selectedPathway.value)
+              ? queryToPathwayDictionary.value[symbol].includes(
+                  selectedPathway.value
+                )
               : false;
           }
         } else {
           includedInSelectedPathway = selectedPathway.value
-            ? pathwayLayouting.value.queryToPathwayDictionary[symbol].includes(
+            ? queryToPathwayDictionary.value[symbol].includes(
                 selectedPathway.value
               )
             : false;

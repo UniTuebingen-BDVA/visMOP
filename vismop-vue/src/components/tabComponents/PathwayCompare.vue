@@ -45,9 +45,8 @@
           <div class="row justify-center">
             <div class="positionCardTitle">
               {{
-                pathwayLayouting.pathwayList.find(
-                  (elem) => elem.value === element.pathway
-                )?.title +
+                pathwayList.find((elem) => elem.value === element.pathway)
+                  ?.title +
                 ' ' +
                 formatTime(element.pathway.split('_')[1]) +
                 ' Timepoint'
@@ -168,7 +167,7 @@ const mainStore = useMainStore();
 
 const pathwayCompare = computed(() => mainStore.pathwayCompare);
 //const glyphData = computed(() => mainStore.glyphData);
-const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
+const pathwayList = computed(() => mainStore.pathwayList);
 const glyphs = computed(() => mainStore.glyphs);
 
 const options = {

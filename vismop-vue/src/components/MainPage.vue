@@ -137,9 +137,11 @@ const selectedTabMisc = ref('dataTable');
 const selectedTranscriptomics: Ref<{ [key: string]: string }[]> = ref([]);
 const selectedProteomics: Ref<{ [key: string]: string }[]> = ref([]);
 const selectedMetabolomics: Ref<{ [key: string]: string }[]> = ref([]);
-const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
+const queryToPathwayDictionary = computed(
+  () => mainStore.queryToPathwayDictionary
+);
 
-watch(pathwayLayouting, () => {
+watch(queryToPathwayDictionary, () => {
   mainStore.setAvailables('transcriptomics');
   mainStore.setAvailables('proteomics');
   mainStore.setAvailables('metabolomics');

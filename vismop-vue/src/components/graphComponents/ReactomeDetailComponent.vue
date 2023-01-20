@@ -108,9 +108,8 @@ const selectedPathwayOptions: Ref<
   { title: string; value: string; text: string }[]
 > = ref([]);
 
-const selectedPathway = computed(() => mainStore.selectedPathway);
 const detailDropdown = computed(() => mainStore.detailDropdown);
-const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
+const pathwayList = computed(() => mainStore.pathwayList);
 const overviewData = computed(
   () => mainStore.overviewData as { [key: string]: reactomeEntry }
 );
@@ -145,8 +144,8 @@ const sizeClass = computed(() => {
   }
 });
 
-watch(pathwayLayouting, () => {
-  selectedPathwayOptions.value = pathwayLayouting.value.pathwayList;
+watch(pathwayList, () => {
+  selectedPathwayOptions.value = pathwayList.value;
 });
 watch(pathwaySelection, () => {
   if (pathwaySelection.value) {
@@ -187,7 +186,7 @@ const cycleSize = () => {
 const filterFunction = (val: string, update: (n: () => void) => void) => {
   update(() => {
     const tarValue = val.toLowerCase();
-    selectedPathwayOptions.value = pathwayLayouting.value.pathwayList.filter(
+    selectedPathwayOptions.value = pathwayList.value.filter(
       (v: { text: string; value: string; title: string }) =>
         v.text.toLowerCase().indexOf(tarValue) > -1
     );

@@ -696,8 +696,8 @@ class Cluster_layout:
         for result in pool.imap_unordered(
             simplified_func,
             range(
-                math.floor(num_pathways / 50),
-                math.floor(num_pathways / 50) + self.pool_size,
+                math.floor(max(4, num_pathways / 80)),
+                math.floor(max(4, num_pathways / 80)) + self.pool_size,
             ),
         ):
             if result:

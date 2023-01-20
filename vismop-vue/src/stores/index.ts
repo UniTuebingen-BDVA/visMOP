@@ -42,12 +42,11 @@ interface State {
     proteomics: d3.ScaleDiverging<string, never>;
     metabolomics: d3.ScaleDiverging<string, never>;
   };
-  pathwayLayouting: {
-    pathwayList: [{ text: string; value: string; title: string }];
-    queryToPathwayDictionary: { [key: string]: string[] };
-    nodePathwayDictionary: { [key: string]: string[] };
-    rootIds: string[];
-  };
+
+  pathwayList: [{ text: string; value: string; title: string }];
+  queryToPathwayDictionary: { [key: string]: string[] };
+  rootIds: string[];
+
   selectedPathway: string;
   detailDropdown: string;
   omicsRecieved: {
@@ -67,10 +66,12 @@ interface State {
     url: { [key: string]: string };
     svg: { [key: string]: SVGElement };
   };
-  clusterAreas: [number[]];
-  clusters: string[][];
-  noiseClusterExists: boolean;
-  clusterCenters: [number, number][];
+  clusterData: {
+    clusters: string[][];
+    noiseClusterExists: boolean;
+    clusterCenters: [number, number][];
+  };
+
   keggChebiTranslate: { [key: string]: string[] };
 }
 
@@ -99,12 +100,11 @@ export const useMainStore = defineStore('mainStore', {
       proteomics: d3.scaleDiverging(),
       metabolomics: d3.scaleDiverging(),
     },
-    pathwayLayouting: {
-      pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
-      queryToPathwayDictionary: {},
-      nodePathwayDictionary: {},
-      rootIds: [],
-    },
+
+    pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
+    queryToPathwayDictionary: {},
+    rootIds: [],
+
     selectedPathway: '',
     detailDropdown: '',
     omicsRecieved: {
@@ -117,10 +117,11 @@ export const useMainStore = defineStore('mainStore', {
     pathwayCompare: [],
     glyphData: {},
     glyphs: { url: {}, svg: {} },
-    clusterAreas: [[]],
-    clusters: [],
-    noiseClusterExists: false,
-    clusterCenters: [],
+    clusterData: {
+      clusters: [],
+      noiseClusterExists: false,
+      clusterCenters: [],
+    },
     keggChebiTranslate: {},
   }),
   actions: {
@@ -172,7 +173,7 @@ export const useMainStore = defineStore('mainStore', {
                 chebiIDs.forEach((element: string) => {
                   try {
                     pathwaysContaining.push(
-                      ...this.pathwayLayouting.nodePathwayDictionary[element]
+                      ...this.queryToPathwayDictionary[element]
                     );
                   } catch (error) {
                     //
@@ -180,12 +181,10 @@ export const useMainStore = defineStore('mainStore', {
                 });
               }
             } else {
-              pathwaysContaining =
-                this.pathwayLayouting.nodePathwayDictionary[symbol];
+              pathwaysContaining = this.queryToPathwayDictionary[symbol];
             }
           } else {
-            pathwaysContaining =
-              this.pathwayLayouting.nodePathwayDictionary[symbol];
+            pathwaysContaining = this.queryToPathwayDictionary[symbol];
           }
           row._reserved_available = pathwaysContaining
             ? pathwaysContaining.length
@@ -210,17 +209,12 @@ export const useMainStore = defineStore('mainStore', {
     setGraphData(val: graphData) {
       this.graphData = val;
     },
-    setClusterAreas(val: [number[]]) {
-      this.clusterAreas = val;
-    },
-    setClusters(val: string[][]) {
-      this.clusters = val;
-    },
-    setNoiseClusterExists(val: boolean) {
-      this.noiseClusterExists = val;
-    },
-    setClusterCenters(val: [number, number][]) {
-      this.clusterCenters = val;
+    setClusterData(val: {
+      clusters: string[][];
+      noiseClusterExists: boolean;
+      clusterCenters: [number, number][];
+    }) {
+      this.clusterData = val;
     },
     setFcs(val: {
       transcriptomics: { [key: string]: number[] };
@@ -300,16 +294,14 @@ export const useMainStore = defineStore('mainStore', {
         metabolomics: colorScaleMetabolomics,
       };
     },
-    setPathwayLayouting(val: {
-      pathwayList: [{ text: string; value: string; title: string }];
-      queryToPathwayDictionary: { [key: string]: string[] };
-      rootIds: string[];
-    }) {
-      this.pathwayLayouting = {
-        ...val,
-        nodePathwayDictionary: val.queryToPathwayDictionary,
-        rootIds: val.rootIds,
-      };
+    setPathwayList(val: [{ text: string; value: string; title: string }]) {
+      this.pathwayList = val;
+    },
+    setQueryToPathwayDictionary(val: { [key: string]: string[] }) {
+      this.queryToPathwayDictionary = val;
+    },
+    setRootIds(val: string[]) {
+      this.rootIds = val;
     },
     focusPathwayViaOverview(val: { nodeID: string; label: string }) {
       this.selectedPathway = val.nodeID.split('_')[0];

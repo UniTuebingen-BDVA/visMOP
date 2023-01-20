@@ -207,8 +207,8 @@ const rootFilter = computed({
 });
 
 const rootFilterOptions = computed(() => {
-  const rootIDs = mainStore.pathwayLayouting.rootIds;
-  const pathways = mainStore.pathwayLayouting.pathwayList;
+  const rootIDs = mainStore.rootIds;
+  const pathways = mainStore.pathwayList;
   const options: { text: string; value: string; title: string }[] = [];
   rootIDs.forEach((v) => {
     const text = pathways.filter((d) => {

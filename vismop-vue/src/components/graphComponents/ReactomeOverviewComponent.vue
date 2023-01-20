@@ -194,7 +194,10 @@ const fa2LayoutParams = ref({
 
 const overviewData = computed(() => mainStore.overviewData);
 const selectedPathway = computed(() => mainStore.selectedPathway);
-const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
+const queryToPathwayDictionary = computed(
+  () => mainStore.queryToPathwayDictionary
+);
+const rootIds = computed(() => mainStore.rootIds);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
 
@@ -244,8 +247,7 @@ watch(
     props.transcriptomicsSelection?.forEach(
       (element: { [key: string]: string }) => {
         const symbol = element[usedSymbolCols.value.transcriptomics];
-        const pathwaysContaining =
-          pathwayLayouting.value.nodePathwayDictionary[symbol]; // [0] ??????? TODO BUG CHECK???
+        const pathwaysContaining = queryToPathwayDictionary.value[symbol]; // [0] ??????? TODO BUG CHECK???
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
     );
@@ -268,8 +270,7 @@ watch(
     const foundPathways: string[][] = [];
     props.proteomicsSelection?.forEach((element: { [key: string]: string }) => {
       const symbol = element[usedSymbolCols.value.proteomics];
-      const pathwaysContaining =
-        pathwayLayouting.value.nodePathwayDictionary[symbol];
+      const pathwaysContaining = queryToPathwayDictionary.value[symbol];
       if (pathwaysContaining) foundPathways.push(pathwaysContaining);
     });
     const intersection =
@@ -299,15 +300,14 @@ watch(
           chebiIDs.forEach((element) => {
             try {
               pathwaysContaining.push(
-                ...pathwayLayouting.value.nodePathwayDictionary[element]
+                ...queryToPathwayDictionary.value[element]
               );
             } catch {
               // id not in dict
             }
           });
         } else {
-          pathwaysContaining =
-            pathwayLayouting.value.nodePathwayDictionary[symbol]; //[0] ???? bugcheck
+          pathwaysContaining = queryToPathwayDictionary.value[symbol]; //[0] ???? bugcheck
         }
         if (pathwaysContaining) foundPathways.push(pathwaysContaining);
       }
@@ -557,13 +557,18 @@ const drawNetwork = () => {
   );
   console.log(generatedGlyphsHighDetail, generatedGlyphsLowDetail);
   mainStore.setGlyphs(generatedGlyphsHighDetail);
-  const clusterWeights = mainStore.clusters.map((elem) => elem.length);
+  const clusterWeights = mainStore.clusterData.clusters.map(
+    (elem) => elem.length
+  );
   const polygons = generateVoronoiCells(
     250,
     clusterWeights,
-    mainStore.clusterCenters
+    mainStore.clusterData.clusterCenters
   );
-  const positionMapping = nodePolygonMapping(mainStore.clusters, polygons);
+  const positionMapping = nodePolygonMapping(
+    mainStore.clusterData.clusters,
+    polygons
+  );
   const polygonsArrays: [number, number][][] = [];
   for (let index = 0; index < Object.keys(polygons).length; index++) {
     polygonsArrays.push(polygons[index].verticesToArray(true));
@@ -574,7 +579,7 @@ const drawNetwork = () => {
     generatedGlyphsHighDetail.url,
     generatedGlyphsLowDetail.url,
     glyphDataVar.value,
-    pathwayLayouting.value.rootIds,
+    rootIds.value,
     polygons,
     positionMapping
   );
