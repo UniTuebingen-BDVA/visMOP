@@ -282,7 +282,6 @@ export class HighDetailGlyph {
       .attr('stroke-width', -2);
     if (!this.pathwayCompare) {
       arcSeg.on('click', (event, d) => {
-        mainStore.addClickedNode({ queryID: d.queryID, name: d.name });
         event.stopPropagation();
       });
     }

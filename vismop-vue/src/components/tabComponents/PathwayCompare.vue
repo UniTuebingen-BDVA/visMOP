@@ -161,13 +161,13 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
 import { useMainStore } from '@/stores';
-import { computed, nextTick, watch } from 'vue';
+import { computed, nextTick } from 'vue';
 import { Sortable } from 'sortablejs-vue3';
 
 const mainStore = useMainStore();
 
 const pathwayCompare = computed(() => mainStore.pathwayCompare);
-const glyphData = computed(() => mainStore.glyphData);
+//const glyphData = computed(() => mainStore.glyphData);
 const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
 const glyphs = computed(() => mainStore.glyphs);
 

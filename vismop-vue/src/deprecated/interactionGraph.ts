@@ -8,7 +8,7 @@ import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
 import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
-import { defaultInteractionGraphEdgeColor } from './colors';
+import { defaultInteractionGraphEdgeColor } from '../core/colors';
 const satColors = [
   'rgba(228,26,28,1.0)',
   'rgba(55,126,184,1.0)',

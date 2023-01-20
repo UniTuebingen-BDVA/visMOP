@@ -25,7 +25,6 @@ export function generateGraphData(
     [key: string]: glyphData;
   },
   rootIds: string[],
-  clusterAreas: [number[]] = [[]],
   voronoiPolygons: {
     [key: number]: ConvexPolygon;
   },

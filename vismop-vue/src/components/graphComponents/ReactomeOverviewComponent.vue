@@ -543,7 +543,6 @@ const removeSelection = () => {
 };
 const drawNetwork = () => {
   networkGraph.value?.killGraph();
-  // const fcExtents = fcQuantiles
   glyphDataVar.value = generateGlyphDataReactome();
   mainStore.setGlyphData(glyphDataVar.value);
   const generatedGlyphsHighDetail = generateGlyphs(
@@ -558,8 +557,6 @@ const drawNetwork = () => {
   );
   console.log(generatedGlyphsHighDetail, generatedGlyphsLowDetail);
   mainStore.setGlyphs(generatedGlyphsHighDetail);
-  //const clusterAreas = mainStore.clusterAreas;
-  //get cluster areas here!!!
   const clusterWeights = mainStore.clusters.map((elem) => elem.length);
   const polygons = generateVoronoiCells(
     250,
@@ -578,7 +575,6 @@ const drawNetwork = () => {
     generatedGlyphsLowDetail.url,
     glyphDataVar.value,
     pathwayLayouting.value.rootIds,
-    [[1, 1, 1, 1]],
     polygons,
     positionMapping
   );
