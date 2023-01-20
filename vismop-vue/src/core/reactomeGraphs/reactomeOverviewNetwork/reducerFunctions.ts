@@ -67,9 +67,7 @@ export function nodeReducer(
         hidden: hidden,
       };
     }
-    if (
-      this.pathwaysContainingIntersection.includes(node.replace('path:', ''))
-    ) {
+    if (this.pathwaysContainingIntersection.includes(node.split('_')[0])) {
       return {
         ...data,
         color: overviewColors.intersection,
@@ -79,7 +77,7 @@ export function nodeReducer(
         hidden: hidden,
       };
     }
-    if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
+    if (this.pathwaysContainingUnion.includes(node.split('_')[0])) {
       return {
         ...data,
         color: overviewColors.union,
