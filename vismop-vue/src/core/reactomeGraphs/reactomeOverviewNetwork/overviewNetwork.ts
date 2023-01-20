@@ -866,50 +866,16 @@ export default class OverviewGraph {
   }
 
   /**
-   * generate a mapping of clusters to nodes
-   * @returns object with cluster IDs as keys and information about the contained nodes
-   * (ids, layout positions and layout position when the cluster is selected)
-   */
-  getClusterNodeIds() {
-    const clusterNodeMapping: {
-      [key: string]: {
-        ids: string[];
-        pos: number[][];
-        posOnClusterFocus: number[][];
-      };
-    } = {};
-    this.graph.forEachNode((node, attr) => {
-      if (!attr.isRoot) {
-        // short circuit eval. to generate the corresponding entry
-        !(attr.clusterNum in clusterNodeMapping) &&
-          (clusterNodeMapping[attr.clusterNum] = {
-            ids: [],
-            pos: [],
-            posOnClusterFocus: [],
-          });
-        clusterNodeMapping[attr.clusterNum].ids.push(attr.id);
-        clusterNodeMapping[attr.clusterNum].pos.push([attr.x, attr.y]);
-        clusterNodeMapping[attr.clusterNum].posOnClusterFocus.push([
-          attr.xOnClusterFocus,
-          attr.yOnClusterFocus,
-        ]);
-      }
-    });
-    return clusterNodeMapping;
-  }
-
-  /**
    * Adds cluster overview nodes to the graph, using data from the pina storage and from class functions
    */
   addClusterOverviewNodes() {
     const mainStore = useMainStore();
-    const clusterNodeMapping = this.getClusterNodeIds();
     const glyphs = generateGlyphs(
       mainStore.glyphData,
       OverviewGraph.GLYPH_SIZE,
-      clusterNodeMapping
+      mainStore.clusters
     );
-    for (const key in Object.keys(clusterNodeMapping)) {
+    for (const key in mainStore.clusters) {
       const xPos = this.polygons[key].getCenter()[0]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[0]));
       const yPos = this.polygons[key].getCenter()[1]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[1]));
       const clusterNode: overviewNodeAttr = {

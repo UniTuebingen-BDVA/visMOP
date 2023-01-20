@@ -11,7 +11,7 @@ import { ClusterSummaryGlyph } from './clusterSummaryGlyph';
 export function generateGlyphs(
   inputData: { [key: string]: glyphData },
   diameter = 28,
-  clusterNodeMapping: { [key: string]: { ids: string[]; pos: number[][] } }
+  clusterNodeMapping: string[][]
 ): {
   [key: string]: string;
 } {
@@ -41,12 +41,12 @@ export function generateGlyphs(
 
 export function generateClusterGlyphData(
   inputData: { [key: string]: glyphData },
-  clusterNodeMapping: { [key: string]: { ids: string[]; pos: number[][] } }
+  clusterNodeMapping: string[][]
 ): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {};
 
   // contains pathway lists
-  for (const key in clusterNodeMapping) {
+  clusterNodeMapping.forEach((clusterNodes, clusterIndex) => {
     const transcriptomicsData: omicsData = {
       available: false,
       foldChanges: [],
@@ -66,7 +66,6 @@ export function generateClusterGlyphData(
       foldChanges: [],
       nodeState: { total: 0, regulated: 0 },
     };
-    const currentClusterKeys = clusterNodeMapping[key].ids;
     const omicsDataArray: [
       omicsData,
       'transcriptomics' | 'metabolomics' | 'proteomics'
@@ -76,7 +75,7 @@ export function generateClusterGlyphData(
       [metabolomicsData, 'metabolomics'],
     ];
 
-    for (const pathwayKey of currentClusterKeys) {
+    for (const pathwayKey of clusterNodes) {
       const glyphData = inputData[pathwayKey];
 
       omicsDataArray.forEach((arrEntry) => {
@@ -99,12 +98,12 @@ export function generateClusterGlyphData(
       arrEntry[0].meanFoldchange = _.mean(fcVals);
     });
 
-    outGlyphData[key] = {
-      pathwayID: key,
+    outGlyphData[clusterIndex] = {
+      pathwayID: clusterIndex + '',
       transcriptomics: transcriptomicsData,
       proteomics: proteomicsData,
       metabolomics: metabolomicsData,
     };
-  }
+  });
   return outGlyphData;
 }
