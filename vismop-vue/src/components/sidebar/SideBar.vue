@@ -383,7 +383,7 @@ const queryReactome = () => {
       }
       mainStore.setOmicsRecieved(dataContent.omicsRecieved);
       mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
-      mainStore.setFCSReactome(dataContent.fcs);
+      mainStore.setFcs(dataContent.fcs);
       mainStore.setKeggChebiTranslate(dataContent.keggChebiTranslate);
     })
     .then(() => getReactomeData());
@@ -408,7 +408,7 @@ const getReactomeData = () => {
       mainStore.setClusters(dataContent.clusters);
       mainStore.setNoiseClusterExists(dataContent.noiseClusterExists);
       mainStore.setClusterCenters(dataContent.clusterCenters);
-      mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
+      mainStore.setPathwayLayouting(dataContent.pathwayLayouting);
     })
     .then(
       () => $q.loading.hide(),
