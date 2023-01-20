@@ -867,7 +867,8 @@ export default class OverviewGraph {
 
   /**
    * generate a mapping of clusters to nodes
-   * @returns
+   * @returns object with cluster IDs as keys and information about the contained nodes
+   * (ids, layout positions and layout position when the cluster is selected)
    */
   getClusterNodeIds() {
     const clusterNodeMapping: {
@@ -959,6 +960,10 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * changes the default sizes depending on the supplied parameter
+   * @param windowWidth size of the window/container in which the overview graph should be displayed
+   */
   setSize(windowWidth: number) {
     this.windowWidth = windowWidth;
     console.log('Window Size', windowWidth);
@@ -978,6 +983,9 @@ export default class OverviewGraph {
     this.applySize();
   }
 
+  /**
+   * Applies node sizes to all nodes, depending on the type of node
+   */
   applySize() {
     this.renderer.getGraph().forEachNode((node, attr) => {
       switch (attr.nodeType) {
@@ -1004,6 +1012,9 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * Function to reset the zoom level
+   */
   public resetZoom = resetZoom;
 
   /**
@@ -1034,7 +1045,7 @@ export default class OverviewGraph {
 
   /**
    * Sets Pathways containing an intersection of the selected entities of interest
-   * @param val list of IDs defining the intersection
+   * @param val array of IDs defining the intersection
    */
   public setPathwaysContainingIntersecion(val: string[] = []) {
     this.pathwaysContainingIntersection = val;
@@ -1043,7 +1054,7 @@ export default class OverviewGraph {
 
   /**
    * Sets Pathways containing an union of the selected entities of interest
-   * @param val  lost of IDs defining the union
+   * @param val array of IDs defining the union
    */
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;

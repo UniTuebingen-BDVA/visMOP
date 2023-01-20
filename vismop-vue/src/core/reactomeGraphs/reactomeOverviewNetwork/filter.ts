@@ -5,6 +5,9 @@ import { filterValues } from '../../generalTypes';
 import FilterData from './filterData';
 import OverviewGraph from './overviewNetwork';
 
+/**
+ * Class containing all the functionality needed for the graphical filtering as controlled by the on screen interface of the overview network view
+ */
 export default class OverviewFilter {
   overviewGraph: OverviewGraph;
 
@@ -194,6 +197,10 @@ export default class OverviewFilter {
     this.overviewGraph.renderer.refresh();
   }
 
+  /**
+   * Set a positive filter for a root pathway, i.e., a filter which, if chosen, filters out all but the pathways belonging to the root pathway
+   * @param rootFilter object containing whether the root filter is applied and if so for which rootID
+   */
   setRootFilter(rootFilter: { filterActive: boolean; rootID: string }) {
     if (rootFilter.filterActive && rootFilter.rootID) {
       const rootSubtree = this.overviewGraph.graph.neighbors(rootFilter.rootID);
@@ -206,6 +213,11 @@ export default class OverviewFilter {
     this.filtersChanged = true;
     this.overviewGraph.renderer.refresh();
   }
+
+  /**
+   * Set a negative filter for a root pathway, i.e., a filter which, if chosen, filters out the pathways belonging to one of the chosen root pathways
+   * @param rootNegativeFilter object containing whether the filter is applied and if so for which rootIDs
+   */
 
   setRootNegativeFilter(rootNegativeFilter: {
     filterActive: boolean;
