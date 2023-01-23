@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import * as d3 from 'd3';
 import { defineStore } from 'pinia';
-import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
+import { entry, graphData } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
 import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 import { Loading } from 'quasar';

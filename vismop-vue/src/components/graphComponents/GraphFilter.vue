@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { filterValues } from '@/core/generalTypes';
+import { filterValues } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 import { useMainStore } from '@/stores/index.js';
 import { computed, defineProps, defineEmits, PropType, ref, watch } from 'vue';
 import RegulationFilter from './RegulationFilter.vue';

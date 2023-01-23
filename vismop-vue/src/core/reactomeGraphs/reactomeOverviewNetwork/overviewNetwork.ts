@@ -6,6 +6,7 @@ import {
   overviewNodeAttr,
 } from '@/core/graphTypes';
 import getNodeProgramImage from '@/core/custom-nodes/custom-image-node-program';
+import { fa2LayoutParams } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 //import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';

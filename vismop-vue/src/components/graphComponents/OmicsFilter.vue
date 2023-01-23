@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import RegulationFilter from './RegulationFilter.vue';
-import { filterValues } from '@/core/generalTypes';
+import { filterValues } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 import { computed, defineProps, defineEmits, PropType, ref } from 'vue';
 
 const props = defineProps({

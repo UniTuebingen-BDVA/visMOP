@@ -1,16 +1,8 @@
 import { Attributes } from 'graphology-types';
-/**
- * Defines a set of edge attributes
- */
-type fadeEdgeAttr = Attributes & {
-  sourceColor: string;
-  targetColor: string;
-  zIndex: number;
-  fadeColor: string;
-  nonFadeColor: string;
-  type: string;
-};
 
+/**
+ * Set of attributes common to all edge types
+ */
 type baseEdgeAttr = Attributes & {
   type: string;
   zIndex: number;
@@ -27,18 +19,9 @@ type edge = {
   attributes: Attributes;
 };
 
-type detailNodeAttr = baseNodeAttr & {
-  origPos: { [key: string]: number[] };
-  secondaryColor: string;
-  outlineColor: string;
-  nonFadeColor: string;
-  nonFadeColorSecondary: string;
-  fadeColor: string;
-  fadeColorSecondary: string;
-  initialX: number;
-  initialY: number;
-};
-
+/**
+ * Attributes common to all node types
+ */
 type baseNodeAttr = {
   id: string;
   x: number;
@@ -51,6 +34,9 @@ type baseNodeAttr = {
   label: string;
 };
 
+/**
+ * attributes of a node in the overview graph
+ */
 type overviewNodeAttr = baseNodeAttr & {
   layoutX: number;
   layoutY: number;
@@ -97,6 +83,9 @@ type node = {
   attributes: baseNodeAttr;
 };
 
+/**
+ * Defines an overview Node
+ */
 type overviewNode = node & {
   attributes: overviewNodeAttr;
 };
@@ -112,8 +101,14 @@ type graphData = {
   options: unkown;
 };
 
+/**
+ * Type defining the points of the convex hull describing the clusters boundary
+ */
 type hullPoints = number[][][];
 
+/**
+ * Data needed for sigma to display the convex cluster hulls
+ */
 type additionalData = {
   clusterAreas: {
     hullPoints: hullPoints;
@@ -121,58 +116,18 @@ type additionalData = {
   };
 };
 
+/**
+ * Data decsribing the cluster hulls and their coloring
+ */
 type clusterData = {
   normalHullPoints: hullPoints;
   focusHullPoints: hullPoints;
   clusterColors: [number, number, number, number][];
 };
 /**
- * Defines overview Graph Data
+ * Defines the overview Graph Data
  */
 type overviewGraphData = graphData & {
   clusterData: clusterData;
   nodes: overviewNode[];
-};
-
-type networkxNode = {
-  labelName: string;
-  key: string;
-  egoNode: string;
-  size: number;
-  identity: string;
-};
-type networkxNodeLink = {
-  graph: { identities: number[] };
-  nodes: networkxNode[];
-  links: [{ [key: string]: string }];
-};
-/**
- * Defines a graph relation
- */
-type relation = {
-  relationID: string;
-  source: string;
-  target: string;
-  relationType: string;
-  edgeType: string;
-};
-/**
- * Defines an graph entry
- */
-type entry = {
-  // seems Deprecated
-  clusterNum: number;
-  name: string;
-  entryType: string;
-  entryID: string;
-  isempty: boolean;
-  initialPosX: number;
-  initialPosY: number;
-  outgoingEdges: relation[];
-  outgoingOnceRemoved: relation[];
-  trascriptomicsValue: number | string;
-  proteomicsValue: number | string;
-  metabolomicsValue: number | string;
-  label: string;
-  origPos: { [key: string]: number[] };
 };

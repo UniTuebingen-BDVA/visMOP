@@ -207,7 +207,9 @@ export function generateGraphData(
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
   const clusterColors: [number, number, number, number][] = [];
-  const firstNoneNoiseCluster = useMainStore().noiseClusterExists ? 1 : 0;
+  const firstNoneNoiseCluster = useMainStore().clusterData.noiseClusterExists
+    ? 1
+    : 0;
   // const totalNumHulls = clusterAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
@@ -235,6 +237,12 @@ export function generateGraphData(
   return graph;
 }
 
+/**
+ * Determines the type of edge depending on the type of the source and target nodes
+ * @param type1 type of node one
+ * @param type2 type of node 2
+ * @returns
+ */
 function determineEdgeType(
   type1: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other',
   type2: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other'

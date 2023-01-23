@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { graphData, networkxNodeLink } from '@/core/graphTypes';
+import { graphData } from '@/core/graphTypes';
 import Sigma from 'sigma';
 import { MultiGraph } from 'graphology';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
@@ -9,6 +9,20 @@ import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
 import { defaultInteractionGraphEdgeColor } from '../core/colors';
+
+type networkxNode = {
+  labelName: string;
+  key: string;
+  egoNode: string;
+  size: number;
+  identity: string;
+};
+type networkxNodeLink = {
+  graph: { identities: number[] };
+  nodes: networkxNode[];
+  links: [{ [key: string]: string }];
+};
+
 const satColors = [
   'rgba(228,26,28,1.0)',
   'rgba(55,126,184,1.0)',
@@ -54,7 +68,6 @@ export function generateInteractionGraphData(
       index: index,
       attributes: {
         id: node.key,
-        name: node.labelName ? node.labelName : node.key,
         label: node.labelName ? node.labelName : node.key,
         x: Math.random(),
         y: Math.random(),

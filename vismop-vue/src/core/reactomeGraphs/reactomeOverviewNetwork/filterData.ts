@@ -1,4 +1,4 @@
-import { filterValues } from '@/core/generalTypes';
+import { filterValues } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 
 export default class FilterData implements filterValues {
   limits = {

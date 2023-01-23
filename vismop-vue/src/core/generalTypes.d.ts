@@ -6,15 +6,24 @@ type typeExtractor<TarObj> = TarObj extends (infer U)[]
     : never
   : never;
 
+/**
+ * Type for QTable column
+ */
 // eslint-disable-next-line no-unused-vars
 type ColType = typeExtractor<QTableProps['columns']>;
 
+/**
+ * Type correspoinding to a single entity in one specific omics measurment
+ */
 type measureData = {
   name: string;
   value: number;
   queryID: string;
 };
 
+/**
+ *  Type corresponding to a single pathway and one type of omics
+ */
 type omicsData = {
   available: boolean;
   foldChanges: measureData[];
@@ -22,23 +31,12 @@ type omicsData = {
   nodeState: { total: number; regulated: number };
 };
 
+/**
+ * Type corresponding to all the information needed for the construction of a single pathway glyph
+ */
 export type glyphData = {
   pathwayID: string;
   proteomics: omicsData;
   metabolomics: omicsData;
   transcriptomics: omicsData;
-};
-
-export type filterValues = {
-  limits: {
-    min: number;
-    max: number;
-  };
-  value: {
-    min: number;
-    max: number;
-  };
-  filterActive: boolean;
-  inside: boolean;
-  disable: boolean;
 };
