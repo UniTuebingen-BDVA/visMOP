@@ -30,6 +30,104 @@ from multiprocessing import Process
 import pandas as pd
 
 
+def getClusterLayout(
+    omics_recieved,
+    layout_targets,
+    up_down_reg_limits,
+    data_col_used,
+    statistic_data_complete,
+    pathway_connection_dict,
+    reactome_roots={},
+    pathways_root_names={},
+):
+    up_down_reg_means = {
+        o: mean(limits) for o, limits in zip(["t", "p", "m"], up_down_reg_limits)
+    }
+
+    omics_names = ["t", "p", "m"]
+    stat_value_names = [
+        "num values",
+        "mean exp (high ",
+        "% vals (higher ",
+        "mean exp(lower ",
+        "% vals (lower ",
+        "% Reg (",
+        "% Unreg (",
+        "% p with val",
+    ]
+    # for diagramms
+    complete_stat_names = []
+    for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
+        if omic_r:
+            for pos, stat in enumerate(stat_value_names):
+                next_col_name = omic + "_" + stat
+                if pos in [1, 2]:  #
+                    next_col_name += str(limits[1]) + ")"
+                elif pos in [3, 4]:  #
+                    next_col_name += str(limits[0]) + ")"
+                elif pos in [5, 6]:  #
+                    next_col_name += str(limits) + ")"
+                complete_stat_names.append(next_col_name)
+    complete_stat_names += ["pathway size"]
+    statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
+    statistic_data_complete.columns = complete_stat_names
+    try:
+        cluster_layout = Cluster_layout(
+            statistic_data_user,
+            layout_targets,
+            pathway_connection_dict,
+            up_down_reg_means,
+            reactome_roots,
+            pathways_root_names,
+        )
+    except ValueError as e:
+        print("LayoutError", e)
+        return -1, -1
+    return (
+        cluster_layout.clusters,
+        cluster_layout.clusters_center,
+        cluster_layout.noise_cluster_exists,
+    )
+
+
+def get_layout_settings(settings, omics_recieved):
+    possible_omic_attributes = [
+        "Number of values",
+        "Mean expression above limit",
+        "% values above limit",
+        "Mean expression below limit ",
+        "% values below limit ",
+        "% regulated",
+        "% unregulated",
+        "% with measured value",
+    ]
+    possible_no_omic_attributes = ["% values measured over all omics"]
+    attributes = []
+    limits = []
+    # print(settings.items())
+    omics_recieved.append(True)
+    for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
+        omic_limits = [float(i) for i in layout_settings["limits"]]
+        limits.append(omic_limits)
+        if recieved and omic != "not related to specific omic ":
+            attribute_boolean = [
+                (
+                    (layout_settings["attributes"] is not None)
+                    and att in layout_settings["attributes"]
+                )
+                for att in possible_omic_attributes
+            ]
+            attributes += attribute_boolean
+
+        elif recieved:
+            attribute_boolean = [
+                att in layout_settings["attributes"]
+                for att in possible_no_omic_attributes
+            ]
+            attributes += attribute_boolean
+    return {"attributes": attributes, "limits": limits}
+
+
 def timepoint_analysis(input_lists):
     in_same_cluster = []
     in_different_cluster = []

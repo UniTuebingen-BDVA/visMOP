@@ -1,7 +1,7 @@
 .DS_Store
 node_modules
 /dist
-**/uniprot_files
+**/uniprot_files*
 kegg_cache/*.json
 package-lock.json
 __pycache__

@@ -1,17 +1,12 @@
 import math
 from random import randint, random
 from flask import Flask, render_template, send_from_directory, request
+from visMOP.python_scripts.omics_format import format_omics_data
 from visMOP.python_scripts.utils import kegg_to_chebi
 from visMOP.python_scripts.data_table_parsing import (
     table_request,
 )
 from visMOP.python_scripts.create_overview import get_overview_reactome
-from visMOP.python_scripts.uniprot_access import (
-    make_protein_dict,
-    get_uniprot_entry,
-    add_uniprot_info,
-)
-from visMOP.python_scripts.interaction_graph import StringGraph
 from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
 from visMOP.python_scripts.reactome_query import ReactomeQuery
 
@@ -20,7 +15,12 @@ import pandas as pd
 import pathlib
 import os
 import json
-from visMOP.python_scripts.cluster_layout import Cluster_layout, timepoint_analysis
+from visMOP.python_scripts.cluster_layout import (
+    Cluster_layout,
+    get_layout_settings,
+    getClusterLayout,
+    timepoint_analysis,
+)
 from numpy.core.fromnumeric import mean
 
 import secrets
@@ -49,110 +49,6 @@ app.config.from_mapping(
 cache = Cache(app)
 
 
-def getClusterLayout(
-    omics_recieved,
-    layout_targets,
-    up_down_reg_limits,
-    data_col_used,
-    statistic_data_complete,
-    pathway_connection_dict,
-    reactome_roots={},
-    pathways_root_names={},
-):
-    up_down_reg_means = {
-        o: mean(limits) for o, limits in zip(["t", "p", "m"], up_down_reg_limits)
-    }
-
-    omics_names = ["t", "p", "m"]
-    stat_value_names = [
-        "num values",
-        "mean exp (high ",
-        "% vals (higher ",
-        "mean exp(lower ",
-        "% vals (lower ",
-        "% Reg (",
-        "% Unreg (",
-        "% p with val",
-    ]
-    # for diagramms
-    complete_stat_names = []
-    for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
-        if omic_r:
-            for pos, stat in enumerate(stat_value_names):
-                next_col_name = omic + "_" + stat
-                if pos in [1, 2]:  #
-                    next_col_name += str(limits[1]) + ")"
-                elif pos in [3, 4]:  #
-                    next_col_name += str(limits[0]) + ")"
-                elif pos in [5, 6]:  #
-                    next_col_name += str(limits) + ")"
-                complete_stat_names.append(next_col_name)
-    complete_stat_names += ["pathway size"]
-    statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
-    statistic_data_complete.columns = complete_stat_names
-    try:
-        cluster_layout = Cluster_layout(
-            statistic_data_user,
-            layout_targets,
-            pathway_connection_dict,
-            up_down_reg_means,
-            reactome_roots,
-            pathways_root_names,
-        )
-    except ValueError as e:
-        print("LayoutError", e)
-        return -1, -1
-    # cluster_node_pos = cluster_layout.initial_node_pos
-    # outcommented for test of voronoi layout
-    # cluster_node_pos = cluster_layout.get_final_node_positions()
-    # cluster_areas = cluster_layout.get_cluster_areas()
-    # cluster_areas = []
-    # return cluster_node_pos, cluster_areas
-    return (
-        cluster_layout.clusters,
-        cluster_layout.clusters_center,
-        cluster_layout.noise_cluster_exists,
-    )
-
-
-def get_layout_settings(settings, omics_recieved):
-    possible_omic_attributes = [
-        "Number of values",
-        "Mean expression above limit",
-        "% values above limit",
-        "Mean expression below limit ",
-        "% values below limit ",
-        "% regulated",
-        "% unregulated",
-        "% with measured value",
-    ]
-    possible_no_omic_attributes = ["% values measured over all omics"]
-    attributes = []
-    limits = []
-    # print(settings.items())
-    omics_recieved.append(True)
-    for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
-        omic_limits = [float(i) for i in layout_settings["limits"]]
-        limits.append(omic_limits)
-        if recieved and omic != "not related to specific omic ":
-            attribute_boolean = [
-                (
-                    (layout_settings["attributes"] is not None)
-                    and att in layout_settings["attributes"]
-                )
-                for att in possible_omic_attributes
-            ]
-            attributes += attribute_boolean
-
-        elif recieved:
-            attribute_boolean = [
-                att in layout_settings["attributes"]
-                for att in possible_no_omic_attributes
-            ]
-            attributes += attribute_boolean
-    return {"attributes": attributes, "limits": limits}
-
-
 """
 Default app routes for index and favicon
 """
@@ -175,115 +71,26 @@ def fav():
 
 
 """
-transcriptomics table recieve
+APP ROUTES FOR THE DATATABLE
 """
 
 
 @app.route("/transcriptomics_table", methods=["POST"])
 def transcriptomics_table_recieve():
-    json_data = table_request(request, cache, "transcriptomics_df_global")
+    json_data = table_request(request, cache, "transcriptomics_data_cache")
     return json_data
-
-
-"""
-protein recieve
-"""
 
 
 @app.route("/proteomics_table", methods=["POST"])
 def prot_table_recieve():
-    json_data = table_request(request, cache, "prot_table_global")
+    json_data = table_request(request, cache, "proteomics_data_cache")
     return json_data
-
-
-"""
-metabolomics table recieve
-"""
 
 
 @app.route("/metabolomics_table", methods=["POST"])
 def metabolomics_table_recieve():
-    json_data = table_request(request, cache, "metabolomics_df_global")
+    json_data = table_request(request, cache, "metabolomics_data_cache")
     return json_data
-
-
-@app.route("/interaction_graph", methods=["POST"])
-def interaction_graph():
-    # get string graph:
-    string_graph = cache.get("string_graph")
-    if not string_graph:
-        script_dir = data_path
-        target_db = cache.get("target_db")
-        dest_dir = os.path.join(
-            script_dir,
-            "10090.protein.links.v11.5.txt.gz"
-            if target_db == "mmu"
-            else "9606.protein.links.v11.5.txt.gz",
-        )
-        string_graph = StringGraph(dest_dir)
-        cache.set("string_graph", string_graph)
-    # global prot_dict_global # keggID --> Uniprot data
-    prot_dict_global = json.loads(cache.get("prot_dict_global"))
-
-    # get node IDs and confidence threshold from request
-    node_IDs = request.json["nodes"]
-    confidence_threshold = request.json["threshold"]
-
-    # get name Mapping
-    stringID_to_name = {
-        v["string_id"]: v["Gene Symbol"][0] for k, v in prot_dict_global.items()
-    }
-
-    # get string IDs from the transferred keggIDs of selected proteins/nodes
-    string_IDs = [prot_dict_global[node_ID]["string_id"] for node_ID in node_IDs]
-
-    # generate json data of merged ego graphs
-    return json.dumps(
-        {
-            "interaction_graph": string_graph.get_merged_egoGraph(
-                string_IDs, 1, stringID_to_name, confidence_threshold
-            )
-        }
-    )
-
-
-def uniprot_access(colname, filter_obj):
-    # create dict from protein dataframe
-    print("protcols", colname)
-    prot_table = pd.read_json(cache.get("prot_table_global"), orient="columns")
-
-    id_col = colname
-    prot_table = prot_table.drop_duplicates(subset=id_col).set_index(id_col)
-    for k, v in filter_obj.items():
-        is_empty = v["empties"] & (prot_table[k] == "None")
-        is_numeric = pd.to_numeric(prot_table[k], errors="coerce").notnull()
-        df_numeric = prot_table.loc[is_numeric]
-        if v["inside"]:
-            df_is_in_range = df_numeric.loc[
-                (df_numeric[k] >= v["vals"]["min"])
-                & (df_numeric[k] <= v["vals"]["max"])
-            ]
-        else:
-            df_is_in_range = df_numeric.loc[
-                (df_numeric[k] <= v["vals"]["min"])
-                | (df_numeric[k] >= v["vals"]["max"])
-            ]
-        df_is_empty = prot_table.loc[is_empty]
-
-        prot_table = prot_table.loc[
-            prot_table.index.isin(df_is_in_range.index)
-            | prot_table.index.isin(df_is_empty.index)
-        ]
-    protein_dict = make_protein_dict(prot_table, id_col)
-    # query uniprot for the IDs in the table and add their info to the dictionary
-    get_uniprot_entry(protein_dict, data_path)
-    add_uniprot_info(protein_dict)
-    # add location to table
-    # prot_table_global['Location'] = [protein_dict[item]['location'] for item in protein_dict]
-
-    # set cache for structures
-    cache.set("prot_dict_global", json.dumps(protein_dict))
-    # cache.set('prot_table_global', prot_table_global.to_json(orient="columns"))
 
 
 """
@@ -343,22 +150,23 @@ def reactome_parsing():
     ##
     if proteomics["recieved"]:
         proteomics_query_data_tuples = []
-        try:
-            uniprot_access(proteomics["symbol"], slider_vals["proteomics"])
-            prot_dict_global = json.loads(cache.get("prot_dict_global"))
 
-            for ID_number in prot_dict_global:
-                entry = prot_dict_global[ID_number]
-                proteomics_query_data_tuples.append(
-                    (
-                        {"ID": ID_number, "table_id": ID_number},
-                        [entry[valCol] for valCol in proteomics["value"]],
-                    )
+        format_omics_data(
+            proteomics["symbol"],
+            slider_vals["proteomics"],
+            "proteomics_data_cache",
+            cache,
+        )
+        proteomics_data = json.loads(cache.get("prot_dict_global"))
+
+        for ID_number in proteomics_data:
+            entry = proteomics_data[ID_number]
+            proteomics_query_data_tuples.append(
+                (
+                    {"ID": ID_number, "table_id": ID_number},
+                    [entry[valCol] for valCol in proteomics["value"]],
                 )
-
-        except FileNotFoundError:
-            print("Download 10090.protein.links.v11.5.txt.gz from STRING database.")
-
+            )
         # target organism is a little bit annoying at the moment
         tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
         print(tar_organism)
@@ -384,37 +192,13 @@ def reactome_parsing():
     if metabolomics["recieved"]:
         metabolomics_query_data_tuples = []
 
-        metabolomics_df_global = pd.read_json(
-            cache.get("metabolomics_df_global"), orient="columns"
+        format_omics_data(
+            metabolomics["symbol"],
+            slider_vals["metabolomics"],
+            "metabolomics_data_cache",
+            cache,
         )
-        id_col = metabolomics["symbol"]
-        metabolomics_df = metabolomics_df_global.drop_duplicates(
-            subset=id_col
-        ).set_index(id_col)
-        for k, v in slider_vals["metabolomics"].items():
-            if k != id_col:
-                is_empty = v["empties"] & (metabolomics_df[k] == "None")
-                is_numeric = pd.to_numeric(
-                    metabolomics_df[k], errors="coerce"
-                ).notnull()
-                df_numeric = metabolomics_df.loc[is_numeric]
-                if v["inside"]:
-                    df_is_in_range = df_numeric.loc[
-                        (df_numeric[k] >= v["vals"]["min"])
-                        & (df_numeric[k] <= v["vals"]["max"])
-                    ]
-                else:
-                    df_is_in_range = df_numeric.loc[
-                        (df_numeric[k] <= v["vals"]["min"])
-                        | (df_numeric[k] >= v["vals"]["max"])
-                    ]
-                df_is_empty = metabolomics_df.loc[is_empty]
-
-                metabolomics_df = metabolomics_df.loc[
-                    metabolomics_df.index.isin(df_is_in_range.index)
-                    | metabolomics_df.index.isin(df_is_empty.index)
-                ]
-        metabolomics_dict = metabolomics_df.to_dict("index")
+        metabolomics_dict = json.loads(cache.get("metabolomics_data_cache"))
         metabolomics_IDs = list(metabolomics_dict.keys())
 
         if any(
@@ -472,37 +256,13 @@ def reactome_parsing():
     ##
     if transcriptomics["recieved"]:
         transcriptomics_query_data_tuples = []
-        transcriptomics_df_global = pd.read_json(
-            cache.get("transcriptomics_df_global"), orient="columns"
+        format_omics_data(
+            transcriptomics["symbol"],
+            slider_vals["transcriptomics"],
+            "transcriptomics_data_cache",
+            cache,
         )
-        id_col = transcriptomics["symbol"]
-        # TODO Duplicates are dropped how to handle these duplicates?!
-        transcriptomics_df = transcriptomics_df_global.drop_duplicates(
-            subset=id_col
-        ).set_index(id_col)
-        for k, v in slider_vals["transcriptomics"].items():
-            is_empty = v["empties"] & (transcriptomics_df[k] == "None")
-            is_numeric = pd.to_numeric(transcriptomics_df[k], errors="coerce").notnull()
-            df_numeric = transcriptomics_df.loc[is_numeric]
-            if v["inside"]:
-                df_is_in_range = df_numeric.loc[
-                    (df_numeric[k] >= v["vals"]["min"])
-                    & (df_numeric[k] <= v["vals"]["max"])
-                ]
-            else:
-                df_is_in_range = df_numeric.loc[
-                    (df_numeric[k] <= v["vals"]["min"])
-                    | (df_numeric[k] >= v["vals"]["max"])
-                ]
-            df_is_empty = transcriptomics_df.loc[is_empty]
-
-            transcriptomics_df = transcriptomics_df.loc[
-                transcriptomics_df.index.isin(df_is_in_range.index)
-                | transcriptomics_df.index.isin(df_is_empty.index)
-            ]
-
-        # print("DF", transcriptomics_df)
-        transcriptomics_dict = transcriptomics_df.to_dict("index")
+        transcriptomics_dict = json.loads(cache.get("transcriptomics_data_cache"))
         transcriptomics_IDs = list(transcriptomics_dict.keys())
         for ID_number in transcriptomics_IDs:
             transcriptomics_query_data_tuples.append(
