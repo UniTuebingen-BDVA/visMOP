@@ -1,12 +1,12 @@
 import Graph, { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
-import {
-  additionalData,
-  overviewGraphData,
-  overviewNodeAttr,
-} from '@/core/graphTypes';
 import getNodeProgramImage from '@/core/custom-nodes/custom-image-node-program';
-import { fa2LayoutParams } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
+import {
+  fa2LayoutParams,
+  overviewNodeAttr,
+  overviewGraphData,
+  additionalData,
+} from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 //import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
@@ -136,7 +136,7 @@ export default class OverviewGraph {
         nodeReducer: nodeReducer.bind(this),
         edgeReducer: edgeReducer.bind(this),
         zIndex: true, // enabling zIndex parameter
-        renderLabels: true, // do not render labels w/o hover
+        renderLabels: true,
         labelRenderedSizeThreshold: 999999,
         edgeProgramClasses: {
           ...DEFAULT_SETTINGS.edgeProgramClasses,

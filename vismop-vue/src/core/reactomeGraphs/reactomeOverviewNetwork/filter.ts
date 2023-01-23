@@ -1,4 +1,4 @@
-import { overviewNodeAttr } from '@/core/graphTypes';
+import { overviewNodeAttr } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 import { PlainObject } from 'sigma/types';
 import { animateNodes } from 'sigma/utils/animate';
 import { filterValues } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';

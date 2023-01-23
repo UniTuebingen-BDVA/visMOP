@@ -1,6 +1,5 @@
 // https://reactome.org/dev/diagram/pathway-diagram-specs for infos
 // types describing data structures in the reactome json files and detail diagrams
-import { upDatedPos } from '@/core/graphTypes';
 /*
 Basic Types
 */

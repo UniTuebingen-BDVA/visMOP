@@ -1,10 +1,9 @@
 import * as _ from 'lodash';
+import { edge, baseEdgeAttr } from '@/core/graphTypes';
 import {
-  edge,
-  baseEdgeAttr,
-  overviewNode,
   overviewGraphData,
-} from '@/core/graphTypes';
+  overviewNode,
+} from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 import { reactomeEntry } from './reactomeTypes';
 import { glyphData } from '../generalTypes';
 import ClusterHulls from '@/core/layouting/convexHullsForClusters';

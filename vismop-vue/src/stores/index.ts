@@ -1,10 +1,9 @@
 import _ from 'lodash';
 import * as d3 from 'd3';
 import { defineStore } from 'pinia';
-import { entry, graphData } from '@/core/graphTypes';
+import { graphData } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
 import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
-import { Loading } from 'quasar';
 
 interface State {
   sideBarExpand: boolean;
@@ -126,7 +125,7 @@ export const useMainStore = defineStore('mainStore', {
   }),
   actions: {
     resetStore() {
-      this.resetPathwayCompare();
+      this.$reset();
     },
     setTargetDatabase(val: string) {
       this.targetDatabase = val;
@@ -337,9 +336,6 @@ export const useMainStore = defineStore('mainStore', {
     removePathwayCompare(val: string) {
       const idx = this.pathwayCompare.findIndex((elem) => elem.pathway == val);
       this.pathwayCompare.splice(idx, 1);
-    },
-    resetPathwayCompare() {
-      this.pathwayCompare = [];
     },
     setKeggChebiTranslate(val: { [key: string]: string[] }) {
       this.keggChebiTranslate = val;
