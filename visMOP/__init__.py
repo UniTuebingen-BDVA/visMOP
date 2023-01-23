@@ -3,7 +3,7 @@ from random import random
 from flask import Flask, render_template, send_from_directory, request
 from visMOP.python_scripts.utils import kegg_to_chebi
 from visMOP.python_scripts.data_table_parsing import table_request, format_omics_data
-from visMOP.python_scripts.create_overview import get_overview_reactome
+from visMOP.python_scripts.create_overview import create_overview_data
 from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
 from visMOP.python_scripts.reactome_query import ReactomeQuery
 
@@ -337,7 +337,7 @@ def reactome_overview():
         statistic_data_complete,
         omics_recieved,
     ) = reactome_hierarchy.generate_overview_data(layout_limits, False)
-    pathway_connection_dict = get_overview_reactome(out_data, central_nodes)
+    pathway_connection_dict = create_overview_data(out_data, central_nodes)
     # network_overview = generate_networkx_dict(pathway_connection_dict)
     # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
     # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)

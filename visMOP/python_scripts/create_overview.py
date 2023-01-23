@@ -1,4 +1,4 @@
-def get_overview_reactome(displayed_pathways, central_nodes):
+def create_overview_data(displayed_pathways, central_nodes):
     # at the moment only maplinks are considered
     # print("+++++NOTE: pathways that are not in global_dict_entries are NOT USED!!+++++")
     # Get pathways from dropdown menu --> main pathways for overview
