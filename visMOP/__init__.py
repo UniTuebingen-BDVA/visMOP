@@ -1,22 +1,16 @@
 import math
-from random import randint, random
+from random import random
 from flask import Flask, render_template, send_from_directory, request
-from visMOP.python_scripts.omics_format import format_omics_data
 from visMOP.python_scripts.utils import kegg_to_chebi
-from visMOP.python_scripts.data_table_parsing import (
-    table_request,
-)
+from visMOP.python_scripts.data_table_parsing import table_request, format_omics_data
 from visMOP.python_scripts.create_overview import get_overview_reactome
 from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
 from visMOP.python_scripts.reactome_query import ReactomeQuery
 
-
 import pandas as pd
 import pathlib
-import os
 import json
 from visMOP.python_scripts.cluster_layout import (
-    Cluster_layout,
     get_layout_settings,
     getClusterLayout,
     timepoint_analysis,
@@ -47,7 +41,6 @@ app.config.from_mapping(
     ICON_FOLDER=data_path / "dist/icons",
 )
 cache = Cache(app)
-
 
 """
 Default app routes for index and favicon
@@ -106,7 +99,6 @@ def reactome_parsing():
             "used_symbol_cols" : dictionary containing string which indicate which column in the data-table contains the queried accession IDs
             "fcs": fold changes of the queries
     """
-
     ###
     # Parse POST data
     ###
@@ -144,7 +136,6 @@ def reactome_parsing():
     node_pathway_dict = {}
     fold_changes = {"transcriptomics": [], "proteomics": [], "metabolomics": []}
     chebi_ids = {}
-
     ##
     # Add Proteomics Data
     ##
@@ -185,7 +176,6 @@ def reactome_parsing():
         for query_key, query_result in protein_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "protein", query_key)
-
     ##
     # Add Metabolomics Data
     ##
@@ -250,7 +240,6 @@ def reactome_parsing():
         for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "metabolite", query_key)
-
     ##
     # Add Transcriptomics Data Data
     ##
@@ -293,7 +282,6 @@ def reactome_parsing():
         for query_key, query_result in transcriptomics_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "gene", query_key)
-
     # Aggregate Data in Hierarcy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
@@ -377,7 +365,6 @@ def reactome_overview():
     clusters = [elem.tolist() for elem in clusters]
     timepoint_analysis(clusters)
     # temporary?
-
     out_data_dict = {elem["pathwayId"]: elem for elem in out_data}
 
     return json.dumps(
