@@ -80,7 +80,6 @@ export function generateGraphData(
         image: glyphHighDetail[id],
         imageHighDetail: glyphHighDetail[id],
         imageLowDetail: glyphsLowDetail[id],
-        name: _.escape(name),
         id: id,
         hidden: !entry.isCentral,
         filterHidden: false,
@@ -92,7 +91,7 @@ export function generateGraphData(
           entry.rootId === entry.pathwayId
             ? overviewColors.roots
             : overviewColors.default,
-        label: `${_.escape(name)}`,
+        label: _.escape(name),
         forceLabel: !entry.isCentral,
         fcAverages: {
           transcriptomics: glyphData[id].transcriptomics.available

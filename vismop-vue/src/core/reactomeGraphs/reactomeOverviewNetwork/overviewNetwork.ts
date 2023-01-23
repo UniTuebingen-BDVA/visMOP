@@ -477,9 +477,9 @@ export default class OverviewGraph {
   }
 
   /**
-   * layouts a hierarhc
-   * @param targetNode
-   * @param skipNode
+   * layouts a hierarchy level after a step out.
+   * @param targetNode parent node for which the subtree should be layout as a new hierarchy level
+   * @param skipNode node id
    */
   layoutNewHierarchyLevel(targetNode: string, skipNode = '') {
     /**
@@ -519,9 +519,12 @@ export default class OverviewGraph {
       minDivisions: this.rootOrder,
     }) as LayoutMapping<{ [dimension: string]: number }>;
     this.animationStack = { ...this.animationStack, ...currentLevelPositions };
-    this.hierarchyEdgeAttributes(currentLevelGraph);
+    this.setHierarchyEdgeAttributes(currentLevelGraph);
   }
 
+  /**
+   * sets the attributes of all edges to hierarchy hidden
+   */
   //TODO: broken! e.g. wrong edge types
   resetHierarchyHidden() {
     this.graph.forEachEdge((edge, attributes) => {
@@ -533,6 +536,11 @@ export default class OverviewGraph {
     this.applyEdgeAttributeStack();
   }
 
+  /**
+   * Finds the first visible node higher in the hierarchy from the given node and returns its ID
+   * @param nodeID target node id for which to find the first visible parent
+   * @returns node ID of the first visible node
+   */
   getVisibleParent(nodeID: string): string {
     let currentParentNode = this.graph.getNodeAttribute(nodeID, 'parents')[0];
     let notFoundVisibleParent = true;
@@ -557,6 +565,9 @@ export default class OverviewGraph {
     return currentParentNode;
   }
 
+  /**
+   * set the visibile subtree attribute for hierarchy and root nodes. this indicates if any of the child-nodes are visible in the graph
+   */
   setVisibleSubtree(): void {
     const nonRegularNodes: string[] = [];
     this.graph.forEachNode((node) => {
@@ -576,6 +587,11 @@ export default class OverviewGraph {
     this.applyNodeAttributeStack();
   }
 
+  /**
+   * traverses the subtree of a given node and return if any of its children are visible
+   * @param nodeID  node id of node for which to traverse its subtree
+   * @returns boolean indicating
+   */
   hasVisibleSubtreeNodes(nodeID: string): boolean {
     const subtreeIds = [
       ...this.graph
@@ -594,7 +610,11 @@ export default class OverviewGraph {
     return visibleNodeFound;
   }
 
-  hierarchyEdgeAttributes(graph: Graph) {
+  /**
+   * unhides edges of the now visible hierarcvhy nodes
+   * @param graph
+   */
+  setHierarchyEdgeAttributes(graph: Graph) {
     //this.resetHierarchyHidden();
     // hide rootRegular edges which are there as
     const checkNodes: string[] = [];
@@ -619,6 +639,9 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * Applies the nodes attribute stack to the graph
+   */
   applyNodeAttributeStack() {
     const nodeKeys = Object.keys(this.nodeAttributeStack);
     nodeKeys.forEach((node) => {
@@ -632,6 +655,9 @@ export default class OverviewGraph {
     this.nodeAttributeStack = {};
   }
 
+  /**
+   * Applies the edge attribute stack to the graph
+   */
   applyEdgeAttributeStack() {
     const edgeKeys = Object.keys(this.edgeAttributeStack);
     edgeKeys.forEach((edge) => {
@@ -644,6 +670,13 @@ export default class OverviewGraph {
     });
     this.edgeAttributeStack = {};
   }
+
+  /**
+   * Applies the animation stack to the graph
+   * @param animationOptions options of the sigma animation function
+   * @param callback callback to be executed after the animation has finished
+   * @param callbackArgs arguments to be passed to the callback function
+   */
 
   applyAnimationStack(
     animationOptions?: { [key: string]: string | number | boolean },
@@ -661,6 +694,11 @@ export default class OverviewGraph {
     );
   }
 
+  /**
+   * Adds changes to a nodes attributes to the attribute stack
+   * @param nodeID ID of the node
+   * @param attrs attributes of the node
+   */
   addNodeAttributeStack(
     nodeID: string,
     attrs: { [key: string]: string | number | boolean }
@@ -675,6 +713,11 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * Adds changes to an edges attributes to the attributes stack
+   * @param edgeID ID of the edge
+   * @param attrs attributes of the edge
+   */
   addEdgeAttributeStack(
     edgeID: string,
     attrs: { [key: string]: string | number | boolean }
@@ -689,6 +732,10 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * Function which is bound the the onclick event handler of node. Wraps the step in and outs
+   * @param targetNode target node for which to execute the layouting
+   */
   hierarchyLayoutClickfunc(targetNode: string) {
     // if we click the root node when the hierarchy is partly built, we take a step back in the hierarchy
     if (
@@ -879,7 +926,6 @@ export default class OverviewGraph {
       const xPos = this.polygons[key].getCenter()[0]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[0]));
       const yPos = this.polygons[key].getCenter()[1]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[1]));
       const clusterNode: overviewNodeAttr = {
-        name: key,
         id: key,
         x: xPos,
         y: yPos,

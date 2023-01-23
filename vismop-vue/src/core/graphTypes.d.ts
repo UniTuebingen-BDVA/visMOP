@@ -40,7 +40,6 @@ type detailNodeAttr = baseNodeAttr & {
 };
 
 type baseNodeAttr = {
-  name: string;
   id: string;
   x: number;
   y: number;
