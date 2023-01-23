@@ -32,7 +32,6 @@ def get_overview_reactome(displayed_pathways, central_nodes):
                         "relationType": "maplink",
                         "relation_subtype": ["compound"],
                         "pathway_ID": pathwayKey,
-                        "pathway_name": "",
                     }
                 )
 
