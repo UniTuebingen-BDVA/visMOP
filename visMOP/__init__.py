@@ -270,6 +270,7 @@ def reactome_parsing():
         # target organism is a little bit annoying at the moment
         tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
         print(tar_organism)
+        # Some entries do not exist for ENMUSG but do exist for ENSMUSP
         transcriptomics_query = ReactomeQuery(
             transcriptomics_query_data_tuples,
             tar_organism,

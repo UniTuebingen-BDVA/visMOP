@@ -42,13 +42,27 @@ class ReactomeQuery:
             reactome_data = pickle.load(handle)
             not_found = 0
             for elem in self.query_data:
+                query_id = elem[0]['ID']
                 try:
-                    reactome_elem = reactome_data[elem[0]['ID']]
+                    reactome_elem = reactome_data[query_id]
                     for pathway_id in reactome_elem:
                         reactome_elem[pathway_id]['measurement'] = elem[1]
-                    self.query_results[elem[0]['ID']] = reactome_elem
+                    self.query_results[query_id] = reactome_elem
                 except:
-                    not_found += 1
+                    if id_database == 'Ensembl':
+                        if "G" in query_id:
+                            query_id_mod = query_id.replace('G', 'P')
+                        else:
+                            query_id_mod = query_id.replace('P', 'G')
+                        try:
+                            reactome_elem = reactome_data[query_id_mod]
+                            for pathway_id in reactome_elem:
+                                reactome_elem[pathway_id]['measurement'] = elem[1]
+                            self.query_results[query_id] = reactome_elem 
+                        except:
+                            not_found += 1
+                    else: 
+                        not_found += 1
             print("{} entries from {} were not found in REACTOME DB".format(not_found, id_database))
 
     def calc_all_pathways(self):
