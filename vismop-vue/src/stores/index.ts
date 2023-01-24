@@ -125,7 +125,8 @@ export const useMainStore = defineStore('mainStore', {
   }),
   actions: {
     resetStore() {
-      this.$reset();
+      //this.$reset();
+      this.pathwayCompare = [];
     },
     setTargetDatabase(val: string) {
       this.targetDatabase = val;

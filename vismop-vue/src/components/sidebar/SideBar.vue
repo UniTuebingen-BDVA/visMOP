@@ -381,8 +381,16 @@ const queryReactome = () => {
         alert(dataContent.ErrorMsg);
         return Promise.reject(dataContent.errorMsg);
       }
-      mainStore.setOmicsRecieved(dataContent.omicsRecieved);
-      mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
+      mainStore.setOmicsRecieved({
+        transcriptomics: recievedTranscriptomicsData.value,
+        proteomics: recievedProteomicsData.value,
+        metabolomics: recievedMetabolomicsData.value,
+      });
+      mainStore.setUsedSymbolCols({
+        transcriptomics: transcriptomicsSymbolCol.value.field.toString(),
+        proteomics: proteomicsSymbolCol.value.field.toString(),
+        metabolomics: metabolomicsSymbolCol.value.field.toString(),
+      });
       mainStore.setFcs(dataContent.fcs);
       mainStore.setKeggChebiTranslate(dataContent.keggChebiTranslate);
     })

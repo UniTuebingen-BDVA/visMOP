@@ -130,12 +130,23 @@ class PathwayHierarchy(dict):
     functions as main datastructure for reactome data
     """
 
-    def __init__(self, amt_timesteps, *arg, **kw):
+    def __init__(
+        self,
+        metadata,
+        relational_data_path,
+        target_organism,
+        json_data_path,
+        *arg,
+        **kw
+    ):
         super(PathwayHierarchy, self).__init__(*arg, **kw)
         self.levels = {}
         self.omics_recieved = []
         self.layout_settings = {}
-        self.amt_timesteps = amt_timesteps
+        self.amt_timesteps = metadata["amt_timesteps"]
+        self.omics_recieved = metadata["omics_recieved"]
+        self.load_data(relational_data_path, target_organism)
+        self.add_json_data(json_data_path)
 
     def set_layout_settings(self, settings):
         self.layout_settings = settings
@@ -148,9 +159,6 @@ class PathwayHierarchy(dict):
             "brite_hier_subcategories": self.brite_hier_subcategories,
             "brite_hier_proteinIDs": self.brite_hier_proteinIDs,
         }
-
-    def set_omics_recieved(self, omics_recieved):
-        self.omics_recieved = omics_recieved
 
     def add_hierarchy_levels(self):
         """Adds hierarchy levels to all entries.

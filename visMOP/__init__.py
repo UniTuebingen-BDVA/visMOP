@@ -126,10 +126,13 @@ def reactome_parsing():
     if metabolomics["recieved"] and metabolomics["amtTimesteps"] < amt_timesteps:
         amt_timesteps = metabolomics["amtTimesteps"]
 
-    reactome_hierarchy = PathwayHierarchy(amt_timesteps)
-    reactome_hierarchy.load_data(data_path / "reactome_data", target_db.upper())
-    reactome_hierarchy.add_json_data(data_path / "reactome_data" / "diagram")
-    reactome_hierarchy.set_omics_recieved(omics_recieved)
+    reactome_hierarchy = PathwayHierarchy(
+        {"amt_timesteps": amt_timesteps, "omics_recieved": omics_recieved},
+        data_path / "reactome_data",
+        target_db.upper(),
+        data_path / "reactome_data" / "diagram",
+    )
+
     ##
     # Add query Data to Hierarchy
     ##
@@ -148,7 +151,7 @@ def reactome_parsing():
             "proteomics_data_cache",
             cache,
         )
-        proteomics_data = json.loads(cache.get("prot_dict_global"))
+        proteomics_data = json.loads(cache.get("proteomics_data_cache"))
 
         for ID_number in proteomics_data:
             entry = proteomics_data[ID_number]
@@ -282,27 +285,16 @@ def reactome_parsing():
         for query_key, query_result in transcriptomics_query.query_results.items():
             for entity_id, entity_data in query_result.items():
                 reactome_hierarchy.add_query_data(entity_data, "gene", query_key)
-    # Aggregate Data in Hierarcy, and set session cache
+    # Aggregate Data in Hierarchy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
     reactome_hierarchy.set_layout_settings(
         get_layout_settings(layout_settings, omics_recieved)
     )
-
     cache.set("reactome_hierarchy", reactome_hierarchy)
-    dropdown_pathways = []  # TODO
+
     out_dat = {
         "keggChebiTranslate": chebi_ids,
-        "omicsRecieved": {
-            "transcriptomics": transcriptomics["recieved"],
-            "proteomics": proteomics["recieved"],
-            "metabolomics": metabolomics["recieved"],
-        },
-        "used_symbol_cols": {
-            "transcriptomics": transcriptomics["symbol"],
-            "proteomics": proteomics["symbol"],
-            "metabolomics": metabolomics["symbol"],
-        },
         "fcs": fold_changes,
     }
     return json.dumps(out_dat)
