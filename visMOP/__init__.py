@@ -4,8 +4,9 @@ from flask import Flask, render_template, send_from_directory, request
 from visMOP.python_scripts.utils import kegg_to_chebi
 from visMOP.python_scripts.data_table_parsing import table_request, format_omics_data
 from visMOP.python_scripts.create_overview import create_overview_data
-from visMOP.python_scripts.reactome_hierarchy import PathwayHierarchy
+from visMOP.python_scripts.reactome_hierarchy import ReactomeHierarchy
 from visMOP.python_scripts.reactome_query import ReactomeQuery
+from visMOP.python_scripts.timeseries_analysis import add_regression_data_to_omics_data
 
 import pandas as pd
 import pathlib
@@ -126,7 +127,7 @@ def reactome_parsing():
     if metabolomics["recieved"] and metabolomics["amtTimesteps"] < amt_timesteps:
         amt_timesteps = metabolomics["amtTimesteps"]
 
-    reactome_hierarchy = PathwayHierarchy(
+    reactome_hierarchy = ReactomeHierarchy(
         {"amt_timesteps": amt_timesteps, "omics_recieved": omics_recieved},
         data_path / "reactome_data",
         target_db.upper(),
@@ -294,6 +295,9 @@ def reactome_parsing():
     )
     cache.set("reactome_hierarchy", reactome_hierarchy)
 
+    # use add_regression_data_to_omics_data to add regression data to the fold_changes dict
+    # add_regression_data_to_omics_data(fold_changes)
+
     out_dat = {
         "keggChebiTranslate": chebi_ids,
         "fcs": fold_changes,
@@ -312,7 +316,7 @@ def reactome_overview():
                                 list of Ids belonging to root nodes
     """
 
-    reactome_hierarchy = cache.get("reactome_hierarchy")
+    reactome_hierarchy: ReactomeHierarchy = cache.get("reactome_hierarchy")
     layout_limits = reactome_hierarchy.layout_settings["limits"]
     layout_attributes_used = reactome_hierarchy.layout_settings["attributes"]
     # user choice
@@ -329,11 +333,8 @@ def reactome_overview():
         root_subpathways,
         statistic_data_complete,
         omics_recieved,
-    ) = reactome_hierarchy.generate_overview_data(layout_limits, False)
+    ) = reactome_hierarchy.generate_overview_data(layout_limits, False, "individual")
     pathway_connection_dict = create_overview_data(out_data, central_nodes)
-    # network_overview = generate_networkx_dict(pathway_connection_dict)
-    # pathway_info_dict = {'path:'+id: ontology_string_info for id, ontology_string_info in (pathway.return_pathway_kegg_String_info_dict() for pathway in parsed_pathways)}
-    # network_with_edge_weight = get_networkx_with_edge_weights(network_overview, pathway_info_dict, stringGraph)
 
     # cluster_node_pos, cluster_areas = getClusterLayout(
     clusters, cluster_centers, noiseClusterExists = getClusterLayout(

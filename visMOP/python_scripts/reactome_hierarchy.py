@@ -124,7 +124,7 @@ class ReactomePathway:
             self.is_root = True
 
 
-class PathwayHierarchy(dict):
+class ReactomeHierarchy(dict):
     """Class for pathway hierarchy
 
     functions as main datastructure for reactome data
@@ -139,7 +139,7 @@ class PathwayHierarchy(dict):
         *arg,
         **kw
     ):
-        super(PathwayHierarchy, self).__init__(*arg, **kw)
+        super(ReactomeHierarchy, self).__init__(*arg, **kw)
         self.levels = {}
         self.omics_recieved = []
         self.layout_settings = {}
@@ -602,10 +602,12 @@ class PathwayHierarchy(dict):
                 for elem in self[entry_id].children:
                     self._get_subtree_non_overview_recursion(elem, subtree)
 
-    def generate_overview_data(self, omic_limits, verbose):
+    def generate_overview_data(self, omic_limits, verbose, mode):
         """Generates data to be exported to the frontend
         Args:
+            omic_limits: dictionary: limits for omic data
             verbose: boolean: If total proteins/metabolite ids should be transmitted
+            mode: string: "aggregate" or "individual"
         Returns:
             List of pathway overview entries, with each element being one pathway
             Dictionary of which query (accession Ids, e.g. uniprot/ensmbl) maps to which pathways
@@ -636,7 +638,8 @@ class PathwayHierarchy(dict):
             entry = self[pathway]
             hierarchical_roots = self.get_hierachical_superpathways(entry)
             if entry.has_data:
-                for timepoint in range(self.amt_timesteps):
+                amount_timesteps = self.amt_timesteps if mode == "individual" else 1
+                for timepoint in range(amount_timesteps):
                     (
                         pathway_dict,
                         dropdown_entry,
@@ -645,7 +648,9 @@ class PathwayHierarchy(dict):
                         entry,
                         pathway in central_nodes,
                         pathway,
+                        mode,
                         timepoint,
+                        amount_timesteps,
                         query_pathway_dict,
                         verbose,
                         omic_limits,
@@ -713,7 +718,9 @@ def generate_overview_pathway_entry(
     entry,
     is_central,
     pathway_Id,
+    mode,
     timepoint_index,
+    amt_timesteps,
     query_pathway_dict,
     verbose,
     omic_limits,
@@ -722,10 +729,15 @@ def generate_overview_pathway_entry(
     """generates pathway entry for overview
     Args:
         entry: entry object
+        is_central: boolean if entry is in the central nodes
         pathway_Id: if of pathway
+        mode: string: "aggregate" or "individual"
+        timepoint_index: int: index of timepoint
+        amt_timesteps: int: amount of timepoints
         query_pathway_dict: dictionary associating query id to pathways in which query is appearing
         verbose: boolean if total proteins should be enumerated or if only number should be used
-
+        omic_limits: dictionary: limits for omic data
+        omics_recieved: list of booleans: if omic data was recieved
 
     Returns:
         formatted json file dictionary
@@ -757,22 +769,22 @@ def generate_overview_pathway_entry(
             "metabolomics": {"measured": {}, "total": 0},
         },
     }
-    pathway_dict["pathwayName"] = entry.name + "_" + str(timepoint_index)
-    pathway_dict["pathwayId"] = entry.reactome_sID + "_" + str(timepoint_index)
-    pathway_dict["rootId"] = entry.root_id + "_" + str(timepoint_index)
+    if amt_timesteps > 1:
+        string_suffix = "_" + str(timepoint_index)
+    else:
+        string_suffix = ""
+    pathway_dict["pathwayName"] = entry.name + string_suffix
+    pathway_dict["pathwayId"] = entry.reactome_sID + string_suffix
+    pathway_dict["rootId"] = entry.root_id + string_suffix
     pathway_dict["nodeType"] = (
         "root" if entry.is_root else "regular" if is_central else "hierarchical"
     )
     pathway_dict["maplinks"] = entry.maplinks
-    pathway_dict["subtreeIds"] = [
-        elem + "_" + str(timepoint_index) for elem in entry.subtree_ids
-    ]
+    pathway_dict["subtreeIds"] = [elem + string_suffix for elem in entry.subtree_ids]
     pathway_dict["isOverview"] = entry.is_overview
-    pathway_dict["parents"] = [
-        elem + "_" + str(timepoint_index) for elem in entry.parents_with_data
-    ]
+    pathway_dict["parents"] = [elem + string_suffix for elem in entry.parents_with_data]
     pathway_dict["children"] = [
-        elem + "_" + str(timepoint_index) for elem in entry.children_with_data
+        elem + string_suffix for elem in entry.children_with_data
     ]
     pathway_dict["ownMeasuredEntryIDs"]["proteomics"] = entry.own_measured_proteins
     pathway_dict["ownMeasuredEntryIDs"]["transcriptomics"] = entry.own_measured_genes
@@ -788,12 +800,8 @@ def generate_overview_pathway_entry(
     ] = entry.subdiagrams_measured_metabolites
 
     pathway_dropdown_entry = {
-        "text": entry.reactome_sID
-        + ": "
-        + entry.name
-        + "; Timepoint: "
-        + str(timepoint_index),
-        "value": entry.reactome_sID + "_" + str(timepoint_index),
+        "text": entry.reactome_sID + ": " + entry.name + string_suffix,
+        "value": entry.reactome_sID + string_suffix,
         "title": entry.name,
     }
 
@@ -868,7 +876,9 @@ def generate_overview_pathway_entry(
         name = v["forms"][list(v["forms"].keys())[0]]["name"].split(" [")[0]
         pathway_dict["entries"]["proteomics"]["measured"][k] = {
             "queryId": k,
-            "value": v["measurement"][timepoint_index],
+            "value": v["measurement"][timepoint_index]
+            if mode == "individual"
+            else v["measurement"],
             "name": name,
             "forms": v["forms"],
         }
@@ -881,7 +891,9 @@ def generate_overview_pathway_entry(
         name = v["forms"][list(v["forms"].keys())[0]]["name"].split(" [")[0]
         pathway_dict["entries"]["transcriptomics"]["measured"][k] = {
             "queryId": k,
-            "value": v["measurement"][timepoint_index],
+            "value": v["measurement"][timepoint_index]
+            if mode == "individual"
+            else v["measurement"],
             "name": name,
             "forms": v["forms"],
         }
@@ -894,7 +906,9 @@ def generate_overview_pathway_entry(
         name = v["forms"][list(v["forms"].keys())[0]]["name"].split(" [")[0]
         pathway_dict["entries"]["metabolomics"]["measured"][k] = {
             "queryId": k,
-            "value": v["measurement"][timepoint_index],
+            "value": v["measurement"][timepoint_index]
+            if mode == "individual"
+            else v["measurement"],
             "name": name,
             "forms": v["forms"],
         }

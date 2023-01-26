@@ -93,7 +93,8 @@ class ReactomeQuery:
         for k,v in self.query_results.items():
             k2, entry = list(v.items())[0]
             measurement_val = entry['measurement']
-            fold_changes[k] = measurement_val
+            fold_changes[k] = {'fc_values':[]}
+            fold_changes[k]['fc_values'] = measurement_val
         return fold_changes
        
     def get_levels_of_query(self, hierarchy, level):

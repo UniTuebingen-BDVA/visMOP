@@ -27,9 +27,9 @@ interface State {
   };
   graphData: graphData;
   fcs: {
-    transcriptomics: { [key: string]: number[] };
-    proteomics: { [key: string]: number[] };
-    metabolomics: { [key: string]: number[] };
+    transcriptomics: { [key: string]: { fc_values: number[] } };
+    proteomics: { [key: string]: { fc_values: number[] } };
+    metabolomics: { [key: string]: { fc_values: number[] } };
   };
   fcQuantiles: {
     transcriptomics: number[];
@@ -217,19 +217,19 @@ export const useMainStore = defineStore('mainStore', {
       this.clusterData = val;
     },
     setFcs(val: {
-      transcriptomics: { [key: string]: number[] };
-      proteomics: { [key: string]: number[] };
-      metabolomics: { [key: string]: number[] };
+      transcriptomics: { [key: string]: { fc_values: number[] } };
+      proteomics: { [key: string]: { fc_values: number[] } };
+      metabolomics: { [key: string]: { fc_values: number[] } };
     }) {
       this.fcs = val;
       const fcsTranscriptomicsAsc = Object.values(val.transcriptomics)
-        .flat()
+        .flatMap((x) => x.fc_values)
         .sort((a, b) => a - b);
       const fcsProteomicsAsc = Object.values(val.proteomics)
-        .flat()
+        .flatMap((x) => x.fc_values)
         .sort((a, b) => a - b);
       const fcsMetabolomicsAsc = Object.values(val.metabolomics)
-        .flat()
+        .flatMap((x) => x.fc_values)
         .sort((a, b) => a - b);
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
