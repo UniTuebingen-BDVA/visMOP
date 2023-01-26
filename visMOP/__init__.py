@@ -96,9 +96,8 @@ App route for querying and parsing on reactome data
 def reactome_parsing():
     """Generates reactome hierarchy and maps query data to it
     returns: json:
-            "omicsRecieved": dictionary containing for which omics type data was recieved
-            "used_symbol_cols" : dictionary containing string which indicate which column in the data-table contains the queried accession IDs
-            "fcs": fold changes of the queries
+
+
     """
     ###
     # Parse POST data
@@ -300,7 +299,6 @@ def reactome_parsing():
 
     out_dat = {
         "keggChebiTranslate": chebi_ids,
-        "fcs": fold_changes,
     }
     return json.dumps(out_dat)
 

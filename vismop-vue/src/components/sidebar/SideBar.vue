@@ -391,7 +391,6 @@ const queryReactome = () => {
         proteomics: proteomicsSymbolCol.value.field.toString(),
         metabolomics: metabolomicsSymbolCol.value.field.toString(),
       });
-      mainStore.setFcs(dataContent.fcs);
       mainStore.setKeggChebiTranslate(dataContent.keggChebiTranslate);
     })
     .then(() => getReactomeData());

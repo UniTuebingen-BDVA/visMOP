@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import { defineStore } from 'pinia';
 import { graphData } from '@/core/graphTypes';
 import { ColType, glyphData } from '@/core/generalTypes';
-import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
+import { measure, reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
 
 interface State {
   sideBarExpand: boolean;
@@ -26,11 +26,6 @@ interface State {
     metabolomics: string;
   };
   graphData: graphData;
-  fcs: {
-    transcriptomics: { [key: string]: { fc_values: number[] } };
-    proteomics: { [key: string]: { fc_values: number[] } };
-    metabolomics: { [key: string]: { fc_values: number[] } };
-  };
   fcQuantiles: {
     transcriptomics: number[];
     proteomics: number[];
@@ -88,7 +83,6 @@ export const useMainStore = defineStore('mainStore', {
       edges: [],
       options: null,
     },
-    fcs: { transcriptomics: {}, proteomics: {}, metabolomics: {} },
     fcQuantiles: {
       transcriptomics: [0, 0],
       proteomics: [0, 0],
@@ -133,6 +127,7 @@ export const useMainStore = defineStore('mainStore', {
     },
     setOverviewData(val: { [key: string]: reactomeEntry }) {
       this.overviewData = val;
+      this.setOmicsScales(val);
     },
     setAmtTimepoints(val: number) {
       this.amtTimepoints = val;
@@ -216,21 +211,40 @@ export const useMainStore = defineStore('mainStore', {
     }) {
       this.clusterData = val;
     },
-    setFcs(val: {
-      transcriptomics: { [key: string]: { fc_values: number[] } };
-      proteomics: { [key: string]: { fc_values: number[] } };
-      metabolomics: { [key: string]: { fc_values: number[] } };
-    }) {
-      this.fcs = val;
-      const fcsTranscriptomicsAsc = Object.values(val.transcriptomics)
-        .flatMap((x) => x.fc_values)
+    setOmicsScales(val: { [key: string]: reactomeEntry }) {
+      const measuredTranscriptomics = Object.keys(val)
+        .map((key) => val[key].entries.transcriptomics.measured)
+        .reduce(
+          (acc, cur) => ({ ...acc, ...cur }),
+          {} as { [key: string]: measure }
+        );
+      const measuredProteomics = Object.keys(val)
+        .map((key) => val[key].entries.proteomics.measured)
+        .reduce(
+          (acc, cur) => ({ ...acc, ...cur }),
+          {} as { [key: string]: measure }
+        );
+      const measuredMetabolomics = Object.keys(val)
+        .map((key) => val[key].entries.metabolomics.measured)
+        .reduce(
+          (acc, cur) => ({ ...acc, ...cur }),
+          {} as { [key: string]: measure }
+        );
+
+      //flatten and map to array containing only the values and sort them ascending
+      const fcsTranscriptomicsAsc = Object.values(measuredTranscriptomics)
+        .map((entry) => entry.value)
         .sort((a, b) => a - b);
-      const fcsProteomicsAsc = Object.values(val.proteomics)
-        .flatMap((x) => x.fc_values)
+
+      const fcsProteomicsAsc = Object.values(measuredProteomics)
+        .map((entry) => entry.value)
         .sort((a, b) => a - b);
-      const fcsMetabolomicsAsc = Object.values(val.metabolomics)
-        .flatMap((x) => x.fc_values)
+
+      const fcsMetabolomicsAsc = Object.values(measuredMetabolomics)
+        .map((entry) => entry.value)
         .sort((a, b) => a - b);
+      // measured transcriptomics
+
       // https://stackoverflow.com/a/55297611
       const quantile = (arr: number[], q: number) => {
         const pos = (arr.length - 1) * q;
