@@ -6,7 +6,6 @@ from visMOP.python_scripts.data_table_parsing import table_request, format_omics
 from visMOP.python_scripts.create_overview import create_overview_data
 from visMOP.python_scripts.reactome_hierarchy import ReactomeHierarchy
 from visMOP.python_scripts.reactome_query import ReactomeQuery
-from visMOP.python_scripts.timeseries_analysis import add_regression_data_to_omics_data
 
 import pandas as pd
 import pathlib

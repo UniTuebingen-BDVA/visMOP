@@ -7,6 +7,8 @@ from operator import itemgetter
 from copy import deepcopy
 import collections
 
+from visMOP.python_scripts.timeseries_analysis import get_regression_data
+
 
 def get_PathwaySummaryData_omic(num_entries, all_values, limits):
     num_val_omic = len(all_values)
@@ -881,6 +883,9 @@ def generate_overview_pathway_entry(
             else v["measurement"],
             "name": name,
             "forms": v["forms"],
+            "regressionData": get_regression_data(v["measurement"])
+            if mode == "aggregate"
+            else None,
         }
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
@@ -896,6 +901,9 @@ def generate_overview_pathway_entry(
             else v["measurement"],
             "name": name,
             "forms": v["forms"],
+            "regressionData": get_regression_data(v["measurement"])
+            if mode == "aggregate"
+            else None,
         }
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
@@ -911,6 +919,9 @@ def generate_overview_pathway_entry(
             else v["measurement"],
             "name": name,
             "forms": v["forms"],
+            "regressionData": get_regression_data(v["measurement"])
+            if mode == "aggregate"
+            else None,
         }
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
