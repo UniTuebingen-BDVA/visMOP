@@ -26,11 +26,7 @@ interface State {
     metabolomics: string;
   };
   graphData: graphData;
-  fcQuantiles: {
-    transcriptomics: number[];
-    proteomics: number[];
-    metabolomics: number[];
-  };
+
   fcScales: {
     transcriptomics: d3.ScaleDiverging<string, never>;
     proteomics: d3.ScaleDiverging<string, never>;
@@ -83,11 +79,7 @@ export const useMainStore = defineStore('mainStore', {
       edges: [],
       options: null,
     },
-    fcQuantiles: {
-      transcriptomics: [0, 0],
-      proteomics: [0, 0],
-      metabolomics: [0, 0],
-    },
+
     fcScales: {
       transcriptomics: d3.scaleDiverging(),
       proteomics: d3.scaleDiverging(),
@@ -211,85 +203,51 @@ export const useMainStore = defineStore('mainStore', {
     }) {
       this.clusterData = val;
     },
+
+    /**
+     * function to set the fold change scales for the omics data
+     * @param baseData
+     * @param omicsType
+     * @returns
+     */
+    generateFoldChangeScale(
+      baseData: { [key: string]: reactomeEntry },
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      const data = Object.keys(baseData)
+        .map((key) => baseData[key].entries[omicsType].measured)
+        .reduce(
+          (acc, cur) => ({ ...acc, ...cur }),
+          {} as { [key: string]: measure }
+        );
+      const dataValues = Object.values(data).map((entry) => entry.value);
+      return this.generateQuantileColorscale(dataValues, d3.interpolateRdBu);
+    },
+
+    /**
+     * function to generate a quantile colorscale
+     * @param dataValues
+     * @param interpolator
+     * @returns
+     */
+    generateQuantileColorscale(
+      dataValues: number[],
+      interpolator: (t: number) => string
+    ) {
+      const sortedValues = dataValues.sort((a, b) => a - b);
+
+      const colorScale = d3
+        .scaleDiverging(interpolator)
+        .domain([
+          d3.quantile(sortedValues, 0.05) as number,
+          (d3.quantile(sortedValues, 0.05) as number) < 0.0 ? 0.0 : 1.0,
+          d3.quantile(sortedValues, 0.95) as number,
+        ]);
+
+      return colorScale;
+    },
+
     setOmicsScales(val: { [key: string]: reactomeEntry }) {
-      const measuredTranscriptomics = Object.keys(val)
-        .map((key) => val[key].entries.transcriptomics.measured)
-        .reduce(
-          (acc, cur) => ({ ...acc, ...cur }),
-          {} as { [key: string]: measure }
-        );
-      const measuredProteomics = Object.keys(val)
-        .map((key) => val[key].entries.proteomics.measured)
-        .reduce(
-          (acc, cur) => ({ ...acc, ...cur }),
-          {} as { [key: string]: measure }
-        );
-      const measuredMetabolomics = Object.keys(val)
-        .map((key) => val[key].entries.metabolomics.measured)
-        .reduce(
-          (acc, cur) => ({ ...acc, ...cur }),
-          {} as { [key: string]: measure }
-        );
-
-      //flatten and map to array containing only the values and sort them ascending
-      const fcsTranscriptomicsAsc = Object.values(measuredTranscriptomics)
-        .map((entry) => entry.value)
-        .sort((a, b) => a - b);
-
-      const fcsProteomicsAsc = Object.values(measuredProteomics)
-        .map((entry) => entry.value)
-        .sort((a, b) => a - b);
-
-      const fcsMetabolomicsAsc = Object.values(measuredMetabolomics)
-        .map((entry) => entry.value)
-        .sort((a, b) => a - b);
-      // measured transcriptomics
-
-      // https://stackoverflow.com/a/55297611
-      const quantile = (arr: number[], q: number) => {
-        const pos = (arr.length - 1) * q;
-        const base = Math.floor(pos);
-        const rest = pos - base;
-        if (arr[base + 1] !== undefined) {
-          return arr[base] + rest * (arr[base + 1] - arr[base]);
-        } else {
-          return arr[base];
-        }
-      };
-      const quantTranscriptomics = [
-        quantile(fcsTranscriptomicsAsc, 0.05),
-        quantile(fcsTranscriptomicsAsc, 0.95),
-      ];
-      const quantProteomics = [
-        quantile(fcsProteomicsAsc, 0.05),
-        quantile(fcsProteomicsAsc, 0.95),
-      ];
-      const quantMetabolomics = [
-        quantile(fcsMetabolomicsAsc, 0.05),
-        quantile(fcsMetabolomicsAsc, 0.95),
-      ];
-
-      const colorScaleTranscriptomics = d3
-        .scaleDiverging(d3.interpolateRdBu)
-        .domain([
-          quantTranscriptomics[1],
-          quantTranscriptomics[0] < 0.0 ? 0.0 : 1.0,
-          quantTranscriptomics[0],
-        ]);
-      const colorScaleProteomics = d3
-        .scaleDiverging(d3.interpolateRdBu)
-        .domain([
-          quantProteomics[1],
-          quantProteomics[0] < 0.0 ? 0.0 : 1.0,
-          quantProteomics[0],
-        ]);
-      const colorScaleMetabolomics = d3
-        .scaleDiverging(d3.interpolateRdBu)
-        .domain([
-          quantMetabolomics[1],
-          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
-          quantMetabolomics[0],
-        ]);
       // .scaleDiverging(d3.interpolatePRGn) // try rdbu aswell
       // .domain([
       //   quantMetabolomics[0],
@@ -297,15 +255,10 @@ export const useMainStore = defineStore('mainStore', {
       //   quantMetabolomics[1],
       // ]);
 
-      this.fcQuantiles = {
-        transcriptomics: quantTranscriptomics,
-        proteomics: quantProteomics,
-        metabolomics: quantMetabolomics,
-      };
       this.fcScales = {
-        transcriptomics: colorScaleTranscriptomics,
-        proteomics: colorScaleProteomics,
-        metabolomics: colorScaleMetabolomics,
+        transcriptomics: this.generateFoldChangeScale(val, 'transcriptomics'),
+        proteomics: this.generateFoldChangeScale(val, 'proteomics'),
+        metabolomics: this.generateFoldChangeScale(val, 'metabolomics'),
       };
     },
     setPathwayList(val: [{ text: string; value: string; title: string }]) {
