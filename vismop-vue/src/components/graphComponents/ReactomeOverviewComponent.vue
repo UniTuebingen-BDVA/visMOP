@@ -543,7 +543,7 @@ const removeSelection = () => {
 };
 const drawNetwork = () => {
   networkGraph.value?.killGraph();
-  glyphDataVar.value = generateGlyphDataReactome();
+  glyphDataVar.value = generateGlyphDataReactome('fc');
   mainStore.setGlyphData(glyphDataVar.value);
   const generatedGlyphsHighDetail = generateGlyphs(
     glyphDataVar.value,

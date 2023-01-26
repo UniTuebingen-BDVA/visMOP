@@ -2,7 +2,7 @@ import { useMainStore } from '@/stores';
 import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import * as _ from 'lodash';
-import { glyphData } from '../generalTypes';
+import { glyphData } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphsNoValueGrey } from '@/core/colors';
 
 /**
@@ -77,15 +77,10 @@ export class LowDetailGlyph {
   prepareOmics(
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
-    this.glyphData[omicsType].foldChanges.sort((a, b) => a.value - b.value);
+    this.glyphData[omicsType].measurements.sort((a, b) => a.value - b.value);
     const avgColor =
-      this.glyphData[omicsType].foldChanges.length > 0
-        ? this.colorScales[omicsType](
-            this.glyphData[omicsType].foldChanges.reduce(
-              (a, b) => a + b.value,
-              0
-            ) / this.glyphData[omicsType].foldChanges.length
-          )
+      this.glyphData[omicsType].measurements.length > 0
+        ? this.colorScales[omicsType](this.glyphData[omicsType].meanMeasure)
         : glyphsNoValueGrey;
     this.outerColors.push(avgColor);
     const startAngleVal =

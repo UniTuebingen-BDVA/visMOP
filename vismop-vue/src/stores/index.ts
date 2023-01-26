@@ -2,8 +2,12 @@ import _ from 'lodash';
 import * as d3 from 'd3';
 import { defineStore } from 'pinia';
 import { graphData } from '@/core/graphTypes';
-import { ColType, glyphData } from '@/core/generalTypes';
-import { measure, reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
+import { ColType } from '@/core/generalTypes';
+import {
+  measure,
+  reactomeEntry,
+  glyphData,
+} from '@/core/reactomeGraphs/reactomeTypes';
 
 interface State {
   sideBarExpand: boolean;
@@ -33,6 +37,12 @@ interface State {
     metabolomics: d3.ScaleDiverging<string, never>;
   };
 
+  slopeScales: {
+    transcriptomics: d3.ScaleDiverging<string, never>;
+    proteomics: d3.ScaleDiverging<string, never>;
+    metabolomics: d3.ScaleDiverging<string, never>;
+  };
+
   pathwayList: [{ text: string; value: string; title: string }];
   queryToPathwayDictionary: { [key: string]: string[] };
   rootIds: string[];
@@ -45,6 +55,7 @@ interface State {
     metabolomics: boolean;
   };
   amtTimepoints: number;
+  timepointMethod: 'aggregate' | 'individual';
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
@@ -86,6 +97,12 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: d3.scaleDiverging(),
     },
 
+    slopeScales: {
+      transcriptomics: d3.scaleDiverging(),
+      proteomics: d3.scaleDiverging(),
+      metabolomics: d3.scaleDiverging(),
+    },
+
     pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
     queryToPathwayDictionary: {},
     rootIds: [],
@@ -98,6 +115,7 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: false,
     },
     amtTimepoints: 0,
+    timepointMethod: 'aggregate',
     pathayAmountDict: {},
     pathwayCompare: [],
     glyphData: {},
@@ -205,6 +223,24 @@ export const useMainStore = defineStore('mainStore', {
     },
 
     /**
+     * reduce the reactome data to a single object containing all the measured data
+     * @param baseData
+     * @param omicsType
+     * @returns
+     */
+    reduceReactomeData(
+      baseData: { [key: string]: reactomeEntry },
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      return Object.keys(baseData)
+        .map((key) => baseData[key].entries[omicsType].measured)
+        .reduce(
+          (acc, cur) => ({ ...acc, ...cur }),
+          {} as { [key: string]: measure }
+        );
+    },
+
+    /**
      * function to set the fold change scales for the omics data
      * @param baseData
      * @param omicsType
@@ -214,14 +250,26 @@ export const useMainStore = defineStore('mainStore', {
       baseData: { [key: string]: reactomeEntry },
       omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
     ) {
-      const data = Object.keys(baseData)
-        .map((key) => baseData[key].entries[omicsType].measured)
-        .reduce(
-          (acc, cur) => ({ ...acc, ...cur }),
-          {} as { [key: string]: measure }
-        );
+      const data = this.reduceReactomeData(baseData, omicsType);
       const dataValues = Object.values(data).map((entry) => entry.value);
       return this.generateQuantileColorscale(dataValues, d3.interpolateRdBu);
+    },
+
+    /**
+     * function to set the slope scales for the omics data
+     * @param baseData
+     * @param omicsType
+     * @returns
+     */
+    generateSlopeScale(
+      baseData: { [key: string]: reactomeEntry },
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      const data = this.reduceReactomeData(baseData, omicsType);
+      const dataValues = Object.values(data).map(
+        (entry) => entry.regressionData.slope
+      );
+      return this.generateQuantileColorscale(dataValues, d3.interpolatePRGn);
     },
 
     /**
@@ -248,18 +296,18 @@ export const useMainStore = defineStore('mainStore', {
     },
 
     setOmicsScales(val: { [key: string]: reactomeEntry }) {
-      // .scaleDiverging(d3.interpolatePRGn) // try rdbu aswell
-      // .domain([
-      //   quantMetabolomics[0],
-      //   quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
-      //   quantMetabolomics[1],
-      // ]);
-
       this.fcScales = {
         transcriptomics: this.generateFoldChangeScale(val, 'transcriptomics'),
         proteomics: this.generateFoldChangeScale(val, 'proteomics'),
         metabolomics: this.generateFoldChangeScale(val, 'metabolomics'),
       };
+      if (this.timepointMethod === 'aggregate' && this.amtTimepoints > 1) {
+        this.slopeScales = {
+          transcriptomics: this.generateSlopeScale(val, 'transcriptomics'),
+          proteomics: this.generateSlopeScale(val, 'proteomics'),
+          metabolomics: this.generateSlopeScale(val, 'metabolomics'),
+        };
+      }
     },
     setPathwayList(val: [{ text: string; value: string; title: string }]) {
       this.pathwayList = val;

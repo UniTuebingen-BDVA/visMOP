@@ -6,14 +6,46 @@ Basic Types
 
 import { glyphData } from '../core/generalTypes';
 
+/**
+ * Type corresponding to all the information needed for the construction of a single pathway glyph
+ */
+/**
+ *  Type corresponding to a single pathway and one type of omics
+ */
+type omicsData = {
+  available: boolean;
+  measurements: measure[];
+  meanMeasure: number;
+  nodeState: { total: number; regulated: number };
+};
+
+/**
+ * Type corresponding to all the information needed for the construction of a single pathway glyph
+ */
+export type glyphData = {
+  pathwayID: string;
+  proteomics: omicsData;
+  metabolomics: omicsData;
+  transcriptomics: omicsData;
+};
+
 type form = {
   name: string;
   toplevelId: number[];
 };
 
+type regressionData = {
+  slope: number;
+  intercept: number;
+  r2: number;
+  p_value: number;
+  std_err: number;
+};
+
 type measure = {
   queryId: string;
   value: number;
+  regressionData: regressionData;
   name: string;
   forms: { [key: string]: form };
 };

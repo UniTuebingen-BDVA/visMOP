@@ -2,7 +2,7 @@ import { useMainStore } from '@/stores';
 import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import * as _ from 'lodash';
-import { glyphData } from '../generalTypes';
+import { glyphData } from '../reactomeGraphs/reactomeTypes';
 import { glyphsNoValueGrey } from '@/core/colors';
 
 /**
@@ -446,16 +446,14 @@ export class HighDetailGlyph {
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
     this.totalNodes += this.glyphData[omicsType].nodeState.total;
-    this.glyphData[omicsType].foldChanges.sort((a, b) => a.value - b.value);
-    const omicsColors = this.glyphData[omicsType].foldChanges.map((elem) =>
+    this.glyphData[omicsType].measurements.sort((a, b) => a.value - b.value);
+    const omicsColors = this.glyphData[omicsType].measurements.map((elem) =>
       this.colorScales[omicsType](elem.value)
     );
     this.outerColors.push(...omicsColors);
     const startAngleVal =
       this.addedElements * this.thirdCircle + this.circlePadding;
-    this.omicsAverages.push(
-      this.glyphData[omicsType].meanFoldchange.toFixed(3)
-    );
+    this.omicsAverages.push(this.glyphData[omicsType].meanMeasure.toFixed(3));
     const angleFCs = _.range(
       startAngleVal,
       startAngleVal +
@@ -481,9 +479,9 @@ export class HighDetailGlyph {
         startAngle: angleFCs[idx],
         endAngle: angleFCs[idx + 1],
         padAngle: 0,
-        name: this.glyphData[omicsType].foldChanges[idx].name,
-        fc: this.glyphData[omicsType].foldChanges[idx].value,
-        queryID: this.glyphData[omicsType].foldChanges[idx].queryID,
+        name: this.glyphData[omicsType].measurements[idx].name,
+        fc: this.glyphData[omicsType].measurements[idx].value,
+        queryID: this.glyphData[omicsType].measurements[idx].queryId,
       };
       this.outerArcDat.push(pushDat);
     });

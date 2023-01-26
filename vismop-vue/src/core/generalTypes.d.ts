@@ -20,23 +20,3 @@ type measureData = {
   value: number;
   queryID: string;
 };
-
-/**
- *  Type corresponding to a single pathway and one type of omics
- */
-type omicsData = {
-  available: boolean;
-  foldChanges: measureData[];
-  meanFoldchange: number;
-  nodeState: { total: number; regulated: number };
-};
-
-/**
- * Type corresponding to all the information needed for the construction of a single pathway glyph
- */
-export type glyphData = {
-  pathwayID: string;
-  proteomics: omicsData;
-  metabolomics: omicsData;
-  transcriptomics: omicsData;
-};

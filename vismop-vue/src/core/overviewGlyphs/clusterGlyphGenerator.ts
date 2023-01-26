@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { glyphData, omicsData } from '../generalTypes';
+import { glyphData, omicsData } from '@/core/reactomeGraphs/reactomeTypes';
 import { ClusterSummaryGlyph } from './clusterSummaryGlyph';
 
 /**
@@ -49,21 +49,21 @@ export function generateClusterGlyphData(
   clusterNodeMapping.forEach((clusterNodes, clusterIndex) => {
     const transcriptomicsData: omicsData = {
       available: false,
-      foldChanges: [],
-      meanFoldchange: 0,
+      measurements: [],
+      meanMeasure: 0,
       nodeState: { total: 0, regulated: 0 },
     };
 
     const proteomicsData: omicsData = {
       available: false,
-      foldChanges: [],
-      meanFoldchange: 0,
+      measurements: [],
+      meanMeasure: 0,
       nodeState: { total: 0, regulated: 0 },
     };
     const metabolomicsData: omicsData = {
       available: false,
-      meanFoldchange: 0,
-      foldChanges: [],
+      measurements: [],
+      meanMeasure: 0,
       nodeState: { total: 0, regulated: 0 },
     };
     const omicsDataArray: [
@@ -81,21 +81,21 @@ export function generateClusterGlyphData(
       omicsDataArray.forEach((arrEntry) => {
         if (glyphData[arrEntry[1]].available) {
           arrEntry[0].available = true;
-          glyphData[arrEntry[1]].foldChanges.forEach((element) => {
+          glyphData[arrEntry[1]].measurements.forEach((element) => {
             if (
-              arrEntry[0].foldChanges.every(
-                (entry) => entry.queryID !== element.queryID
+              arrEntry[0].measurements.every(
+                (entry) => entry.queryId !== element.queryId
               )
             ) {
-              arrEntry[0].foldChanges.push(element);
+              arrEntry[0].measurements.push(element);
             }
           });
         }
       });
     }
     omicsDataArray.forEach((arrEntry) => {
-      const fcVals = arrEntry[0].foldChanges.map((elem) => elem.value);
-      arrEntry[0].meanFoldchange = _.mean(fcVals);
+      const fcVals = arrEntry[0].measurements.map((elem) => elem.value);
+      arrEntry[0].meanMeasure = _.mean(fcVals);
     });
 
     outGlyphData[clusterIndex] = {
