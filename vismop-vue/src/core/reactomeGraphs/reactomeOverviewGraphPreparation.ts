@@ -4,8 +4,7 @@ import {
   overviewGraphData,
   overviewNode,
 } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
-import { reactomeEntry } from './reactomeTypes';
-import { glyphData } from '../generalTypes';
+import { reactomeEntry, glyphData } from './reactomeTypes';
 import ClusterHulls from '@/core/layouting/convexHullsForClusters';
 import OverviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
@@ -94,13 +93,13 @@ export function generateGraphData(
         forceLabel: !entry.isCentral,
         fcAverages: {
           transcriptomics: glyphData[id].transcriptomics.available
-            ? glyphData[id].transcriptomics.meanFoldchange
+            ? glyphData[id].transcriptomics.meanMeasure
             : NaN,
           proteomics: glyphData[id].proteomics.available
-            ? glyphData[id].proteomics.meanFoldchange
+            ? glyphData[id].proteomics.meanMeasure
             : NaN,
           metabolomics: glyphData[id].metabolomics.available
-            ? glyphData[id].metabolomics.meanFoldchange
+            ? glyphData[id].metabolomics.meanMeasure
             : NaN,
         },
         nodeState: {

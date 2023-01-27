@@ -31,13 +31,13 @@ interface State {
   };
   graphData: graphData;
 
-  fcScales: {
+  fcColorScales: {
     transcriptomics: d3.ScaleDiverging<string, never>;
     proteomics: d3.ScaleDiverging<string, never>;
     metabolomics: d3.ScaleDiverging<string, never>;
   };
 
-  slopeScales: {
+  slopeColorScales: {
     transcriptomics: d3.ScaleDiverging<string, never>;
     proteomics: d3.ScaleDiverging<string, never>;
     metabolomics: d3.ScaleDiverging<string, never>;
@@ -55,7 +55,7 @@ interface State {
     metabolomics: boolean;
   };
   amtTimepoints: number;
-  timepointMethod: 'aggregate' | 'individual';
+  timeseriesModeToggle: 'aggregate' | 'individual';
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
@@ -91,13 +91,13 @@ export const useMainStore = defineStore('mainStore', {
       options: null,
     },
 
-    fcScales: {
+    fcColorScales: {
       transcriptomics: d3.scaleDiverging(),
       proteomics: d3.scaleDiverging(),
       metabolomics: d3.scaleDiverging(),
     },
 
-    slopeScales: {
+    slopeColorScales: {
       transcriptomics: d3.scaleDiverging(),
       proteomics: d3.scaleDiverging(),
       metabolomics: d3.scaleDiverging(),
@@ -115,7 +115,7 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: false,
     },
     amtTimepoints: 0,
-    timepointMethod: 'aggregate',
+    timeseriesModeToggle: 'aggregate',
     pathayAmountDict: {},
     pathwayCompare: [],
     glyphData: {},
@@ -202,6 +202,14 @@ export const useMainStore = defineStore('mainStore', {
           entry.label = `available (${available} of ${total})`;
         }
       });
+    },
+    setTimeSeriesToggle(val: 'aggregate' | 'individual') {
+      this.timeseriesModeToggle = val;
+    },
+    getTimeSeriesMode() {
+      return this.amtTimepoints > 1 && this.timeseriesModeToggle == 'aggregate'
+        ? 'aggregate'
+        : 'individual';
     },
 
     setUsedSymbolCols(val: {
@@ -296,13 +304,13 @@ export const useMainStore = defineStore('mainStore', {
     },
 
     setOmicsScales(val: { [key: string]: reactomeEntry }) {
-      this.fcScales = {
+      this.fcColorScales = {
         transcriptomics: this.generateFoldChangeScale(val, 'transcriptomics'),
         proteomics: this.generateFoldChangeScale(val, 'proteomics'),
         metabolomics: this.generateFoldChangeScale(val, 'metabolomics'),
       };
-      if (this.timepointMethod === 'aggregate' && this.amtTimepoints > 1) {
-        this.slopeScales = {
+      if (this.getTimeSeriesMode() == 'aggregate') {
+        this.slopeColorScales = {
           transcriptomics: this.generateSlopeScale(val, 'transcriptomics'),
           proteomics: this.generateSlopeScale(val, 'proteomics'),
           metabolomics: this.generateSlopeScale(val, 'metabolomics'),

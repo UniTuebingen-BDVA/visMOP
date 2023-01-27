@@ -93,8 +93,7 @@ import { generateGraphData } from '../../core/reactomeGraphs/reactomeOverviewGra
 import { generateGlyphDataReactome } from '../../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../../core/overviewGlyphs/generator';
 import { computed, PropType, Ref, ref, watch, defineProps } from 'vue';
-import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
-import { glyphData } from '@/core/generalTypes';
+import { reactomeEntry, glyphData } from '@/core/reactomeGraphs/reactomeTypes';
 import { useMainStore } from '@/stores';
 import { HighDetailGlyph } from '@/core/overviewGlyphs/highDetailGlyph';
 import { LowDetailGlyph } from '@/core/overviewGlyphs/lowDetailGlyph';
@@ -387,14 +386,10 @@ watch(glyphDataVar, () => {
         transcriptomicsRegulatedLimits.max =
           currPathway.transcriptomics.nodeState.regulated;
       sumRegulatedNodes += currPathway.transcriptomics.nodeState.regulated;
-      if (
-        currPathway.transcriptomics.meanFoldchange < transcriptomicsLimits.min
-      )
-        transcriptomicsLimits.min = currPathway.transcriptomics.meanFoldchange;
-      if (
-        currPathway.transcriptomics.meanFoldchange > transcriptomicsLimits.max
-      )
-        transcriptomicsLimits.max = currPathway.transcriptomics.meanFoldchange;
+      if (currPathway.transcriptomics.meanMeasure < transcriptomicsLimits.min)
+        transcriptomicsLimits.min = currPathway.transcriptomics.meanMeasure;
+      if (currPathway.transcriptomics.meanMeasure > transcriptomicsLimits.max)
+        transcriptomicsLimits.max = currPathway.transcriptomics.meanMeasure;
     }
     if (currPathway.proteomics.available) {
       proteomicsAvailable = true;
@@ -411,10 +406,10 @@ watch(glyphDataVar, () => {
         proteomicsRegulatedLimits.max =
           currPathway.proteomics.nodeState.regulated;
       sumRegulatedNodes += currPathway.proteomics.nodeState.regulated;
-      if (currPathway.proteomics.meanFoldchange < proteomicsLimits.min)
-        proteomicsLimits.min = currPathway.proteomics.meanFoldchange;
-      if (currPathway.proteomics.meanFoldchange > proteomicsLimits.max)
-        proteomicsLimits.max = currPathway.proteomics.meanFoldchange;
+      if (currPathway.proteomics.meanMeasure < proteomicsLimits.min)
+        proteomicsLimits.min = currPathway.proteomics.meanMeasure;
+      if (currPathway.proteomics.meanMeasure > proteomicsLimits.max)
+        proteomicsLimits.max = currPathway.proteomics.meanMeasure;
     }
     if (currPathway.metabolomics.available) {
       metabolomicsAvailable = true;
@@ -431,10 +426,10 @@ watch(glyphDataVar, () => {
         metabolomicsRegulatedLimits.max =
           currPathway.metabolomics.nodeState.regulated;
       sumRegulatedNodes += currPathway.metabolomics.nodeState.regulated;
-      if (currPathway.metabolomics.meanFoldchange < metabolomicsLimits.min)
-        metabolomicsLimits.min = currPathway.metabolomics.meanFoldchange;
-      if (currPathway.metabolomics.meanFoldchange > metabolomicsLimits.max)
-        metabolomicsLimits.max = currPathway.metabolomics.meanFoldchange;
+      if (currPathway.metabolomics.meanMeasure < metabolomicsLimits.min)
+        metabolomicsLimits.min = currPathway.metabolomics.meanMeasure;
+      if (currPathway.metabolomics.meanMeasure > metabolomicsLimits.max)
+        metabolomicsLimits.max = currPathway.metabolomics.meanMeasure;
     }
     if (sumRegulatedNodes < regulatedLimits.min)
       regulatedLimits.min = sumRegulatedNodes;
@@ -543,15 +538,19 @@ const removeSelection = () => {
 };
 const drawNetwork = () => {
   networkGraph.value?.killGraph();
-  glyphDataVar.value = generateGlyphDataReactome('fc');
+  glyphDataVar.value = generateGlyphDataReactome(
+    mainStore.getTimeSeriesMode() == 'aggregate' ? 'slope' : 'fc'
+  );
   mainStore.setGlyphData(glyphDataVar.value);
   const generatedGlyphsHighDetail = generateGlyphs(
     glyphDataVar.value,
+    mainStore.getTimeSeriesMode() == 'aggregate' ? 'slope' : 'fc',
     HighDetailGlyph,
     OverviewGraph.GLYPH_SIZE
   );
   const generatedGlyphsLowDetail = generateGlyphs(
     glyphDataVar.value,
+    mainStore.getTimeSeriesMode() == 'aggregate' ? 'slope' : 'fc',
     LowDetailGlyph,
     OverviewGraph.GLYPH_SIZE
   );

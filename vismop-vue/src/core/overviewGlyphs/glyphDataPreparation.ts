@@ -13,6 +13,8 @@ export function generateGlyphDataReactome(targetMeasurement: 'fc' | 'slope'): {
   const mainStore = useMainStore();
 
   // contains pathway lists
+  const accessor =
+    targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
   const omicsRecieved = mainStore.omicsRecieved;
   const overviewData = mainStore.overviewData;
   for (const pathwayID in overviewData) {
@@ -57,8 +59,6 @@ export function generateGlyphDataReactome(targetMeasurement: 'fc' | 'slope'): {
       metabolomicsData.nodeState.regulated += 1;
     }
 
-    const accessor =
-      targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
     transcriptomicsData.measurements.sort(
       (a, b) => _.get(a, accessor) - _.get(b, accessor)
     );
@@ -76,6 +76,7 @@ export function generateGlyphDataReactome(targetMeasurement: 'fc' | 'slope'): {
     proteomicsData.meanMeasure =
       proteomicsData.measurements.reduce((a, b) => a + _.get(b, accessor), 0) /
       proteomicsData.measurements.length;
+    console.log('proteomicsData', proteomicsData);
     metabolomicsData.meanMeasure =
       metabolomicsData.measurements.reduce(
         (a, b) => a + _.get(b, accessor),

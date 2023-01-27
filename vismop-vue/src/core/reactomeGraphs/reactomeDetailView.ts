@@ -66,9 +66,10 @@ export default class ReactomeDetailView {
   private layoutData: layoutJSON;
   private graphData: graphJSON;
   private containerID: string;
-  private colorScaleTranscriptomics = useMainStore().fcScales.transcriptomics;
-  private colorScaleProteomics = useMainStore().fcScales.proteomics;
-  private colorScaleMetabolomics = useMainStore().fcScales.metabolomics;
+  private colorScaleTranscriptomics =
+    useMainStore().fcColorScales.transcriptomics;
+  private colorScaleProteomics = useMainStore().fcColorScales.proteomics;
+  private colorScaleMetabolomics = useMainStore().fcColorScales.metabolomics;
   private foldChanges: foldChangesByType;
   private foldChangeReactome: foldChangesByID;
   /**
@@ -569,7 +570,7 @@ export default class ReactomeDetailView {
       const mainStore = useMainStore();
       // maybe save uniprot id when drawing?
       const uniprotID = self.graphData.nodes[d.reactomeId].identifier;
-      mainStore.addClickedNode({ queryID: uniprotID, name: d.displayName });
+      //mainStore.addClickedNode({ queryID: uniprotID, name: d.displayName });
     });
 
     enterG
@@ -680,6 +681,7 @@ export default class ReactomeDetailView {
       self.tooltipG.append(() => {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
+          'fc',
           true,
           d.reactomeId,
           64,
@@ -825,6 +827,7 @@ export default class ReactomeDetailView {
       self.tooltipG.append(() => {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
+          'fc',
           true,
           d.reactomeId,
           64,
@@ -930,6 +933,7 @@ export default class ReactomeDetailView {
       self.tooltipG.append(() => {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
+          'fc',
           true,
           d.reactomeId,
           64,

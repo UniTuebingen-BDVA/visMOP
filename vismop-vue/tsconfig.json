@@ -3,7 +3,7 @@
     "resolveJsonModule": true,
     "useDefineForClassFields": true,
     "target": "esnext",
-    "module": "commonjs", // was "esnext" but this didnt work with mocha
+    "module": "ESNext", // if mocha does not work, change to "commonjs"
     "strict": true,
     "isolatedModules": true,
     "noEmit": true,

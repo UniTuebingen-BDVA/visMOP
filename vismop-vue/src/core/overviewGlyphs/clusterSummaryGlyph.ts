@@ -31,14 +31,25 @@ export class ClusterSummaryGlyph {
   private outerColors: string[] = [];
   private colorScales;
   glyphId: string;
+  accessor: string;
 
-  constructor(glyphData: glyphData, glyphId: string, imgWidth: number) {
+  constructor(
+    glyphData: glyphData,
+    targetMeasurement: 'fc' | 'slope',
+    glyphId: string,
+    imgWidth: number
+  ) {
     const mainStore = useMainStore();
 
     this.glyphData = glyphData;
     this.glyphId = glyphId;
     this.diameter = imgWidth - imgWidth / 10 - (this.drawLabels ? 7 : 0);
-
+    this.accessor =
+      targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
+    this.colorScales =
+      targetMeasurement === 'fc'
+        ? mainStore.fcColorScales
+        : mainStore.slopeColorScales;
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;
     if (this.glyphData.proteomics.available) this.availableOmics += 1;
     if (this.glyphData.metabolomics.available) this.availableOmics += 1;
@@ -49,7 +60,6 @@ export class ClusterSummaryGlyph {
     this.width = imgWidth;
     this.height = imgWidth;
     this.radius = this.diameter / 2;
-    this.colorScales = mainStore.fcScales;
     if (this.glyphData.transcriptomics.available) {
       this.prepareOmics('transcriptomics');
     }

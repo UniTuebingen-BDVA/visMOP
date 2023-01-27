@@ -15,6 +15,15 @@
       option-label="text"
       option-value="value"
     ></q-select>
+    <!-- A toggle switch to switch between aggergate and individual time series mode-->
+    <q-toggle
+      v-model="timeseriesModeToggle"
+      :label="`Timeseries ${timeseriesModeToggle} Mode`"
+      color="primary"
+      :true-value="'aggregate'"
+      :false-value="'individual'"
+    ></q-toggle>
+    <q-separator />
     Selected Omics:
     {{ chosenOmics.length }}
     <!--
@@ -188,6 +197,12 @@ const sliderValsMetabolomics = ref(
     };
   }
 );
+
+const timeseriesModeToggle = computed({
+  get: () => mainStore.timeseriesModeToggle,
+  set: (value) => mainStore.setTimeSeriesToggle(value),
+});
+
 const transcriptomicsTableHeaders = computed(
   () => mainStore.tableHeaders.transcriptomics
 );
@@ -339,6 +354,12 @@ const queryReactome = () => {
   const mainStore = useMainStore();
   mainStore.resetStore();
   $q.loading.show();
+  const amtTimepoints = Math.max(
+    transcriptomicsValueCol.value.map((entry) => entry.field).length,
+    proteomicsValueCol.value.map((entry) => entry.field).length,
+    metabolomicsValueCol.value.map((entry) => entry.field).length
+  );
+  mainStore.setAmtTimepoints(amtTimepoints);
   const payload = {
     targetOrganism: targetOrganism.value,
     transcriptomics: {
@@ -397,11 +418,15 @@ const queryReactome = () => {
 };
 
 const getReactomeData = () => {
+  const payload = {
+    timeseriesMode: mainStore.getTimeSeriesMode(),
+  };
   fetch('/reactome_overview', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
+    body: JSON.stringify(payload),
   })
     .then((response) => response.json())
     .then((dataContent) => {
@@ -409,7 +434,6 @@ const getReactomeData = () => {
         return Promise.reject(dataContent.ErrorMsg);
       }
       mainStore.setOverviewData(dataContent.overviewData);
-      mainStore.setAmtTimepoints(dataContent.amtTimepoints);
       mainStore.setClusterData(dataContent.clusterData);
       mainStore.setPathwayList(dataContent.pathwayList);
       mainStore.setQueryToPathwayDictionary(

@@ -920,6 +920,7 @@ export default class OverviewGraph {
     const mainStore = useMainStore();
     const glyphs = generateGlyphs(
       mainStore.glyphData,
+      mainStore.getTimeSeriesMode() == 'aggregate' ? 'slope' : 'fc',
       OverviewGraph.GLYPH_SIZE,
       mainStore.clusterData.clusters
     );

@@ -13,6 +13,7 @@ export class LowDetailGlyph {
   private availableOmics = 0;
   private drawLabels = false;
   private glyphData: glyphData;
+  private accessor: 'value' | 'regressionData.slope';
   private diameter: number;
   private thirdCircle: number;
   private thirdCircleElement: number;
@@ -35,6 +36,7 @@ export class LowDetailGlyph {
 
   constructor(
     glyphData: glyphData,
+    targetMeasurement: 'fc' | 'slope',
     drawLabels: boolean,
     glyphIdx: number,
     imgWidth: number,
@@ -47,7 +49,12 @@ export class LowDetailGlyph {
     this.pathwayCompare = pathwayCompare;
     this.glyphIdx = glyphIdx;
     this.diameter = imgWidth - imgWidth / 10 - (this.drawLabels ? 7 : 0);
-
+    this.accessor =
+      targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
+    this.colorScales =
+      targetMeasurement === 'fc'
+        ? mainStore.fcColorScales
+        : mainStore.slopeColorScales;
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;
     if (this.glyphData.proteomics.available) this.availableOmics += 1;
     if (this.glyphData.metabolomics.available) this.availableOmics += 1;
@@ -58,7 +65,6 @@ export class LowDetailGlyph {
     this.width = imgWidth;
     this.height = imgWidth;
     this.radius = this.diameter / 2;
-    this.colorScales = mainStore.fcScales;
     if (this.glyphData.transcriptomics.available) {
       this.prepareOmics('transcriptomics');
     }
@@ -77,7 +83,9 @@ export class LowDetailGlyph {
   prepareOmics(
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
-    this.glyphData[omicsType].measurements.sort((a, b) => a.value - b.value);
+    this.glyphData[omicsType].measurements.sort(
+      (a, b) => _.get(a, this.accessor) - _.get(b, this.accessor)
+    );
     const avgColor =
       this.glyphData[omicsType].measurements.length > 0
         ? this.colorScales[omicsType](this.glyphData[omicsType].meanMeasure)

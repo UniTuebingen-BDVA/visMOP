@@ -10,6 +10,7 @@ import { ClusterSummaryGlyph } from './clusterSummaryGlyph';
  */
 export function generateGlyphs(
   inputData: { [key: string]: glyphData },
+  targetMeasurement: 'fc' | 'slope',
   diameter = 28,
   clusterNodeMapping: string[][]
 ): {
@@ -24,7 +25,12 @@ export function generateGlyphs(
     if (Object.prototype.hasOwnProperty.call(clusterGlyphData, key)) {
       const element = clusterGlyphData[key];
       const serializer = new XMLSerializer();
-      const currentGlyph = new ClusterSummaryGlyph(element, key, diameter);
+      const currentGlyph = new ClusterSummaryGlyph(
+        element,
+        targetMeasurement,
+        key,
+        diameter
+      );
       const glyphSVGstring = serializer.serializeToString(
         currentGlyph.generateGlyphSvg()
       );

@@ -17,6 +17,7 @@ export class HighDetailGlyph {
   private pathwayCompare = false;
   private glyphIdx;
   private glyphData: glyphData;
+  private accessor: 'value' | 'regressionData.slope';
   private diameter: number;
   private thirdCircle: number;
   private thirdCircleElement: number;
@@ -74,6 +75,7 @@ export class HighDetailGlyph {
 
   constructor(
     glyphData: glyphData,
+    targetMeasurement: 'fc' | 'slope',
     drawLabels: boolean,
     glyphIdx: number,
     imgWidth: number,
@@ -86,6 +88,8 @@ export class HighDetailGlyph {
     this.pathwayCompare = pathwayCompare;
     this.glyphIdx = glyphIdx;
     this.diameter = imgWidth - imgWidth / 10 - (this.drawLabels ? 7 : 0);
+    this.accessor =
+      targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
 
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;
     if (this.glyphData.proteomics.available) this.availableOmics += 1;
@@ -100,7 +104,10 @@ export class HighDetailGlyph {
     this.outermostRadius = this.diameter / 2;
     this.firstLayer = this.outermostRadius - this.layerWidth;
     this.secondLayer = this.firstLayer - this.layerWidth;
-    this.colorScales = mainStore.fcScales;
+    this.colorScales =
+      targetMeasurement === 'fc'
+        ? mainStore.fcColorScales
+        : mainStore.slopeColorScales;
     if (this.glyphData.transcriptomics.available) {
       this.prepareOmics('transcriptomics');
     }
@@ -446,9 +453,11 @@ export class HighDetailGlyph {
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
     this.totalNodes += this.glyphData[omicsType].nodeState.total;
-    this.glyphData[omicsType].measurements.sort((a, b) => a.value - b.value);
+    this.glyphData[omicsType].measurements.sort(
+      (a, b) => _.get(a, this.accessor) - _.get(b, this.accessor)
+    );
     const omicsColors = this.glyphData[omicsType].measurements.map((elem) =>
-      this.colorScales[omicsType](elem.value)
+      this.colorScales[omicsType](_.get(elem, this.accessor))
     );
     this.outerColors.push(...omicsColors);
     const startAngleVal =
@@ -480,7 +489,7 @@ export class HighDetailGlyph {
         endAngle: angleFCs[idx + 1],
         padAngle: 0,
         name: this.glyphData[omicsType].measurements[idx].name,
-        fc: this.glyphData[omicsType].measurements[idx].value,
+        fc: _.get(this.glyphData[omicsType].measurements[idx], this.accessor),
         queryID: this.glyphData[omicsType].measurements[idx].queryId,
       };
       this.outerArcDat.push(pushDat);

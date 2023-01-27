@@ -302,7 +302,7 @@ def reactome_parsing():
     return json.dumps(out_dat)
 
 
-@app.route("/reactome_overview", methods=["GET"])
+@app.route("/reactome_overview", methods=["POST"])
 def reactome_overview():
     """Generates and sends data to the frontend needed to display the reactome overview graph
     Returns:
@@ -330,7 +330,9 @@ def reactome_overview():
         root_subpathways,
         statistic_data_complete,
         omics_recieved,
-    ) = reactome_hierarchy.generate_overview_data(layout_limits, False, "individual")
+    ) = reactome_hierarchy.generate_overview_data(
+        layout_limits, False, request.json["timeseriesMode"]
+    )
     pathway_connection_dict = create_overview_data(out_data, central_nodes)
 
     # cluster_node_pos, cluster_areas = getClusterLayout(
@@ -362,7 +364,6 @@ def reactome_overview():
         {
             "exitState": 0,
             "overviewData": out_data_dict,
-            "amtTimepoints": reactome_hierarchy.amt_timesteps,
             "clusterData": {
                 "clusters": clusters,
                 "clusterCenters": cluster_centers,

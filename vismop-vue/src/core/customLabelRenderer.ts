@@ -124,7 +124,7 @@ export function drawHover(
 
   const MARGIN = 2;
 
-  console.log('labelData', data);
+  //console.log('labelData', data);
   if (typeof data.label === 'string') {
     const labelText = splitText(context, data.label);
     const boxWidth = Math.round(labelText.maxWidth + 9);
