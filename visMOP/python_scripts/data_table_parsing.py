@@ -2,7 +2,7 @@ import json
 import pandas as pd
 
 
-def create_df(file_type, sheet_no):
+def create_df(file_type, sheet_name):
     """creates dataframe from filetype object (i.e. a excel file)
     Args:
         file_type: file-type object
@@ -11,7 +11,7 @@ def create_df(file_type, sheet_no):
     """
     try:
         read_table = pd.read_excel(
-            file_type, sheet_name=sheet_no, header=None, engine="openpyxl"
+            file_type, sheet_name=sheet_name, header=None, engine="openpyxl"
         )
     except ValueError as e:
         return 1, "Xlsx parse Error!! Is the Correct Sheet chosen?"
@@ -76,9 +76,9 @@ def table_request(request, cache, requestType):
 
     # recieve data-blob
     transfer_dat = request.files["dataTable"]
-    sheet_no = int(request.form["sheetNumber"])
+    sheet_name = request.form["sheetName"]
     # create and parse data table and prepare json
-    exitState, data_table = create_df(transfer_dat, sheet_no)
+    exitState, data_table = create_df(transfer_dat, sheet_name)
     if exitState == 1:
         return json.dumps({"exitState": 1, "errorMsg": data_table})
     cache.set(

@@ -12,18 +12,16 @@
           v-model="omicsFile"
           chips
           label=".xlsx File Input"
-          @update:model-value="fetchOmicsTable"
+          @update:model-value="setSheetOptions"
         ></q-file>
 
         <q-separator />
 
-        <q-input
-          v-model="sheetVal"
-          :rules="sheetRules"
-          label="Sheet Number"
-          :value="sheetVal"
-          :disable="$q.loading.isActive"
-        ></q-input>
+        <q-select
+          v-model="sheetSelection"
+          :options="sheetOptions"
+          label="Sheet Names"
+        ></q-select>
 
         <q-separator />
 
@@ -114,6 +112,7 @@ import { computed, ref, defineProps, watch, defineEmits } from 'vue';
 import type { Ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { ColType } from '@/core/generalTypes';
+import * as XLSX from 'xlsx';
 
 const emit = defineEmits([
   'update:recievedOmicsData',
@@ -144,7 +143,6 @@ const mainStore = useMainStore();
 
 const $q = useQuasar();
 const omicsFile: Ref<File | null> = ref(null);
-const sheetVal = ref('0');
 const amtValueCols = ref(1);
 const dropdownHeaders = computed(() => {
   return props.tableHeaders.filter(
@@ -176,6 +174,23 @@ const slidersInternal = computed({
   get: () => props.sliderVals,
   set: (value) => emit('update:sliderValue', value),
 });
+
+const sheetSelection = ref('');
+const sheetOptions: Ref<string[]> = ref([]);
+
+const setSheetOptions = () => {
+  if (omicsFile.value) {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const data = e.target?.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      sheetOptions.value = workbook.SheetNames;
+    };
+
+    reader.readAsBinaryString(omicsFile.value);
+  }
+};
 
 const slider = computed(() => {
   const outObj: {
@@ -236,7 +251,7 @@ watch(slider, () => {
   }
 });
 
-watch(sheetVal, () => {
+watch(sheetSelection, () => {
   fetchOmicsTable(omicsFile.value);
 });
 
@@ -262,11 +277,11 @@ const fetchOmicsTable = (fileInput: File | null) => {
   mainStore.setOmicsTableHeaders([], props.omicsType);
   mainStore.setOmicsTableData([], props.omicsType);
   slidersInternal.value = {};
-  if (fileInput !== null && sheetVal.value) {
+  if (fileInput !== null && sheetSelection.value) {
     $q.loading.show();
     const formData = new FormData();
     formData.append('dataTable', fileInput);
-    formData.append('sheetNumber', sheetVal.value);
+    formData.append('sheetName', sheetSelection.value);
     fetch(`/${props.omicsType}_table`, {
       method: 'POST',
       headers: {},
