@@ -538,19 +538,17 @@ const removeSelection = () => {
 };
 const drawNetwork = () => {
   networkGraph.value?.killGraph();
-  glyphDataVar.value = generateGlyphDataReactome(
-    mainStore.getTimeSeriesMode() == 'aggregate' ? 'slope' : 'fc'
-  );
+  glyphDataVar.value = generateGlyphDataReactome(mainStore.getTimeSeriesMode());
   mainStore.setGlyphData(glyphDataVar.value);
   const generatedGlyphsHighDetail = generateGlyphs(
     glyphDataVar.value,
-    mainStore.getTimeSeriesMode() == 'aggregate' ? 'slope' : 'fc',
+    mainStore.getTimeSeriesMode(),
     HighDetailGlyph,
     OverviewGraph.GLYPH_SIZE
   );
   const generatedGlyphsLowDetail = generateGlyphs(
     glyphDataVar.value,
-    mainStore.getTimeSeriesMode() == 'aggregate' ? 'slope' : 'fc',
+    mainStore.getTimeSeriesMode(),
     LowDetailGlyph,
     OverviewGraph.GLYPH_SIZE
   );

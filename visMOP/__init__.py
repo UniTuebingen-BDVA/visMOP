@@ -356,7 +356,7 @@ def reactome_overview():
         pathway["initialPosY"] = random()  # x_y_pos[1]
         pathway["clusterNum"] = 0  # x_y_pos[2]
     clusters = [elem.tolist() for elem in clusters]
-    timepoint_analysis(clusters)
+    # timepoint_analysis(clusters)
     # temporary?
     out_data_dict = {elem["pathwayId"]: elem for elem in out_data}
 

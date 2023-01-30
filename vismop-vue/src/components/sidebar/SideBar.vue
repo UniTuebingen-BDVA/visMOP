@@ -419,7 +419,7 @@ const queryReactome = () => {
 
 const getReactomeData = () => {
   const payload = {
-    timeseriesMode: mainStore.getTimeSeriesMode(),
+    timeseriesMode: mainStore.timeseriesModeToggle,
   };
   fetch('/reactome_overview', {
     method: 'POST',

@@ -48,8 +48,8 @@ import ReactomeDetailView from '../../core/reactomeGraphs/reactomeDetailView';
 import {
   graphJSON,
   layoutJSON,
-  foldChangesByType,
-  foldChangesByID,
+  measureByType,
+  measureById,
   reactomeEntry,
 } from '../../core/reactomeGraphs/reactomeTypes';
 import { getEntryAmounts } from '../../core/reactomeGraphs/reactomeUtils';
@@ -64,6 +64,7 @@ import {
 } from 'vue';
 import { useMainStore } from '@/stores';
 import { useQuasar } from 'quasar';
+import _ from 'lodash';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -220,76 +221,79 @@ const getJsonFiles = (reactomeID: string) => {
  * Fill the fc objects for the selected type with the supplied pathway Data
  *
  * @param pathwayData
- * @param {foldChangesByType} fcs
- * @param {foldChangesByID} fcsReactomeKey
+ * @param {measureByType} measureByType
+ * @param {measureById} measureById
  * @param {'proteomics' | 'metabolomics' | 'transcriptomics'} type
  */
-const prepareFcs = (
+const measureDataDetail = (
   pathwayData: reactomeEntry,
-  fcs: foldChangesByType,
-  fcsReactomeKey: foldChangesByID,
+  targetMeasurement: 'fc' | 'slope',
+  measureByType: measureByType,
+  measureById: measureById,
   type: 'proteomics' | 'metabolomics' | 'transcriptomics'
 ) => {
+  const accessor =
+    targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
   // Regular node parsing
   for (const entry of pathwayData.ownMeasuredEntryIDs[type]) {
     try {
-      const measureEntry = pathwayData.entries[type].measured[entry] as {
-        queryId: string;
-        value: number;
-        forms: { [key: string]: { name: string; toplevelId: number[] } };
-      };
-      const val = measureEntry.value;
+      const measureEntry = pathwayData.entries[type].measured[entry];
+      const val = _.get(measureEntry, accessor);
       for (const entity in measureEntry.forms) {
         const entityElem = measureEntry.forms[entity];
         for (const id of entityElem.toplevelId) {
-          fcs[type][id] = val;
+          measureByType[type][id] = val;
           const totalAmount = getEntryAmounts(id, currentGraphJson.value);
-          if (id in fcsReactomeKey) {
-            fcsReactomeKey[id][type].available = true;
-            fcsReactomeKey[id][type].foldChanges.push({
+          if (id in measureById) {
+            measureById[id][type].available = true;
+            measureById[id][type].measurements.push({
               value: val,
               name: entityElem.name,
-              queryID: measureEntry.queryId,
+              queryId: measureEntry.queryId,
+              regressionData: measureEntry.regressionData || {},
+              forms: {},
             });
-            fcsReactomeKey[id][type].meanFoldchange =
-              (fcsReactomeKey[id][type].nodeState.regulated *
-                fcsReactomeKey[id][type].meanFoldchange +
+            measureById[id][type].meanMeasure =
+              (measureById[id][type].nodeState.regulated *
+                measureById[id][type].meanMeasure +
                 val) /
-              (fcsReactomeKey[id][type].nodeState.regulated + 1);
-            fcsReactomeKey[id][type].nodeState.regulated += 1;
+              (measureById[id][type].nodeState.regulated + 1);
+            measureById[id][type].nodeState.regulated += 1;
           } else {
-            fcsReactomeKey[id] = {
+            measureById[id] = {
               pathwayID: '' + id,
               proteomics: {
                 available: false,
-                foldChanges: [],
-                meanFoldchange: -100,
+                measurements: [],
+                meanMeasure: -100,
                 nodeState: { total: totalAmount.totalProteins, regulated: 0 },
               },
               transcriptomics: {
                 available: false,
-                foldChanges: [],
-                meanFoldchange: -100,
+                measurements: [],
+                meanMeasure: -100,
                 nodeState: { total: totalAmount.totalProteins, regulated: 0 },
               },
               metabolomics: {
                 available: false,
-                foldChanges: [],
-                meanFoldchange: -100,
+                measurements: [],
+                meanMeasure: -100,
                 nodeState: { total: totalAmount.totalMolecules, regulated: 0 },
               },
             };
 
-            fcsReactomeKey[id][type] = {
+            measureById[id][type] = {
               available: true,
-              foldChanges: [
+              measurements: [
                 {
                   value: val,
                   name: entityElem.name,
-                  queryID: measureEntry.queryId,
+                  queryId: measureEntry.queryId,
+                  regressionData: measureEntry.regressionData || {},
+                  forms: {},
                 },
               ],
-              meanFoldchange: val,
+              meanMeasure: val,
               nodeState: {
                 total:
                   type === 'proteomics' || type === 'transcriptomics'
@@ -314,63 +318,64 @@ const prepareFcs = (
       const entryList = pathwayData.insetPathwayEntryIDs[type][entry].nodes;
       const totalAmount = currentInsetPathwaysTotals.value[entry];
       for (const measureEntryID of entryList) {
-        const measureEntry = pathwayData.entries[type].measured[
-          measureEntryID
-        ] as {
-          queryId: string;
-          value: number;
-          forms: { [key: string]: { name: string; toplevelId: number[] } };
-        };
-        const val = measureEntry.value;
+        const measureEntry = pathwayData.entries[type].measured[measureEntryID];
+        const val = _.get(measureEntry, accessor);
+        if (val === undefined) {
+          continue;
+        }
         for (const entity in measureEntry.forms) {
           const entityElem = measureEntry.forms[entity];
-          fcs[type][entry] = val;
-          if (entry in fcsReactomeKey) {
-            fcsReactomeKey[entry][type].available = true;
-            fcsReactomeKey[entry][type].foldChanges.push({
+          measureByType[type][entry] = val;
+          if (entry in measureById) {
+            measureById[entry][type].available = true;
+            measureById[entry][type].measurements.push({
               value: val,
               name: entityElem.name,
-              queryID: measureEntry.queryId,
+              queryId: measureEntry.queryId,
+              regressionData: measureEntry.regressionData || {},
+              forms: {},
             });
-            fcsReactomeKey[entry][type].meanFoldchange =
-              (fcsReactomeKey[entry][type].nodeState.regulated *
-                fcsReactomeKey[entry][type].meanFoldchange +
+            measureById[entry][type].meanMeasure =
+              (measureById[entry][type].nodeState.regulated *
+                measureById[entry][type].meanMeasure +
                 val) /
-              (fcsReactomeKey[entry][type].nodeState.regulated + 1);
-            fcsReactomeKey[entry][type].nodeState.regulated += 1;
+              (measureById[entry][type].nodeState.regulated + 1);
+            measureById[entry][type].nodeState.regulated += 1;
           } else {
-            fcsReactomeKey[entry] = {
+            measureById[entry] = {
               pathwayID: '' + entry,
               proteomics: {
                 available: false,
-                foldChanges: [],
-                meanFoldchange: -100,
+                measurements: [],
+                meanMeasure: -100,
                 nodeState: { total: totalAmount.proteomics, regulated: 0 },
               },
               transcriptomics: {
                 available: false,
-                foldChanges: [],
-                meanFoldchange: -100,
+                measurements: [],
+                meanMeasure: -100,
                 nodeState: { total: totalAmount.transcriptomics, regulated: 0 },
               },
               metabolomics: {
                 available: false,
-                foldChanges: [],
-                meanFoldchange: -100,
+                measurements: [],
+                meanMeasure: -100,
                 nodeState: { total: totalAmount.metabolomics, regulated: 0 },
               },
             };
 
-            fcsReactomeKey[entry][type] = {
+            measureById[entry][type] = {
               available: true,
-              foldChanges: [
+              measurements: [
                 {
                   value: val,
                   name: entityElem.name,
-                  queryID: measureEntry.queryId,
+                  queryId: measureEntry.queryId,
+                  regressionData: measureEntry.regressionData || {},
+                  forms: {},
                 },
               ],
-              meanFoldchange: val,
+              meanMeasure: val,
               nodeState: { total: totalAmount[type], regulated: 1 },
             };
           }
@@ -383,25 +388,44 @@ const prepareFcs = (
 };
 const drawDetailView = () => {
   currentView.value?.clearView();
-  const fcs: foldChangesByType = {
+  const measureByType: measureByType = {
     proteomics: {},
     transcriptomics: {},
     metabolomics: {},
   };
-  const fcsReactomeKey: foldChangesByID = {};
+  const measureById: measureById = {};
   const pathwayData = overviewData.value[pathwaySelection.value.value];
   if (pathwayData) {
-    prepareFcs(pathwayData, fcs, fcsReactomeKey, 'proteomics');
-    prepareFcs(pathwayData, fcs, fcsReactomeKey, 'transcriptomics');
-    prepareFcs(pathwayData, fcs, fcsReactomeKey, 'metabolomics');
+    measureDataDetail(
+      pathwayData,
+      mainStore.getTimeSeriesMode(),
+      measureByType,
+      measureById,
+      'proteomics'
+    );
+    measureDataDetail(
+      pathwayData,
+      mainStore.getTimeSeriesMode(),
+      measureByType,
+      measureById,
+      'transcriptomics'
+    );
+    measureDataDetail(
+      pathwayData,
+      mainStore.getTimeSeriesMode(),
+      measureByType,
+      measureById,
+      'metabolomics'
+    );
   }
 
   currentView.value = new ReactomeDetailView(
     currentLayoutJson.value,
     currentGraphJson.value,
+    mainStore.getTimeSeriesMode(),
     '#' + props.contextID,
-    fcs,
-    fcsReactomeKey
+    measureByType,
+    measureById
   );
 };
 const refreshSize = () => {

@@ -4,8 +4,6 @@
 Basic Types
 */
 
-import { glyphData } from '../core/generalTypes';
-
 /**
  * Type corresponding to all the information needed for the construction of a single pathway glyph
  */
@@ -290,12 +288,12 @@ type layoutJSON = {
 Misc. classes needed for detail View.
 */
 
-type foldChangesByType = {
+type measureByType = {
   proteomics: { [key: number]: number };
   transcriptomics: { [key: number]: number };
   metabolomics: { [key: number]: number };
 };
 
-type foldChangesByID = {
+type measureById = {
   [key: number]: glyphData;
 };

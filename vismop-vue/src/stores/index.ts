@@ -208,8 +208,8 @@ export const useMainStore = defineStore('mainStore', {
     },
     getTimeSeriesMode() {
       return this.amtTimepoints > 1 && this.timeseriesModeToggle == 'aggregate'
-        ? 'aggregate'
-        : 'individual';
+        ? 'slope'
+        : 'fc';
     },
 
     setUsedSymbolCols(val: {
@@ -274,9 +274,9 @@ export const useMainStore = defineStore('mainStore', {
       omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
     ) {
       const data = this.reduceReactomeData(baseData, omicsType);
-      const dataValues = Object.values(data).map(
-        (entry) => entry.regressionData.slope
-      );
+      const dataValues = Object.values(data).map((entry) => {
+        return entry.regressionData.slope;
+      });
       return this.generateQuantileColorscale(dataValues, d3.interpolatePRGn);
     },
 
@@ -305,15 +305,27 @@ export const useMainStore = defineStore('mainStore', {
 
     setOmicsScales(val: { [key: string]: reactomeEntry }) {
       this.fcColorScales = {
-        transcriptomics: this.generateFoldChangeScale(val, 'transcriptomics'),
-        proteomics: this.generateFoldChangeScale(val, 'proteomics'),
-        metabolomics: this.generateFoldChangeScale(val, 'metabolomics'),
+        transcriptomics: this.omicsRecieved.transcriptomics
+          ? this.generateFoldChangeScale(val, 'transcriptomics')
+          : d3.scaleDiverging(),
+        proteomics: this.omicsRecieved.proteomics
+          ? this.generateFoldChangeScale(val, 'proteomics')
+          : d3.scaleDiverging(),
+        metabolomics: this.omicsRecieved.metabolomics
+          ? this.generateFoldChangeScale(val, 'metabolomics')
+          : d3.scaleDiverging(),
       };
-      if (this.getTimeSeriesMode() == 'aggregate') {
+      if (this.getTimeSeriesMode() == 'slope') {
         this.slopeColorScales = {
-          transcriptomics: this.generateSlopeScale(val, 'transcriptomics'),
-          proteomics: this.generateSlopeScale(val, 'proteomics'),
-          metabolomics: this.generateSlopeScale(val, 'metabolomics'),
+          transcriptomics: this.omicsRecieved.transcriptomics
+            ? this.generateSlopeScale(val, 'transcriptomics')
+            : d3.scaleDiverging(),
+          proteomics: this.omicsRecieved.proteomics
+            ? this.generateSlopeScale(val, 'proteomics')
+            : d3.scaleDiverging(),
+          metabolomics: this.omicsRecieved.metabolomics
+            ? this.generateSlopeScale(val, 'metabolomics')
+            : d3.scaleDiverging(),
         };
       }
     },
