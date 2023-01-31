@@ -11,7 +11,7 @@ import { ModuleSummaryGlyph } from './moduleSummaryGlyph';
 export function generateGlyphs(
   inputData: { [key: string]: glyphData },
   diameter = 28,
-  moduleNodeMapping: { [key: string]: { ids: string[]; pos: number[][] } }
+  moduleNodeMapping: string[][]
 ): {
   [key: string]: string;
 } {
@@ -38,12 +38,13 @@ export function generateGlyphs(
 
 export function generateModuleGlyphData(
   inputData: { [key: string]: glyphData },
-  moduleNodeMapping: { [key: string]: { ids: string[]; pos: number[][] } }
+  moduleNodeMapping: string[][]
 ): { [key: string]: glyphData } {
   const outGlyphData: { [key: string]: glyphData } = {};
 
   // contains pathway lists
-  for (const key in moduleNodeMapping) {
+
+  moduleNodeMapping.forEach( (currentModuleKeys, key) => {
     const transcriptomicsData: omicsData = {
       available: false,
       foldChanges: [],
@@ -63,7 +64,6 @@ export function generateModuleGlyphData(
       foldChanges: [],
       nodeState: { total: 0, regulated: 0 },
     };
-    const currentModuleKeys = moduleNodeMapping[key].ids;
     const omicsDataArray: [
       omicsData,
       'transcriptomics' | 'metabolomics' | 'proteomics'
@@ -96,12 +96,16 @@ export function generateModuleGlyphData(
       arrEntry[0].meanFoldchange = _.mean(fcVals);
     });
 
+
+
+
     outGlyphData[key] = {
-      pathwayID: key,
+      pathwayID: key + "",
       transcriptomics: transcriptomicsData,
       proteomics: proteomicsData,
       metabolomics: metabolomicsData,
     };
-  }
+
+  });
   return outGlyphData;
 }

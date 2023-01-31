@@ -12,7 +12,10 @@ import OverviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
 import { useMainStore } from '@/stores';
 import { ConvexPolygon } from '../layouting/ConvexPolygon';
-import { over } from 'lodash';
+import { min, over } from 'lodash';
+import { generateModuleGlyphData } from '../overviewGlyphs/moduleGlyphGenerator';
+import { to } from 'mathjs';
+
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeList list of node data
@@ -47,7 +50,7 @@ export function generateGraphData(
     clusterData: {
       normalHullPoints: [[[]]],
       focusHullPoints: [[[]]],
-      greyValues: [],
+      clusterColors: [],
     },
     options: [],
   };
@@ -169,23 +172,86 @@ export function generateGraphData(
     index += 1;
   }
 
+  type color = [number, number, number, number];
+
   const maxExt = 250;
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
-  const greyValues = [] as number[];
+  const clusterColors = [] as color[];
   const firstNoneNoiseCluster = useMainStore().noiseClusterExists ? 1 : 0;
   // const totalNumHulls = moduleAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
+
+  
+  const mainStore = useMainStore();
+  const clusterNodeMapping = mainStore.modules;
+  const clusterGlyphs = generateModuleGlyphData(mainStore.glyphData, clusterNodeMapping);
+  const noiseClusterGreyValue = 250;
+  const maxBrightnessVoronoiColors = 230;
+
+  // Takes: clusterNum, omicType
+  // Returns: culor of that omic type for the cluster
+  function clusterOmicsToColor(clusterNum: number, omicType: "transcriptomics" | "proteomics" | "metabolomics") {
+    const clusterMeanFoldchange = clusterGlyphs[clusterNum][omicType].meanFoldchange;
+
+    if(Number.isNaN(clusterMeanFoldchange)) return [127, 127, 127, 1] as color;
+
+    const clusterColor = mainStore.fcScales[omicType](clusterMeanFoldchange).replaceAll(/rgb\(|\)/gm, '').split(',');
+    return [parseInt(clusterColor[0]), parseInt(clusterColor[1]), parseInt(clusterColor[2]), 1.0] as color;
+  }
+
+  function mixOmicsColors(omicColors: color[]) {
+    const len = omicColors.length;
+    const outColor = [0,0,0,0] as color;
+    omicColors.forEach(color => {
+      outColor[0] += color[0] / len;
+      outColor[1] += color[1] / len;
+      outColor[2] += color[2] / len;
+      outColor[3] += color[3] / len;
+    });
+    return outColor;
+  }
+
+  function lightenValue(x: number, minBrightness = 120, maxBrightness = 255): number {
+    return minBrightness + (maxBrightness - minBrightness) / 255 * x;
+  }
+  function lightenColor(color: color): color {
+    const threshold = maxBrightnessVoronoiColors;
+    const total =  color[0] + color[1] + color[2];
+
+    const new_color = [lightenValue(color[0]), lightenValue(color[1]), lightenValue(color[2]), color[3]] as color;
+    if (total > 3 * threshold) {
+      return [threshold, threshold, threshold, 1] as color;
+    }
+    return new_color;
+  }
+
+
   let clusterNum = 0;
-  _.forEach(voronoiPolygons, (polygon) => {
+  Object.keys(voronoiPolygons).forEach(polygonKey=> {
+    const polygon = voronoiPolygons[parseInt(polygonKey)];
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
         polygon,
         maxExt
       );
-      const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
-      greyValues.push(greyValue);
+      const omicsRecieved = mainStore.omicsRecieved;
+      const omicColors : color[]= [];
+
+      if (clusterNum >= firstNoneNoiseCluster) {
+        Object.keys(omicsRecieved).forEach( omic => {
+          if(omicsRecieved[omic]) {
+            omicColors.push(clusterOmicsToColor(clusterNum, omic));
+          }
+        });
+
+        const clusterColor = mixOmicsColors(omicColors);
+        const lighterColor = lightenColor(clusterColor);
+        clusterColors.push(lighterColor);
+      } else {
+        clusterColors.push([noiseClusterGreyValue, noiseClusterGreyValue, noiseClusterGreyValue, 1.0]);
+      }
       clusterHulls.push(hullAdjustment.finalHullNodes);
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
     }
@@ -195,7 +261,7 @@ export function generateGraphData(
 
   graph.clusterData.normalHullPoints = clusterHulls;
   graph.clusterData.focusHullPoints = focusClusterHulls;
-  graph.clusterData.greyValues = greyValues;
+  graph.clusterData.clusterColors = clusterColors;
 
   //graph.nodes = norm_node_pos;
 

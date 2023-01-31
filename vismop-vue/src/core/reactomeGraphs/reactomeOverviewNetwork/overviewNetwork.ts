@@ -25,6 +25,7 @@ import {
   setRootNegativeFilter,
   setRootFilter,
 } from './filter';
+import {Attributes} from 'graphology-types';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
@@ -167,11 +168,8 @@ export default class OverviewGraph {
   // makes a helper-edge between that node
   // and every other node in the cluster
   generateHelperEdges() {
-    
     const graph = this.renderer.getGraph ();
-    
     const cluster = this.getModuleNodeIds();
-
     const clusterKeys = Object.keys(cluster);
 
     clusterKeys.forEach(clusterKey => {
@@ -253,7 +251,7 @@ export default class OverviewGraph {
 
     const graph = this.renderer.getGraph();
     const edgeKeys = this.renderer.getGraph().edges();
-    const skip : {edgeKey: string, source: string, target: string, attributes: unknown}[] = [];
+    const skip : {edgeKey: string, source: string, target: string, attributes: Attributes}[] = [];
 
     edgeKeys.forEach(key => {
       const edgeAttribs = graph.getEdgeAttributes(key);
@@ -353,7 +351,7 @@ export default class OverviewGraph {
     this.additionalData = {
       clusterAreas: {
         hullPoints: this.clusterData.normalHullPoints,
-        greyValues: this.clusterData.greyValues,
+        clusterColors: this.clusterData.clusterColors,
       },
     };
 
@@ -505,13 +503,13 @@ export default class OverviewGraph {
           ? Object.assign(this.additionalData, {
               clusterAreas: {
                 hullPoints: this.clusterData.normalHullPoints,
-                greyValues: this.clusterData.greyValues,
+                clusterColors: this.clusterData.clusterColors,
               },
             })
           : Object.assign(this.additionalData, {
               clusterAreas: {
                 hullPoints: [this.clusterData.focusHullPoints[parseInt(node)]],
-                greyValues: [this.clusterData.greyValues[parseInt(node)]],
+                clusterColors: [this.clusterData.clusterColors[parseInt(node)]],
               },
             });
         this.lastClickedClusterNode = defocus ? -1 : parseInt(node);
@@ -695,7 +693,7 @@ export default class OverviewGraph {
 
   addModuleOverviewNodes() {
     const mainStore = useMainStore();
-    const moduleNodeMapping = this.getModuleNodeIds();
+    const moduleNodeMapping = mainStore.modules;
     const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
     console.log('ModuleGlyphs', glyphs);
     for (const key in Object.keys(moduleNodeMapping)) {

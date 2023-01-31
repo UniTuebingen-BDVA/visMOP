@@ -125,14 +125,14 @@ type hullPoints = number[][][];
 type additionalData = {
   clusterAreas: {
     hullPoints: hullPoints;
-    greyValues: number[];
+    clusterColors: [number, number, number, number][];
   };
 };
 
 type clusterData = {
   normalHullPoints: hullPoints;
   focusHullPoints: hullPoints;
-  greyValues: number[];
+  clusterColors: [number, number, number, number][];
 };
 /**
  * Defines overview Graph Data

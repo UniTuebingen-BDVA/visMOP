@@ -33,10 +33,17 @@ void main(void) {
   );
 
   bool dashed = v_dashed == 1.0;
-
-  if ((fract(distFromStart / (u_dashLength + u_gapLength)) > u_gapLength/(u_dashLength + u_gapLength)) && dashed)
+  
+  if ((fract(distFromStart / (u_dashLength + u_gapLength)) > u_gapLength/(u_dashLength + u_gapLength)) && dashed) {
     //discard;
-    outColor =  mix(vec4(0.3 * v_color[0],0.3 * v_color[1], 0.3 * v_color[2], v_color[3]), color0, t); 
-  else
-    outColor =  mix(v_color, color0, t);
+    outColor =  mix(vec4(0.3 * v_color[0],0.3 * v_color[1], 0.3 * v_color[2], v_color[3]), color0, t);
+  }
+  /*
+  if (dashed) {
+    outColor = vec4(0.0, 0.0, 1.0, 1.0);
+  }
+  */
+  else {
+    outColor = mix(v_color, color0, t);
+  }
 }
