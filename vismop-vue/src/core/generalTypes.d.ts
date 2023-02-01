@@ -20,3 +20,22 @@ type measureData = {
   value: number;
   queryID: string;
 };
+
+type LayoutSettings = {
+  transcriptomics: {
+    attributes: { text: string; value: string }[];
+    limits: [number, number];
+  };
+  proteomics: {
+    attributes: { text: string; value: string }[];
+    limits: [number, number];
+  };
+  metabolomics: {
+    attributes: { text: string; value: string }[];
+    limits: [number, number];
+  };
+  'not related to specific omic': {
+    attributes: { text: string; value: string }[];
+    limits: [number, number];
+  };
+};

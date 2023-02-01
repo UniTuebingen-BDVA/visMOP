@@ -20,8 +20,8 @@
       v-model="timeseriesModeToggle"
       :label="`Timeseries ${timeseriesModeToggle} Mode`"
       color="primary"
-      :true-value="'aggregate'"
-      :false-value="'individual'"
+      :true-value="'fc'"
+      :false-value="'slope'"
     ></q-toggle>
     <q-separator />
     Selected Omics:
@@ -73,70 +73,11 @@
         @update:slider-value="(newVal) => (sliderValsMetabolomics = newVal)"
       ></omic-input>
       <q-separator />
-      <q-expansion-item
-        label="Layout Attributes"
-        group="omicsSelect"
-        header-class="bg-primary text-white"
-        expand-icon-class="text-white"
-        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
-      >
-        <q-card>
-          <q-card-section>
-            <q-select
-              v-model="currentLayoutOmic"
-              :options="layoutOmics"
-              label="Omic Type"
-            ></q-select>
-            <div v-if="currentLayoutOmic != ''">
-              <q-select
-                v-model="chosenLayoutAttributes[currentLayoutOmic]"
-                :options="layoutAttributes"
-                label="Attributes"
-                use-chips
-                clearable
-                multiple
-              >
-                <template #option="{ itemProps, opt, selected, toggleOption }">
-                  <q-item v-bind="itemProps">
-                    <q-item-section side>
-                      <q-checkbox
-                        :model-value="selected"
-                        @update:model-value="toggleOption(opt)"
-                      />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>{{ opt }}</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </template>
-              </q-select>
-              <div
-                v-if="currentLayoutOmic != 'not related to specific omic'"
-                class="row"
-              >
-                <q-input
-                  v-model.number="omicLimitMin[currentLayoutOmic]"
-                  type="number"
-                  step="0.1"
-                  style="max-width: 130px"
-                  class="mt-4 ml-2"
-                  label="minimal FC limit"
-                  filled
-                />
-                <q-input
-                  v-model.number="omicLimitMax[currentLayoutOmic]"
-                  type="number"
-                  step="0.1"
-                  style="max-width: 130px"
-                  class="mt-2 mr-2"
-                  label="maximal FC limit"
-                  filled
-                />
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </q-expansion-item>
+      <AttributeSelection
+        v-model:layout-settings="attributeDefaults"
+        :timeseries-mode-toggle="timeseriesModeToggle"
+        :layout-omics="layoutOmics"
+      ></AttributeSelection>
     </q-list>
     <q-btn @click="dataQuery">Plot</q-btn>
   </q-list>
@@ -146,14 +87,11 @@
 import { ColType } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
 import { useQuasar } from 'quasar';
-import { ref, Ref, computed, watch, onMounted } from 'vue';
+import { ref, Ref, computed, watch } from 'vue';
 import OmicInput from './OmicInput.vue';
-interface layoutSettingsInterface {
-  'Transcriptomics ': { attributes: string[]; limits: number[] };
-  'Proteomics ': { attributes: string[]; limits: number[] };
-  'Metabolomics ': { attributes: string[]; limits: number[] };
-  'not related to specific omic ': { attributes: string[]; limits: number[] };
-}
+import AttributeSelection from './AttributeSelection.vue';
+import { LayoutSettings } from '@/core/generalTypes';
+
 const mainStore = useMainStore();
 
 const $q = useQuasar();
@@ -196,6 +134,18 @@ const sliderValsMetabolomics = ref(
       inside: boolean;
     };
   }
+);
+
+const chosenOmics = computed((): string[] => {
+  const chosen = [];
+  if (recievedTranscriptomicsData.value) chosen.push('transcriptomics');
+  if (recievedProteomicsData.value) chosen.push('proteomics');
+  if (recievedMetabolomicsData.value) chosen.push('metabolomics');
+  return chosen;
+});
+
+const layoutOmics = computed(() =>
+  chosenOmics.value.concat(['not related to specific omic'])
 );
 
 const timeseriesModeToggle = computed({
@@ -264,106 +214,92 @@ const metabolomicsValueCol: Ref<ColType[]> = ref([
   },
 ]);
 
-const allOmicLayoutAttributes = {
-  common: [
-    'Number of values',
-    '% regulated',
-    '% unregulated',
-    '% with measured value',
-  ],
-  timeseries: [
-    'Mean Slope above limit',
-    'Mean Slope below limit',
-    '% slopes below limit',
-    '% slopes above limit',
-    'standard error above limit',
-    'standard error below limit',
-    '% standard error above limit',
-    '% standard error below limit',
-  ],
-  foldChange: [
-    'Mean expression above limit',
-    '% values above limit',
-    'Mean expression below limit ',
-    '% values below limit ',
-  ],
+const commonDefault = [
+  { text: '% regulated', value: 'common_reg' },
+  { text: '% with measured value', value: 'common_measured' },
+];
+
+const timeseriesDefault = [
+  { text: 'Mean Slope above limit', value: 'timeseries_meanSlopeAbove' },
+  { text: 'Mean Slope below limit', value: 'timeseries_meanSlopeBelow' },
+  { text: '% slopes below limit', value: 'timeseries_percentSlopeBelow' },
+  { text: '% slopes above limit', value: 'timeseries_percentSlopeAbove' },
+  {
+    text: 'Mean standard error above limit',
+    value: 'timeseries_meanSeAbove',
+  },
+  {
+    text: 'Mean standard error below limit',
+    value: 'timeseries_meanSeBelow',
+  },
+  {
+    text: '% standard error above limit',
+    value: 'timeseries_percentSeAbove',
+  },
+  {
+    text: '% standard error below limit',
+    value: 'timeseries_percentSeBelow',
+  },
+];
+
+const foldChangeDefault = [
+  { text: 'Mean expression above limit', value: 'fc_meanFcAbove' },
+  { text: '% values above limit', value: 'fc_percentFcAbove' },
+  { text: 'Mean expression below limit ', value: 'fc_meanFcBelow' },
+  { text: '% values below limit ', value: 'fc_percentFcBelow' },
+];
+
+const attributeDefaults: Ref<LayoutSettings> = ref({
+  transcriptomics: {
+    attributes:
+      timeseriesModeToggle.value == 'slope'
+        ? [...commonDefault, ...timeseriesDefault]
+        : [...commonDefault, ...foldChangeDefault],
+    limits: [0.8, 1.2],
+  },
+  proteomics: {
+    attributes:
+      timeseriesModeToggle.value == 'slope'
+        ? [...commonDefault, ...timeseriesDefault]
+        : [...commonDefault, ...foldChangeDefault],
+    limits: [0.8, 1.2],
+  },
+  metabolomics: {
+    attributes:
+      timeseriesModeToggle.value == 'slope'
+        ? [...commonDefault, ...timeseriesDefault]
+        : [...commonDefault, ...foldChangeDefault],
+    limits: [0.8, 1.2],
+  },
+  'not related to specific omic': {
+    attributes: [
+      {
+        text: '% values measured over all omics',
+        value: 'nonOmic_percentMeasured',
+      },
+    ],
+    limits: [0, 0],
+  },
+} as LayoutSettings);
+
+watch(timeseriesModeToggle, () => {
+  setAttributeDefaults();
+});
+
+const setAttributeDefaults = () => {
+  attributeDefaults.value.transcriptomics.attributes =
+    timeseriesModeToggle.value == 'slope'
+      ? [...commonDefault, ...timeseriesDefault]
+      : [...commonDefault, ...foldChangeDefault];
+  attributeDefaults.value.proteomics.attributes =
+    timeseriesModeToggle.value == 'slope'
+      ? [...commonDefault, ...timeseriesDefault]
+      : [...commonDefault, ...foldChangeDefault];
+  attributeDefaults.value.metabolomics.attributes =
+    timeseriesModeToggle.value == 'slope'
+      ? [...commonDefault, ...timeseriesDefault]
+      : [...commonDefault, ...foldChangeDefault];
 };
-const allNonOmicAttributes = ['% values measured over all omics'];
-
-const omicLimitMin = ref({
-  transcriptomics: -1.3,
-  proteomics: -1.3,
-  metabolomics: -1.3,
-});
-const omicLimitMax = ref({
-  transcriptomics: 1.3,
-  proteomics: 1.3,
-  metabolomics: 1.3,
-});
-const currentLayoutOmic: Ref<
-  | 'transcriptomics'
-  | 'proteomics'
-  | 'metabolomics'
-  | 'not related to specific omic'
-  | ''
-> = ref('');
-const layoutOmics = ref(['']);
-const chosenLayoutAttributes = ref({
-  transcriptomics: [''],
-  proteomics: [''],
-  metabolomics: [''],
-  'not related to specific omic': [''],
-});
-const chosenOmics = computed((): string[] => {
-  const chosen = [];
-  if (recievedTranscriptomicsData.value) chosen.push('Transcriptomics');
-  if (recievedProteomicsData.value) chosen.push('Proteomics');
-  if (recievedMetabolomicsData.value) chosen.push('Metabolomics');
-  return chosen;
-});
-watch(chosenOmics, () => {
-  layoutOmics.value = chosenOmics.value.concat([
-    'not related to specific omic',
-  ]);
-});
-
-const layoutAttributes = computed(() => {
-  return currentLayoutOmic.value === 'not related to specific omic'
-    ? allNonOmicAttributes
-    : [
-        ...allOmicLayoutAttributes.common,
-        ...allOmicLayoutAttributes[
-          timeseriesModeToggle.value === 'fc' ? 'foldChange' : 'timeseries'
-        ],
-      ];
-});
-
-const layoutSettings = computed(() => {
-  return {
-    'Transcriptomics ': {
-      attributes: chosenLayoutAttributes.value.transcriptomics,
-      limits: [
-        omicLimitMin.value.transcriptomics,
-        omicLimitMax.value.transcriptomics,
-      ],
-    },
-    'Proteomics ': {
-      attributes: chosenLayoutAttributes.value.proteomics,
-      limits: [omicLimitMin.value.proteomics, omicLimitMax.value.proteomics],
-    },
-    'Metabolomics ': {
-      attributes: chosenLayoutAttributes.value.metabolomics,
-      limits: [
-        omicLimitMin.value.metabolomics,
-        omicLimitMax.value.metabolomics,
-      ],
-    },
-    'not related to specific omic ': {
-      attributes: chosenLayoutAttributes.value['not related to specific omic'],
-      limits: [0, 0],
-    },
-  };
-});
 
 const dataQuery = () => {
   if (targetDatabase.value.value === 'reactome') {
@@ -408,7 +344,8 @@ const queryReactome = () => {
       proteomics: sliderValsProteomics.value,
       metabolomics: sliderValsMetabolomics.value,
     },
-    layoutSettings: layoutSettings.value,
+    timeseriesMode: mainStore.getTimeSeriesMode(),
+    layoutSettings: attributeDefaults.value,
   };
   fetch('/reactome_parsing', {
     method: 'POST',

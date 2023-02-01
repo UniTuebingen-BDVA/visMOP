@@ -106,7 +106,8 @@ def reactome_parsing():
     proteomics = request.json["proteomics"]
     metabolomics = request.json["metabolomics"]
     slider_vals = request.json["sliderVals"]
-    layout_settings = request.json["layoutSettings"]
+    layout_settings_recieved = request.json["layoutSettings"]
+    timeseries_mode = request.json["timeseriesMode"]
     cache.set("target_db", target_db)
 
     ##
@@ -288,9 +289,10 @@ def reactome_parsing():
     # Aggregate Data in Hierarchy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
-    reactome_hierarchy.set_layout_settings(
-        get_layout_settings(layout_settings, omics_recieved)
+    layout_settings = get_layout_settings(
+        layout_settings_recieved, timeseries_mode, omics_recieved
     )
+    cache.set("layout_settings", layout_settings)
     cache.set("reactome_hierarchy", reactome_hierarchy)
 
     # use add_regression_data_to_omics_data to add regression data to the fold_changes dict
@@ -314,11 +316,12 @@ def reactome_overview():
     """
 
     reactome_hierarchy: ReactomeHierarchy = cache.get("reactome_hierarchy")
-    layout_limits = reactome_hierarchy.layout_settings["limits"]
-    layout_attributes_used = reactome_hierarchy.layout_settings["attributes"]
+    layout_settings: dict[str, list] = cache.get("layout_settings")
+    layout_limits = layout_settings["limits"]
+    layout_attributes_used = layout_settings["attributes"]
     # user choice
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
-    print(reactome_hierarchy.layout_settings)
+    print(layout_settings)
     # print(layout_limits, layout_attributes_used)
     (
         out_data,

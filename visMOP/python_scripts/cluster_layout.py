@@ -79,7 +79,7 @@ def getClusterLayout(
     )
 
 
-def get_layout_settings(settings, omics_recieved):
+def get_layout_settings(settings, timeseries_mode, omics_recieved):
     possible_omic_attributes = {
         "common": [
             "Number of values",
@@ -87,7 +87,7 @@ def get_layout_settings(settings, omics_recieved):
             "% unregulated",
             "% with measured value",
         ],
-        "timeseries": [
+        "slope": [
             "Mean Slope above limit",
             "Mean Slope below limit",
             "% slopes below limit",
@@ -97,7 +97,7 @@ def get_layout_settings(settings, omics_recieved):
             "% standard error above limit",
             "% standard error below limit",
         ],
-        "foldChange": [
+        "fc": [
             "Mean expression above limit",
             "% values above limit",
             "Mean expression below limit ",
@@ -118,7 +118,10 @@ def get_layout_settings(settings, omics_recieved):
                     (layout_settings["attributes"] is not None)
                     and att in layout_settings["attributes"]
                 )
-                for att in possible_omic_attributes
+                for att in [
+                    *possible_omic_attributes["common"],
+                    *possible_omic_attributes[timeseries_mode],
+                ]
             ]
             attributes += attribute_boolean
 
