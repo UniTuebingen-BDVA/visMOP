@@ -45,29 +45,18 @@ def getClusterLayout(
     }
 
     omics_names = ["t", "p", "m"]
-    stat_value_names = [
-        "num values",
-        "mean exp (high ",
-        "% vals (higher ",
-        "mean exp(lower ",
-        "% vals (lower ",
-        "% Reg (",
-        "% Unreg (",
-        "% p with val",
-    ]
     # for diagramms
     complete_stat_names = []
     for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
         if omic_r:
-            for pos, stat in enumerate(stat_value_names):
-                next_col_name = omic + "_" + stat
-                if pos in [1, 2]:  #
-                    next_col_name += str(limits[1]) + ")"
-                elif pos in [3, 4]:  #
-                    next_col_name += str(limits[0]) + ")"
-                elif pos in [5, 6]:  #
-                    next_col_name += str(limits) + ")"
-                complete_stat_names.append(next_col_name)
+            complete_stat_names.append("num values"),
+            complete_stat_names.append("{}_mean exp (high {})".format(omic, limits[1])),
+            complete_stat_names.append("{}_% vals (higher {})".format(omic, limits[1])),
+            complete_stat_names.append("{}_mean exp(lower {})".format(omic, limits[0])),
+            complete_stat_names.append("{}_% vals (lower {})".format(omic, limits[0])),
+            complete_stat_names.append("{}_% Reg ({})".format(omic, limits)),
+            complete_stat_names.append("{}_% Unreg ({})".format(omic, limits)),
+            complete_stat_names.append("{}_% p with val"),
     complete_stat_names += ["pathway size"]
     statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
@@ -91,16 +80,30 @@ def getClusterLayout(
 
 
 def get_layout_settings(settings, omics_recieved):
-    possible_omic_attributes = [
-        "Number of values",
-        "Mean expression above limit",
-        "% values above limit",
-        "Mean expression below limit ",
-        "% values below limit ",
-        "% regulated",
-        "% unregulated",
-        "% with measured value",
-    ]
+    possible_omic_attributes = {
+        "common": [
+            "Number of values",
+            "% regulated",
+            "% unregulated",
+            "% with measured value",
+        ],
+        "timeseries": [
+            "Mean Slope above limit",
+            "Mean Slope below limit",
+            "% slopes below limit",
+            "% slopes above limit",
+            "standard error above limit",
+            "standard error below limit",
+            "% standard error above limit",
+            "% standard error below limit",
+        ],
+        "foldChange": [
+            "Mean expression above limit",
+            "% values above limit",
+            "Mean expression below limit ",
+            "% values below limit ",
+        ],
+    }
     possible_no_omic_attributes = ["% values measured over all omics"]
     attributes = []
     limits = []

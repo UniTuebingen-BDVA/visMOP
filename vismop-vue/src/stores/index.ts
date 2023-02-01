@@ -55,7 +55,7 @@ interface State {
     metabolomics: boolean;
   };
   amtTimepoints: number;
-  timeseriesModeToggle: 'aggregate' | 'individual';
+  timeseriesModeToggle: 'slope' | 'fc';
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
@@ -115,7 +115,7 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: false,
     },
     amtTimepoints: 0,
-    timeseriesModeToggle: 'aggregate',
+    timeseriesModeToggle: 'slope',
     pathayAmountDict: {},
     pathwayCompare: [],
     glyphData: {},
@@ -203,11 +203,11 @@ export const useMainStore = defineStore('mainStore', {
         }
       });
     },
-    setTimeSeriesToggle(val: 'aggregate' | 'individual') {
+    setTimeSeriesToggle(val: 'slope' | 'fc') {
       this.timeseriesModeToggle = val;
     },
     getTimeSeriesMode() {
-      return this.amtTimepoints > 1 && this.timeseriesModeToggle == 'aggregate'
+      return this.amtTimepoints > 1 && this.timeseriesModeToggle == 'slope'
         ? 'slope'
         : 'fc';
     },

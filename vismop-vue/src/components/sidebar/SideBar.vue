@@ -89,7 +89,7 @@
             ></q-select>
             <div v-if="currentLayoutOmic != ''">
               <q-select
-                v-model="chosenLayoutAttributes"
+                v-model="chosenLayoutAttributes[currentLayoutOmic]"
                 :options="layoutAttributes"
                 label="Attributes"
                 use-chips
@@ -115,7 +115,7 @@
                 class="row"
               >
                 <q-input
-                  v-model.number="omicLimitMin"
+                  v-model.number="omicLimitMin[currentLayoutOmic]"
                   type="number"
                   step="0.1"
                   style="max-width: 130px"
@@ -124,7 +124,7 @@
                   filled
                 />
                 <q-input
-                  v-model.number="omicLimitMax"
+                  v-model.number="omicLimitMax[currentLayoutOmic]"
                   type="number"
                   step="0.1"
                   style="max-width: 130px"
@@ -263,41 +263,57 @@ const metabolomicsValueCol: Ref<ColType[]> = ref([
     align: undefined,
   },
 ]);
-const allOmicLayoutAttributes = [
-  'Number of values',
-  'Mean expression above limit',
-  '% values above limit',
-  'Mean expression below limit ',
-  '% values below limit ',
-  '% regulated',
-  '% unregulated',
-  '% with measured value',
-];
-const allNoneOmicAttributes = ['% values measured over all omics'];
-const availableOmics = [
-  'Transcriptomics ',
-  'Proteomics ',
-  'Metabolomics ',
-  'not related to specific omic ',
-];
-const layoutSettings = ref({
-  'Transcriptomics ': {
-    attributes: allOmicLayoutAttributes,
-    limits: [0.8, 1.2],
-  },
-  'Proteomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
-  'Metabolomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
-  'not related to specific omic ': {
-    attributes: allNoneOmicAttributes,
-    limits: [0, 0],
-  },
+
+const allOmicLayoutAttributes = {
+  common: [
+    'Number of values',
+    '% regulated',
+    '% unregulated',
+    '% with measured value',
+  ],
+  timeseries: [
+    'Mean Slope above limit',
+    'Mean Slope below limit',
+    '% slopes below limit',
+    '% slopes above limit',
+    'standard error above limit',
+    'standard error below limit',
+    '% standard error above limit',
+    '% standard error below limit',
+  ],
+  foldChange: [
+    'Mean expression above limit',
+    '% values above limit',
+    'Mean expression below limit ',
+    '% values below limit ',
+  ],
+};
+const allNonOmicAttributes = ['% values measured over all omics'];
+
+const omicLimitMin = ref({
+  transcriptomics: -1.3,
+  proteomics: -1.3,
+  metabolomics: -1.3,
 });
-const omicLimitMin = ref(-1.3);
-const omicLimitMax = ref(1.3);
-const currentLayoutOmic = ref('');
+const omicLimitMax = ref({
+  transcriptomics: 1.3,
+  proteomics: 1.3,
+  metabolomics: 1.3,
+});
+const currentLayoutOmic: Ref<
+  | 'transcriptomics'
+  | 'proteomics'
+  | 'metabolomics'
+  | 'not related to specific omic'
+  | ''
+> = ref('');
 const layoutOmics = ref(['']);
-const chosenLayoutAttributes = ref(['']);
-const layoutAttributes = ref(['']);
+const chosenLayoutAttributes = ref({
+  transcriptomics: [''],
+  proteomics: [''],
+  metabolomics: [''],
+  'not related to specific omic': [''],
+});
 const chosenOmics = computed((): string[] => {
   const chosen = [];
   if (recievedTranscriptomicsData.value) chosen.push('Transcriptomics');
@@ -310,38 +326,43 @@ watch(chosenOmics, () => {
     'not related to specific omic',
   ]);
 });
-watch(currentLayoutOmic, () => {
-  // change dropdown list Attributes
-  layoutAttributes.value =
-    currentLayoutOmic.value === 'not related to specific omic'
-      ? allNoneOmicAttributes
-      : allOmicLayoutAttributes;
-  chosenLayoutAttributes.value = layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-  ].attributes.slice(1, 5);
-  // change limits
-  const limits =
-    layoutSettings.value[
-      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-    ].limits;
-  omicLimitMin.value = limits[0];
-  omicLimitMax.value = limits[1];
+
+const layoutAttributes = computed(() => {
+  return currentLayoutOmic.value === 'not related to specific omic'
+    ? allNonOmicAttributes
+    : [
+        ...allOmicLayoutAttributes.common,
+        ...allOmicLayoutAttributes[
+          timeseriesModeToggle.value === 'fc' ? 'foldChange' : 'timeseries'
+        ],
+      ];
 });
-watch(omicLimitMin, () => {
-  layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-  ].limits[0] = omicLimitMin.value;
-});
-watch(omicLimitMax, () => {
-  layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-  ].limits[1] = omicLimitMax.value;
-});
-watch(chosenLayoutAttributes, () => {
-  // save choosen Layout attribute for omic
-  layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-  ].attributes = chosenLayoutAttributes.value;
+
+const layoutSettings = computed(() => {
+  return {
+    'Transcriptomics ': {
+      attributes: chosenLayoutAttributes.value.transcriptomics,
+      limits: [
+        omicLimitMin.value.transcriptomics,
+        omicLimitMax.value.transcriptomics,
+      ],
+    },
+    'Proteomics ': {
+      attributes: chosenLayoutAttributes.value.proteomics,
+      limits: [omicLimitMin.value.proteomics, omicLimitMax.value.proteomics],
+    },
+    'Metabolomics ': {
+      attributes: chosenLayoutAttributes.value.metabolomics,
+      limits: [
+        omicLimitMin.value.metabolomics,
+        omicLimitMax.value.metabolomics,
+      ],
+    },
+    'not related to specific omic ': {
+      attributes: chosenLayoutAttributes.value['not related to specific omic'],
+      limits: [0, 0],
+    },
+  };
 });
 
 const dataQuery = () => {
