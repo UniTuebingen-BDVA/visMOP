@@ -74,7 +74,7 @@
       ></omic-input>
       <q-separator />
       <AttributeSelection
-        v-model:layout-settings="attributeDefaults"
+        v-model:layout-settings="layoutAttributes"
         :timeseries-mode-toggle="timeseriesModeToggle"
         :layout-omics="layoutOmics"
       ></AttributeSelection>
@@ -249,26 +249,44 @@ const foldChangeDefault = [
   { text: '% values below limit ', value: 'fc_percentFcBelow' },
 ];
 
-const attributeDefaults: Ref<LayoutSettings> = ref({
+const layoutAttributes: Ref<LayoutSettings> = ref({
   transcriptomics: {
     attributes:
       timeseriesModeToggle.value == 'slope'
-        ? [...commonDefault, ...timeseriesDefault]
-        : [...commonDefault, ...foldChangeDefault],
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ],
     limits: [0.8, 1.2],
   },
   proteomics: {
     attributes:
       timeseriesModeToggle.value == 'slope'
-        ? [...commonDefault, ...timeseriesDefault]
-        : [...commonDefault, ...foldChangeDefault],
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ],
     limits: [0.8, 1.2],
   },
   metabolomics: {
     attributes:
       timeseriesModeToggle.value == 'slope'
-        ? [...commonDefault, ...timeseriesDefault]
-        : [...commonDefault, ...foldChangeDefault],
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ],
     limits: [0.8, 1.2],
   },
   'not related to specific omic': {
@@ -287,18 +305,36 @@ watch(timeseriesModeToggle, () => {
 });
 
 const setAttributeDefaults = () => {
-  attributeDefaults.value.transcriptomics.attributes =
+  (layoutAttributes.value.transcriptomics.attributes =
     timeseriesModeToggle.value == 'slope'
-      ? [...commonDefault, ...timeseriesDefault]
-      : [...commonDefault, ...foldChangeDefault];
-  attributeDefaults.value.proteomics.attributes =
+      ? [
+          ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ...timeseriesDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+        ]
+      : [
+          ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ...foldChangeDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+        ]),
+    (layoutAttributes.value.proteomics.attributes =
+      timeseriesModeToggle.value == 'slope'
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ]);
+  layoutAttributes.value.metabolomics.attributes =
     timeseriesModeToggle.value == 'slope'
-      ? [...commonDefault, ...timeseriesDefault]
-      : [...commonDefault, ...foldChangeDefault];
-  attributeDefaults.value.metabolomics.attributes =
-    timeseriesModeToggle.value == 'slope'
-      ? [...commonDefault, ...timeseriesDefault]
-      : [...commonDefault, ...foldChangeDefault];
+      ? [
+          ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ...timeseriesDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+        ]
+      : [
+          ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ...foldChangeDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+        ];
 };
 
 const dataQuery = () => {
@@ -345,7 +381,7 @@ const queryReactome = () => {
       metabolomics: sliderValsMetabolomics.value,
     },
     timeseriesMode: mainStore.getTimeSeriesMode(),
-    layoutSettings: attributeDefaults.value,
+    layoutSettings: layoutAttributes.value,
   };
   fetch('/reactome_parsing', {
     method: 'POST',

@@ -9,57 +9,99 @@ import collections
 
 from visMOP.python_scripts.timeseries_analysis import get_regression_data
 
+stat_vals = {
+    "common": [
+        "common_numVals",
+        "common_reg",
+        "common_unReg",
+        "common_measured",
+    ],
+    "slope": [
+        "timeseries_meanSlopeAbove",
+        "timeseries_meanSlopeBelow",
+        "timeseries_percentSlopeBelow",
+        "timeseries_percentSlopeAbove",
+        "timeseries_meanSeAbove",
+        "timeseries_meanSeBelow",
+        "timeseries_percentSeAbove",
+        "timeseries_percentSeBelow",
+    ],
+    "fc": [
+        "fc_meanFcAbove",
+        "fc_percentFcAbove",
+        "fc_meanFcBelow",
+        "fc_percentFcBelow",
+    ],
+}
 
-def get_PathwaySummaryData_omic(num_entries, all_values, limits):
+
+def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_type):
     num_val_omic = len(all_values)
+    pathway_summary_data = {}
+    statics_to_calculate = [*stat_vals["common"], *stat_vals[mode]]
     # statistics for products produced in a significant higher amount
-    vals_higher_ul = [val for val in all_values if val > limits[1]]
-    mean_val_higher_ul = (
-        sum(vals_higher_ul) / len(vals_higher_ul)
-        if len(vals_higher_ul) > 0
-        else float("nan")
-    )
-    pc_vals_higher_ul = (
-        len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
-    )  # float('nan')
 
-    # statistics for products produced in a significant smaller amount
-    vals_smaller_ll = [val for val in all_values if val < limits[0]]
-    mean_val_smaller_ll = (
-        sum(vals_smaller_ll) / len(vals_smaller_ll)
-        if len(vals_smaller_ll) > 0
-        else float("nan")
-    )
-    pc_vals_smaller_ll = (
-        len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
-    )  # float('nan')
+    # fold change mean and percent above
+    if (
+        "fc_meanFcAbove" in statics_to_calculate
+        or "fc_percentFcAbove" in statics_to_calculate
+    ):
+        vals_higher_ul = [val for val in all_values if val > limits[1]]
+        if "fc_meanFcAbove" in statics_to_calculate:
+            mean_val_higher_ul = (
+                sum(vals_higher_ul) / len(vals_higher_ul)
+                if len(vals_higher_ul) > 0
+                else float("nan")
+            )
+            pathway_summary_data[omics_type + "_fc_meanFcAbove"] = mean_val_higher_ul
 
-    # procentage of products produced in a significant differnt amount
-    pcReg = (
-        sum(val > limits[1] or val < limits[0] for val in all_values) / num_val_omic
-        if num_val_omic != 0
-        else 0
-    )  # float('nan')
+        if "fc_percentFcAbove" in statics_to_calculate:
+            pc_vals_higher_ul = (
+                len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
+            )
+            pathway_summary_data[omics_type + "_fc_percentFcAbove"] = pc_vals_higher_ul
 
-    # procentage of products not produced in a significant differnt amount
-    pcUnReg = (
-        sum(val < limits[1] and val > limits[0] for val in all_values) / num_val_omic
-        if num_val_omic != 0
-        else 0
-    )  ## float('nan')
+    # fold change mean and percent below
+    if (
+        "fc_meanFcBelow" in statics_to_calculate
+        or "fc_percentFcBelow" in statics_to_calculate
+    ):
+        vals_smaller_ll = [val for val in all_values if val < limits[0]]
+        if "fc_meanFcBelow" in statics_to_calculate:
+            mean_val_smaller_ll = (
+                sum(vals_smaller_ll) / len(vals_smaller_ll)
+                if len(vals_smaller_ll) > 0
+                else float("nan")
+            )
+            pathway_summary_data[omics_type + "_fc_meanFcBelow"] = mean_val_smaller_ll
 
-    pc_with_val_for_omic = num_val_omic / num_entries if num_entries != 0 else 0
+        if "fc_percentFcBelow" in statics_to_calculate:
+            pc_vals_smaller_ll = (
+                len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
+            )
+            pathway_summary_data[omics_type + "_fc_percentFcBelow"] = pc_vals_smaller_ll
 
-    pathway_summary_data = [
-        num_val_omic,
-        mean_val_higher_ul,
-        pc_vals_higher_ul,
-        mean_val_smaller_ll,
-        pc_vals_smaller_ll,
-        pcReg,
-        pcUnReg,
-        pc_with_val_for_omic,
-    ]
+    # common statistics
+    if "common_numVals" in statics_to_calculate:
+        pathway_summary_data["common_numVals"] = num_val_omic
+    if "common_reg" in statics_to_calculate:
+        pathway_summary_data[omics_type + "_common_reg"] = (
+            sum(val > limits[1] or val < limits[0] for val in all_values) / num_val_omic
+            if num_val_omic != 0
+            else 0
+        )
+    if "common_unReg" in statics_to_calculate:
+        pathway_summary_data[omics_type + "_common_unReg"] = (
+            sum(val < limits[1] and val > limits[0] for val in all_values)
+            / num_val_omic
+            if num_val_omic != 0
+            else 0
+        )
+    if "common_measured" in statics_to_calculate:
+        pathway_summary_data[omics_type + "_common_measured"] = (
+            num_val_omic / num_entries if num_entries != 0 else 0
+        )
+
     return pathway_summary_data
 
 
@@ -460,7 +502,7 @@ class ReactomeHierarchy(dict):
                 self._subtree_recursive(elem, subtree)
             subtree.append(entry_id)
 
-    def add_query_data(self, entity_data, query_type, query_key):
+    def add_query_data(self, entity_data, query_type, query_key, mode):
         """Adds query data (i.e. experimental omics data, to hierarchy structure)"""
         current_reactome_id = entity_data["reactome_id"]
         for pathway in entity_data["pathways"]:
@@ -480,6 +522,11 @@ class ReactomeHierarchy(dict):
                 else:
                     self[pathway[0]].total_measured_proteins[query_key] = {
                         "measurement": entity_data["measurement"],
+                        "regressionData": get_regression_data(
+                            entity_data["measurement"]
+                        )
+                        if mode == "slope"
+                        else None,
                         "forms": {
                             current_reactome_id: {
                                 "name": entity_data["name"],
@@ -506,6 +553,11 @@ class ReactomeHierarchy(dict):
                 else:
                     self[pathway[0]].total_measured_genes[query_key] = {
                         "measurement": entity_data["measurement"],
+                        "regressionData": get_regression_data(
+                            entity_data["measurement"]
+                        )
+                        if mode == "slope"
+                        else None,
                         "forms": {
                             current_reactome_id: {
                                 "name": entity_data["name"],
@@ -534,6 +586,11 @@ class ReactomeHierarchy(dict):
                 else:
                     self[pathway[0]].total_measured_metabolites[query_key] = {
                         "measurement": entity_data["measurement"],
+                        "regressionData": get_regression_data(
+                            entity_data["measurement"]
+                        )
+                        if mode == "slope"
+                        else None,
                         "forms": {
                             current_reactome_id: {
                                 "name": entity_data["name"],
@@ -609,7 +666,7 @@ class ReactomeHierarchy(dict):
         Args:
             omic_limits: dictionary: limits for omic data
             verbose: boolean: If total proteins/metabolite ids should be transmitted
-            mode: string: "aggregate" or "individual"
+            mode: string: "slope" or "fc"
         Returns:
             List of pathway overview entries, with each element being one pathway
             Dictionary of which query (accession Ids, e.g. uniprot/ensmbl) maps to which pathways
@@ -675,19 +732,11 @@ class ReactomeHierarchy(dict):
                     pathway_summary_stats_dict[
                         pathway_dict["pathwayId"]
                     ] = pathway_summary_data
-        stat_vals = [
-            "num values",
-            "mean exp (high) ",
-            "% vals (higher) ",
-            "mean exp(lower) ",
-            "% vals (lower) ",
-            "% Reg",
-            "% Unreg",
-            "% p with val",
-        ]
-        omics = [o for i, o in enumerate(["t ", "p ", "m "]) if self.omics_recieved[i]]
-        stat_vals_colnames = [o + stat for o in omics for stat in stat_vals]
-        stat_vals_colnames.append("pathway size")
+
+        stat_vals_combined = [*stat_vals["common"], *stat_vals[mode]]
+        omics = [o for i, o in enumerate(["t_", "p_ ", "m_"]) if self.omics_recieved[i]]
+        stat_vals_colnames = [o + stat for o in omics for stat in stat_vals_combined]
+        stat_vals_colnames.append("pathway_size")
         return (
             out_data,
             central_nodes_out,
@@ -696,9 +745,7 @@ class ReactomeHierarchy(dict):
             list(set(root_ids)),
             pathways_root_names,
             root_subpathways,
-            pd.DataFrame.from_dict(
-                pathway_summary_stats_dict, orient="index", columns=stat_vals_colnames
-            ),
+            pd.DataFrame.from_dict(pathway_summary_stats_dict, orient="index"),
             self.omics_recieved,
         )
 
@@ -733,7 +780,7 @@ def generate_overview_pathway_entry(
         entry: entry object
         is_central: boolean if entry is in the central nodes
         pathway_Id: if of pathway
-        mode: string: "aggregate" or "individual"
+        mode: string: "slope" or "fc"
         timepoint_index: int: index of timepoint
         amt_timesteps: int: amount of timepoints
         query_pathway_dict: dictionary associating query id to pathways in which query is appearing
@@ -818,7 +865,7 @@ def generate_overview_pathway_entry(
     )
 
     # fill statistical datat for pathway
-    pathway_summary_data = []
+    pathway_summary_data = {}
     # num_entries = len(
     #     set(
     #         list(entry.total_measured_genes.keys())
@@ -829,21 +876,27 @@ def generate_overview_pathway_entry(
     values_per_omic = [
         [
             {
-                "measurement": elem["measurement"][timepoint_index],
+                "measurement": elem["measurement"][timepoint_index]
+                if mode == "fc"
+                else elem["regressionData"],
                 "forms": elem["forms"],
             }
             for elem in entry.total_measured_genes.values()
         ],
         [
             {
-                "measurement": elem["measurement"][timepoint_index],
+                "measurement": elem["measurement"][timepoint_index]
+                if mode == "fc"
+                else elem["regressionData"],
                 "forms": elem["forms"],
             }
             for elem in entry.total_measured_proteins.values()
         ],
         [
             {
-                "measurement": elem["measurement"][timepoint_index],
+                "measurement": elem["measurement"][timepoint_index]
+                if mode == "fc"
+                else elem["regressionData"],
                 "forms": elem["forms"],
             }
             for elem in entry.total_measured_metabolites.values()
@@ -860,18 +913,25 @@ def generate_overview_pathway_entry(
         [value for values_omic in values_per_omic for value in values_omic]
     ) / sum(num_entries_omics)
 
-    for omic_recieved, omic_values_dict, num_entries_omic, limits in zip(
-        omics_recieved, values_per_omic, num_entries_omics, omic_limits
+    for omic_recieved, omic_values_dict, num_entries_omic, limits, omicsType in zip(
+        omics_recieved,
+        values_per_omic,
+        num_entries_omics,
+        omic_limits,
+        ["t", "p", "m", "nonOmic"],
     ):
         if omic_recieved:
             omic_values = [vals["measurement"] for vals in omic_values_dict]
             # print(num_entries_omic, omic_values, limits)
-            pathway_summary_data += get_PathwaySummaryData_omic(
-                num_entries_omic, omic_values, limits
-            )
+            pathway_summary_data = {
+                **pathway_summary_data,
+                **get_PathwaySummaryData_omic(
+                    num_entries_omic, omic_values, limits, mode, omicsType
+                ),
+            }
 
     # pathway_summary_data.append(len(entry.subtree_ids))
-    pathway_summary_data.append(perc_vals_total)
+    pathway_summary_data["nonOmic_percentMeasured"] = perc_vals_total
 
     for k in entry.total_measured_proteins:
         v = entry.total_measured_proteins[k]
@@ -879,13 +939,11 @@ def generate_overview_pathway_entry(
         pathway_dict["entries"]["proteomics"]["measured"][k] = {
             "queryId": k,
             "value": v["measurement"][timepoint_index]
-            if mode == "individual"
+            if mode == "fc"
             else v["measurement"],
             "name": name,
             "forms": v["forms"],
-            "regressionData": get_regression_data(v["measurement"])
-            if mode == "aggregate"
-            else None,
+            "regressionData": v["regressionData"] if mode == "slope" else None,
         }
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
@@ -897,13 +955,11 @@ def generate_overview_pathway_entry(
         pathway_dict["entries"]["transcriptomics"]["measured"][k] = {
             "queryId": k,
             "value": v["measurement"][timepoint_index]
-            if mode == "individual"
+            if mode == "fc"
             else v["measurement"],
             "name": name,
             "forms": v["forms"],
-            "regressionData": get_regression_data(v["measurement"])
-            if mode == "aggregate"
-            else None,
+            "regressionData": v["regressionData"] if mode == "slope" else None,
         }
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)
@@ -915,13 +971,11 @@ def generate_overview_pathway_entry(
         pathway_dict["entries"]["metabolomics"]["measured"][k] = {
             "queryId": k,
             "value": v["measurement"][timepoint_index]
-            if mode == "individual"
+            if mode == "fc"
             else v["measurement"],
             "name": name,
             "forms": v["forms"],
-            "regressionData": get_regression_data(v["measurement"])
-            if mode == "aggregate"
-            else None,
+            "regressionData": v["regressionData"] if mode == "slope" else None,
         }
         if k in query_pathway_dict.keys():
             query_pathway_dict[k].append(pathway_Id)

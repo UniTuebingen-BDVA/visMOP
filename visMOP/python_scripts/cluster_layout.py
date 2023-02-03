@@ -30,6 +30,9 @@ from multiprocessing import Process
 import pandas as pd
 
 
+defaultVals = {}
+
+
 def getClusterLayout(
     omics_recieved,
     layout_targets,
@@ -43,7 +46,7 @@ def getClusterLayout(
     up_down_reg_means = {
         o: mean(limits) for o, limits in zip(["t", "p", "m"], up_down_reg_limits)
     }
-
+    up_down_reg_means["n"] = 0
     omics_names = ["t", "p", "m"]
     # for diagramms
     complete_stat_names = []
@@ -58,7 +61,7 @@ def getClusterLayout(
             complete_stat_names.append("{}_% Unreg ({})".format(omic, limits)),
             complete_stat_names.append("{}_% p with val"),
     complete_stat_names += ["pathway size"]
-    statistic_data_user = statistic_data_complete.iloc[:, data_col_used]
+    statistic_data_user = statistic_data_complete.loc[:, data_col_used]
     statistic_data_complete.columns = complete_stat_names
     try:
         cluster_layout = Cluster_layout(
@@ -113,24 +116,27 @@ def get_layout_settings(settings, timeseries_mode, omics_recieved):
         omic_limits = [float(i) for i in layout_settings["limits"]]
         limits.append(omic_limits)
         if recieved and omic != "not related to specific omic ":
-            attribute_boolean = [
-                (
-                    (layout_settings["attributes"] is not None)
-                    and att in layout_settings["attributes"]
-                )
-                for att in [
-                    *possible_omic_attributes["common"],
-                    *possible_omic_attributes[timeseries_mode],
-                ]
-            ]
-            attributes += attribute_boolean
+            # attribute_boolean = [
+            #     (
+            #         (layout_settings["attributes"] is not None)
+            #         and att in layout_settings["attributes"]
+            #     )
+            #     for att in [
+            #         *possible_omic_attributes["common"],
+            #         *possible_omic_attributes[timeseries_mode],
+            #     ]
+            # ]
+            # attributes += attribute_boolean
+            attributes.extend([att["value"] for att in layout_settings["attributes"]])
 
         elif recieved:
-            attribute_boolean = [
-                att in layout_settings["attributes"]
-                for att in possible_no_omic_attributes
-            ]
-            attributes += attribute_boolean
+            # attribute_boolean = [
+            #     att in layout_settings["attributes"]
+            #     for att in possible_no_omic_attributes
+            # ]
+            # attributes += attribute_boolean
+            attributes.extend([att["value"] for att in layout_settings["attributes"]])
+
     return {"attributes": attributes, "limits": limits}
 
 
@@ -395,12 +401,14 @@ class Cluster_layout:
     ):
         node_names = list(self.data_table.index)
         new_data = {}
-        default_val_0 = ["num values", "pathway size", "%"]
+        default_val_0 = ["numVals", "percent"]
         for node_name in node_names:
             new_node_vec = []
             for ind, val in zip(
                 list(self.data_table.columns), self.data_table.loc[node_name]
             ):
+                # kinda fishy, as default means are always 0
+                # TODO get defaults working,
                 default_val = (
                     0 if any(s in ind for s in default_val_0) else default_means[ind[0]]
                 )

@@ -86,42 +86,63 @@ const layoutSettingsInternal = computed({
   get: () => props.layoutSettings,
   set: (value) => emit('update:layoutSettings', value),
 });
-const allOmicLayoutAttributes = {
-  common: [
-    { text: 'Number of values', value: 'common_numVals' },
-    { text: '% regulated', value: 'common_reg' },
-    { text: '% unregulated', value: 'common_unReg' },
-    { text: '% with measured value', value: 'common_measured' },
-  ],
-  timeseries: [
-    { text: 'Mean Slope above limit', value: 'timeseries_meanSlopeAbove' },
-    { text: 'Mean Slope below limit', value: 'timeseries_meanSlopeBelow' },
-    { text: '% slopes below limit', value: 'timeseries_percentSlopeBelow' },
-    { text: '% slopes above limit', value: 'timeseries_percentSlopeAbove' },
-    {
-      text: 'Mean standard error above limit',
-      value: 'timeseries_meanSeAbove',
-    },
-    {
-      text: 'Mean standard error below limit',
-      value: 'timeseries_meanSeBelow',
-    },
-    {
-      text: '% standard error above limit',
-      value: 'timeseries_percentSeAbove',
-    },
-    {
-      text: '% standard error below limit',
-      value: 'timeseries_percentSeBelow',
-    },
-  ],
-  foldChange: [
-    { text: 'Mean expression above limit', value: 'fc_meanFcAbove' },
-    { text: '% values above limit', value: 'fc_percentFcAbove' },
-    { text: 'Mean expression below limit ', value: 'fc_meanFcBelow' },
-    { text: '% values below limit ', value: 'fc_percentFcBelow' },
-  ],
-};
+const allOmicLayoutAttributes = computed(() => {
+  const prefix =
+    currentLayoutOmic.value === 'not related to specific omic'
+      ? ''
+      : currentLayoutOmic.value[0] + '_';
+  return {
+    common: [
+      { text: 'Number of values', value: prefix + 'common_numVals' },
+      { text: '% regulated', value: prefix + 'common_reg' },
+      { text: '% unregulated', value: prefix + 'common_unReg' },
+      { text: '% with measured value', value: prefix + 'common_measured' },
+    ],
+    timeseries: [
+      {
+        text: 'Mean Slope above limit',
+        value: prefix + 'timeseries_meanSlopeAbove',
+      },
+      {
+        text: 'Mean Slope below limit',
+        value: prefix + 'timeseries_meanSlopeBelow',
+      },
+      {
+        text: '% slopes below limit',
+        value: prefix + 'timeseries_percentSlopeBelow',
+      },
+      {
+        text: '% slopes above limit',
+        value: prefix + 'timeseries_percentSlopeAbove',
+      },
+      {
+        text: 'Mean standard error above limit',
+        value: prefix + 'timeseries_meanSeAbove',
+      },
+      {
+        text: 'Mean standard error below limit',
+        value: prefix + 'timeseries_meanSeBelow',
+      },
+      {
+        text: '% standard error above limit',
+        value: prefix + 'timeseries_percentSeAbove',
+      },
+      {
+        text: '% standard error below limit',
+        value: prefix + 'timeseries_percentSeBelow',
+      },
+    ],
+    foldChange: [
+      { text: 'Mean expression above limit', value: prefix + 'fc_meanFcAbove' },
+      { text: '% values above limit', value: prefix + 'fc_percentFcAbove' },
+      {
+        text: 'Mean expression below limit ',
+        value: prefix + 'fc_meanFcBelow',
+      },
+      { text: '% values below limit ', value: prefix + 'fc_percentFcBelow' },
+    ],
+  };
+});
 const allNonOmicAttributes = [
   {
     text: '% values measured over all omics',
@@ -141,8 +162,8 @@ const layoutAttributes = computed(() => {
   return currentLayoutOmic.value === 'not related to specific omic'
     ? allNonOmicAttributes
     : [
-        ...allOmicLayoutAttributes.common,
-        ...allOmicLayoutAttributes[
+        ...allOmicLayoutAttributes.value.common,
+        ...allOmicLayoutAttributes.value[
           props.timeseriesModeToggle === 'fc' ? 'foldChange' : 'timeseries'
         ],
       ];

@@ -178,7 +178,9 @@ def reactome_parsing():
         }
         for query_key, query_result in protein_query.query_results.items():
             for entity_id, entity_data in query_result.items():
-                reactome_hierarchy.add_query_data(entity_data, "protein", query_key)
+                reactome_hierarchy.add_query_data(
+                    entity_data, "protein", query_key, timeseries_mode
+                )
     ##
     # Add Metabolomics Data
     ##
@@ -242,7 +244,9 @@ def reactome_parsing():
 
         for query_key, query_result in metabolite_query.query_results.items():
             for entity_id, entity_data in query_result.items():
-                reactome_hierarchy.add_query_data(entity_data, "metabolite", query_key)
+                reactome_hierarchy.add_query_data(
+                    entity_data, "metabolite", query_key, timeseries_mode
+                )
     ##
     # Add Transcriptomics Data Data
     ##
@@ -285,7 +289,9 @@ def reactome_parsing():
         }
         for query_key, query_result in transcriptomics_query.query_results.items():
             for entity_id, entity_data in query_result.items():
-                reactome_hierarchy.add_query_data(entity_data, "gene", query_key)
+                reactome_hierarchy.add_query_data(
+                    entity_data, "gene", query_key, timeseries_mode
+                )
     # Aggregate Data in Hierarchy, and set session cache
     ##
     reactome_hierarchy.aggregate_pathways()
