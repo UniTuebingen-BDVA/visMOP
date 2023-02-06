@@ -24,18 +24,18 @@ type measureData = {
 type LayoutSettings = {
   transcriptomics: {
     attributes: { text: string; value: string }[];
-    limits: [number, number];
+    limits: number[];
   };
   proteomics: {
     attributes: { text: string; value: string }[];
-    limits: [number, number];
+    limits: number[];
   };
   metabolomics: {
     attributes: { text: string; value: string }[];
-    limits: [number, number];
+    limits: number[];
   };
   'not related to specific omic': {
     attributes: { text: string; value: string }[];
-    limits: [number, number];
+    limits: number[];
   };
 };

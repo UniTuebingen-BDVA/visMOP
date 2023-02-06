@@ -1,5 +1,6 @@
 import json
 import pathlib
+import statistics
 import pandas as pd
 import pickle
 import os
@@ -41,12 +42,122 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
     statics_to_calculate = [*stat_vals["common"], *stat_vals[mode]]
     # statistics for products produced in a significant higher amount
 
+    if (
+        "timeseries_meanSlopeAbove" in statics_to_calculate
+        or "timeseries_percentSlopeAbove" in statics_to_calculate
+    ):
+        vals_higher_ul = [
+            val["regressionData"]["slope"]
+            for val in all_values
+            if val["regressionData"]["slope"] > limits[1]
+        ]
+        if "timeseries_meanSlopeAbove" in statics_to_calculate:
+            mean_val_higher_ul = (
+                sum(vals_higher_ul) / len(vals_higher_ul)
+                if len(vals_higher_ul) > 0
+                else float("nan")
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_meanSlopeAbove"
+            ] = mean_val_higher_ul
+
+        if "timeseries_percentSlopeAbove" in statics_to_calculate:
+            pc_vals_higher_ul = (
+                len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_percentSlopeAbove"
+            ] = pc_vals_higher_ul
+
+    if (
+        "timeseries_meanSlopeBelow" in statics_to_calculate
+        or "timeseries_percentSlopeBelow" in statics_to_calculate
+    ):
+        vals_smaller_ll = [
+            val["regressionData"]["slope"]
+            for val in all_values
+            if val["regressionData"]["slope"] < limits[0]
+        ]
+        if "timeseries_meanSlopeBelow" in statics_to_calculate:
+            mean_val_smaller_ll = (
+                sum(vals_smaller_ll) / len(vals_smaller_ll)
+                if len(vals_smaller_ll) > 0
+                else float("nan")
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_meanSlopeBelow"
+            ] = mean_val_smaller_ll
+
+        if "timeseries_percentSlopeBelow" in statics_to_calculate:
+            pc_vals_smaller_ll = (
+                len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_percentSlopeBelow"
+            ] = pc_vals_smaller_ll
+
+    if (
+        "timeseries_meanSeAbove" in statics_to_calculate
+        or "timeseries_percentSeAbove" in statics_to_calculate
+    ):
+        vals_higher_ul = [
+            val["regressionData"]["std_err"]
+            for val in all_values
+            if val["regressionData"]["std_err"] > limits[3]
+        ]
+        if "timeseries_meanSeAbove" in statics_to_calculate:
+            mean_val_higher_ul = (
+                sum(vals_higher_ul) / len(vals_higher_ul)
+                if len(vals_higher_ul) > 0
+                else float("nan")
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_meanSeAbove"
+            ] = mean_val_higher_ul
+
+        if "timeseries_percentSeAbove" in statics_to_calculate:
+            pc_vals_higher_ul = (
+                len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_percentSeAbove"
+            ] = pc_vals_higher_ul
+
+    if (
+        "timeseries_meanSeBelow" in statics_to_calculate
+        or "timeseries_percentSeBelow" in statics_to_calculate
+    ):
+        vals_smaller_ll = [
+            val["regressionData"]["std_err"]
+            for val in all_values
+            if val["regressionData"]["std_err"] < limits[2]
+        ]
+        if "timeseries_meanSeBelow" in statics_to_calculate:
+            mean_val_smaller_ll = (
+                sum(vals_smaller_ll) / len(vals_smaller_ll)
+                if len(vals_smaller_ll) > 0
+                else float("nan")
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_meanSeBelow"
+            ] = mean_val_smaller_ll
+
+        if "timeseries_percentSeBelow" in statics_to_calculate:
+            pc_vals_smaller_ll = (
+                len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
+            )
+            pathway_summary_data[
+                omics_type + "_timeseries_percentSeBelow"
+            ] = pc_vals_smaller_ll
+
     # fold change mean and percent above
     if (
         "fc_meanFcAbove" in statics_to_calculate
         or "fc_percentFcAbove" in statics_to_calculate
     ):
-        vals_higher_ul = [val for val in all_values if val > limits[1]]
+        vals_higher_ul = [
+            val["measurement"] for val in all_values if val["measurement"] > limits[1]
+        ]
         if "fc_meanFcAbove" in statics_to_calculate:
             mean_val_higher_ul = (
                 sum(vals_higher_ul) / len(vals_higher_ul)
@@ -66,7 +177,9 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
         "fc_meanFcBelow" in statics_to_calculate
         or "fc_percentFcBelow" in statics_to_calculate
     ):
-        vals_smaller_ll = [val for val in all_values if val < limits[0]]
+        vals_smaller_ll = [
+            val["measurement"] for val in all_values if val["measurement"] < limits[0]
+        ]
         if "fc_meanFcBelow" in statics_to_calculate:
             mean_val_smaller_ll = (
                 sum(vals_smaller_ll) / len(vals_smaller_ll)
@@ -85,14 +198,23 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
     if "common_numVals" in statics_to_calculate:
         pathway_summary_data["common_numVals"] = num_val_omic
     if "common_reg" in statics_to_calculate:
+        measurement = [
+            val["measurement"] if mode == "fc" else statistics.fmean(val["measurement"])
+            for val in all_values
+        ]
         pathway_summary_data[omics_type + "_common_reg"] = (
-            sum(val > limits[1] or val < limits[0] for val in all_values) / num_val_omic
+            sum(val > limits[1] or val < limits[0] for val in measurement)
+            / num_val_omic
             if num_val_omic != 0
             else 0
         )
     if "common_unReg" in statics_to_calculate:
+        measurement = [
+            val["measurement"] if mode == "fc" else statistics.fmean(val["measurement"])
+            for val in all_values
+        ]
         pathway_summary_data[omics_type + "_common_unReg"] = (
-            sum(val < limits[1] and val > limits[0] for val in all_values)
+            sum(val < limits[1] and val > limits[0] for val in measurement)
             / num_val_omic
             if num_val_omic != 0
             else 0
@@ -878,7 +1000,8 @@ def generate_overview_pathway_entry(
             {
                 "measurement": elem["measurement"][timepoint_index]
                 if mode == "fc"
-                else elem["regressionData"],
+                else elem["measurement"],
+                "regressionData": elem["regressionData"],
                 "forms": elem["forms"],
             }
             for elem in entry.total_measured_genes.values()
@@ -887,7 +1010,8 @@ def generate_overview_pathway_entry(
             {
                 "measurement": elem["measurement"][timepoint_index]
                 if mode == "fc"
-                else elem["regressionData"],
+                else elem["measurement"],
+                "regressionData": elem["regressionData"],
                 "forms": elem["forms"],
             }
             for elem in entry.total_measured_proteins.values()
@@ -896,7 +1020,8 @@ def generate_overview_pathway_entry(
             {
                 "measurement": elem["measurement"][timepoint_index]
                 if mode == "fc"
-                else elem["regressionData"],
+                else elem["measurement"],
+                "regressionData": elem["regressionData"],
                 "forms": elem["forms"],
             }
             for elem in entry.total_measured_metabolites.values()
@@ -921,7 +1046,7 @@ def generate_overview_pathway_entry(
         ["t", "p", "m", "nonOmic"],
     ):
         if omic_recieved:
-            omic_values = [vals["measurement"] for vals in omic_values_dict]
+            omic_values = [vals for vals in omic_values_dict]
             # print(num_entries_omic, omic_values, limits)
             pathway_summary_data = {
                 **pathway_summary_data,

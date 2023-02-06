@@ -66,6 +66,58 @@
               filled
             />
           </div>
+          <div v-if="timeseriesModeToggle === 'slope'" class="row">
+            <!-- Another set of inputs if timeseriesModeToggle is slope -->
+            <q-input
+              v-model.number="
+                layoutSettingsInternal[currentLayoutOmic].limits[2]
+              "
+              type="number"
+              step="0.1"
+              style="max-width: 130px"
+              class="mt-4 ml-2"
+              label="minimal slope limit"
+              filled
+            />
+            <q-input
+              v-if="timeseriesModeToggle === 'slope'"
+              v-model.number="
+                layoutSettingsInternal[currentLayoutOmic].limits[3]
+              "
+              type="number"
+              step="0.1"
+              style="max-width: 130px"
+              class="mt-2 mr-2"
+              label="maximal slope limit"
+              filled
+            />
+          </div>
+          <div v-if="timeseriesModeToggle === 'slope'" class="row">
+            <!-- Another set of inputs if timeseriesModeToggle is slope -->
+            <q-input
+              v-model.number="
+                layoutSettingsInternal[currentLayoutOmic].limits[4]
+              "
+              type="number"
+              step="0.1"
+              style="max-width: 130px"
+              class="mt-4 ml-2"
+              label="minimal std. err limit"
+              filled
+            />
+            <q-input
+              v-if="timeseriesModeToggle === 'slope'"
+              v-model.number="
+                layoutSettingsInternal[currentLayoutOmic].limits[5]
+              "
+              type="number"
+              step="0.1"
+              style="max-width: 130px"
+              class="mt-2 mr-2"
+              label="maximal std. err limit"
+              filled
+            />
+          </div>
         </div>
       </q-card-section>
     </q-card>

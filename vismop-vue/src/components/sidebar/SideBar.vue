@@ -261,7 +261,7 @@ const layoutAttributes: Ref<LayoutSettings> = ref({
             ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
             ...foldChangeDefault.map((x) => ({ ...x, value: 't_' + x.value })),
           ],
-    limits: [0.8, 1.2],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
   },
   proteomics: {
     attributes:
@@ -274,7 +274,7 @@ const layoutAttributes: Ref<LayoutSettings> = ref({
             ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
             ...foldChangeDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
           ],
-    limits: [0.8, 1.2],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
   },
   metabolomics: {
     attributes:
@@ -287,7 +287,7 @@ const layoutAttributes: Ref<LayoutSettings> = ref({
             ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
             ...foldChangeDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
           ],
-    limits: [0.8, 1.2],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
   },
   'not related to specific omic': {
     attributes: [
@@ -296,7 +296,7 @@ const layoutAttributes: Ref<LayoutSettings> = ref({
         value: 'nonOmic_percentMeasured',
       },
     ],
-    limits: [0, 0],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
   },
 } as LayoutSettings);
 

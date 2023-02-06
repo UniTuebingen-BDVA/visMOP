@@ -47,22 +47,8 @@ def getClusterLayout(
         o: mean(limits) for o, limits in zip(["t", "p", "m"], up_down_reg_limits)
     }
     up_down_reg_means["n"] = 0
-    omics_names = ["t", "p", "m"]
     # for diagramms
-    complete_stat_names = []
-    for omic, omic_r, limits in zip(omics_names, omics_recieved, up_down_reg_limits):
-        if omic_r:
-            complete_stat_names.append("num values"),
-            complete_stat_names.append("{}_mean exp (high {})".format(omic, limits[1])),
-            complete_stat_names.append("{}_% vals (higher {})".format(omic, limits[1])),
-            complete_stat_names.append("{}_mean exp(lower {})".format(omic, limits[0])),
-            complete_stat_names.append("{}_% vals (lower {})".format(omic, limits[0])),
-            complete_stat_names.append("{}_% Reg ({})".format(omic, limits)),
-            complete_stat_names.append("{}_% Unreg ({})".format(omic, limits)),
-            complete_stat_names.append("{}_% p with val"),
-    complete_stat_names += ["pathway size"]
     statistic_data_user = statistic_data_complete.loc[:, data_col_used]
-    statistic_data_complete.columns = complete_stat_names
     try:
         cluster_layout = Cluster_layout(
             statistic_data_user,
