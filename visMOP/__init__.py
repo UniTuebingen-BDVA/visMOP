@@ -151,7 +151,7 @@ def reactome_parsing():
             "proteomics_data_cache",
             cache,
         )
-        proteomics_data = json.loads(cache.get("proteomics_data_cache"))
+        proteomics_data = json.loads(cache.get("proteomics_data_cache_filtered"))
 
         for ID_number in proteomics_data:
             entry = proteomics_data[ID_number]
@@ -193,7 +193,7 @@ def reactome_parsing():
             "metabolomics_data_cache",
             cache,
         )
-        metabolomics_dict = json.loads(cache.get("metabolomics_data_cache"))
+        metabolomics_dict = json.loads(cache.get("metabolomics_data_cache_filtered"))
         metabolomics_IDs = list(metabolomics_dict.keys())
 
         if any(
@@ -258,7 +258,9 @@ def reactome_parsing():
             "transcriptomics_data_cache",
             cache,
         )
-        transcriptomics_dict = json.loads(cache.get("transcriptomics_data_cache"))
+        transcriptomics_dict = json.loads(
+            cache.get("transcriptomics_data_cache_filtered")
+        )
         transcriptomics_IDs = list(transcriptomics_dict.keys())
         for ID_number in transcriptomics_IDs:
             transcriptomics_query_data_tuples.append(

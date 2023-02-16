@@ -126,4 +126,4 @@ def format_omics_data(colname, filter_obj, cache_name, cache):
     data_dict = data_table.to_dict("index")
 
     # set cache for structures
-    cache.set(cache_name, json.dumps(data_dict))
+    cache.set(cache_name + "_filtered", json.dumps(data_dict))
