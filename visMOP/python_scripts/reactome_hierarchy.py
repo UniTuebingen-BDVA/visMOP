@@ -776,8 +776,8 @@ class ReactomeHierarchy(dict):
         """Recursive function for leaf retrieval"""
         if entry_id is not None:
             if not self[entry_id].is_overview:
-                subtree.append(entry_id)
                 if not self[entry_id].is_root:
+                    subtree.append(entry_id)
                     return
             if self[entry_id].is_overview or self[entry_id].is_root:
                 for elem in self[entry_id].children:
