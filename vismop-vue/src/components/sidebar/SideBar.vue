@@ -1,5 +1,6 @@
 <template>
   <q-list nav class="q-pa-sm">
+    <!-- DEPRECATED: For the time being, we only support one database
     <q-select
       v-model="targetDatabase"
       :options="targetDatabases"
@@ -8,6 +9,7 @@
       option-value="value"
       @update:model-value="setTargetDatabase"
     ></q-select>
+    -->
     <q-select
       v-model="targetOrganism"
       :options="targetOrganisms"
@@ -101,7 +103,7 @@ const targetOrganisms = ref([
   { text: 'Human', value: 'hsa' },
 ]);
 const targetOrganism = ref({ text: 'Human', value: 'hsa' });
-const targetDatabases = ref([{ text: 'Reactome', value: 'reactome' }]);
+//const targetDatabases = ref([{ text: 'Reactome', value: 'reactome' }]);
 const targetDatabase = ref({ text: 'Reactome', value: 'reactome' });
 
 const recievedTranscriptomicsData = ref(false);
@@ -443,7 +445,7 @@ const getReactomeData = () => {
       }
     );
 };
-const setTargetDatabase = (inputVal: { text: string; value: string }) => {
-  mainStore.setTargetDatabase(inputVal.value);
-};
+// const setTargetDatabase = (inputVal: { text: string; value: string }) => {
+//   mainStore.setTargetDatabase(inputVal.value);
+// };
 </script>

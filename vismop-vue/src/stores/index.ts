@@ -115,7 +115,7 @@ export const useMainStore = defineStore('mainStore', {
       metabolomics: false,
     },
     amtTimepoints: 0,
-    timeseriesModeToggle: 'slope',
+    timeseriesModeToggle: 'fc',
     pathayAmountDict: {},
     pathwayCompare: [],
     glyphData: {},
