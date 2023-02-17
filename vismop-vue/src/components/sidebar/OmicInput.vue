@@ -185,7 +185,8 @@ const setSheetOptions = () => {
     reader.onload = (e) => {
       const data = e.target?.result;
       const workbook = XLSX.read(data, { type: 'binary' });
-      sheetOptions.value = workbook.SheetNames;
+      const sheetNames = workbook.SheetNames;
+      sheetOptions.value = sheetNames;
     };
 
     reader.readAsBinaryString(omicsFile.value);
@@ -302,7 +303,11 @@ const fetchOmicsTable = (fileInput: File | null) => {
           recievedOmicsDataInternal.value = true;
         }
       })
-      .then(() => $q.loading.hide());
+      .then(() => {
+        symbolColInternal.value = dropdownHeaders.value[0];
+        valueColInternal.value = [dropdownHeaders.value[1]];
+        $q.loading.hide();
+      });
   } else {
     // more errorhandling?
     recievedOmicsDataInternal.value = false;
