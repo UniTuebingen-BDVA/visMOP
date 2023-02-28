@@ -327,6 +327,7 @@ def reactome_overview():
     layout_settings: dict[str, list] = cache.get("layout_settings")
     layout_limits = layout_settings["limits"]
     layout_attributes_used = layout_settings["attributes"]
+    cluster_min_size_quotient = request.json["cluster_min_size_quotient"]
     # user choice
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
     print(layout_settings)
@@ -356,6 +357,7 @@ def reactome_overview():
         pathway_connection_dict,
         root_subpathways,
         pathways_root_names,
+        cluster_min_size_quotient,
     )
 
     if clusters == -1:

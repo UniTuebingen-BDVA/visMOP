@@ -42,6 +42,7 @@ def getClusterLayout(
     pathway_connection_dict,
     reactome_roots={},
     pathways_root_names={},
+    cluster_min_size_quotient=80,
 ):
     up_down_reg_means = {
         o: mean(limits) for o, limits in zip(["t", "p", "m"], up_down_reg_limits)
@@ -57,6 +58,7 @@ def getClusterLayout(
             up_down_reg_means,
             reactome_roots,
             pathways_root_names,
+            cluster_min_size_quotient,
         )
     except ValueError as e:
         print("LayoutError", e)
@@ -313,10 +315,11 @@ class Cluster_layout:
         up_down_reg_means,
         reactome_roots,
         pathways_root_names,
+        cluster_min_size_quotient,
         node_size=2,
     ):
         self.pool_size = 8
-
+        self.cluster_min_size_quotient = cluster_min_size_quotient
         data_table.sort_index(inplace=True)
         print("cols", data_table.columns)
         startTime = time.time()
@@ -502,8 +505,11 @@ class Cluster_layout:
         for result in pool.imap_unordered(
             simplified_func,
             range(
-                math.floor(max(4, num_pathways / 80)),
-                math.floor(max(4, num_pathways / 80)) + self.pool_size,
+                math.floor(
+                    max(4, num_pathways / self.cluster_min_size_quotient)
+                ),  # TODO make this a parameter
+                math.floor(max(4, num_pathways / self.cluster_min_size_quotient))
+                + self.pool_size,
             ),
         ):
             if result:

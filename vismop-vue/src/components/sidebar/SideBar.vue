@@ -80,6 +80,22 @@
         :timeseries-mode-toggle="timeseriesModeToggle"
         :layout-omics="layoutOmics"
       ></AttributeSelection>
+      <!--Expansion Item "Advanced Settings" with one entry field for the cluster_min_size_quotient-->
+      <q-expansion-item
+        dense
+        icon="settings"
+        label="Advanced Settings"
+        expand-icon-class="text-primary"
+        collapse-icon-class="text-primary"
+      >
+        <q-input
+          v-model="cluster_min_size_quotient"
+          label="Cluster Min Size Quotient"
+          type="number"
+          hint="Quotient influencing the minimum size of a cluster in relation to the number of nodes"
+          stack-label
+        />
+      </q-expansion-item>
     </q-list>
     <q-btn @click="dataQuery">Plot</q-btn>
   </q-list>
@@ -109,7 +125,7 @@ const targetDatabase = ref({ text: 'Reactome', value: 'reactome' });
 const recievedTranscriptomicsData = ref(false);
 const recievedProteomicsData = ref(false);
 const recievedMetabolomicsData = ref(false);
-
+const cluster_min_size_quotient = ref(80);
 const sliderValsTranscriptomics = ref(
   {} as {
     [key: string]: {
@@ -416,6 +432,7 @@ const queryReactome = () => {
 const getReactomeData = () => {
   const payload = {
     timeseriesMode: mainStore.timeseriesModeToggle,
+    cluster_min_size_quotient: cluster_min_size_quotient.value,
   };
   fetch('/reactome_overview', {
     method: 'POST',
