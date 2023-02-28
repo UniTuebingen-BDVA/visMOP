@@ -174,89 +174,6 @@ export class HighDetailGlyph {
         .attr('id', `glyph${this.glyphIdx}`)
         .attr('transform', `translate(${this.width / 2},${this.height / 2})`);
       glyphG = labelG.append('g');
-      // DOMMouseScroll seems to work in FF
-      glyphG.on('mouseenter', (event, _dat) => {
-        event.preventDefault();
-        const amtElems = d3
-          .select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .size();
-        this.highlightSection = 0 % amtElems;
-        d3.select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .data(this.outerArcDat)
-          .attr('fill-opacity', (d, i) => {
-            if (i === this.highlightSection) {
-              const label = d.name.split(' ')[0]; // more of a temp fix
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan1')
-                .attr(
-                  'class',
-                  label.length > textSmallThreshold
-                    ? label.length > textTinyThreshold
-                      ? 'glyphTextTiny'
-                      : 'glyphTextSmall'
-                    : 'glyphText'
-                )
-                .text(label);
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan2')
-                .text(d.fc.toFixed(3));
-              return 1.0;
-            } else return 0.2;
-          });
-      });
-      glyphG.on('mouseleave', (event, _dat) => {
-        this.highlightSection = 0;
-        d3.select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .attr('fill-opacity', (_d, _i) => {
-            d3.select(`#glyph${this.glyphIdx}`)
-              .select('#tspan1')
-              .attr('class', 'glyphText')
-              .text('Total:');
-            d3.select(`#glyph${this.glyphIdx}`)
-              .select('#tspan2')
-              .text(this.totalNodes);
-            return 1.0;
-          });
-      });
-      glyphG.on('wheel.zoom', (event, _dat) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const amtElems = d3
-          .select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .size();
-        this.highlightSection =
-          (((this.highlightSection + (event.wheelDelta > 0 ? 1 : -1)) %
-            amtElems) +
-            amtElems) %
-          amtElems;
-        d3.select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .data(this.outerArcDat)
-          .attr('fill-opacity', (d, i) => {
-            if (i === this.highlightSection) {
-              const label = d.name.split(' ')[0]; // more of a temp fix
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan1')
-                .attr(
-                  'class',
-                  label.length > textSmallThreshold
-                    ? label.length > textTinyThreshold
-                      ? 'glyphTextTiny'
-                      : 'glyphTextSmall'
-                    : 'glyphText'
-                )
-                .text(label);
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan2')
-                .text(d.fc.toFixed(3));
-              return 1.0;
-            } else return 0.2;
-          });
-      });
     } else {
       svg = d3
         .create('svg')
@@ -286,6 +203,7 @@ export class HighDetailGlyph {
       .attr('d', arcOuter)
       .attr('fill', (_d, i) => this.outerColors[i])
       .attr('class', 'foldArc')
+      .attr('id', (_d, i) => `foldArc_${i}`)
       .attr('stroke-width', -2);
     if (!this.pathwayCompare) {
       arcSeg.on('click', (event, d) => {
@@ -419,6 +337,92 @@ export class HighDetailGlyph {
         .attr('x', 0)
         .attr('dy', '1em')
         .text(this.totalNodes);
+
+      // DOMMouseScroll seems to work in FF
+      arcSeg.on('mouseenter', (event, _dat) => {
+        event.preventDefault();
+        console.log('glyph mouseenter', event, _dat);
+        const amtElems = d3
+          .select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .size();
+        const current_Id = event.target.id.split('foldArc_')[1];
+        this.highlightSection = current_Id % amtElems;
+        d3.select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .data(this.outerArcDat)
+          .attr('fill-opacity', (d, i) => {
+            if (i === this.highlightSection) {
+              const label = d.name.split(' ')[0]; // more of a temp fix
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan1')
+                .attr(
+                  'class',
+                  label.length > textSmallThreshold
+                    ? label.length > textTinyThreshold
+                      ? 'glyphTextTiny'
+                      : 'glyphTextSmall'
+                    : 'glyphText'
+                )
+                .text(label);
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan2')
+                .text(d.fc.toFixed(3));
+              return 1.0;
+            } else return 0.2;
+          });
+      });
+      arcSeg.on('mouseleave', (event, _dat) => {
+        this.highlightSection = 0;
+        d3.select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .attr('fill-opacity', (_d, _i) => {
+            d3.select(`#glyph${this.glyphIdx}`)
+              .select('#tspan1')
+              .attr('class', 'glyphText')
+              .text('Total:');
+            d3.select(`#glyph${this.glyphIdx}`)
+              .select('#tspan2')
+              .text(this.totalNodes);
+            return 1.0;
+          });
+      });
+      arcSeg.on('wheel.zoom', (event, _dat) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const amtElems = d3
+          .select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .size();
+        this.highlightSection =
+          (((this.highlightSection + (event.wheelDelta > 0 ? 1 : -1)) %
+            amtElems) +
+            amtElems) %
+          amtElems;
+        d3.select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .data(this.outerArcDat)
+          .attr('fill-opacity', (d, i) => {
+            if (i === this.highlightSection) {
+              const label = d.name.split(' ')[0]; // more of a temp fix
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan1')
+                .attr(
+                  'class',
+                  label.length > textSmallThreshold
+                    ? label.length > textTinyThreshold
+                      ? 'glyphTextTiny'
+                      : 'glyphTextSmall'
+                    : 'glyphText'
+                )
+                .text(label);
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan2')
+                .text(d.fc.toFixed(3));
+              return 1.0;
+            } else return 0.2;
+          });
+      });
     }
     return svg.node() as SVGElement;
   }
