@@ -47,9 +47,11 @@
               {{
                 pathwayList.find((elem) => elem.value === element.pathway)
                   ?.title +
-                ' ' +
-                formatTime(element.pathway.split('_')[1]) +
-                ' Timepoint'
+                (amtTimepoints > 1
+                  ? ' ' +
+                    formatTime(element.pathway.split('_')[1]) +
+                    ' Timepoint'
+                  : '')
               }}
             </div>
           </div>
@@ -166,6 +168,7 @@ import { Sortable } from 'sortablejs-vue3';
 const mainStore = useMainStore();
 
 const pathwayCompare = computed(() => mainStore.pathwayCompare);
+const amtTimepoints = computed(() => mainStore.amtTimepoints);
 //const glyphData = computed(() => mainStore.glyphData);
 const pathwayList = computed(() => mainStore.pathwayList);
 const glyphs = computed(() => mainStore.glyphs);
