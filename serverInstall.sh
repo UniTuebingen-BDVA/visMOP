@@ -2,20 +2,20 @@
 #bash ./installScript.sh
 #bash ./reactomePickle.sh
 echo "Updating conda"
-if conda update -y -n base -c defaults conda; then
+if /opt/anaconda/anaconda3/conda update -y -n base -c defaults conda; then
     echo "Conda successfully updated"
 else
     echo "Conda update failed"
 fi
 
-if conda env update -y --prefix= ./visMOPenv --file environment_defaults.yml --prune; then
+if /opt/anaconda/anaconda3/conda env update -y --prefix= ./visMOPenv --file environment_defaults.yml --prune; then
     echo "Environment successfully updated/created"
 else
     echo "Environment wupdate/creation failed"
 fi
 
 echo "Activating visMOP environment"
-conda activate visMOP
+/opt/anaconda/anaconda3/conda activate ./visMOPenv/visMOP
 echo "Installing visMOP"
 if pip install .; then
     echo "visMOP successfully installed"
@@ -24,7 +24,7 @@ else
 fi
 
 echo "Verifying folder structure"
-mkdir session_cache reactome_data reactome_data/pickles
+mkdir session_cache reactome_data reactome_data/pickles numbaCache
 
 echo "Verifying reactome files"
 
@@ -75,4 +75,5 @@ if wget -N --spider https://reactome.org/download/current/ChEBI2Reactome_PE_Path
 else
     echo "ChEBI2Reactome_PE_Pathway.txt is up to date"
 fi
+/opt/anaconda/anaconda3/conda activate ./visMOPenv/visMOP
 
