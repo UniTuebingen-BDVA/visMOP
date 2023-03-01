@@ -2,20 +2,20 @@
 #bash ./installScript.sh
 #bash ./reactomePickle.sh
 echo "Updating conda"
-if /opt/anaconda/anaconda3/conda update -y -n base -c defaults conda; then
+if conda update -y -n base -c defaults conda; then
     echo "Conda successfully updated"
 else
     echo "Conda update failed"
 fi
 
-if /opt/anaconda/anaconda3/conda env update -y --prefix= ./visMOPenv --file environment_defaults.yml --prune; then
+if conda env update -y --prefix= ./visMOPenv --file environment_defaults.yml --prune; then
     echo "Environment successfully updated/created"
 else
     echo "Environment wupdate/creation failed"
 fi
 
 echo "Activating visMOP environment"
-/opt/anaconda/anaconda3/conda activate ./visMOPenv/visMOP
+conda activate ./visMOPenv/visMOP
 echo "Installing visMOP"
 if pip install .; then
     echo "visMOP successfully installed"
