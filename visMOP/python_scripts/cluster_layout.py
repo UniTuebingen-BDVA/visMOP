@@ -22,9 +22,6 @@ from itertools import combinations
 from scipy.spatial import distance
 from copy import deepcopy
 from sklearn import metrics
-from visMOP.python_scripts.deprecated.forceDir_layouting import (
-    get_adjusted_force_dir_node_pos,
-)
 from visMOP.python_scripts.networkx_layouting import generate_networkx_dict
 from multiprocessing import Process
 import pandas as pd
