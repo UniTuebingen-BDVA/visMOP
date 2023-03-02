@@ -20,11 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: CD
-      run: cd vismopVue
+      run: cd vismop-vue
     - name: setup node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
           node-version: 18
     - name: install
@@ -33,7 +33,7 @@ jobs:
       run: npm run build
     # install the ssh private key to ~/.ssh/github-actions, add the ssh config and the known hosts
     - name: Install SSH Key
-      uses: shimataro/ssh-key-action@v2.3.1
+      uses: shimataro/ssh-key-action@v2.5.0
       with:
         key: ${{ secrets.SSH_PRIVATE_KEY }} 
         name: github-actions
