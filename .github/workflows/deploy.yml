@@ -21,16 +21,14 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v3
-    - name: CD
-      run: cd vismop-vue
     - name: setup node
       uses: actions/setup-node@v3
       with:
           node-version: 18
     - name: install
-      run: npm install
+      run: cd vismop-vue && npm install
     - name: build
-      run: npm run build
+      run: cd vismop-vue && npm run build
     # install the ssh private key to ~/.ssh/github-actions, add the ssh config and the known hosts
     - name: Install SSH Key
       uses: shimataro/ssh-key-action@v2.5.0
