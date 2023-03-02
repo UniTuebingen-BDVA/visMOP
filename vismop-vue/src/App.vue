@@ -8,7 +8,7 @@
           <q-avatar>
             <q-img class="mr-2" contain :src="svgIcon" width="40" />
           </q-avatar>
-          VisMOP
+          VisMOP - v0.1
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
