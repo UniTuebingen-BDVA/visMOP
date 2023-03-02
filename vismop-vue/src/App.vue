@@ -8,8 +8,9 @@
           <q-avatar>
             <q-img class="mr-2" contain :src="svgIcon" width="40" />
           </q-avatar>
-          VisMOP - v0.1
+          VisMOP
         </q-toolbar-title>
+        v0.1.0
       </q-toolbar>
     </q-header>
 
