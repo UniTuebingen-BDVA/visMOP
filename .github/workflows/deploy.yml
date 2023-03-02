@@ -10,7 +10,10 @@ on:
       - deploy
   pull_request:
     branches:
+      - main
       - deploy
+    paths:
+      - ".github/workflows/test.yaml"
 
 jobs:
   rsync-deployment:
