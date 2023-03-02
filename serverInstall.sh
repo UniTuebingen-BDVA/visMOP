@@ -37,10 +37,10 @@ else
 fi
 #check if ReactomePathwayRelations.txt is already present and up to date
 # if not download the file from the server and replace the old one
-if wget --server-response -N  https://reactome.org/download/current/ReactomePathwayRelation.txt 2>&1 | grep "HTTP/1.1 200 OK"; then
-    echo "ReactomePathwayRelation.txt is not up to date"
+if wget --server-response -N  https://reactome.org/download/current/ReactomePathwaysRelation.txt 2>&1 | grep "HTTP/1.1 200 OK"; then
+    echo "ReactomePathwaysRelation.txt is not up to date"
 else
-    echo "ReactomePathwayRelation.txt is up to date"
+    echo "ReactomePathwaysRelation.txt is up to date"
 fi
 #check if if Ensembl2Reactome_PE_Pathway.txt is already present and up to date
 # if not download the file from the server and replace the old one and create a pickle file using /visMOP/python_scripts/reactome_mapping.py
