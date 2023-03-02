@@ -47,7 +47,7 @@ fi
 if wget --server-response -N https://reactome.org/download/current/Ensembl2Reactome_PE_Pathway.txt 2>&1 | grep "HTTP/1.1 200 OK"; then
     echo "Ensembl2Reactome_PE_Pathway.txt is not up to date"
     cd ..
-    python $(readlink -f ./visMOP/python_scripts/reactome_mapping.py) reactome_data  Ensembl2Reactome_PE_Pathway.txt
+    conda run -p $(readlink -f ./visMOPenv/) $(readlink -f ./visMOP/python_scripts/reactome_mapping.py) reactome_data  Ensembl2Reactome_PE_Pathway.txt
 else
     cd ..
     echo "Ensembl2Reactome_PE_Pathway.txt is up to date"
@@ -58,7 +58,7 @@ cd reactome_data
 if wget --server-response -N https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt 2>&1 | grep "HTTP/1.1 200 OK"; then
     echo "UniProt2Reactome_PE_Pathway.txt is not up to date"
     cd ..
-    python $(readlink -f ./visMOP/python_scripts/reactome_mapping.py) reactome_data  UniProt2Reactome_PE_Pathway.txt
+    conda run -p $(readlink -f ./visMOPenv/) $(readlink -f ./visMOP/python_scripts/reactome_mapping.py) reactome_data  UniProt2Reactome_PE_Pathway.txt
 else
     echo "UniProt2Reactome_PE_Pathway.txt is up to date"
     cd ..
@@ -69,7 +69,7 @@ cd reactome_data
 if wget --server-response -N https://reactome.org/download/current/ChEBI2Reactome_PE_Pathway.txt 2>&1 | grep "HTTP/1.1 200 OK"; then
     echo "ChEBI2Reactome_PE_Pathway.txt is not up to date"
     cd ..
-    python $(readlink -f ./visMOP/python_scripts/reactome_mapping.py) reactome_data  ChEBI2Reactome_PE_Pathway.txt
+    conda run -p $(readlink -f ./visMOPenv/) $(readlink -f ./visMOP/python_scripts/reactome_mapping.py) reactome_data  ChEBI2Reactome_PE_Pathway.txt
 else
     echo "ChEBI2Reactome_PE_Pathway.txt is up to date"
 fi
