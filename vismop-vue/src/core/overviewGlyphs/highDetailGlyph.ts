@@ -371,7 +371,7 @@ export class HighDetailGlyph {
             } else return 0.2;
           });
       });
-      arcSeg.on('mouseleave', (event, _dat) => {
+      arcSeg.on('mouseleave', (_event, _dat) => {
         this.highlightSection = 0;
         d3.select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')
