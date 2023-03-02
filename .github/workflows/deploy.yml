@@ -1,0 +1,40 @@
+# This workflow will run tests using node and then publish a package to the server when we push to the deploy branch or merge a PR
+
+name: Node.js Package
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the deploy branch
+  push:
+    branches:
+      - deploy
+  pull_request:
+    branches:
+      - deploy
+
+jobs:
+  rsync-deployment:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2 
+    - name: setup node
+      uses: actions/setup-node@v2
+      with:
+          node-version: 18
+    - name: install
+      run: npm install
+    - name: build
+      run: npm run build
+    # install the ssh private key to ~/.ssh/github-actions, add the ssh config and the known hosts
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2.3.1
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }} 
+        name: github-actions
+        config: ${{ secrets.SSH_CONFIG }} 
+        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+    - name: Deploy with rsync
+      run: rsync -azv -O --no-perms --exclude='.git-blame-ignore-revs' --exclude='vismopVue' --exclude='.gitignore' --exclude='README.md' --exclude='.git' --exclude='.github' --exclude='package.json' --exclude='package-lock-json' . ${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_TARGET }}
+    - name: Restart service
+      run: ssh ${{ secrets.SSH_HOST }} ${{ secrets.UPDATE_COMMAND }}
