@@ -4,7 +4,7 @@ name: Node.js Package
 
 on:
   # Trigger the workflow on push or pull request,
-  # but only for the deploy branch
+  # for pushes on deploy or pull-merges on main and deploy
   push:
     branches:
       - deploy
