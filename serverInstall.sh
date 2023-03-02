@@ -11,7 +11,7 @@ fi
 if conda env update --prefix=$(readlink -f ./visMOPenv) --file environment_defaults.yml --prune; then
     echo "Environment successfully updated/created"
 else
-    echo "Environment wupdate/creation failed"
+    echo "Environment update/creation failed"
 fi
 
 if conda run -p $(readlink -f ./visMOPenv/) pip install .; then
