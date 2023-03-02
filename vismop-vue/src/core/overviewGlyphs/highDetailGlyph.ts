@@ -155,7 +155,6 @@ export class HighDetailGlyph {
    * @returns SVGElement of the glyph
    */
   generateGlyphSvg(): SVGElement {
-    const mainStore = useMainStore();
     let svg;
     let labelG;
     let glyphG;
