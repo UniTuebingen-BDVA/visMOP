@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import * as d3 from 'd3';
 import { defineStore } from 'pinia';
 import { graphData } from '@/core/graphTypes';
@@ -260,7 +259,11 @@ export const useMainStore = defineStore('mainStore', {
     ) {
       const data = this.reduceReactomeData(baseData, omicsType);
       const dataValues = Object.values(data).map((entry) => entry.value);
-      return this.generateQuantileColorscale(dataValues, d3.interpolateRdBu);
+      return this.generateQuantileColorscale(
+        dataValues,
+        d3.interpolateRdBu,
+        true
+      );
     },
 
     /**
@@ -288,16 +291,17 @@ export const useMainStore = defineStore('mainStore', {
      */
     generateQuantileColorscale(
       dataValues: number[],
-      interpolator: (t: number) => string
+      interpolator: (t: number) => string,
+      invert = false
     ) {
       const sortedValues = dataValues.sort((a, b) => a - b);
 
       const colorScale = d3
         .scaleDiverging(interpolator)
         .domain([
-          d3.quantile(sortedValues, 0.05) as number,
+          d3.quantile(sortedValues, invert ? 0.95 : 0.05) as number,
           (d3.quantile(sortedValues, 0.05) as number) < 0.0 ? 0.0 : 1.0,
-          d3.quantile(sortedValues, 0.95) as number,
+          d3.quantile(sortedValues, invert ? 0.05 : 0.95) as number,
         ]);
 
       return colorScale;
