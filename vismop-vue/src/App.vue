@@ -10,7 +10,7 @@
           </q-avatar>
           VisMOP
         </q-toolbar-title>
-        v0.1.1
+        v0.1.1a
       </q-toolbar>
     </q-header>
 
