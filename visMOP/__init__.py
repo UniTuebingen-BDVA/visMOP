@@ -327,7 +327,15 @@ def reactome_overview():
     layout_settings: dict[str, list] = cache.get("layout_settings")
     layout_limits = layout_settings["limits"]
     layout_attributes_used = layout_settings["attributes"]
-    cluster_min_size_quotient = request.json["cluster_min_size_quotient"]
+    umap_settings = {
+        "cluster_min_size_quotient": request.json["cluster_min_size_quotient"],
+        "use_umap": request.json["useUMAP"],
+        "automatic_cluster_target_dimensions": request.json[
+            "automaticClusterTargetDimensions"
+        ],
+        "cluster_target_dimensions": request.json["clusterTargetDimensions"],
+    }
+
     # user choice
     # up- and downregulation limits (limits_transriptomics, limits_proteomics, limits_metabolomics)
     print(layout_settings)
@@ -357,7 +365,7 @@ def reactome_overview():
         pathway_connection_dict,
         root_subpathways,
         pathways_root_names,
-        cluster_min_size_quotient,
+        umap_settings,
     )
 
     if clusters == -1:

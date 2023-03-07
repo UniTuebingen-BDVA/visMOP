@@ -39,7 +39,12 @@ def getClusterLayout(
     pathway_connection_dict,
     reactome_roots={},
     pathways_root_names={},
-    cluster_min_size_quotient=80,
+    umap_cluster_settings={
+        "cluster_min_size_quotient": 80,
+        "use_umap": True,
+        "automatic_cluster_target_dimensions": True,
+        "cluster_target_dimensions": 2,
+    },
 ):
     up_down_reg_means = {
         o: mean(limits) for o, limits in zip(["t", "p", "m"], up_down_reg_limits)
@@ -55,7 +60,7 @@ def getClusterLayout(
             up_down_reg_means,
             reactome_roots,
             pathways_root_names,
-            cluster_min_size_quotient,
+            umap_cluster_settings,
         )
     except ValueError as e:
         print("LayoutError", e)
@@ -312,11 +317,21 @@ class Cluster_layout:
         up_down_reg_means,
         reactome_roots,
         pathways_root_names,
-        cluster_min_size_quotient,
+        umap_cluster_settings,
         node_size=2,
     ):
         self.pool_size = 8
-        self.cluster_min_size_quotient = cluster_min_size_quotient
+        self.cluster_min_size_quotient = umap_cluster_settings[
+            "cluster_min_size_quotient"
+        ]
+        self.use_umap = umap_cluster_settings["use_umap"]
+        self.automatic_cluster_target_dimensions = umap_cluster_settings[
+            "automatic_cluster_target_dimensions"
+        ]
+        self.cluster_target_dimensions = umap_cluster_settings[
+            "cluster_target_dimensions"
+        ]
+
         data_table.sort_index(inplace=True)
         print("cols", data_table.columns)
         startTime = time.time()
@@ -427,7 +442,13 @@ class Cluster_layout:
 
     # for clustering higer n_components and n_neighbors and lower min_dist
     def get_umap_layout_pos(
-        self, n_components=2, n_neighbors=5, min_dist=0.1, norm_lower=0, norm_upper=1
+        self,
+        log_arg,
+        n_components=2,
+        n_neighbors=5,
+        min_dist=0.1,
+        norm_lower=0,
+        norm_upper=1,
     ):
         """Performs UMAP on scaled data returns new normalizied in [0,1] n-D Positions in node dict and postion list of lists
 
@@ -436,6 +457,9 @@ class Cluster_layout:
             n_neigherbors: Parameter for UMAP
             min_dist: Parameter for UMAP
         """
+        print(
+            f"Applying UMAP {log_arg} with n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}"
+        )
         new_pos = UMAP(
             n_components=n_components,
             n_neighbors=n_neighbors,
@@ -479,10 +503,18 @@ class Cluster_layout:
         """
         num_features = len(self.data_table_scaled_filled[0])
         num_pathways = len(self.data_table_scaled_filled)
-        if num_features > 2:
-            n_comp = min(math.ceil(num_features / 2), 10)
+        print("Number of Features: ", num_features)
+        print("Using UMAP: ", self.use_umap)
+        print("Number of Pathways: ", num_pathways)
+        if num_features > 2 and self.use_umap:
+            n_comp = (
+                min(math.ceil(num_features / 2), 10)
+                if self.automatic_cluster_target_dimensions
+                else self.cluster_target_dimensions
+            )
             n_neighbors = 5 if num_pathways < 100 else 10 if num_pathways < 200 else 15
             positions_dict, position_list = self.get_umap_layout_pos(
+                "for clustering",
                 n_components=n_comp,
                 n_neighbors=n_neighbors,
                 min_dist=0,
@@ -534,7 +566,7 @@ class Cluster_layout:
             drm: dimensionality reduction method
 
         """
-        node_pos_dic, node_pos_list = self.get_umap_layout_pos()
+        node_pos_dic, node_pos_list = self.get_umap_layout_pos("for visualization")
         return node_pos_dic, node_pos_list
 
     def getClustersWeights(self):

@@ -95,6 +95,26 @@
           hint="Quotient influencing the minimum size of a cluster in relation to the number of nodes"
           stack-label
         />
+        <!-- Checkbox for "use UMAP before clustering", another checkbox with "automatic target dimensions" which is only enabled if the first one is ticked, and an input wich determines the number of target dimensions -->
+        <q-checkbox
+          v-model="useUMAP"
+          label="Use UMAP before clustering"
+          color="primary"
+        />
+        <q-checkbox
+          v-model="automaticClusterTargetDimensions"
+          label="Automatic target dimensions"
+          color="primary"
+          :disable="!useUMAP"
+        />
+        <q-input
+          v-model="clusterTargetDimensions"
+          label="Target dimensions"
+          type="number"
+          hint="Number of dimensions to which the data is projected before clustering"
+          stack-label
+          :disable="!useUMAP || automaticClusterTargetDimensions"
+        />
       </q-expansion-item>
     </q-list>
     <q-btn @click="dataQuery">Plot</q-btn>
@@ -126,6 +146,9 @@ const recievedTranscriptomicsData = ref(false);
 const recievedProteomicsData = ref(false);
 const recievedMetabolomicsData = ref(false);
 const cluster_min_size_quotient = ref(80);
+const useUMAP = ref(true);
+const automaticClusterTargetDimensions = ref(true);
+const clusterTargetDimensions = ref(2);
 const sliderValsTranscriptomics = ref(
   {} as {
     [key: string]: {
@@ -433,6 +456,9 @@ const getReactomeData = () => {
   const payload = {
     timeseriesMode: mainStore.timeseriesModeToggle,
     cluster_min_size_quotient: cluster_min_size_quotient.value,
+    useUMAP: useUMAP.value,
+    automaticClusterTargetDimensions: automaticClusterTargetDimensions.value,
+    clusterTargetDimensions: clusterTargetDimensions.value,
   };
   fetch('/reactome_overview', {
     method: 'POST',
