@@ -254,8 +254,12 @@ export default class OverviewGraph {
     const skip : {edgeKey: string, source: string, target: string, attributes: Attributes}[] = [];
 
     edgeKeys.forEach(key => {
+      graph.setEdgeAttribute(key, "bezeierControlPoints", []);
       const edgeAttribs = graph.getEdgeAttributes(key);
 
+      graph.setEdgeAttribute(key, "skip", false);
+      graph.setEdgeAttribute(key, "lock", false);
+      
       // retriving & calculating necessary data
       const source = edgeAttribs.source;
       const target = edgeAttribs.target;
@@ -320,14 +324,14 @@ export default class OverviewGraph {
       const normalizationFunction = createNormalizationFunction(nodeExtent); 
 
       // get vertecies of path
-      const vertecies: number[]= [];
+      const vertices: number[]= [];
       nodePath.forEach(pathNode => {
         const norm_xy: Coordinates = { x: graph.getNodeAttribute(pathNode, "x"), y: graph.getNodeAttribute(pathNode, "y") };
         normalizationFunction.applyTo(norm_xy);
-        vertecies.push(norm_xy.x , norm_xy.y);
+        vertices.push(norm_xy.x , norm_xy.y);
       })
 
-      graph.setEdgeAttribute(edgeKey, "bezeierControlPoints", vertecies);
+      graph.setEdgeAttribute(edgeKey, "bezeierControlPoints", vertices);
     });
 
 

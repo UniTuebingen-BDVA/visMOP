@@ -26,9 +26,9 @@
         <div class="col-12">
           <q-slider
             :model-value="bundlingParams.maximumDistortion"
-            :min="1"
-            :max="10"
-            :step="0.5"
+            :min="1.25"
+            :max="5"
+            :step="0.25"
             label
             @change="
               (val: number) => {
@@ -44,9 +44,9 @@
         <div class="col-12">
           <q-slider
             :model-value="bundlingParams.edgeWeightFactor"
-            :min="1"
-            :max="10"
-            :step="0.5"
+            :min="0.25"
+            :max="5"
+            :step="0.25"
             label
             @change="
               (val: number) => {

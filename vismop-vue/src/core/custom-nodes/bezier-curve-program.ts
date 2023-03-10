@@ -279,43 +279,24 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
       n2 = dx * inv_len * thickness;
     }
 
-    let i = POINTS * ATTRIBUTES * offset;
-
     const array = this.array;
-
-    const points = [];
-
+    const control_points = [];
+    let i = POINTS * ATTRIBUTES * offset;
+    
     // source node
-    points.push([x1,y1]);
-
+    control_points.push([x1,y1]);
     if(bezeierControlPoints.length >= 2 && data.showBundling) {
-
-      const bx1 = bezeierControlPoints[0];
-      const by1 = bezeierControlPoints[1];
-
-      const bx2 = bezeierControlPoints[bezeierControlPoints.length - 1];
-      const by2 = bezeierControlPoints[bezeierControlPoints.length];
-
-      // Computing normals
-      const bezier_dx =  bx2 - bx1;
-      const bezier_dy =  by2 - by1;
-
-      let bezier_len = bezier_dx * bezier_dx + bezier_dy * bezier_dy;
-
-      const bezierCorrectionFactor = len / bezier_len;
-
       // add all control-points to points except the first and the last
       // the first and the last are added with "points.push([x1,y1]);" and "points.push([x2,y2]);"
       // before and after this code block
       for(let i =1; i < bezeierControlPoints.length/2 - 1; ++i) {
-        points.push([bezeierControlPoints[i*2], bezeierControlPoints[i*2 + 1]])
+        control_points.push([bezeierControlPoints[i*2], bezeierControlPoints[i*2 + 1]])
       }
     }
-
     // target node
-    points.push([x2,y2]);
+    control_points.push([x2,y2]);
 
-    const bez_samples = this.evaluate_bezier(points, bez_sample_count);
+    const bez_samples = this.evaluate_bezier(control_points, bez_sample_count);
 
     // for each sample point pair from the bezier curve create
     // four vertecies (to form a line segment)

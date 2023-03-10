@@ -191,7 +191,7 @@ export function generateGraphData(
   const maxBrightnessVoronoiColors = 230;
 
   // Takes: clusterNum, omicType
-  // Returns: culor of that omic type for the cluster
+  // Returns: color of that omic type for the cluster
   function clusterOmicsToColor(clusterNum: number, omicType: "transcriptomics" | "proteomics" | "metabolomics") {
     const clusterMeanFoldchange = clusterGlyphs[clusterNum][omicType].meanFoldchange;
 
