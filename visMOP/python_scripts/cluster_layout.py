@@ -44,6 +44,7 @@ def getClusterLayout(
         "use_umap": True,
         "automatic_cluster_target_dimensions": True,
         "cluster_target_dimensions": 2,
+        "umap_distance_metric": "correlation",
     },
 ):
     up_down_reg_means = {
@@ -325,6 +326,7 @@ class Cluster_layout:
             "cluster_min_size_quotient"
         ]
         self.use_umap = umap_cluster_settings["use_umap"]
+        self.umap_distance_metric = umap_cluster_settings["umap_distance_metric"]
         self.automatic_cluster_target_dimensions = umap_cluster_settings[
             "automatic_cluster_target_dimensions"
         ]
@@ -449,6 +451,7 @@ class Cluster_layout:
         min_dist=0.1,
         norm_lower=0,
         norm_upper=1,
+        metric="correlation",
     ):
         """Performs UMAP on scaled data returns new normalizied in [0,1] n-D Positions in node dict and postion list of lists
 
@@ -458,12 +461,13 @@ class Cluster_layout:
             min_dist: Parameter for UMAP
         """
         print(
-            f"Applying UMAP {log_arg} with n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}"
+            f"Applying UMAP {log_arg} with n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}, metric={metric}"
         )
         new_pos = UMAP(
             n_components=n_components,
             n_neighbors=n_neighbors,
             min_dist=min_dist,
+            metric=metric
             # random_state=10,
         ).fit_transform(self.data_table_scaled_filled)
         new_pos_norm = normalize_value_list_in_range(new_pos, [norm_lower, norm_upper])
@@ -520,6 +524,7 @@ class Cluster_layout:
                 min_dist=0,
                 norm_lower=-125,
                 norm_upper=125,
+                metric=self.umap_distance_metric,
             )
         else:
             position_list = self.data_table_scaled_filled
@@ -566,7 +571,10 @@ class Cluster_layout:
             drm: dimensionality reduction method
 
         """
-        node_pos_dic, node_pos_list = self.get_umap_layout_pos("for visualization")
+        node_pos_dic, node_pos_list = self.get_umap_layout_pos(
+            "for visualization",
+            metric=self.umap_distance_metric,
+        )
         return node_pos_dic, node_pos_list
 
     def getClustersWeights(self):

@@ -26,8 +26,8 @@ set_start_method("spawn", force=True)
 
 app = Flask(__name__, static_folder="../dist/assets", template_folder="../dist")
 # DATA PATHS: (1) Local, (2) tuevis
-# data_path = pathlib.Path().resolve()
-data_path = pathlib.Path("/var/www/vismop")
+data_path = pathlib.Path().resolve()
+# data_path = pathlib.Path("/var/www/vismop")
 
 app.config.from_mapping(
     # this causes random key on each start, so a server restart will invaldiate sessions
@@ -334,6 +334,7 @@ def reactome_overview():
             "automaticClusterTargetDimensions"
         ],
         "cluster_target_dimensions": request.json["clusterTargetDimensions"],
+        "umap_distance_metric": request.json["umapDistanceMetric"],
     }
 
     # user choice

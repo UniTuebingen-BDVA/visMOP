@@ -115,6 +115,16 @@
           stack-label
           :disable="!useUMAP || automaticClusterTargetDimensions"
         />
+
+        <!-- Input for cluster distance metrics -->
+        <q-select
+          v-model="umapDistanceMetric"
+          :options="umapDistanceMetrics"
+          label="Cluster distance metric"
+          option-label="text"
+          option-value="value"
+          :disable="!useUMAP"
+        ></q-select>
       </q-expansion-item>
     </q-list>
     <q-btn @click="dataQuery">Plot</q-btn>
@@ -149,6 +159,8 @@ const cluster_min_size_quotient = ref(80);
 const useUMAP = ref(true);
 const automaticClusterTargetDimensions = ref(true);
 const clusterTargetDimensions = ref(2);
+const umapDistanceMetric = ref('correlation');
+const umapDistanceMetrics = ['correlation', 'euclidean', 'cosine'];
 const sliderValsTranscriptomics = ref(
   {} as {
     [key: string]: {
@@ -459,6 +471,7 @@ const getReactomeData = () => {
     useUMAP: useUMAP.value,
     automaticClusterTargetDimensions: automaticClusterTargetDimensions.value,
     clusterTargetDimensions: clusterTargetDimensions.value,
+    umapDistanceMetric: umapDistanceMetric.value,
   };
   fetch('/reactome_overview', {
     method: 'POST',
