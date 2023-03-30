@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { edge, baseEdgeAttr } from '@/core/graphTypes';
+import { edge, baseEdgeAttr, color } from '@/core/graphTypes';
 import {
   overviewGraphData,
   overviewNode,
@@ -10,6 +10,7 @@ import OverviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
 import { useMainStore } from '@/stores';
 import { ConvexPolygon } from '../layouting/ConvexPolygon';
+import { generateClusterGlyphData } from '@/core/overviewGlyphs/clusterGlyphGenerator';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeData list of node data
@@ -204,21 +205,115 @@ export function generateGraphData(
   const clusterHullsAdjustment = new ClusterHulls(60);
   const clusterHulls = [] as number[][][];
   const focusClusterHulls = [] as number[][][];
-  const clusterColors: [number, number, number, number][] = [];
+  const clusterColors: color[] = [];
   const firstNoneNoiseCluster = useMainStore().clusterData.noiseClusterExists
     ? 1
     : 0;
+
+  const mainStore = useMainStore();
+  const clusterNodeMapping = mainStore.clusterData.clusters;
+  const clusterGlyphs = generateClusterGlyphData(
+    mainStore.glyphData,
+    clusterNodeMapping
+  );
+  const noiseClusterGreyValue = 250;
+  const maxBrightnessVoronoiColors = 230;
+
+  // Takes: clusterNum, omicType
+  // Returns: color of that omic type for the cluster
+  function clusterOmicsToColor(
+    clusterNum: number,
+    omicType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+  ): color {
+    // TODO: This is a hack to get the color scale for the current measurement type
+    const targetMeasurement = 'fc';
+    const colorScales =
+      targetMeasurement === 'fc'
+        ? mainStore.fcColorScales
+        : mainStore.slopeColorScales;
+    const clusterMeanMeasure = clusterGlyphs[clusterNum][omicType].meanMeasure;
+
+    if (Number.isNaN(clusterMeanMeasure)) return [127, 127, 127, 1];
+
+    const clusterColor = colorScales[omicType](clusterMeanMeasure)
+      .replaceAll(/rgb\(|\)/gm, '')
+      .split(',');
+    return [
+      parseInt(clusterColor[0]),
+      parseInt(clusterColor[1]),
+      parseInt(clusterColor[2]),
+      1.0,
+    ];
+  }
+
+  function mixOmicsColors(omicColors: color[]): color {
+    const len = omicColors.length;
+    const outColor: color = [0, 0, 0, 0];
+    omicColors.forEach((color) => {
+      outColor[0] += color[0] / len;
+      outColor[1] += color[1] / len;
+      outColor[2] += color[2] / len;
+      outColor[3] += color[3] / len;
+    });
+    return outColor;
+  }
+
+  function lightenValue(
+    x: number,
+    minBrightness = 120,
+    maxBrightness = 255
+  ): number {
+    return minBrightness + ((maxBrightness - minBrightness) / 255) * x;
+  }
+  function lightenColor(color: color): color {
+    const threshold = maxBrightnessVoronoiColors;
+    const total = color[0] + color[1] + color[2];
+
+    const new_color: color = [
+      lightenValue(color[0]),
+      lightenValue(color[1]),
+      lightenValue(color[2]),
+      color[3],
+    ];
+    if (total > 3 * threshold) {
+      return [threshold, threshold, threshold, 1];
+    }
+    return new_color;
+  }
   // const totalNumHulls = clusterAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
-  _.forEach(voronoiPolygons, (polygon) => {
+  Object.keys(voronoiPolygons).forEach((polygonKey) => {
+    const polygon = voronoiPolygons[parseInt(polygonKey)];
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
         polygon,
         OverviewGraph.CLUSTER_EXTENT
       );
-      const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
-      clusterColors.push([greyValue, greyValue, greyValue, 1.0]);
+      const omicsRecieved = mainStore.omicsRecieved;
+      const omicColors: color[] = [];
+
+      if (clusterNum >= firstNoneNoiseCluster) {
+        for (const [omic, omicsVal] of Object.entries(omicsRecieved) as [
+          'transcriptomics' | 'proteomics' | 'metabolomics',
+          boolean
+        ][]) {
+          if (omicsVal) {
+            omicColors.push(clusterOmicsToColor(clusterNum, omic));
+          }
+        }
+
+        const clusterColor = mixOmicsColors(omicColors);
+        const lighterColor = lightenColor(clusterColor);
+        clusterColors.push(lighterColor);
+      } else {
+        clusterColors.push([
+          noiseClusterGreyValue,
+          noiseClusterGreyValue,
+          noiseClusterGreyValue,
+          1.0,
+        ]);
+      }
       clusterHulls.push(hullAdjustment.finalHullNodes);
       focusClusterHulls.push(hullAdjustment.focusHullPoints);
     }
@@ -286,6 +381,14 @@ function generateForceGraphEdge(
     target: entry2,
     undirected: true,
     attributes: {
+      weight: 0,
+      len: 0,
+      lock: false,
+      skip: false,
+      source: entry1,
+      target: entry2,
+      bezeierControlPoints: [],
+      showBundling: true,
       zIndex: 0,
       hidden: type === 'temporal' ? false : true,
       edgeType: type,

@@ -53,3 +53,9 @@ type graphData = {
 
   options: unkown;
 };
+
+/**
+ * defines a colors object
+ * @example  [255, 255, 255, 1.0]
+ */
+type color = [number, number, number, number];

@@ -77,6 +77,20 @@
             ></fa2-params>
           </q-expansion-item>
         </q-fab-action>
+        <q-fab-action color="white" text-color="black">
+          <q-expansion-item
+            v-model="bundlingControl"
+            icon="fa-solid fa-diagram-project"
+            label="Bundling Controls"
+            @click.prevent
+          >
+            <bundling-controls
+              v-model:bundlingParams="bundlingParams"
+              @generateNewBundling="generateNewBundling"
+              @click.prevent
+            ></bundling-controls>
+          </q-expansion-item>
+        </q-fab-action>
       </q-fab>
       <div
         :id="contextID"
@@ -89,6 +103,7 @@
 <script setup lang="ts">
 import OverviewGraph from '../../core/reactomeGraphs/reactomeOverviewNetwork/overviewNetwork';
 import GraphFilter from './GraphFilter.vue';
+import BundlingControls from './BundlingControls.vue';
 import { generateGraphData } from '../../core/reactomeGraphs/reactomeOverviewGraphPreparation';
 import { generateGlyphDataReactome } from '../../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../../core/overviewGlyphs/generator';
@@ -102,6 +117,7 @@ import {
   nodePolygonMapping,
 } from '@/core/layouting/voronoiLayout';
 import Fa2Params from './Fa2Params.vue';
+import { useQuasar } from 'quasar';
 import FilterData from '@/core/reactomeGraphs/reactomeOverviewNetwork/filterData';
 
 const props = defineProps({
@@ -123,6 +139,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const $q = useQuasar();
 
 const mainStore = useMainStore();
 
@@ -227,7 +245,27 @@ const combinedUnion = computed((): string[] => {
     ]),
   ];
 });
-
+const bundlingControl = ref(false);
+const bundlingParams = ref({
+  maximumDistortion: 2,
+  edgeWeightFactor: 2,
+  showAllEdges: false,
+  showBundling: true,
+});
+watch(bundlingParams.value, () => {
+  networkGraph.value?.setShowAllEdges(bundlingParams.value.showAllEdges);
+});
+watch(bundlingParams.value, () => {
+  networkGraph.value?.setShowBundling(bundlingParams.value.showBundling);
+});
+const generateNewBundling = () => {
+  $q.loading.show();
+  networkGraph.value?.generateBezierControlPoints(
+    bundlingParams.value.maximumDistortion,
+    bundlingParams.value.edgeWeightFactor
+  );
+  $q.loading.hide();
+};
 watch(width, () => {
   networkGraph.value?.setSize(width.value);
 });

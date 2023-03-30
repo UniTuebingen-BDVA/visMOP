@@ -7,6 +7,7 @@ import {
   overviewGraphData,
   additionalData,
 } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
+import { baseEdgeAttr, edge } from '@/core/graphTypes';
 //import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
 import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
@@ -16,6 +17,12 @@ import { animateNodes } from 'sigma/utils/animate';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import OverviewFilter from './filter';
+import {
+  bidirectional,
+  dijkstra,
+  edgePathFromNodePath,
+} from 'graphology-shortest-path';
+import { Attributes } from 'graphology-types';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
@@ -24,8 +31,12 @@ import orderedCircularLayout from '../orderedCircularLayout';
 import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
-import { PlainObject } from 'sigma/types';
+import { Coordinates, PlainObject } from 'sigma/types';
 import { vec2 } from 'gl-matrix';
+import { BezierEdgeProgram } from '@/core/custom-nodes/bezier-curve-program';
+import { DontRender } from '@/core/custom-nodes/dont-render';
+import { createNormalizationFunction, graphExtent } from 'sigma/utils';
+
 export default class OverviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 6;
@@ -56,6 +67,8 @@ export default class OverviewGraph {
   // renderer and camera
   renderer;
   camera;
+  showAllEdges = false;
+  showBundling = true;
   prevFrameZoom;
   graph;
   clusterData;
@@ -107,6 +120,8 @@ export default class OverviewGraph {
     this.calculateGraphWidth();
     this.layoutRoots();
     this.relayoutGraph(this.initialFa2Params);
+    this.generateHelperEdges();
+    this.generateBezierControlPoints();
     this.setSize(windowWidth);
 
     this.refreshCurrentPathway();
@@ -140,7 +155,9 @@ export default class OverviewGraph {
         labelRenderedSizeThreshold: 999999,
         edgeProgramClasses: {
           ...DEFAULT_SETTINGS.edgeProgramClasses,
-          dashed: DashedEdgeProgram,
+          dashed: BezierEdgeProgram,
+          line: BezierEdgeProgram,
+          helper: DontRender,
         },
         nodeProgramClasses: {
           ...DEFAULT_SETTINGS.nodeProgramClasses,
@@ -1076,5 +1093,224 @@ export default class OverviewGraph {
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;
     this.renderer.refresh();
+  }
+
+  setShowAllEdges(val: boolean) {
+    this.showAllEdges = val;
+    this.renderer.refresh();
+  }
+  getShowBundling() {
+    return this.showBundling;
+  }
+  setShowBundling(val: boolean) {
+    this.showBundling = val;
+
+    const graph = this.renderer.getGraph();
+    const edgeKeys = this.renderer.getGraph().edges();
+    edgeKeys.forEach((key) => {
+      graph.setEdgeAttribute(key, 'showBundling', val);
+    });
+
+    this.renderer.refresh();
+  }
+
+  // for each cluster:
+  // picks the last node in the cluster,
+  // makes a helper-edge between that node
+  // and every other node in the cluster
+  generateHelperEdges() {
+    const graph = this.renderer.getGraph();
+    const clusterData = useMainStore().clusterData.clusters;
+
+    clusterData.forEach((currNodes) => {
+      // todo: check if this really works
+      const centerNode = currNodes.pop() as string;
+
+      const subClusters: { [key: string]: string[] } = {};
+
+      // find sub-clusters
+      currNodes.forEach((node) => {
+        if (subClusters[graph.getNodeAttribute(node, 'rootId')] === undefined) {
+          subClusters[graph.getNodeAttribute(node, 'rootId')] = [];
+        }
+        subClusters[graph.getNodeAttribute(node, 'rootId')].push(node);
+      });
+
+      // in each sub-cluster
+      Object.keys(subClusters).forEach((subClustersKey) => {
+        const subCluster = subClusters[subClustersKey];
+        const centerSubCluster = subCluster.pop() as string;
+
+        // connect all nodes to the center
+        subCluster.forEach((node) => {
+          if (!graph.hasEdge(centerSubCluster, node)) {
+            this.addHelperEdge(centerSubCluster, node);
+          }
+        });
+      });
+    });
+  }
+
+  dropHelperEdges() {
+    const graph = this.renderer.getGraph();
+    const edges = graph.edges();
+
+    edges.forEach((edge) => {
+      const type = graph.getEdgeAttribute(edge, 'type');
+      if (type === 'helper') {
+        graph.dropEdge(edge);
+      }
+    });
+  }
+
+  // generates a helper-edge that won't be rendered
+  addHelperEdge(sourceID: string, targetID: string) {
+    const entry1 = sourceID;
+    const entry2 = targetID;
+    const edge = {
+      key: `${sourceID}+${targetID}`,
+      source: entry1,
+      target: entry2,
+      undirected: true,
+      attributes: {
+        weight: 0,
+        len: 0,
+        lock: false,
+        skip: false,
+        source: entry1,
+        target: entry2,
+        bezeierControlPoints: [],
+        showBundling: true,
+        zIndex: 0,
+        hidden: true,
+        type: 'helper',
+        color: 'rgba(0,0,0,0.0)',
+      },
+    };
+    this.renderer
+      .getGraph()
+      .addEdgeWithKey(edge.key, edge.source, edge.target, edge.attributes);
+  }
+
+  // generates bezier control points based on the edge-path bundling algorithm
+  generateBezierControlPoints(k = 2, d = 2) {
+    this.generateHelperEdges();
+
+    const graph = this.renderer.getGraph();
+    const edgeKeys = this.renderer.getGraph().edges();
+    const skip: {
+      edgeKey: string;
+      source: string;
+      target: string;
+      attributes: Attributes;
+    }[] = [];
+
+    edgeKeys.forEach((key) => {
+      graph.setEdgeAttribute(key, 'bezeierControlPoints', []);
+      const edgeAttribs = graph.getEdgeAttributes(key);
+
+      graph.setEdgeAttribute(key, 'skip', false);
+      graph.setEdgeAttribute(key, 'lock', false);
+
+      // retriving & calculating necessary data
+      const source = edgeAttribs.source;
+      const target = edgeAttribs.target;
+
+      const sx = graph.getNodeAttribute(source, 'x');
+      const sy = graph.getNodeAttribute(source, 'y');
+
+      const tx = graph.getNodeAttribute(target, 'x');
+      const ty = graph.getNodeAttribute(target, 'y');
+
+      const dx = tx - sx;
+      const dy = ty - sy;
+      const len = (dx * dx + dy * dy) ** (1 / 2);
+
+      graph.setEdgeAttribute(key, 'len', len);
+      graph.setEdgeAttribute(key, 'weight', len ** d);
+    });
+
+    edgeKeys.sort(
+      (a, b) =>
+        graph.getEdgeAttribute(b, 'weight') -
+        graph.getEdgeAttribute(a, 'weight')
+    ); // sorting edgeKeys by weight descending
+
+    edgeKeys.forEach((edgeKey) => {
+      const edge = graph.getEdgeAttributes(edgeKey);
+      if (edge.lock) {
+        return;
+      }
+      graph.setEdgeAttribute(edgeKey, 'skip', true);
+
+      const source = edge.source;
+      const target = edge.target;
+
+      skip.push({
+        edgeKey: edgeKey,
+        source: source,
+        target: target,
+        attributes: graph.getEdgeAttributes(edgeKey),
+      });
+      skip.forEach((edgeDict) => {
+        graph.dropEdge(edgeDict.edgeKey);
+      });
+      const nodePath = dijkstra.bidirectional(graph, source, target, 'weight');
+      // restore edges dropped for skip
+      skip.forEach((edgeDict) => {
+        graph.addEdgeWithKey(
+          edgeDict.edgeKey,
+          edgeDict.source,
+          edgeDict.target,
+          edgeDict.attributes
+        );
+      });
+
+      let path = null;
+      if (nodePath != null) {
+        path = edgePathFromNodePath(graph, nodePath);
+      }
+
+      if (path === null) {
+        graph.setEdgeAttribute(edgeKey, 'skip', false);
+        skip.pop();
+        return;
+      }
+      if (this.pathLength(path) > k * edge.len) {
+        graph.setEdgeAttribute(edgeKey, 'skip', false);
+        skip.pop();
+        return;
+      }
+
+      path.forEach((pathEdge) => {
+        graph.setEdgeAttribute(pathEdge, 'lock', true);
+      });
+
+      const nodeExtent = graphExtent(graph);
+      const normalizationFunction = createNormalizationFunction(nodeExtent);
+
+      // get vertecies of path
+      const vertices: number[] = [];
+      nodePath.forEach((pathNode) => {
+        const norm_xy: Coordinates = {
+          x: graph.getNodeAttribute(pathNode, 'x'),
+          y: graph.getNodeAttribute(pathNode, 'y'),
+        };
+        normalizationFunction.applyTo(norm_xy);
+        vertices.push(norm_xy.x, norm_xy.y);
+      });
+
+      graph.setEdgeAttribute(edgeKey, 'bezeierControlPoints', vertices);
+    });
+
+    this.dropHelperEdges();
+  }
+
+  pathLength(path: string[]): number {
+    let path_len = 0;
+    path.forEach((edgeKey) => {
+      path_len += this.renderer.getGraph().getEdgeAttribute(edgeKey, 'len');
+    });
+    return path_len;
   }
 }

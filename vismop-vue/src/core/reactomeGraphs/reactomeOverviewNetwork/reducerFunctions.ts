@@ -149,6 +149,10 @@ export function edgeReducer(
         hidden: false,
       };
     }
-    return { ...data, hidden: data.hierarchyHidden ? true : data.hidden };
+    return {
+      ...data,
+      hidden: data.hierarchyHidden ? true : data.hidden,
+      color: overviewColors.edgesHighlight,
+    };
   } else return data;
 }
