@@ -151,7 +151,8 @@ export function edgeReducer(
     }
     return {
       ...data,
-      hidden: data.hierarchyHidden ? true : data.hidden,
+      // TODO hierarchiyHidden causes edges to not bet shown even though showAllEdges is true
+      hidden: data.hierarchyHidden ? true : !this.showAllEdges ? true : false,
       color: overviewColors.edgesHighlight,
     };
   } else return data;
