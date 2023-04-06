@@ -340,7 +340,7 @@ export class HighDetailGlyph {
       // DOMMouseScroll seems to work in FF
       arcSeg.on('mouseenter', (event, _dat) => {
         event.preventDefault();
-        console.log('glyph mouseenter', event, _dat);
+        //console.log('glyph mouseenter', event, _dat);
         const amtElems = d3
           .select(`#glyph${this.glyphIdx}`)
           .selectAll('.foldArc')

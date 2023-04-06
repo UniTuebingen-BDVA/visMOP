@@ -692,11 +692,12 @@ export default class ReactomeDetailView {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           self.targetMeasurement,
-          true,
+          false,
           d.reactomeId,
           64,
           false
         );
+        currentGlyph.setDrawLabels(true);
         return currentGlyph.generateGlyphSvg();
       });
     });
@@ -840,11 +841,12 @@ export default class ReactomeDetailView {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           self.targetMeasurement,
-          true,
+          false,
           d.reactomeId,
           64,
           false
         );
+        currentGlyph.setDrawLabels(true);
         return currentGlyph.generateGlyphSvg();
       });
     });
@@ -946,11 +948,12 @@ export default class ReactomeDetailView {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
           self.targetMeasurement,
-          true,
+          false,
           d.reactomeId,
           64,
           false
         );
+        currentGlyph.setDrawLabels(true);
         return currentGlyph.generateGlyphSvg();
       });
     });

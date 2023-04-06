@@ -50,12 +50,12 @@ class ReactomeQuery:
                     self.query_results[query_id] = reactome_elem
                 except:
                     if id_database == 'Ensembl':
-                        if "G" in query_id:
-                            query_id_mod = query_id.replace('G', 'P')
-                        else:
-                            query_id_mod = query_id.replace('P', 'G')
+                        #if "G" in query_id:
+                        #   query_id_mod = query_id.replace('G', 'P')
+                        #else:
+                        #   query_id_mod = query_id.replace('P', 'G')
                         try:
-                            reactome_elem = reactome_data[query_id_mod]
+                            reactome_elem = reactome_data[query_id]
                             for pathway_id in reactome_elem:
                                 reactome_elem[pathway_id]['measurement'] = elem[1]
                             self.query_results[query_id] = reactome_elem 

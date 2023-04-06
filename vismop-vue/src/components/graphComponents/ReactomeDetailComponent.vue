@@ -246,19 +246,26 @@ const measureDataDetail = (
           const totalAmount = getEntryAmounts(id, currentGraphJson.value);
           if (id in measureById) {
             measureById[id][type].available = true;
-            measureById[id][type].measurements.push({
-              value: val,
-              name: entityElem.name,
-              queryId: measureEntry.queryId,
-              regressionData: measureEntry.regressionData || {},
-              forms: {},
-            });
-            measureById[id][type].meanMeasure =
-              (measureById[id][type].nodeState.regulated *
-                measureById[id][type].meanMeasure +
-                val) /
-              (measureById[id][type].nodeState.regulated + 1);
-            measureById[id][type].nodeState.regulated += 1;
+            //only push if not already in the array
+            if (
+              !measureById[id][type].measurements.find(
+                (elem) => elem.queryId === measureEntry.queryId
+              )
+            ) {
+              measureById[id][type].measurements.push({
+                value: val,
+                name: entityElem.name,
+                queryId: measureEntry.queryId,
+                regressionData: measureEntry.regressionData || {},
+                forms: {},
+              });
+              measureById[id][type].meanMeasure =
+                (measureById[id][type].nodeState.regulated *
+                  measureById[id][type].meanMeasure +
+                  val) /
+                (measureById[id][type].nodeState.regulated + 1);
+              measureById[id][type].nodeState.regulated += 1;
+            }
           } else {
             measureById[id] = {
               pathwayID: '' + id,
@@ -328,19 +335,26 @@ const measureDataDetail = (
           measureByType[type][entry] = val;
           if (entry in measureById) {
             measureById[entry][type].available = true;
-            measureById[entry][type].measurements.push({
-              value: val,
-              name: entityElem.name,
-              queryId: measureEntry.queryId,
-              regressionData: measureEntry.regressionData || {},
-              forms: {},
-            });
-            measureById[entry][type].meanMeasure =
-              (measureById[entry][type].nodeState.regulated *
-                measureById[entry][type].meanMeasure +
-                val) /
-              (measureById[entry][type].nodeState.regulated + 1);
-            measureById[entry][type].nodeState.regulated += 1;
+            //only push if not already in the array
+            if (
+              !measureById[entry][type].measurements.find(
+                (elem) => elem.queryId === measureEntry.queryId
+              )
+            ) {
+              measureById[entry][type].measurements.push({
+                value: val,
+                name: entityElem.name,
+                queryId: measureEntry.queryId,
+                regressionData: measureEntry.regressionData || {},
+                forms: {},
+              });
+              measureById[entry][type].meanMeasure =
+                (measureById[entry][type].nodeState.regulated *
+                  measureById[entry][type].meanMeasure +
+                  val) /
+                (measureById[entry][type].nodeState.regulated + 1);
+              measureById[entry][type].nodeState.regulated += 1;
+            }
           } else {
             measureById[entry] = {
               pathwayID: '' + entry,
@@ -417,6 +431,7 @@ const drawDetailView = () => {
       measureById,
       'metabolomics'
     );
+    console.log('DetailPWData', measureByType, measureById);
   }
 
   currentView.value = new ReactomeDetailView(

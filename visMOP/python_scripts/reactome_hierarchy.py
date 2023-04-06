@@ -471,10 +471,10 @@ class ReactomeHierarchy(dict):
                 v = self[entry_key]
                 # if not v.is_leaf:
                 subtree = self.get_subtree_target(v.reactome_sID)
-                own_measured_proteins = v.own_measured_proteins
-                own_measured_genes = v.own_measured_genes
-                own_measured_metabolites = v.own_measured_metabolites
-                own_measured_maplinks = v.own_measured_maplinks
+                own_measured_proteins = list(set(v.own_measured_proteins))
+                own_measured_genes = list(set(v.own_measured_genes))
+                own_measured_metabolites = list(set(v.own_measured_metabolites))
+                own_measured_maplinks = list(set(v.own_measured_maplinks))
                 total_measured_proteins = v.total_measured_proteins
                 total_measured_genes = v.total_measured_genes
                 total_measured_metabolites = v.total_measured_metabolites
@@ -588,10 +588,10 @@ class ReactomeHierarchy(dict):
                 v.total_measured_genes = total_measured_genes
                 v.total_measured_metabolites = total_measured_metabolites
                 v.total_measured_maplinks = total_measured_maplinks
-                v.own_measured_proteins = own_measured_proteins
-                v.own_measured_genes = own_measured_genes
-                v.own_measured_metabolites = own_measured_metabolites
-                v.own_measured_maplinks = own_measured_maplinks
+                v.own_measured_proteins = list(set(own_measured_proteins))
+                v.own_measured_genes = list(set(own_measured_genes))
+                v.own_measured_metabolites = list(set(own_measured_metabolites))
+                v.own_measured_maplinks = list(set(own_measured_maplinks))
                 v.subdiagrams_measured_proteins = subdiagrams_measured_proteins
                 v.subdiagrams_measured_genes = subdiagrams_measured_genes
                 v.subdiagrams_measured_metabolites = subdiagrams_measured_metabolites
@@ -671,7 +671,8 @@ class ReactomeHierarchy(dict):
                             self[pathway[0]].total_proteins[current_reactome_id].keys()
                         ),
                     }
-                    self[pathway[0]].own_measured_genes.append(query_key)
+                    if query_key not in self[pathway[0]].own_measured_genes:
+                        self[pathway[0]].own_measured_genes.append(query_key)
                 else:
                     self[pathway[0]].total_measured_genes[query_key] = {
                         "measurement": entity_data["measurement"],
@@ -957,9 +958,15 @@ def generate_overview_pathway_entry(
     pathway_dict["children"] = [
         elem + string_suffix for elem in entry.children_with_data
     ]
-    pathway_dict["ownMeasuredEntryIDs"]["proteomics"] = entry.own_measured_proteins
-    pathway_dict["ownMeasuredEntryIDs"]["transcriptomics"] = entry.own_measured_genes
-    pathway_dict["ownMeasuredEntryIDs"]["metabolomics"] = entry.own_measured_metabolites
+    pathway_dict["ownMeasuredEntryIDs"]["proteomics"] = list(
+        set(entry.own_measured_proteins)
+    )
+    pathway_dict["ownMeasuredEntryIDs"]["transcriptomics"] = list(
+        set(entry.own_measured_genes)
+    )
+    pathway_dict["ownMeasuredEntryIDs"]["metabolomics"] = list(
+        set(entry.own_measured_metabolites)
+    )
     pathway_dict["insetPathwayEntryIDs"][
         "proteomics"
     ] = entry.subdiagrams_measured_proteins
