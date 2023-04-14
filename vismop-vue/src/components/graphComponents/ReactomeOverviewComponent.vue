@@ -1,102 +1,82 @@
 <template>
-  <q-card :class="[expandOverview ? 'overviewFullscreen' : '', 'row fit ']">
-    <div class="col-12">
-      <q-fab
-        icon="keyboard_arrow_down"
-        label="Overview Actions"
-        direction="down"
-        vertical-actions-align="left"
-        class="absolute q-pa-md fab-class"
-      >
-        <div class="row graphControl">
-          <div class="col-3">
-            <q-btn
-              color="primary"
-              round
-              icon="keyboard_arrow_left"
-              @click="expandComponent"
-              ><q-tooltip class="bg-accent">Expand</q-tooltip></q-btn
-            >
-          </div>
-          <div class="col-3">
-            <q-btn
-              color="primary"
-              round
-              icon="keyboard_arrow_right"
-              @click="minimizeComponent"
-              ><q-tooltip class="bg-accent">Shrink</q-tooltip></q-btn
-            >
-          </div>
-          <div class="col-3">
-            <q-btn color="primary" round icon="mdi-restore" @click="resetZoom"
-              ><q-tooltip class="bg-accent">Reset</q-tooltip></q-btn
-            >
-          </div>
-          <div class="col-3">
-            <q-btn
-              color="primary"
-              round
-              icon="mdi-select-remove"
-              @click="removeSelection"
-              ><q-tooltip class="bg-accent">Deselect</q-tooltip></q-btn
-            >
-          </div>
+  <q-card :class="[expandOverview ? '' : '', 'fit col-12']">
+    <q-fab
+      icon="keyboard_arrow_down"
+      label="Overview Actions"
+      direction="down"
+      vertical-actions-align="left"
+      class="absolute q-pa-md fab-class"
+    >
+      <div class="row graphControl">
+        <div class="col-3">
+          <q-btn color="primary" round icon="mdi-restore" @click="resetZoom"
+            ><q-tooltip class="bg-accent">Reset</q-tooltip></q-btn
+          >
         </div>
+        <div class="col-3">
+          <q-btn
+            color="primary"
+            round
+            icon="mdi-select-remove"
+            @click="removeSelection"
+            ><q-tooltip class="bg-accent">Deselect</q-tooltip></q-btn
+          >
+        </div>
+      </div>
 
-        <q-fab-action color="white" text-color="black">
-          <q-expansion-item
-            v-model="expandFilter"
-            icon="fa-solid fa-filter"
-            label="Graph Filter"
+      <q-fab-action color="white" text-color="black">
+        <q-expansion-item
+          v-model="expandFilter"
+          icon="fa-solid fa-filter"
+          label="Graph Filter"
+          @click.prevent
+        >
+          <graph-filter
+            v-model:root-negative-filter="rootNegativeFilter"
+            v-model:rootFilter="rootFilter"
+            v-model:transcriptomics="transcriptomicsFilter"
+            v-model:transcriptomics-regulated="transcriptomicsRegulatedFilter"
+            v-model:proteomics="proteomicsFilter"
+            v-model:proteomics-regulated="proteomicsRegulatedFilter"
+            v-model:metabolomics="metabolomicsFilter"
+            v-model:metabolomics-regulated="metabolomicsRegulatedFilter"
+            v-model:sumRegulated="sumRegulated"
             @click.prevent
-          >
-            <graph-filter
-              v-model:root-negative-filter="rootNegativeFilter"
-              v-model:rootFilter="rootFilter"
-              v-model:transcriptomics="transcriptomicsFilter"
-              v-model:transcriptomics-regulated="transcriptomicsRegulatedFilter"
-              v-model:proteomics="proteomicsFilter"
-              v-model:proteomics-regulated="proteomicsRegulatedFilter"
-              v-model:metabolomics="metabolomicsFilter"
-              v-model:metabolomics-regulated="metabolomicsRegulatedFilter"
-              v-model:sumRegulated="sumRegulated"
-              @click.prevent
-            ></graph-filter>
-          </q-expansion-item>
-        </q-fab-action>
-        <q-fab-action color="white" text-color="black">
-          <q-expansion-item
-            v-model="expandFa2Controls"
-            icon="fa-solid fa-diagram-project"
-            label="FA2 Controls"
+          ></graph-filter>
+        </q-expansion-item>
+      </q-fab-action>
+      <q-fab-action color="white" text-color="black">
+        <q-expansion-item
+          v-model="expandFa2Controls"
+          icon="fa-solid fa-diagram-project"
+          label="FA2 Controls"
+          @click.prevent
+        >
+          <fa2-params
+            v-model:fa2LayoutParams="fa2LayoutParams"
             @click.prevent
-          >
-            <fa2-params
-              v-model:fa2LayoutParams="fa2LayoutParams"
-              @click.prevent
-            ></fa2-params>
-          </q-expansion-item>
-        </q-fab-action>
-        <q-fab-action color="white" text-color="black">
-          <q-expansion-item
-            v-model="bundlingControl"
-            icon="fa-solid fa-diagram-project"
-            label="Bundling Controls"
+          ></fa2-params>
+        </q-expansion-item>
+      </q-fab-action>
+      <q-fab-action color="white" text-color="black">
+        <q-expansion-item
+          v-model="bundlingControl"
+          icon="fa-solid fa-diagram-project"
+          label="Bundling Controls"
+          @click.prevent
+        >
+          <bundling-controls
+            v-model:bundlingParams="bundlingParams"
+            @generateNewBundling="generateNewBundling"
             @click.prevent
-          >
-            <bundling-controls
-              v-model:bundlingParams="bundlingParams"
-              @generateNewBundling="generateNewBundling"
-              @click.prevent
-            ></bundling-controls>
-          </q-expansion-item>
-        </q-fab-action>
-      </q-fab>
-      <div
-        :id="contextID"
-        :class="[expandOverview ? '' : '', 'webglContainer']"
-      ></div>
-    </div>
+          ></bundling-controls>
+        </q-expansion-item>
+      </q-fab-action>
+    </q-fab>
+    <div
+      :id="contextID"
+      :class="[expandOverview ? '' : '', 'webglContainer']"
+    ></div>
   </q-card>
 </template>
 
@@ -138,13 +118,16 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  expandOverview: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 const $q = useQuasar();
 
 const mainStore = useMainStore();
 
-const expandOverview = ref(false);
 const expandFilter = ref(false);
 const expandFa2Controls = ref(false);
 const outstandingDraw = ref(false);
@@ -562,12 +545,6 @@ watch(fa2LayoutParams.value, () => {
   console.log(fa2LayoutParams.value);
 });
 
-const expandComponent = () => {
-  expandOverview.value = true;
-};
-const minimizeComponent = () => {
-  expandOverview.value = false;
-};
 const resetZoom = () => {
   networkGraph.value?.resetZoom();
 };

@@ -1,9 +1,26 @@
 <template>
   <q-page class="row no-wrap items-stretch max-height">
     <!-- Misc. Tabs -->
-    <div class="col-5 q-pr-sm q-pl-md q-py-md">
+    <div
+      :class="[
+        expandOverview ? 'col' : 'col-5',
+        'q-pl-sm q-pr-md q-py-md inFront transitionWidth',
+      ]"
+      :style="`transform: translateX(${expandOverview ? '-50%' : '0'})`"
+    >
       <div class="row fit no-wrap">
         <q-card class="col-12 column no-wrap">
+          <q-btn
+            class="collapse-btn absolute middle"
+            color="primary"
+            align="right"
+            round
+            :icon="
+              expandOverview ? 'keyboard_arrow_right' : 'keyboard_arrow_left'
+            "
+            @click="expandOverview = !expandOverview"
+            ><q-tooltip class="bg-accent">Toggle Table</q-tooltip></q-btn
+          >
           <q-tabs
             v-model="selectedTabMisc"
             dense
@@ -92,20 +109,24 @@
       </div>
     </div>
     <!-- Network -->
-    <div class="col-7 q-pl-sm q-pr-md q-py-md">
+    <div
+      :class="[
+        expandOverview ? 'col-12' : 'col-7',
+        'q-pl-sm q-pr-md q-py-md back transitionWidth',
+      ]"
+    >
       <div class="row fit">
-        <div class="col-12">
-          <keep-alive>
-            <reactome-overview-component-vue
-              context-i-d="overviewContext"
-              :transcriptomics-selection="selectedTranscriptomics"
-              :proteomics-selection="selectedProteomics"
-              :metabolomics-selection="selectedMetabolomics"
-              :is-active="activeOverview"
-            >
-            </reactome-overview-component-vue>
-          </keep-alive>
-        </div>
+        <keep-alive>
+          <reactome-overview-component-vue
+            context-i-d="overviewContext"
+            :transcriptomics-selection="selectedTranscriptomics"
+            :proteomics-selection="selectedProteomics"
+            :metabolomics-selection="selectedMetabolomics"
+            :is-active="activeOverview"
+            :expand-overview="expandOverview"
+          >
+          </reactome-overview-component-vue>
+        </keep-alive>
         <keep-alive>
           <reactome-detail-component-vue
             context-i-d="reactomeDetail"
@@ -130,6 +151,7 @@ import { computed, KeepAlive, Ref, ref, watch } from 'vue';
 
 const mainStore = useMainStore();
 
+const expandOverview = ref(false);
 const tableSearch = ref('');
 const selectedTabTable = ref('transcriptomics');
 const selectedTabNetwork = ref('overviewNetwork');
@@ -155,5 +177,20 @@ const activeOverview = computed(
 .max-height {
   max-height: 100%;
   height: 100%;
+}
+.collapse-btn {
+  top: 20px;
+  right: 0;
+  transform: translateX(50%);
+  z-index: -1;
+}
+.inFront {
+  z-index: 10;
+}
+.back {
+  z-index: 1;
+}
+.transition-width {
+  transition: width 0.5s;
 }
 </style>
