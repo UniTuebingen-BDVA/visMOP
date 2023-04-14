@@ -2,11 +2,11 @@
   <q-page class="row no-wrap items-stretch max-height">
     <!-- Misc. Tabs -->
     <div
+      ref="miscTabs"
       :class="[
-        expandOverview ? 'col' : 'col-5',
-        'q-pl-sm q-pr-md q-py-md inFront transitionWidth',
+        expandOverview ? 'col q-pa-0' : 'col-5 q-pl-sm q-pr-md',
+        ' inFront transition-width q-py-md',
       ]"
-      :style="`transform: translateX(${expandOverview ? '-50%' : '0'})`"
     >
       <div class="row fit no-wrap">
         <q-card class="col-12 column no-wrap">
@@ -112,7 +112,7 @@
     <div
       :class="[
         expandOverview ? 'col-12' : 'col-7',
-        'q-pl-sm q-pr-md q-py-md back transitionWidth',
+        'q-pl-sm q-pr-md q-py-md back transition-width',
       ]"
     >
       <div class="row fit">
@@ -151,6 +151,9 @@ import { computed, KeepAlive, Ref, ref, watch } from 'vue';
 
 const mainStore = useMainStore();
 
+// width of the miscTabs section in template
+
+const miscTabs = ref<HTMLElement | null>(null);
 const expandOverview = ref(false);
 const tableSearch = ref('');
 const selectedTabTable = ref('transcriptomics');
@@ -179,7 +182,7 @@ const activeOverview = computed(
   height: 100%;
 }
 .collapse-btn {
-  top: 20px;
+  top: 0;
   right: 0;
   transform: translateX(50%);
   z-index: -1;
@@ -191,6 +194,5 @@ const activeOverview = computed(
   z-index: 1;
 }
 .transition-width {
-  transition: width 0.5s;
 }
 </style>
