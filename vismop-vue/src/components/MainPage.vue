@@ -123,7 +123,6 @@
             :proteomics-selection="selectedProteomics"
             :metabolomics-selection="selectedMetabolomics"
             :is-active="activeOverview"
-            :expand-overview="expandOverview"
           >
           </reactome-overview-component-vue>
         </keep-alive>
@@ -147,7 +146,7 @@ import PathwayCompareVue from './tabComponents/PathwayCompare.vue';
 import ReactomeOverviewComponentVue from './graphComponents/ReactomeOverviewComponent.vue';
 import OmicsDataTableVue from './tabComponents/OmicsDataTable.vue';
 import { useMainStore } from '@/stores';
-import { computed, KeepAlive, Ref, ref, watch } from 'vue';
+import { computed, Ref, ref, watch } from 'vue';
 
 const mainStore = useMainStore();
 
@@ -182,7 +181,7 @@ const activeOverview = computed(
   height: 100%;
 }
 .collapse-btn {
-  top: 0;
+  top: 25px;
   right: 0;
   transform: translateX(50%);
   z-index: -1;

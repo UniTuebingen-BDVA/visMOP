@@ -1,5 +1,5 @@
 <template>
-  <q-card :class="[expandOverview ? '' : '', 'fit col-12']">
+  <q-card class="fit col-12">
     <q-fab
       icon="keyboard_arrow_down"
       label="Overview Actions"
@@ -73,10 +73,7 @@
         </q-expansion-item>
       </q-fab-action>
     </q-fab>
-    <div
-      :id="contextID"
-      :class="[expandOverview ? '' : '', 'webglContainer']"
-    ></div>
+    <div :id="contextID" class="webglContainer"></div>
   </q-card>
 </template>
 
@@ -115,10 +112,6 @@ const props = defineProps({
     required: true,
   },
   isActive: {
-    type: Boolean,
-    required: true,
-  },
-  expandOverview: {
     type: Boolean,
     required: true,
   },
@@ -616,30 +609,5 @@ const drawNetwork = () => {
   height: 100%;
   min-height: 100%;
   z-index: 2;
-}
-.overviewFit {
-  width: 100% !important;
-  height: 100% !important;
-}
-.overviewFullscreen {
-  z-index: 3;
-  position: fixed !important;
-  right: 1vh;
-  bottom: 1vh;
-  left: 1vh;
-  max-width: 99%;
-}
-@media (max-width: 1920px) {
-  .overviewFullscreen {
-    top: 7vh !important;
-    height: 92vh !important;
-  }
-}
-@media (min-width: 1921px) {
-  .overviewFullscreen {
-    top: 3vh !important;
-    height: 96vh !important;
-    font-size: 16px;
-  }
 }
 </style>
