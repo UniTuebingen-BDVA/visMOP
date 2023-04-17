@@ -1,7 +1,7 @@
 <template>
   <q-page class="row no-wrap items-stretch max-height">
     <!-- Misc. Tabs -->
-    <transition name="changeWidth" mode="out-in">
+    <transition name="changeWidth">
       <div
         ref="miscTabs"
         :key="minimizeMiscTabs ? 'minimized' : 'maximized'"
@@ -9,11 +9,12 @@
           minimizeMiscTabs ? '' : 'q-pl-md q-pr-md',
           'col inFront transition-width q-py-md',
         ]"
-        :style="minimizeMiscTabs ? minimizedMiscTabsStyle : miscTabsStyle"
+        :style="miscTabsStyle"
       >
         <div class="row fit no-wrap">
           <q-card class="col-12 column no-wrap">
             <q-btn
+              :key="minimizeMiscTabs ? 'minimized' : 'maximized'"
               class="collapse-btn absolute middle"
               color="primary"
               align="right"
@@ -120,6 +121,7 @@
     <q-separator
       color="primary"
       class="resizeSeperator"
+      inset
       vertical
       @mousedown="sliderDrag"
     />
@@ -179,24 +181,18 @@ const queryToPathwayDictionary = computed(
 // style of the miscTabs section in template
 const miscTabsStyle = computed(() => {
   return {
-    'max-width': miscTabsWidth.value + 'px',
-    width: miscTabsWidth.value + 'px',
-    'min-width': miscTabsWidth.value + 'px',
+    'max-width': minimizeMiscTabs.value ? 0 : miscTabsWidth.value + 'px',
+    width: minimizeMiscTabs.value ? 0 : miscTabsWidth.value + 'px',
+    'min-width': minimizeMiscTabs.value ? 0 : miscTabsWidth.value + 'px',
   };
 });
-
-const minimizedMiscTabsStyle = {
-  'max-width': '0px',
-  width: '0px',
-  'min-width': '0px',
-};
 
 //sliderDrag function, on mouse down, add event listeners to the document so that mousemove increases and decreases the width of the miscTabs section by increaseing and deacreasing the miscTabsWidth variable
 const sliderDrag = (e: MouseEvent) => {
   const initialX = e.clientX;
   const initialWidth = miscTabsWidth.value;
   let currentWidth = miscTabsWidth.value;
-
+  e.preventDefault();
   const windowMinWidthThreshold = window.innerWidth * 0.25;
   const windowMaxWidthThreshold = window.innerWidth * 0.75;
   if (!minimizeMiscTabs.value) {
@@ -251,11 +247,29 @@ const activeOverview = computed(
 .back {
   z-index: 1;
 }
-.transition-width {
-  transition: width 0.5s;
-  -webkit-transition: width 0.5s;
-  -moz-transition: width 0.5s;
+.changeWidth-enter-active,
+.changeWidth-leave-active {
+  transition: all 0.5s ease-in-out;
+  -webkit-transition: all 0.5s ease-in-out;
+  -moz-transition: all 0.5s ease-in-out;
 }
+
+.changeWidth-leave-to {
+  width: 0px !important;
+  min-width: 0px !important;
+  max-width: 0px !important;
+}
+.changeWidth-enter-active .collapse-btn,
+.changeWidth-leave-active .collapse-btn {
+  transition: all 0.5s ease-in-out;
+  -webkit-transition: all 0.5s ease-in-out;
+  -moz-transition: all 0.5s ease-in-out;
+}
+
+.changeWidth-leave-to .collapse-btn {
+  transform: rotate(180deg);
+}
+
 .resizeSeperator {
   width: 5px !important;
   cursor: e-resize;
