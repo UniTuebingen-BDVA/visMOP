@@ -1069,7 +1069,9 @@ export default class OverviewGraph {
     }
     this.renderer.refresh();
   }
-
+  public refreshRenderer() {
+    this.renderer.resize();
+  }
   /**
    * Kills the Graph instance
    */

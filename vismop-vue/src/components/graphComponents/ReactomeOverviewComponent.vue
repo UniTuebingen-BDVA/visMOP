@@ -84,7 +84,15 @@ import BundlingControls from './BundlingControls.vue';
 import { generateGraphData } from '../../core/reactomeGraphs/reactomeOverviewGraphPreparation';
 import { generateGlyphDataReactome } from '../../core/overviewGlyphs/glyphDataPreparation';
 import { generateGlyphs } from '../../core/overviewGlyphs/generator';
-import { computed, PropType, Ref, ref, watch, defineProps } from 'vue';
+import {
+  computed,
+  PropType,
+  Ref,
+  ref,
+  watch,
+  defineProps,
+  onMounted,
+} from 'vue';
 import { reactomeEntry, glyphData } from '@/core/reactomeGraphs/reactomeTypes';
 import { useMainStore } from '@/stores';
 import { HighDetailGlyph } from '@/core/overviewGlyphs/highDetailGlyph';
@@ -96,6 +104,7 @@ import {
 import Fa2Params from './Fa2Params.vue';
 import { useQuasar } from 'quasar';
 import FilterData from '@/core/reactomeGraphs/reactomeOverviewNetwork/filterData';
+import _ from 'lodash';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -184,7 +193,19 @@ const fa2LayoutParams = ref({
   barnesHutTheta: 0.5,
   clusterSizeScalingFactor: 1,
 });
+const resizeObserver: Ref<ResizeObserver | undefined> = ref(undefined);
 
+onMounted(() => {
+  // allows to run function when tar changes
+  resizeObserver.value = new ResizeObserver(_.debounce(refreshSize, 100));
+  const tar = document.getElementById(props.contextID ? props.contextID : '');
+  if (tar) resizeObserver.value.observe(tar);
+});
+
+const refreshSize = () => {
+  console.log('refreshing size Overview');
+  networkGraph.value?.refreshRenderer();
+};
 const overviewData = computed(() => mainStore.overviewData);
 const selectedPathway = computed(() => mainStore.selectedPathway);
 const queryToPathwayDictionary = computed(
