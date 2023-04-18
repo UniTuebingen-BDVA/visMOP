@@ -1,32 +1,18 @@
 <template>
   <q-page class="row no-wrap items-stretch max-height">
     <!-- Misc. Tabs -->
-    <transition name="changeWidth">
+    <transition :name="transitionName">
       <div
         ref="miscTabs"
-        :key="minimizeMiscTabs ? 'minimized' : 'maximized'"
+        :key="transitionName"
         :class="[
           minimizeMiscTabs ? '' : 'q-pl-md q-pr-md',
-          'col inFront transition-width q-py-md',
+          'col transition-width q-py-md',
         ]"
         :style="miscTabsStyle"
       >
         <div class="row fit no-wrap">
           <q-card class="col-12 column no-wrap">
-            <q-btn
-              :key="minimizeMiscTabs ? 'minimized' : 'maximized'"
-              class="collapse-btn absolute middle"
-              color="primary"
-              align="right"
-              round
-              :icon="
-                minimizeMiscTabs
-                  ? 'keyboard_arrow_right'
-                  : 'keyboard_arrow_left'
-              "
-              @click="minimizeMiscTabs = !minimizeMiscTabs"
-              ><q-tooltip class="bg-accent">Toggle Table</q-tooltip></q-btn
-            >
             <q-tabs
               v-model="selectedTabMisc"
               dense
@@ -118,13 +104,38 @@
         </div>
       </div>
     </transition>
-    <q-separator
-      color="primary"
-      class="resizeSeperator"
-      inset
-      vertical
-      @mousedown="sliderDrag"
-    />
+    <div class="sep-col">
+      <div class="row fit no-wrap">
+        <q-separator
+          color="primary"
+          class="resizeSeperator"
+          inset
+          vertical
+          @mousedown="sliderDrag"
+        />
+        <q-btn
+          class="collapse-btn-r absolute middle"
+          color="primary"
+          align="right"
+          round
+          :icon="'keyboard_arrow_right'"
+          @click="minimizeMiscTabs ? returnFromMinimize() : setMaximized()"
+          @mousedown="sliderDrag"
+          ><q-tooltip class="bg-accent">Toggle Table</q-tooltip></q-btn
+        >
+        <q-btn
+          class="collapse-btn-l absolute middle"
+          color="primary"
+          align="left"
+          round
+          icon="keyboard_arrow_left"
+          @click="setMinimized()"
+          @mousedown="sliderDrag"
+          ><q-tooltip class="bg-accent">Toggle Table</q-tooltip></q-btn
+        >
+      </div>
+    </div>
+
     <!-- Network -->
     <div class="col q-pl-md q-pr-md q-py-md back">
       <div class="row fit">
@@ -158,15 +169,28 @@ import PathwayCompareVue from './tabComponents/PathwayCompare.vue';
 import ReactomeOverviewComponentVue from './graphComponents/ReactomeOverviewComponent.vue';
 import OmicsDataTableVue from './tabComponents/OmicsDataTable.vue';
 import { useMainStore } from '@/stores';
-import { computed, Ref, ref, watch } from 'vue';
+import { computed, onMounted, Ref, ref, watch } from 'vue';
+import _ from 'lodash';
 
 const mainStore = useMainStore();
 
 // width of the miscTabs section in template
 
+const transitionName = computed(() => {
+  if (minimizeMiscTabs.value) {
+    return 'slide-left';
+  } else if (maximizeMiscTabs.value) {
+    return 'slide-right';
+  } else {
+    return 'slide-center';
+  }
+});
+const windowWidth = ref(0);
 const miscTabs = ref<HTMLElement | null>(null);
 const miscTabsWidth = ref(window.innerWidth * 0.4);
+const centerPos = ref(window.innerWidth * 0.4);
 const minimizeMiscTabs = ref(false);
+const maximizeMiscTabs = ref(false);
 const tableSearch = ref('');
 const selectedTabTable = ref('transcriptomics');
 const selectedTabNetwork = ref('overviewNetwork');
@@ -178,14 +202,49 @@ const queryToPathwayDictionary = computed(
   () => mainStore.queryToPathwayDictionary
 );
 
+// mounted function to get window.innerWidth
+onMounted(() => {
+  setWindowSize();
+  window.addEventListener('resize', _.debounce(setWindowSize, 100));
+});
+
+const setWindowSize = () => {
+  windowWidth.value = window.innerWidth;
+};
+
+const windowMaxWidthThreshold = computed(() => windowWidth.value * 0.75);
+const windowMinWidthThreshold = computed(() => windowWidth.value * 0.25);
+
 // style of the miscTabs section in template
 const miscTabsStyle = computed(() => {
   return {
+    '--centerPos': centerPos.value + 'px',
     'max-width': minimizeMiscTabs.value ? 0 : miscTabsWidth.value + 'px',
     width: minimizeMiscTabs.value ? 0 : miscTabsWidth.value + 'px',
     'min-width': minimizeMiscTabs.value ? 0 : miscTabsWidth.value + 'px',
   };
 });
+
+const returnFromMinimize = () => {
+  if (minimizeMiscTabs.value) {
+    miscTabsWidth.value = centerPos.value;
+    minimizeMiscTabs.value = false;
+  }
+};
+
+const setMaximized = () => {
+  centerPos.value = miscTabsWidth.value;
+  miscTabsWidth.value = windowMaxWidthThreshold.value;
+  minimizeMiscTabs.value = false;
+  maximizeMiscTabs.value = true;
+};
+
+const setMinimized = () => {
+  centerPos.value = miscTabsWidth.value;
+  miscTabsWidth.value = windowMinWidthThreshold.value;
+  minimizeMiscTabs.value = true;
+  maximizeMiscTabs.value = false;
+};
 
 //sliderDrag function, on mouse down, add event listeners to the document so that mousemove increases and decreases the width of the miscTabs section by increaseing and deacreasing the miscTabsWidth variable
 const sliderDrag = (e: MouseEvent) => {
@@ -193,18 +252,16 @@ const sliderDrag = (e: MouseEvent) => {
   const initialWidth = miscTabsWidth.value;
   let currentWidth = miscTabsWidth.value;
   e.preventDefault();
-  const windowMinWidthThreshold = window.innerWidth * 0.25;
-  const windowMaxWidthThreshold = window.innerWidth * 0.75;
   if (!minimizeMiscTabs.value) {
     const drag = (e: MouseEvent) => {
       currentWidth = initialWidth + (e.clientX - initialX);
-      if (currentWidth < windowMinWidthThreshold) {
-        minimizeMiscTabs.value = true;
-        miscTabsWidth.value = windowMinWidthThreshold;
+      if (currentWidth < windowMinWidthThreshold.value) {
+        setMinimized();
         stopDrag();
-      } else if (currentWidth > windowMaxWidthThreshold) {
-        miscTabsWidth.value = windowMaxWidthThreshold;
+      } else if (currentWidth > windowMaxWidthThreshold.value) {
+        miscTabsWidth.value = windowMaxWidthThreshold.value;
       } else {
+        centerPos.value = currentWidth;
         miscTabsWidth.value = currentWidth;
         minimizeMiscTabs.value = false;
       }
@@ -215,6 +272,9 @@ const sliderDrag = (e: MouseEvent) => {
     };
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', stopDrag);
+  } else {
+    //minimizeMiscTabs.value = false;
+    //miscTabsWidth.value = windowMinWidthThreshold.value;
   }
 };
 
@@ -235,43 +295,69 @@ const activeOverview = computed(
   max-height: 100%;
   height: 100%;
 }
-.collapse-btn {
-  top: 25px;
-  right: 0;
-  transform: translateX(50%);
-  z-index: -1;
+.collapse-btn-r,
+.collapse-btn-l {
+  top: 45%;
+  z-index: 1;
+  width: 1rem !important;
+  height: 2rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
 }
-.inFront {
+.collapse-btn-r {
+  right: -1rem;
+  border-radius: 0 1rem 1rem 0 !important;
+}
+.collapse-btn-l {
+  left: -1rem;
+  border-radius: 1rem 0 0 1rem !important;
+}
+
+.in-front {
   z-index: 10;
 }
-.back {
-  z-index: 1;
-}
-.changeWidth-enter-active,
-.changeWidth-leave-active {
+
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-center-enter-active {
   transition: all 0.5s ease-in-out;
   -webkit-transition: all 0.5s ease-in-out;
   -moz-transition: all 0.5s ease-in-out;
 }
 
-.changeWidth-leave-to {
+.slide-left-leave-to,
+.slide-center-enter-from {
   width: 0px !important;
   min-width: 0px !important;
   max-width: 0px !important;
 }
-.changeWidth-enter-active .collapse-btn,
-.changeWidth-leave-active .collapse-btn {
-  transition: all 0.5s ease-in-out;
-  -webkit-transition: all 0.5s ease-in-out;
-  -moz-transition: all 0.5s ease-in-out;
+
+.slide-center-enter-to {
+  width: var(--centerPos) !important;
+  min-width: var(--centerPos) !important;
+  max-width: var(--centerPos) !important;
 }
 
-.changeWidth-leave-to .collapse-btn {
-  transform: rotate(180deg);
+.slide-right-enter-from {
+  width: var(--centerPos) !important;
+  min-width: var(--centerPos) !important;
+  max-width: var(--centerPos) !important;
+}
+
+.slide-right-enter-to {
+  width: 75% !important;
+  min-width: 75% !important;
+  max-width: 75% !important;
 }
 
 .resizeSeperator {
-  width: 5px !important;
-  cursor: e-resize;
+  width: 0.4rem !important;
+  cursor: col-resize;
+}
+
+.sep-col {
+  position: relative;
+  max-width: 0.4rem;
+  flex: 10000 1 0%;
 }
 </style>
