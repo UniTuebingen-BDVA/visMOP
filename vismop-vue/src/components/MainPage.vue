@@ -252,8 +252,9 @@ const sliderDrag = (e: MouseEvent) => {
   const initialWidth = miscTabsWidth.value;
   let currentWidth = miscTabsWidth.value;
   e.preventDefault();
-  if (!minimizeMiscTabs.value) {
-    const drag = (e: MouseEvent) => {
+
+  const drag = (e: MouseEvent) => {
+    if (!minimizeMiscTabs.value) {
       currentWidth = initialWidth + (e.clientX - initialX);
       if (currentWidth < windowMinWidthThreshold.value) {
         setMinimized();
@@ -265,17 +266,21 @@ const sliderDrag = (e: MouseEvent) => {
         miscTabsWidth.value = currentWidth;
         minimizeMiscTabs.value = false;
       }
-    };
-    const stopDrag = () => {
-      document.removeEventListener('mousemove', drag);
-      document.removeEventListener('mouseup', stopDrag);
-    };
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', stopDrag);
-  } else {
-    //minimizeMiscTabs.value = false;
-    //miscTabsWidth.value = windowMinWidthThreshold.value;
-  }
+    } else {
+      if (e.clientX - initialX > 15) {
+        miscTabsWidth.value = windowMinWidthThreshold.value;
+        centerPos.value = windowMinWidthThreshold.value;
+        minimizeMiscTabs.value = false;
+        stopDrag();
+      }
+    }
+  };
+  const stopDrag = () => {
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', stopDrag);
+  };
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('mouseup', stopDrag);
 };
 
 //watcher for queryToPathwayDictionary, when the dictionary changes, set the availables of the mainStore
