@@ -1,7 +1,10 @@
 <template>
-  <div>
-    <q-card :class="['maxWidth' + sizeClass, 'detailComponent']">
-      <div :class="['maxWidth' + sizeClass, 'col']">
+  <div ref="toplevelRef">
+    <q-card
+      class="detailComponent"
+      :style="{ '--detailComponentWidth': detailWidth + 'px' }"
+    >
+      <div class="col">
         <q-select
           v-model="pathwaySelection"
           filled
@@ -32,11 +35,21 @@
           color="primary"
           class="cycleButton"
           :icon="sizeIcon"
-          @click="cycleSize"
+          @click="clickCycleSize"
+        />
+        <q-icon
+          class="resizeHandle"
+          size="2em"
+          name="fa-solid fa-up-down-left-right"
+          @mousedown="sliderDrag"
         />
         <div
           :id="contextID"
-          :class="['svgContainerDetail' + sizeClass, 'svgContainerDetail']"
+          class="svgContainerDetail"
+          :style="{
+            '--svgContainerDetailWidth': detailWidth + 'px',
+            '--svgContainerDetailHeight': detailHeight + 'px',
+          }"
         ></div>
       </div>
     </q-card>
@@ -64,7 +77,7 @@ import {
 } from 'vue';
 import { useMainStore } from '@/stores';
 import { useQuasar } from 'quasar';
-import _ from 'lodash';
+import _, { size } from 'lodash';
 
 const props = defineProps({
   contextID: { type: String, required: true },
@@ -89,6 +102,15 @@ const props = defineProps({
 const mainStore = useMainStore();
 
 const $q = useQuasar();
+const toplevelRef = ref<HTMLElement | null>(null);
+const parentWidth = ref(0);
+const parentHeight = ref(0);
+const minWidth = ref(0);
+const minHeight = ref(0);
+const maxWidth = ref(0);
+const maxHeight = ref(0);
+const detailWidth = ref(35);
+const detailHeight = ref(38);
 const mutationObserver: Ref<MutationObserver | undefined> = ref(undefined);
 const pathwaySelection = ref({ title: '', value: '', text: '' });
 const sizeCycleState = ref(0);
@@ -109,6 +131,21 @@ const selectedPathwayOptions: Ref<
   { title: string; value: string; text: string }[]
 > = ref([]);
 
+// mounted function to get window.innerWidth
+onMounted(() => {
+  setWindowSize();
+  window.addEventListener('resize', _.debounce(setWindowSize, 100));
+  maxWidth.value = parentWidth.value * 1.35;
+  maxHeight.value = parentHeight.value * 0.7;
+  detailWidth.value = parentWidth.value * 0.35;
+  detailHeight.value = parentHeight.value * 0.7;
+});
+
+const setWindowSize = () => {
+  parentWidth.value = toplevelRef.value?.parentElement?.clientWidth || 0;
+  parentHeight.value = toplevelRef.value?.parentElement?.clientHeight || 0;
+};
+
 const detailDropdown = computed(() => mainStore.detailDropdown);
 const pathwayList = computed(() => mainStore.pathwayList);
 const overviewData = computed(
@@ -127,21 +164,6 @@ const sizeIcon = computed(() => {
       return 'fa-solid fa-minimize';
     default:
       return 'mdi-size-s';
-  }
-});
-
-const sizeClass = computed(() => {
-  switch (sizeCycleState.value) {
-    case 0:
-      return 'Small';
-    case 1:
-      return 'Medium';
-    case 2:
-      return 'Large';
-    case 3:
-      return 'Minimized';
-    default:
-      return 'Small';
   }
 });
 
@@ -178,10 +200,103 @@ onMounted(() => {
   if (tar) mutationObserver.value.observe(tar, config);
 });
 
+// size thresholds as computed values
+const sizeThresholds = computed(() => {
+  return {
+    smallWidth: parentWidth.value * 0.35,
+    smallHeight: parentHeight.value * 0.38,
+    mediumWidth: parentWidth.value * 0.65,
+    mediumHeight: parentHeight.value * 0.55,
+    largeWidth: parentWidth.value * 1.45,
+    largeHeight: parentHeight.value * 0.7,
+    minimizedWidth: parentWidth.value * 0.35,
+    minimizedHeight: parentHeight.value * 0.07,
+  };
+});
+
 /* METHODS */
+
+const clickCycleSize = () => {
+  cycleSize();
+  switch (sizeCycleState.value) {
+    case 0:
+      detailWidth.value = sizeThresholds.value.smallWidth;
+      detailHeight.value = sizeThresholds.value.smallHeight;
+      break;
+    case 1:
+      detailWidth.value = sizeThresholds.value.mediumWidth;
+      detailHeight.value = sizeThresholds.value.mediumHeight;
+      break;
+    case 2:
+      detailWidth.value = sizeThresholds.value.largeWidth;
+      detailHeight.value = sizeThresholds.value.largeHeight;
+      break;
+    case 3:
+      detailWidth.value = sizeThresholds.value.minimizedWidth;
+      detailHeight.value = sizeThresholds.value.minimizedHeight;
+      break;
+    default:
+      detailWidth.value = sizeThresholds.value.smallWidth;
+      detailHeight.value = sizeThresholds.value.smallHeight;
+  }
+};
 
 const cycleSize = () => {
   sizeCycleState.value = (sizeCycleState.value + 1) % 4;
+};
+
+const sliderDrag = (e: MouseEvent) => {
+  const initialX = e.clientX;
+  const initialY = e.clientY;
+  const initialWidth = detailWidth.value;
+  const initialHeight = detailHeight.value;
+  let currentWidth = detailWidth.value;
+  let currentHeight = detailHeight.value;
+  e.preventDefault();
+
+  const drag = (e: MouseEvent) => {
+    currentWidth = initialWidth + (initialX - e.clientX);
+    if (currentWidth < minWidth.value) {
+      detailWidth.value = minWidth.value;
+    } else if (currentWidth > maxWidth.value) {
+      detailWidth.value = maxWidth.value;
+    } else {
+      detailWidth.value = currentWidth;
+    }
+    currentHeight = initialHeight + (e.clientY - initialY);
+    if (currentHeight < minHeight.value) {
+      detailHeight.value = minHeight.value;
+    } else if (currentHeight > maxHeight.value) {
+      detailHeight.value = maxHeight.value;
+    } else {
+      detailHeight.value = currentHeight;
+    }
+    // call sizeCycleState if the current height and width falls into the respective range
+    if (
+      currentWidth < sizeThresholds.value.smallWidth &&
+      currentHeight < sizeThresholds.value.smallHeight
+    ) {
+      sizeCycleState.value = 3;
+    } else if (
+      currentWidth < sizeThresholds.value.mediumWidth &&
+      currentHeight < sizeThresholds.value.mediumHeight
+    ) {
+      sizeCycleState.value = 0;
+    } else if (
+      currentWidth < sizeThresholds.value.largeWidth &&
+      currentHeight < sizeThresholds.value.largeHeight
+    ) {
+      sizeCycleState.value = 1;
+    } else {
+      sizeCycleState.value = 2;
+    }
+  };
+  const stopDrag = () => {
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', stopDrag);
+  };
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('mouseup', stopDrag);
 };
 
 const filterFunction = (val: string, update: (n: () => void) => void) => {
@@ -457,6 +572,7 @@ const _getTotalsFromGraphJson = () => {
   top: 2vh;
   z-index: 5;
   display: flex;
+  max-width: var(--detailComponentWidth) !important;
 }
 
 .svgContainerDetail {
@@ -465,6 +581,8 @@ const _getTotalsFromGraphJson = () => {
   vertical-align: top;
   overflow: hidden;
   z-index: 5;
+  height: var(--svgContainerDetailHeight) !important;
+  width: var(--svgContainerDetailWidth) !important;
 }
 .svgContainerDetailMinimized {
   height: 7vh !important;
@@ -483,21 +601,16 @@ const _getTotalsFromGraphJson = () => {
   width: 145vh !important;
 }
 
-.maxWidthMinimized {
-  max-width: 38vh !important;
-}
-.maxWidthSmall {
-  max-width: 35vh !important;
-}
-.maxWidthMedium {
-  max-width: 65vh !important;
-}
-.maxWidthLarge {
-  max-width: 145vh !important;
-}
 .cycleButton {
   position: absolute !important;
   right: 0;
+  z-index: 6;
+  margin: 9px;
+}
+.resizeHandle {
+  position: absolute !important;
+  left: 0;
+  bottom: 0;
   z-index: 6;
   margin: 9px;
 }
