@@ -2,7 +2,10 @@
   <div ref="toplevelRef">
     <q-card
       class="detailComponent"
-      :style="{ '--detailComponentWidth': detailWidth + 'px' }"
+      :style="{
+        '--detailComponentWidth': detailWidth + 'px',
+        '--detailComponentHeight': detailHeight + 'px',
+      }"
     >
       <div class="col">
         <q-select
@@ -45,6 +48,7 @@
         />
         <div
           :id="contextID"
+          :key="transitionName"
           class="svgContainerDetail"
           :style="{
             '--svgContainerDetailWidth': detailWidth + 'px',
@@ -102,6 +106,7 @@ const props = defineProps({
 const mainStore = useMainStore();
 
 const $q = useQuasar();
+const transitionName = ref('toMinimized');
 const toplevelRef = ref<HTMLElement | null>(null);
 const parentWidth = ref(0);
 const parentHeight = ref(0);
@@ -135,15 +140,17 @@ const selectedPathwayOptions: Ref<
 onMounted(() => {
   setWindowSize();
   window.addEventListener('resize', _.debounce(setWindowSize, 100));
-  maxWidth.value = parentWidth.value * 1.35;
-  maxHeight.value = parentHeight.value * 0.7;
-  detailWidth.value = parentWidth.value * 0.35;
-  detailHeight.value = parentHeight.value * 0.7;
 });
 
 const setWindowSize = () => {
   parentWidth.value = toplevelRef.value?.parentElement?.clientWidth || 0;
   parentHeight.value = toplevelRef.value?.parentElement?.clientHeight || 0;
+  minWidth.value = sizeThresholds.value.minimizedWidth;
+  minHeight.value = sizeThresholds.value.minimizedHeight;
+  maxWidth.value = window.innerWidth * 0.98;
+  maxHeight.value = parentHeight.value * 0.93;
+  detailWidth.value = sizeThresholds.value.smallWidth;
+  detailHeight.value = sizeThresholds.value.smallHeight;
 };
 
 const detailDropdown = computed(() => mainStore.detailDropdown);
@@ -220,22 +227,27 @@ const clickCycleSize = () => {
   cycleSize();
   switch (sizeCycleState.value) {
     case 0:
+      transitionName.value = 'toSmall';
       detailWidth.value = sizeThresholds.value.smallWidth;
       detailHeight.value = sizeThresholds.value.smallHeight;
       break;
     case 1:
+      transitionName.value = 'toMedium';
       detailWidth.value = sizeThresholds.value.mediumWidth;
       detailHeight.value = sizeThresholds.value.mediumHeight;
       break;
     case 2:
+      transitionName.value = 'toLarge';
       detailWidth.value = sizeThresholds.value.largeWidth;
       detailHeight.value = sizeThresholds.value.largeHeight;
       break;
     case 3:
+      transitionName.value = 'toMinimized';
       detailWidth.value = sizeThresholds.value.minimizedWidth;
       detailHeight.value = sizeThresholds.value.minimizedHeight;
       break;
     default:
+      transitionName.value = 'toSmall';
       detailWidth.value = sizeThresholds.value.smallWidth;
       detailHeight.value = sizeThresholds.value.smallHeight;
   }
@@ -566,6 +578,21 @@ const _getTotalsFromGraphJson = () => {
 };
 </script>
 <style>
+.toSmall-enter-active,
+.toMedium-enter-active,
+.toLarge-enter-active,
+.toMinimized-enter-active {
+  transition: all 5s ease-in-out;
+  -webkit-transition: all 5s ease-in-out;
+  -moz-transition: all 5s ease-in-out;
+}
+
+.toSmall-enter-to,
+.toMedium-enter-to,
+.toLarge-enter-to,
+.toMinimized-enter-to {
+}
+
 .detailComponent {
   position: absolute !important;
   right: 2vh;
@@ -573,6 +600,7 @@ const _getTotalsFromGraphJson = () => {
   z-index: 5;
   display: flex;
   max-width: var(--detailComponentWidth) !important;
+  max-height: var(--svgContainerDetailHeight) !important;
 }
 
 .svgContainerDetail {
@@ -583,22 +611,6 @@ const _getTotalsFromGraphJson = () => {
   z-index: 5;
   height: var(--svgContainerDetailHeight) !important;
   width: var(--svgContainerDetailWidth) !important;
-}
-.svgContainerDetailMinimized {
-  height: 7vh !important;
-  width: 38vh !important;
-}
-.svgContainerDetailSmall {
-  height: 38vh !important;
-  width: 35vh !important;
-}
-.svgContainerDetailMedium {
-  height: 55vh !important;
-  width: 65vh !important;
-}
-.svgContainerDetailLarge {
-  height: 70vh !important;
-  width: 145vh !important;
 }
 
 .cycleButton {
