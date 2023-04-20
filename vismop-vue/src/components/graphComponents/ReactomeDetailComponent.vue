@@ -48,7 +48,6 @@
         />
         <div
           :id="contextID"
-          :key="transitionName"
           class="svgContainerDetail"
           :style="{
             '--svgContainerDetailWidth': detailWidth + 'px',
@@ -114,8 +113,8 @@ const minWidth = ref(0);
 const minHeight = ref(0);
 const maxWidth = ref(0);
 const maxHeight = ref(0);
-const detailWidth = ref(35);
-const detailHeight = ref(38);
+const detailWidth = ref(0);
+const detailHeight = ref(0);
 const mutationObserver: Ref<MutationObserver | undefined> = ref(undefined);
 const pathwaySelection = ref({ title: '', value: '', text: '' });
 const sizeCycleState = ref(0);
@@ -221,7 +220,6 @@ const sizeThresholds = computed(() => {
 /* METHODS */
 
 const clickCycleSize = () => {
-  cycleSize();
   switch (sizeCycleState.value) {
     case 0:
       transitionName.value = 'toSmall';
@@ -248,6 +246,7 @@ const clickCycleSize = () => {
       detailWidth.value = sizeThresholds.value.smallWidth;
       detailHeight.value = sizeThresholds.value.smallHeight;
   }
+  cycleSize();
 };
 
 const cycleSize = () => {
@@ -306,6 +305,12 @@ const sliderDrag = (e: MouseEvent) => {
   };
   document.addEventListener('mousemove', drag);
   document.addEventListener('mouseup', stopDrag);
+};
+const refreshSize = () => {
+  // console.log(
+  //   `refreshing size to x: ${detailWidth.value}, y: ${detailHeight.value}`
+  // );
+  currentView.value?.refreshSize();
 };
 
 const filterFunction = (val: string, update: (n: () => void) => void) => {
@@ -567,9 +572,7 @@ const drawDetailView = () => {
     measureById
   );
 };
-const refreshSize = () => {
-  currentView.value?.refreshSize();
-};
+
 const _getTotalsFromGraphJson = () => {
   // TODO get correct totals from graph json via recursion
 };
