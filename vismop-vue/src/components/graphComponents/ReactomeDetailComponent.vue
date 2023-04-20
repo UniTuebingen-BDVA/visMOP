@@ -140,6 +140,11 @@ const selectedPathwayOptions: Ref<
 onMounted(() => {
   setWindowSize();
   window.addEventListener('resize', _.debounce(setWindowSize, 100));
+  // allows to run function when tar changes
+  mutationObserver.value = new MutationObserver(refreshSize);
+  const config = { attributes: true };
+  const tar = document.getElementById(props.contextID ? props.contextID : '');
+  if (tar) mutationObserver.value.observe(tar, config);
 });
 
 const setWindowSize = () => {
@@ -197,14 +202,6 @@ watch(detailDropdown, () => {
       ? optionEntry
       : { text: '', title: '', value: '' };
   }
-});
-
-onMounted(() => {
-  // allows to run function when tar changes
-  mutationObserver.value = new MutationObserver(refreshSize);
-  const config = { attributes: true };
-  const tar = document.getElementById(props.contextID ? props.contextID : '');
-  if (tar) mutationObserver.value.observe(tar, config);
 });
 
 // size thresholds as computed values

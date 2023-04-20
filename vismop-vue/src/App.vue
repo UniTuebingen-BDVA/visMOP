@@ -49,6 +49,7 @@ export default {
 </script>
 <style>
 @import './css/networkGraph.css';
+@import './css/general.css';
 
 .limitToViewport {
   max-height: 100vh;

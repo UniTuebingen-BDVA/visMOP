@@ -151,6 +151,7 @@
         </keep-alive>
         <keep-alive>
           <reactome-detail-component-vue
+            class="highZ"
             context-i-d="reactomeDetail"
             :transcriptomics-selection="selectedTranscriptomics"
             :proteomics-selection="selectedProteomics"
