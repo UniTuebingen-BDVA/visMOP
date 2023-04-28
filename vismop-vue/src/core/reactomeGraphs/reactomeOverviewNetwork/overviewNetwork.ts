@@ -55,8 +55,8 @@ export default class OverviewGraph {
   highlightedEdgesClick = new Set();
   highlightedNodesClick = new Set();
   //from events SIGMA2 example, initialze sets for highlight on hover:
-  highlighedNodesHover = new Set();
-  highlighedEdgesHover = new Set();
+  highlightedNodesHover = new Set();
+  highlightedEdgesHover = new Set();
   highlightedCenterHover = '';
   currentPathway = '';
   hierarchyClickStack: string[] = [];
@@ -178,16 +178,16 @@ export default class OverviewGraph {
     // TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       // console.log('Entering: ', node)
-      this.highlighedNodesHover = new Set(this.graph.neighbors(node));
-      this.highlighedNodesHover.add(node);
+      this.highlightedNodesHover = new Set(this.graph.neighbors(node));
+      this.highlightedNodesHover.add(node);
       this.highlightedCenterHover = node;
-      this.highlighedEdgesHover = new Set(this.graph.edges(node));
+      this.highlightedEdgesHover = new Set(this.graph.edges(node));
       renderer.refresh();
     });
 
     renderer.on('leaveNode', () => {
-      this.highlighedNodesHover.clear();
-      this.highlighedEdgesHover.clear();
+      this.highlightedNodesHover.clear();
+      this.highlightedEdgesHover.clear();
       this.highlightedCenterHover = '';
       renderer.refresh();
     });

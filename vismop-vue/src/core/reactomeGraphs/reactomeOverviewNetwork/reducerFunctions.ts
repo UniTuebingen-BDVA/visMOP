@@ -49,66 +49,34 @@ export function nodeReducer(
 
     const nodeSize =
       this.highlightedCenterHover === node ||
-      this.highlighedNodesHover.has(node) ||
+      this.highlightedNodesHover.has(node) ||
       this.currentPathway === node.replace('path:', '')
         ? data.nonHoverSize + 4
         : data.nonHoverSize;
-
+    let color = 'white';
     if (
-      this.currentPathway === node.replace('path:', '') ||
-      this.highlightedCenterHover === node
+      this.highlightedCenterHover === node ||
+      this.currentPathway === node.replace('path:', '')
     ) {
-      return {
-        ...data,
-        color: overviewColors.selected,
-        zindex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
+      color = overviewColors.selected;
+    } else if (
+      this.highlightedNodesHover.has(node) ||
+      this.highlightedNodesClick.has(node)
+    ) {
+      color = overviewColors.highlight;
+    } else if (
+      this.pathwaysContainingIntersection.includes(node.split('_')[0])
+    ) {
+      color = overviewColors.intersection;
+    } else if (this.pathwaysContainingUnion.includes(node.split('_')[0])) {
+      color = overviewColors.union;
     }
-    if (this.pathwaysContainingIntersection.includes(node.split('_')[0])) {
-      return {
-        ...data,
-        color: overviewColors.intersection,
-        zindex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (this.pathwaysContainingUnion.includes(node.split('_')[0])) {
-      return {
-        ...data,
-        color: overviewColors.union,
-        zindex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (this.highlighedNodesHover.has(node)) {
-      return {
-        ...data,
-        color: overviewColors.highlight,
-        zIndex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (this.highlightedNodesClick.has(node)) {
-      return {
-        ...data,
-        color: overviewColors.highlight,
-        zIndex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
+
     return {
       ...data,
+      color: color,
+      zIndex: 1,
+      nodeSize: nodeSize,
       hidden: hidden,
       image: lodImage,
     };
@@ -131,29 +99,21 @@ export function edgeReducer(
   data: Attributes
 ): Attributes {
   if (this.renderer) {
-    if (this.highlighedEdgesHover.has(edge)) {
-      return {
-        ...data,
-        color: overviewColors.edgesHighlight,
-        size: 4,
-        zIndex: 1,
-        hidden: false,
-      };
-    }
-    if (this.highlightedEdgesClick.has(edge)) {
-      return {
-        ...data,
-        color: overviewColors.edgesHighlight,
-        size: 1,
-        zIndex: 1,
-        hidden: false,
-      };
-    }
+    const hidden =
+      this.highlightedEdgesHover.has(edge) ||
+      this.highlightedEdgesClick.has(edge) ||
+      this.showAllEdges
+        ? false
+        : true;
+    const width = this.highlightedEdgesHover.has(edge) ? 4 : 1;
+
+    const color = overviewColors.edgesHighlight;
     return {
       ...data,
-      // TODO hierarchiyHidden causes edges to not bet shown even though showAllEdges is true
-      hidden: !this.showAllEdges ? true : false,
-      color: overviewColors.edgesHighlight,
+      hidden: hidden,
+      color: color,
+      size: width,
+      zIndex: 1,
     };
   } else return data;
 }
