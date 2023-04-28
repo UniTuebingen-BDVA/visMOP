@@ -3,8 +3,8 @@ export const overviewColors = {
   clusters: 'rgba(184,86,202, 1.0)',
   roots: 'rgba(117, 117, 117, 1)',
   noVisibleSubtree: 'rgba(0, 0, 0, 1)',
-  union: '#314aecff',
-  intersection: '#6de428ff',
+  union: '#6de428ff',
+  intersection: '#314aecff',
   highlight: 'rgba(250,145,166,1.0)',
 
   default: 'rgba(255,255,255, 1.0)',
