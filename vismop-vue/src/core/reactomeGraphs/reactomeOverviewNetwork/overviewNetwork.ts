@@ -105,6 +105,7 @@ export default class OverviewGraph {
     clusterWeights: number[],
     windowWidth: number
   ) {
+    console.log('GraphData:', graphData);
     this.graph = UndirectedGraph.from(graphData);
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;

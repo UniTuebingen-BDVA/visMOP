@@ -76,7 +76,7 @@ export function generateGlyphDataReactome(targetMeasurement: 'fc' | 'slope'): {
     proteomicsData.meanMeasure =
       proteomicsData.measurements.reduce((a, b) => a + _.get(b, accessor), 0) /
       proteomicsData.measurements.length;
-    console.log('proteomicsData', proteomicsData);
+    //console.log('proteomicsData', proteomicsData);
     metabolomicsData.meanMeasure =
       metabolomicsData.measurements.reduce(
         (a, b) => a + _.get(b, accessor),

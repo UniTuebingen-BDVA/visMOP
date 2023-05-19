@@ -33,8 +33,8 @@ const POINTS = 1,
   // low setting of 3072 works on phones & tablets
   MAX_CANVAS_WIDTH = 16384;
 
-const fragShaderString = fragmentShaderSource['default'];
-const vertShaderString = vertexShaderSource['default'];
+const fragShaderString = fragmentShaderSource;
+const vertShaderString = vertexShaderSource;
 
 type ImageLoading = { status: 'loading' };
 type ImageError = { status: 'error' };
