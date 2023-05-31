@@ -1,12 +1,22 @@
 import json
-import pathlib
 import statistics
 import pandas as pd
-import pickle
 import os
 from operator import itemgetter
-from copy import deepcopy
+from typing import List, Dict, Tuple, Union, Any, Literal
 import collections
+from visMOP.python_scripts.hierarchy_types import (
+    HierarchyMetadata,
+    OmicMeasurement,
+    SubdiagramOmicEntry,
+    ReactomeGraphJSON,
+    ModifiedReactomeGraphJSON,
+    EntityNode,
+    EventNode,
+    SubpathwayNode,
+    EntityOccurrence,
+)
+from pathlib import Path
 
 from visMOP.python_scripts.timeseries_analysis import get_regression_data
 
@@ -36,11 +46,23 @@ stat_vals = {
 }
 
 
-def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_type):
+def get_PathwaySummaryData_omic(
+    num_entries: int,
+    all_values: List[OmicMeasurement],
+    limits: List[float],
+    mode: str,
+    omics_type: str,
+) -> Dict[str, Union[float, int]]:
     num_val_omic = len(all_values)
     pathway_summary_data = {}
     statics_to_calculate = [*stat_vals["common"], *stat_vals[mode]]
+
     # statistics for products produced in a significant higher amount
+    def calculate_mean(vals: List[float]) -> float:
+        return sum(vals) / len(vals) if vals else float("nan")
+
+    def calculate_percent(vals: List[float]) -> float:
+        return len(vals) / num_val_omic if num_val_omic else 0
 
     if (
         "timeseries_meanSlopeAbove" in statics_to_calculate
@@ -49,25 +71,17 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
         vals_higher_ul = [
             val["regressionData"]["slope"]
             for val in all_values
-            if val["regressionData"]["slope"] > limits[1]
+            if val["regressionData"] and val["regressionData"]["slope"] > limits[1]
         ]
         if "timeseries_meanSlopeAbove" in statics_to_calculate:
-            mean_val_higher_ul = (
-                sum(vals_higher_ul) / len(vals_higher_ul)
-                if len(vals_higher_ul) > 0
-                else float("nan")
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_meanSlopeAbove"
-            ] = mean_val_higher_ul
+            ] = calculate_mean(vals_higher_ul)
 
         if "timeseries_percentSlopeAbove" in statics_to_calculate:
-            pc_vals_higher_ul = (
-                len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_percentSlopeAbove"
-            ] = pc_vals_higher_ul
+            ] = calculate_percent(vals_higher_ul)
 
     if (
         "timeseries_meanSlopeBelow" in statics_to_calculate
@@ -76,25 +90,17 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
         vals_smaller_ll = [
             val["regressionData"]["slope"]
             for val in all_values
-            if val["regressionData"]["slope"] < limits[0]
+            if val["regressionData"] and val["regressionData"]["slope"] < limits[0]
         ]
         if "timeseries_meanSlopeBelow" in statics_to_calculate:
-            mean_val_smaller_ll = (
-                sum(vals_smaller_ll) / len(vals_smaller_ll)
-                if len(vals_smaller_ll) > 0
-                else float("nan")
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_meanSlopeBelow"
-            ] = mean_val_smaller_ll
+            ] = calculate_mean(vals_smaller_ll)
 
         if "timeseries_percentSlopeBelow" in statics_to_calculate:
-            pc_vals_smaller_ll = (
-                len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_percentSlopeBelow"
-            ] = pc_vals_smaller_ll
+            ] = calculate_percent(vals_smaller_ll)
 
     if (
         "timeseries_meanSeAbove" in statics_to_calculate
@@ -103,25 +109,17 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
         vals_higher_ul = [
             val["regressionData"]["std_err"]
             for val in all_values
-            if val["regressionData"]["std_err"] > limits[3]
+            if val["regressionData"] and val["regressionData"]["std_err"] > limits[3]
         ]
         if "timeseries_meanSeAbove" in statics_to_calculate:
-            mean_val_higher_ul = (
-                sum(vals_higher_ul) / len(vals_higher_ul)
-                if len(vals_higher_ul) > 0
-                else float("nan")
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_meanSeAbove"
-            ] = mean_val_higher_ul
+            ] = calculate_mean(vals_higher_ul)
 
         if "timeseries_percentSeAbove" in statics_to_calculate:
-            pc_vals_higher_ul = (
-                len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_percentSeAbove"
-            ] = pc_vals_higher_ul
+            ] = calculate_percent(vals_higher_ul)
 
     if (
         "timeseries_meanSeBelow" in statics_to_calculate
@@ -130,25 +128,17 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
         vals_smaller_ll = [
             val["regressionData"]["std_err"]
             for val in all_values
-            if val["regressionData"]["std_err"] < limits[2]
+            if val["regressionData"] and val["regressionData"]["std_err"] < limits[2]
         ]
         if "timeseries_meanSeBelow" in statics_to_calculate:
-            mean_val_smaller_ll = (
-                sum(vals_smaller_ll) / len(vals_smaller_ll)
-                if len(vals_smaller_ll) > 0
-                else float("nan")
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_meanSeBelow"
-            ] = mean_val_smaller_ll
+            ] = calculate_mean(vals_smaller_ll)
 
         if "timeseries_percentSeBelow" in statics_to_calculate:
-            pc_vals_smaller_ll = (
-                len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
-            )
             pathway_summary_data[
                 omics_type + "_timeseries_percentSeBelow"
-            ] = pc_vals_smaller_ll
+            ] = calculate_percent(vals_smaller_ll)
 
     # fold change mean and percent above
     if (
@@ -156,21 +146,19 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
         or "fc_percentFcAbove" in statics_to_calculate
     ):
         vals_higher_ul = [
-            val["measurement"] for val in all_values if val["measurement"] > limits[1]
+            val["measurement"]
+            for val in all_values
+            if isinstance(val["measurement"], float) and val["measurement"] > limits[1]
         ]
         if "fc_meanFcAbove" in statics_to_calculate:
-            mean_val_higher_ul = (
-                sum(vals_higher_ul) / len(vals_higher_ul)
-                if len(vals_higher_ul) > 0
-                else float("nan")
+            pathway_summary_data[omics_type + "_fc_meanFcAbove"] = calculate_mean(
+                vals_higher_ul
             )
-            pathway_summary_data[omics_type + "_fc_meanFcAbove"] = mean_val_higher_ul
 
         if "fc_percentFcAbove" in statics_to_calculate:
-            pc_vals_higher_ul = (
-                len(vals_higher_ul) / num_val_omic if num_val_omic != 0 else 0
+            pathway_summary_data[omics_type + "_fc_percentFcAbove"] = calculate_percent(
+                vals_higher_ul
             )
-            pathway_summary_data[omics_type + "_fc_percentFcAbove"] = pc_vals_higher_ul
 
     # fold change mean and percent below
     if (
@@ -178,45 +166,47 @@ def get_PathwaySummaryData_omic(num_entries, all_values, limits, mode, omics_typ
         or "fc_percentFcBelow" in statics_to_calculate
     ):
         vals_smaller_ll = [
-            val["measurement"] for val in all_values if val["measurement"] < limits[0]
+            val["measurement"]
+            for val in all_values
+            if isinstance(val["measurement"], float) and val["measurement"] < limits[0]
         ]
         if "fc_meanFcBelow" in statics_to_calculate:
-            mean_val_smaller_ll = (
-                sum(vals_smaller_ll) / len(vals_smaller_ll)
-                if len(vals_smaller_ll) > 0
-                else float("nan")
+            pathway_summary_data[omics_type + "_fc_meanFcBelow"] = calculate_mean(
+                vals_smaller_ll
             )
-            pathway_summary_data[omics_type + "_fc_meanFcBelow"] = mean_val_smaller_ll
 
         if "fc_percentFcBelow" in statics_to_calculate:
-            pc_vals_smaller_ll = (
-                len(vals_smaller_ll) / num_val_omic if num_val_omic != 0 else 0
+            pathway_summary_data[omics_type + "_fc_percentFcBelow"] = calculate_percent(
+                vals_smaller_ll
             )
-            pathway_summary_data[omics_type + "_fc_percentFcBelow"] = pc_vals_smaller_ll
 
     # common statistics
     if "common_numVals" in statics_to_calculate:
         pathway_summary_data["common_numVals"] = num_val_omic
     if "common_reg" in statics_to_calculate:
         measurement = [
-            val["measurement"] if mode == "fc" else statistics.fmean(val["measurement"])
+            val["measurement"]
+            if isinstance(val["measurement"], float)
+            else statistics.fmean(val["measurement"])
             for val in all_values
         ]
         pathway_summary_data[omics_type + "_common_reg"] = (
             sum(val > limits[1] or val < limits[0] for val in measurement)
             / num_val_omic
-            if num_val_omic != 0
+            if num_val_omic
             else 0
         )
     if "common_unReg" in statics_to_calculate:
         measurement = [
-            val["measurement"] if mode == "fc" else statistics.fmean(val["measurement"])
+            val["measurement"]
+            if isinstance(val["measurement"], float)
+            else statistics.fmean(val["measurement"])
             for val in all_values
         ]
         pathway_summary_data[omics_type + "_common_unReg"] = (
             sum(val < limits[1] and val > limits[0] for val in measurement)
             / num_val_omic
-            if num_val_omic != 0
+            if num_val_omic
             else 0
         )
     if "common_measured" in statics_to_calculate:
@@ -235,40 +225,46 @@ class ReactomePathway:
 
     """
 
-    def __init__(self, reactome_sID, has_diagram):
-        self.is_root = False
-        self.is_leaf = False
-        self.has_data = False
-        self.has_diagram = has_diagram
-        self.is_overview = True
-        self.name = ""
-        self.layout_json_file = None
-        self.graph_json_file = None
-        self.reactome_sID = reactome_sID
-        self.db_Id = ""
-        self.children = []
-        self.children_with_data = []
-        self.subtree_ids = []
-        self.diagram_entry = ""
-        self.own_measured_proteins = []
-        self.own_measured_genes = []
-        self.own_measured_metabolites = []
-        self.own_measured_maplinks = []
-        self.total_measured_proteins = {}
-        self.total_measured_genes = {}
-        self.total_measured_metabolites = {}
+    def __init__(self, reactome_sID: str, has_diagram: bool):
+        self.is_root: bool = False
+        self.is_leaf: bool = False
+        self.has_data: bool = False
+        self.has_diagram: bool = has_diagram
+        self.is_overview: bool = True
+        self.name: str = ""
+        self.layout_json_file: Dict[str, str] = {}
+        self.graph_json_file: ModifiedReactomeGraphJSON = {
+            "nodes": {},
+            "edges": {},
+            "subpathways": {},
+            "dbId": 0,
+            "stId": "",
+        }
+        self.reactome_sID: str = reactome_sID
+        self.db_Id: int = 0
+        self.children: List[str] = []
+        self.children_with_data: List[str] = []
+        self.subtree_ids: List[str] = []
+        self.diagram_entry: Union[ReactomePathway, None] = None
+        self.own_measured_proteins: List[str] = []
+        self.own_measured_genes: List[str] = []
+        self.own_measured_metabolites: List[str] = []
+        self.own_measured_maplinks: List[str] = []
+        self.total_measured_proteins: Dict[str, OmicMeasurement] = {}
+        self.total_measured_genes: Dict[str, OmicMeasurement] = {}
+        self.total_measured_metabolites: Dict[str, OmicMeasurement] = {}
         self.total_measured_maplinks = {}
-        self.subdiagrams_measured_proteins = {}
-        self.subdiagrams_measured_genes = {}
-        self.subdiagrams_measured_metabolites = {}
-        self.subdiagrams_measured_maplinks = {}
-        self.total_proteins = {}
-        self.total_metabolites = {}
-        self.maplinks = {}
-        self.parents = []
-        self.parents_with_data = []
-        self.level = -1
-        self.root_id = ""
+        self.subdiagrams_measured_proteins: Dict[str, SubdiagramOmicEntry] = {}
+        self.subdiagrams_measured_genes: Dict[str, SubdiagramOmicEntry] = {}
+        self.subdiagrams_measured_metabolites: Dict[str, SubdiagramOmicEntry] = {}
+        self.subdiagrams_measured_maplinks: Dict[str, SubdiagramOmicEntry] = {}
+        self.total_proteins: Dict[str, Dict[int, EntityOccurrence]] = {}
+        self.total_metabolites: Dict[str, Dict[int, EntityOccurrence]] = {}
+        self.maplinks: Dict[str, Dict[int, EntityOccurrence]] = {}
+        self.parents: List[str] = []
+        self.parents_with_data: List[str] = []
+        self.level: int = -1
+        self.root_id: str = ""
 
     def asdict(self):
         """Returns Object as dictionary"""
@@ -290,48 +286,32 @@ class ReactomePathway:
             self.is_root = True
 
 
-class ReactomeHierarchy(dict):
+class ReactomeHierarchy(dict[str, ReactomePathway]):
     """Class for pathway hierarchy
 
     functions as main datastructure for reactome data
     """
 
-    def __init__(
-        self,
-        metadata,
-        relational_data_path,
-        target_organism,
-        json_data_path,
-        *arg,
-        **kw
-    ):
+    def __init__(self, metadata: HierarchyMetadata, *arg, **kw) -> None:
         super(ReactomeHierarchy, self).__init__(*arg, **kw)
-        self.levels = {}
-        self.omics_recieved = []
+        self.levels: Dict[int, List[str]] = {}
+        self.omics_recieved: List[bool] = []
         self.layout_settings = {}
         self.amt_timesteps = metadata["amt_timesteps"]
         self.omics_recieved = metadata["omics_recieved"]
-        self.load_data(relational_data_path, target_organism)
-        self.add_json_data(json_data_path)
+        self.load_data(metadata["relational_data_path"], metadata["target_organism"])
+        self.add_json_data(metadata["json_data_path"])
 
-    def set_layout_settings(self, settings):
+    def set_layout_settings(self, settings) -> None:
+        """Sets layout settings for all pathways"""
         self.layout_settings = settings
 
-    def get_pathway_GO_info_dict(self):
-        return self.pathwayID, {
-            "numEntries": len(self.entries),
-            "StringIds": self.prot_in_pathway_StringIds,
-            "brite_hier_superheadings": self.brite_hier_superheadings,
-            "brite_hier_subcategories": self.brite_hier_subcategories,
-            "brite_hier_proteinIDs": self.brite_hier_proteinIDs,
-        }
-
-    def add_hierarchy_levels(self):
+    def add_hierarchy_levels(self) -> None:
         """Adds hierarchy levels to all entries.
         With 0 Being root and each increase is one level further
         """
         for k, v in self.items():
-            final_entries = []
+            final_entries: List[List[str]] = []
             self._hierarchy_levels_recursion(k, [], final_entries)
             shortest_path = min(final_entries, key=len)
             level = len(shortest_path) - 1
@@ -342,7 +322,9 @@ class ReactomeHierarchy(dict):
             else:
                 self.levels[level] = [v.reactome_sID]
 
-    def _hierarchy_levels_recursion(self, entry_id, path, final_entries):
+    def _hierarchy_levels_recursion(
+        self, entry_id: str, path: List[str], final_entries: List[List[str]]
+    ) -> None:
         at_root = False
         current_entry = self[entry_id]
 
@@ -354,14 +336,14 @@ class ReactomeHierarchy(dict):
             for parent in current_entry.parents:
                 self._hierarchy_levels_recursion(parent, path, final_entries)
 
-    def hierarchyInfo(self):
+    def hierarchyInfo(self) -> Dict[str, int]:
         """Prints info about hierarchy"""
         entries = len(self.keys())
         leafs = len([v for k, v in self.items() if v.is_leaf])
         roots = len([v for k, v in self.items() if v.is_root])
         return {"size": entries, "leafs": leafs, "roots": roots}
 
-    def generate_parents_children_with_data(self):
+    def generate_parents_children_with_data(self) -> None:
         for entry in self.values():
             for parent_entry in entry.parents:
                 entryObject = self[parent_entry]
@@ -372,7 +354,7 @@ class ReactomeHierarchy(dict):
                 if entryObject.has_data:
                     entry.children_with_data.append(child_entry)
 
-    def add_json_data(self, json_path):
+    def add_json_data(self, json_path: Path) -> None:
         """Adds json data to the pathways
 
         this includes names, aswell as detail level pathway information
@@ -389,22 +371,25 @@ class ReactomeHierarchy(dict):
                 entry = self[key]
                 if entry.has_diagram:
                     with open(json_path / (key + ".json"), encoding="utf8") as fh:
-                        json_file = json.load(fh)
-                        entry.layout_json_file = json_file
-                        entry.name = json_file["displayName"]
+                        json_file_layout = json.load(fh)
+                        entry.layout_json_file = json_file_layout
+                        entry.name = json_file_layout["displayName"]
 
                 if entry.has_diagram:
                     with open(json_path / (key + ".graph.json"), encoding="utf8") as fh:
-                        json_file = json.load(fh)
-                        json_file = format_graph_json(json_file)
-                        entry.graph_json_file = json_file
+                        json_file_graph: ReactomeGraphJSON = json.load(fh)
+                        json_file_mod: ModifiedReactomeGraphJSON = format_graph_json(
+                            json_file_graph
+                        )
+                        entry.graph_json_file = json_file_mod
                         (
                             prot,
                             molec,
                             contained_maplinks,
                             is_overview,
                         ) = get_contained_entities_graph_json(
-                            entry.graph_json_file["nodes"].keys(), entry.graph_json_file
+                            list(entry.graph_json_file["nodes"].keys()),
+                            entry.graph_json_file,
                         )
                         entry.total_proteins = prot
                         entry.total_metabolites = molec
@@ -421,7 +406,7 @@ class ReactomeHierarchy(dict):
             for key in current_level_ids:
                 entry = self[key]
                 if not entry.has_diagram:
-                    entries_with_diagram = []
+                    entries_with_diagram: List[Tuple[str, int]] = []
                     self._find_diagram_recursion(key, entries_with_diagram, 0)
                     shortest_path_key = min(entries_with_diagram, key=itemgetter(1))[0]
                     entry_with_diagram = self[shortest_path_key]
@@ -443,7 +428,9 @@ class ReactomeHierarchy(dict):
                     entry.maplinks = contained_maplinks
                     entry.is_overview = is_overview
 
-    def _find_diagram_recursion(self, entry_id, final_entries, steps):
+    def _find_diagram_recursion(
+        self, entry_id: str, final_entries: List[Tuple[str, int]], steps: int
+    ) -> None:
         arrived_at_diagram = False
         current_entry = self[entry_id]
 
@@ -458,7 +445,7 @@ class ReactomeHierarchy(dict):
                 if not arrived_at_diagram:
                     print("did not find diagram for: ", entry_id)
 
-    def aggregate_pathways(self):
+    def aggregate_pathways(self) -> None:
         """Aggregates data from low level nodes to higher level nodes
 
         as the supplied omics data is only mapped to leaf nodes, data has to be aggregated to the higher level nodes
@@ -605,18 +592,24 @@ class ReactomeHierarchy(dict):
                 ):
                     v.has_data = True
 
-    def get_subtree_target(self, tar_id):
+    def get_subtree_target(self, tar_id: str) -> List[str]:
         """Gets all leaves found for target entry
 
         Args:
             tar_id: String: entry id for which to retrieve leaves
         """
-        subtree = []
+        subtree: List[str] = []
         self._subtree_recursive(tar_id, subtree)
         return subtree
 
-    def _subtree_recursive(self, entry_id, subtree):
-        """Recursive function for leaf retrieval"""
+    def _subtree_recursive(self, entry_id: str, subtree: List[str]):
+        """
+        Recursive function to get all leaves for a given entry id
+
+        Args:
+            entry_id: String: entry id for which to retrieve leaves
+            subtree: List: list of leaves
+        """
         if entry_id is not None:
             if len(self[entry_id].children) == 0:
                 pass  # leaves.append(entry_id)
@@ -624,7 +617,13 @@ class ReactomeHierarchy(dict):
                 self._subtree_recursive(elem, subtree)
             subtree.append(entry_id)
 
-    def add_query_data(self, entity_data, query_type, query_key, mode):
+    def add_query_data(
+        self,
+        entity_data,
+        query_type: Literal["protein", "gene", "metabolite"],
+        query_key: str,
+        mode: Literal["slope", "fc"],
+    ):
         """Adds query data (i.e. experimental omics data, to hierarchy structure)"""
         current_reactome_id = entity_data["reactome_id"]
         for pathway in entity_data["pathways"]:
@@ -736,7 +735,6 @@ class ReactomeHierarchy(dict):
         """
         diagram_files = os.listdir(path / "diagram")
         with open(path / "ReactomePathwaysRelation.txt") as fh:
-
             for line in fh:
                 line_list = line.strip().split("\t")
                 left_entry = line_list[0]
@@ -784,12 +782,15 @@ class ReactomeHierarchy(dict):
                 for elem in self[entry_id].children:
                     self._get_subtree_non_overview_recursion(elem, subtree)
 
-    def generate_overview_data(self, omic_limits, verbose, mode):
+    def generate_overview_data(
+        self, omic_limits, verbose, mode, onlyCompletePathways=False
+    ):
         """Generates data to be exported to the frontend
         Args:
             omic_limits: dictionary: limits for omic data
             verbose: boolean: If total proteins/metabolite ids should be transmitted
             mode: string: "slope" or "fc"
+            onlyCompletePathways: boolean: if only pathways with all omics should be returned
         Returns:
             List of pathway overview entries, with each element being one pathway
             Dictionary of which query (accession Ids, e.g. uniprot/ensmbl) maps to which pathways
@@ -838,6 +839,24 @@ class ReactomeHierarchy(dict):
                         omic_limits,
                         self.omics_recieved,
                     )
+                    # only consider entries which do have data for all supplied omics (recieved from frontend)
+                    if onlyCompletePathways:
+                        omics_recived_strings = [
+                            omic
+                            for (omic, boolean) in zip(
+                                ["transcriptomics", "proteomics", "metabolomics"],
+                                self.omics_recieved,
+                            )
+                            if boolean
+                        ]
+                        if not all(
+                            [
+                                len(pathway_dict["entries"][omic]["measured"]) > 0
+                                for omic in omics_recived_strings
+                            ]
+                        ):
+                            continue
+
                     pathway_dropdown.append(dropdown_entry)
                     out_data.append(pathway_dict)
                     if pathway in central_nodes:
@@ -896,7 +915,7 @@ def generate_overview_pathway_entry(
     query_pathway_dict,
     verbose,
     omic_limits,
-    omics_recieved,
+    omics_recieved: list[bool],
 ):
     """generates pathway entry for overview
     Args:
@@ -1116,7 +1135,7 @@ def generate_overview_pathway_entry(
     return pathway_dict, pathway_dropdown_entry, pathway_summary_data
 
 
-def format_graph_json(graph_json_file):
+def format_graph_json(graph_json_file: ReactomeGraphJSON) -> ModifiedReactomeGraphJSON:
     """Formats .graph.json nodes to be easily accessible in dictionary form with
     the keys being node Ids
 
@@ -1126,9 +1145,10 @@ def format_graph_json(graph_json_file):
     Returns:
         formatted json file dictionary
     """
-    intermediate_node_dict = {}
-    intermediate_edge_dict = {}
-    intermediate_subpathway_dict = {}
+
+    intermediate_node_dict: Dict[int, EntityNode] = {}
+    intermediate_edge_dict: Dict[int, EventNode] = {}
+    intermediate_subpathway_dict: Dict[int, SubpathwayNode] = {}
 
     try:
         for v in graph_json_file["nodes"]:
@@ -1148,13 +1168,18 @@ def format_graph_json(graph_json_file):
     except:
         pass
 
-    graph_json_file["nodes"] = intermediate_node_dict
-    graph_json_file["edges"] = intermediate_edge_dict
-    graph_json_file["subpathways"] = intermediate_subpathway_dict
-    return graph_json_file
+    return {
+        "nodes": intermediate_node_dict,
+        "edges": intermediate_edge_dict,
+        "subpathways": intermediate_subpathway_dict,
+        "dbId": graph_json_file["dbId"],
+        "stId": graph_json_file["stId"],
+    }
 
 
-def get_contained_entities_graph_json(node_ids, formatted_json):
+def get_contained_entities_graph_json(
+    node_ids: List[int], formatted_json: ModifiedReactomeGraphJSON
+):
     """Gets contained entities (protein/genes, molecules, maplinks)
     In order to properly generate the glyphs and links of the overview visualization,
     all contained entities and maplinks (non hierarchical links from one pathway to another)
@@ -1169,9 +1194,9 @@ def get_contained_entities_graph_json(node_ids, formatted_json):
         contained_maplinks: list of Ids of contained maplinks
         is_overview: boolean, is pathway overview (i.e. only contains maplinks)
     """
-    contained_proteins = {}
-    contained_molecules = {}
-    contained_maplinks = {}
+    contained_proteins: Dict[str, Dict[int, EntityOccurrence]] = {}
+    contained_molecules: Dict[str, Dict[int, EntityOccurrence]] = {}
+    contained_maplinks: Dict[str, Dict[int, EntityOccurrence]] = {}
     is_overview = True
 
     for node_id in node_ids:
@@ -1199,7 +1224,9 @@ def get_contained_entities_graph_json(node_ids, formatted_json):
     return contained_proteins, contained_molecules, contained_maplinks, is_overview
 
 
-def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
+def get_subpathway_entities_graph_json(
+    formatted_json: ModifiedReactomeGraphJSON, subpathwayID: str
+):
     """Gets entities for subpathways from higherlevel pathways
 
     Args:
@@ -1215,8 +1242,8 @@ def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
 
     """
     name = ""
-    db_Id = ""
-    contained_events = []
+    db_Id = 0
+    contained_events: List[int] = []
 
     for k, v in formatted_json["subpathways"].items():
         # todo we can get pathway name here!!!
@@ -1282,8 +1309,10 @@ def get_subpathway_entities_graph_json(formatted_json, subpathwayID):
     )
 
 
-def get_occurrences_graph_json(intermediate_node_dict, entry_id):
-    """Gets occurences of an .graph.json entry
+def get_occurrences_graph_json(
+    intermediate_node_dict: Dict[int, EntityNode], entry_id: int
+) -> Dict[int, EntityOccurrence]:
+    """Gets occurences of an .graph.json entry.
     Reactome graphs can contain complexes, which in turn can contain
     a multide of proteins (or other entities), thus we have to get
     the parents of leaves to identify all occurences of an entities in the graph structure.
@@ -1293,17 +1322,29 @@ def get_occurrences_graph_json(intermediate_node_dict, entry_id):
         entry_id: id for which to collect the leaves
 
     Returns:
-        list of parents for a entity
+        dict of parents for a entity
     """
-    occurrences = {}
+    occurrences: Dict[int, EntityOccurrence] = {}
     _occurrences_recursive_graph_json(intermediate_node_dict, entry_id, occurrences)
     return occurrences
 
 
-def _occurrences_recursive_graph_json(intermediate_node_dict, entry_id, occurrences):
-    """recursive function to get .graph.json leaves"""
+def _occurrences_recursive_graph_json(
+    intermediate_node_dict: Dict[int, EntityNode],
+    entry_id: int,
+    occurrences: Dict[int, EntityOccurrence],
+) -> None:
+    """
+    Recursive function to get all parents of a node in a graph
+
+    Args:
+        intermediate_node_dict: node dictionary containing the graph nodes,
+        entry_id: id for which to collect the leaves
+        occurrences: list of parents for a entity
+    """
     if entry_id is not None:
         # print(intermediate_node_dict[entry_id]['children'])
+        # TODO if cases do not make sense --> same
         entry = intermediate_node_dict[entry_id]
         if "parents" not in entry:
             occurrences[entry["dbId"]] = {
@@ -1321,7 +1362,9 @@ def _occurrences_recursive_graph_json(intermediate_node_dict, entry_id, occurren
                 )
 
 
-def get_leaves_graph_json(intermediate_node_dict, entry_id):
+def get_leaves_graph_json(
+    intermediate_node_dict: Dict[int, EntityNode], entry_id: int
+) -> List[int]:
     """Gets leaves of an .graph.json entry
 
     Args:
@@ -1331,13 +1374,22 @@ def get_leaves_graph_json(intermediate_node_dict, entry_id):
     Returns:
         list of leaf-ids
     """
-    leaves = []
+    leaves: List[int] = []
     _leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves)
     return leaves
 
 
-def _leaf_recursive_graph_json(intermediate_node_dict, entry_id, leaves):
-    """recursive function to get .graph.json leaves"""
+def _leaf_recursive_graph_json(
+    intermediate_node_dict: Dict[int, EntityNode], entry_id: int, leaves: List[int]
+):
+    """
+    Recursive function to get all leaves of a node in a graph
+
+    Args:
+        intermediate_node_dict: node dictionary containing the graph nodes,
+        entry_id: id for which to collect the leaves
+        leaves: list of leaf-ids
+    """
     if entry_id is not None:
         # print(intermediate_node_dict[entry_id]['children'])
         entry = intermediate_node_dict[entry_id]

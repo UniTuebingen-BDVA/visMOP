@@ -133,10 +133,13 @@ def reactome_parsing():
         amt_timesteps = metabolomics["amtTimesteps"]
 
     reactome_hierarchy = ReactomeHierarchy(
-        {"amt_timesteps": amt_timesteps, "omics_recieved": omics_recieved},
-        data_path / "reactome_data",
-        target_db.upper(),
-        data_path / "reactome_data" / "diagram",
+        {
+            "amt_timesteps": amt_timesteps,
+            "omics_recieved": omics_recieved,
+            "relational_data_path": data_path / "reactome_data",
+            "target_organism": target_db.upper(),
+            "json_data_path": data_path / "reactome_data" / "diagram",
+        }
     )
 
     ##
