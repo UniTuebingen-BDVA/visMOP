@@ -1,8 +1,9 @@
 import json
 import pandas as pd
+from typing import Union
 
 
-def create_df(file_type, sheet_name):
+def create_df(file_type, sheet_name) -> tuple[int, pd.DataFrame]:
     """creates dataframe from filetype object (i.e. a excel file)
     Args:
         file_type: file-type object
@@ -14,7 +15,7 @@ def create_df(file_type, sheet_name):
             file_type, sheet_name=sheet_name, header=None, engine="openpyxl"
         )
     except ValueError as e:
-        return 1, "Xlsx parse Error!! Is the Correct Sheet chosen?"
+        return 1, pd.DataFrame()
     read_table = read_table.dropna(how="all")
     read_table = read_table.rename(columns=read_table.iloc[0])
     read_table = read_table.drop(read_table.index[0])
@@ -80,13 +81,18 @@ def table_request(request, cache, requestType):
     # create and parse data table and prepare json
     exitState, data_table = create_df(transfer_dat, sheet_name)
     if exitState == 1:
-        return json.dumps({"exitState": 1, "errorMsg": data_table})
+        return json.dumps(
+            {
+                "exitState": 1,
+                "errorMsg": "Xlsx parse Error!! Is the Correct Sheet chosen?",
+            }
+        )
     cache.set(
         requestType,
         data_table.copy(deep=True).to_json(orient="columns"),
     )
     entry_IDs = list(data_table.iloc[:, 0])
-    out_data = {"exitState": 0}
+    out_data: dict[str, Union[int, list]] = {"exitState": 0}
     out_data["entry_IDs"] = entry_IDs
     out_data["header"] = generate_vue_table_header(data_table)
     out_data["entries"] = generate_vue_table_entries(data_table)

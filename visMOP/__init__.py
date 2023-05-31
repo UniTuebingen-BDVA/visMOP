@@ -6,6 +6,7 @@ from visMOP.python_scripts.data_table_parsing import table_request, format_omics
 from visMOP.python_scripts.create_overview import create_overview_data
 from visMOP.python_scripts.reactome_hierarchy import ReactomeHierarchy
 from visMOP.python_scripts.reactome_query import ReactomeQuery
+from visMOP.python_scripts.omicsTypeDefs import OmicsInputVals, SliderVals
 
 import pandas as pd
 import pathlib
@@ -16,6 +17,7 @@ from visMOP.python_scripts.cluster_layout import (
     timepoint_analysis,
 )
 from numpy.core.fromnumeric import mean
+from typing import Any, Dict, List, Tuple
 
 import secrets
 from flask_caching import Cache
@@ -101,11 +103,15 @@ def reactome_parsing():
     ###
     # Parse POST data
     ###
-    target_db = request.json["targetOrganism"]["value"]
-    transcriptomics = request.json["transcriptomics"]
-    proteomics = request.json["proteomics"]
-    metabolomics = request.json["metabolomics"]
-    slider_vals = request.json["sliderVals"]
+    # throw error if no data is recieved
+    if not request.json:
+        return json.dumps({"error": "no data recieved"})
+
+    target_db: str = request.json["targetOrganism"]["value"]
+    transcriptomics: OmicsInputVals = request.json["transcriptomics"]
+    proteomics: OmicsInputVals = request.json["proteomics"]
+    metabolomics: OmicsInputVals = request.json["metabolomics"]
+    slider_vals: SliderVals = request.json["sliderVals"]
     layout_settings_recieved = request.json["layoutSettings"]
     timeseries_mode = request.json["timeseriesMode"]
     cache.set("target_db", target_db)
