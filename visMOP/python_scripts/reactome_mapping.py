@@ -1,9 +1,13 @@
 import pickle
 import sys
 import pathlib
+from typing import Dict
+from visMOP.python_scripts.omicsTypeDefs import (
+    ReactomePickleOrganism,
+)
 
 
-def generate_pickles(file_path, mapping_file_name):
+def generate_pickles(file_path: str, mapping_file_name: str):
     """generate pickle mapping objects from mapping files. This is function should be run when updating the reactome data
 
     Args:
@@ -12,7 +16,7 @@ def generate_pickles(file_path, mapping_file_name):
 
     """
     data_path = pathlib.Path(file_path)
-    database_2_reactome = {}
+    database_2_reactome: Dict[str, ReactomePickleOrganism] = {}
     # mapping_file e.g. 'UniProt2Reactome_PE_Pathway.txt' for uniprot
     with open(data_path / mapping_file_name, encoding="utf8") as fh:
         for line in fh:
@@ -24,7 +28,7 @@ def generate_pickles(file_path, mapping_file_name):
             reactome_pathway_Name = line_split[5]
             organism = line_split[7].replace(" ", "_")
             if organism not in database_2_reactome:
-                database_2_reactome[organism] = {}
+                database_2_reactome[organism] = dict()
             # for non reactome ID query
             if query_ID in database_2_reactome[organism]:
                 if reactome_entity_ID in database_2_reactome[organism][query_ID]:
