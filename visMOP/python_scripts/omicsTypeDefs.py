@@ -1,4 +1,4 @@
-from typing import Dict, Literal, TypedDict, Tuple, List, NotRequired
+from typing import Dict, Union, Literal, TypedDict, Tuple, List, NotRequired
 
 
 class OmicsInputVals(TypedDict):
@@ -16,6 +16,18 @@ class OmicsInputVals(TypedDict):
     recieved: bool
     symbol: str
     value: str
+
+
+class TableHeaders(TypedDict):
+    label: str
+    name: str
+    field: str
+    sortable: bool
+    classes: str
+    align: Union[Literal["left", "center", "right"], None]
+    style: str
+    headerClasses: str
+    headerStyle: str
 
 
 class SliderVal(TypedDict):

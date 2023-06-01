@@ -6,7 +6,11 @@ from visMOP.python_scripts.data_table_parsing import table_request, format_omics
 from visMOP.python_scripts.create_overview import create_overview_data
 from visMOP.python_scripts.reactome_hierarchy import ReactomeHierarchy
 from visMOP.python_scripts.reactome_query import ReactomeQuery
-from visMOP.python_scripts.omicsTypeDefs import OmicsInputVals, SliderVals
+from visMOP.python_scripts.omicsTypeDefs import (
+    MeasurementData,
+    OmicsInputVals,
+    SliderVals,
+)
 
 import pandas as pd
 import pathlib
@@ -124,7 +128,7 @@ def reactome_parsing():
         proteomics["recieved"],
         metabolomics["recieved"],
     ]
-    amt_timesteps = math.inf
+    amt_timesteps: int | float = math.inf
     if transcriptomics["recieved"] and transcriptomics["amtTimesteps"] < amt_timesteps:
         amt_timesteps = transcriptomics["amtTimesteps"]
     if proteomics["recieved"] and proteomics["amtTimesteps"] < amt_timesteps:
@@ -146,7 +150,11 @@ def reactome_parsing():
     # Add query Data to Hierarchy
     ##
     node_pathway_dict = {}
-    fold_changes = {"transcriptomics": [], "proteomics": [], "metabolomics": []}
+    fold_changes: Dict[str, List[Dict[str, MeasurementData]]] = {
+        "transcriptomics": [],
+        "proteomics": [],
+        "metabolomics": [],
+    }
     chebi_ids = {}
     ##
     # Add Proteomics Data

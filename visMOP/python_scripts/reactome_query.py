@@ -11,18 +11,23 @@ from visMOP.python_scripts.reactome_hierarchy import ReactomeHierarchy
 
 
 class ReactomeQuery:
-    """Reactome Query class
-    Maps the query (i.e. experimental omics data) to reactome data
+    """
+    A class representing a Reactome query.
 
     Args:
-        query_data: placeholder (?) tuple of ({ID: QueryID, table_id: ID in table}, NUMBER) representing id and associated measurement value
+        query: The query string.
+        target_organism: The full name of the organism (e.g. Mus_musculus, Homo_sapiens).
+        id_database: The database for which to map the IDs to Reactome (e.g. uniprot, ensmbl).
+        pickle_path: The path to the pickle files.
 
-        target_organism: full name organism (e.g. Mus_musculus, Homo_sapiens)
-
-        id_database: database for which to map the ids to reactome (e.g. uniprot, ensmbl)
-
-        pickle_path: path to pickle files
-
+    Attributes:
+        query: The query string.
+        target_organism: The full name of the organism (e.g. Mus_musculus, Homo_sapiens).
+        id_database: The database for which to map the IDs to Reactome (e.g. uniprot, ensmbl).
+        pickle_path: The path to the pickle files.
+        query_results: A dictionary containing the query results.
+        id_table_id: A dictionary mapping IDs to table IDs.
+        all_contained_pathways: A list of all Reactome low level pathways contained in the query.
     """
 
     def __init__(
@@ -32,6 +37,7 @@ class ReactomeQuery:
         id_database: Literal["ChEBI", "UniProt", "Ensembl"],
         pickle_path: Path,
     ):
+        """ """
         self.query_data = query_data
         self.query_results: Dict[str, ReactomeQueryEntry] = {}
         self.id_table_id = {elem[0]["ID"]: elem[0]["table_id"] for elem in query_data}
@@ -134,6 +140,13 @@ class ReactomeQuery:
     def get_levels_of_query(self, hierarchy: ReactomeHierarchy, level: int):
         """gets level of all queried pathway
         probably deprecate
+
+        Args:
+            hierarchy: reactome hierarchy
+            level: level of pathway
+
+        Returns:
+            out_pathways: list of pathways at level
         """
         out_pathways: List[Tuple[str, str]] = []
         for elem in self.all_contained_pathways:
