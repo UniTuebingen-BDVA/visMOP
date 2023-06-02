@@ -15,7 +15,10 @@ from visMOP.python_scripts.hierarchy_types import (
     EventNode,
     SubpathwayNode,
     EntityOccurrence,
+    HierarchyEntryDict,
+    HierarchyEntryMeasurment,
 )
+from visMOP.python_scripts.omicsTypeDefs import ReactomePickleEntry
 from pathlib import Path
 
 from visMOP.python_scripts.timeseries_analysis import get_regression_data
@@ -146,7 +149,7 @@ def get_PathwaySummaryData_omic(
         or "fc_percentFcAbove" in statics_to_calculate
     ):
         vals_higher_ul = [
-            val["measurement"]
+            val["measurement"][0]
             for val in all_values
             if isinstance(val["measurement"], float) and val["measurement"] > limits[1]
         ]
@@ -166,7 +169,7 @@ def get_PathwaySummaryData_omic(
         or "fc_percentFcBelow" in statics_to_calculate
     ):
         vals_smaller_ll = [
-            val["measurement"]
+            val["measurement"][0]
             for val in all_values
             if isinstance(val["measurement"], float) and val["measurement"] < limits[0]
         ]
@@ -266,6 +269,8 @@ class ReactomePathway:
         self.level: int = -1
         self.root_id: str = ""
 
+    __getitem__ = object.__getattribute__
+
     def asdict(self):
         """Returns Object as dictionary"""
         return {
@@ -291,6 +296,8 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
 
     functions as main datastructure for reactome data
     """
+
+    __getitem__ = dict.__getitem__
 
     def __init__(self, metadata: HierarchyMetadata, *arg, **kw) -> None:
         super(ReactomeHierarchy, self).__init__(*arg, **kw)
@@ -619,11 +626,11 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
 
     def add_query_data(
         self,
-        entity_data,
+        entity_data: ReactomePickleEntry,
         query_type: Literal["protein", "gene", "metabolite"],
         query_key: str,
         mode: Literal["slope", "fc"],
-    ):
+    ) -> None:
         """Adds query data (i.e. experimental omics data, to hierarchy structure)"""
         current_reactome_id = entity_data["reactome_id"]
         for pathway in entity_data["pathways"]:
@@ -641,12 +648,11 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     }
                     self[pathway[0]].own_measured_proteins.append(query_key)
                 else:
-                    self[pathway[0]].total_measured_proteins[query_key] = {
-                        "measurement": entity_data["measurement"],
-                        "regressionData": get_regression_data(
-                            entity_data["measurement"]
-                        )
-                        if mode == "slope"
+                    measurement = entity_data.get("measurement")
+                    omic_measurment: OmicMeasurement = {
+                        "measurement": measurement if measurement else [0],
+                        "regressionData": get_regression_data(measurement)
+                        if measurement and mode == "slope"
                         else None,
                         "forms": {
                             current_reactome_id: {
@@ -659,6 +665,9 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                             }
                         },
                     }
+                    self[pathway[0]].total_measured_proteins[
+                        query_key
+                    ] = omic_measurment
                     self[pathway[0]].own_measured_proteins.append(query_key)
             elif query_type == "gene":
                 if query_key in self[pathway[0]].total_measured_genes:
@@ -673,12 +682,11 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     if query_key not in self[pathway[0]].own_measured_genes:
                         self[pathway[0]].own_measured_genes.append(query_key)
                 else:
-                    self[pathway[0]].total_measured_genes[query_key] = {
-                        "measurement": entity_data["measurement"],
-                        "regressionData": get_regression_data(
-                            entity_data["measurement"]
-                        )
-                        if mode == "slope"
+                    measurement: List[float] | None = entity_data.get("measurement")
+                    omic_measurment: OmicMeasurement = {
+                        "measurement": measurement if measurement else [0],
+                        "regressionData": get_regression_data(measurement)
+                        if measurement and mode == "slope"
                         else None,
                         "forms": {
                             current_reactome_id: {
@@ -691,6 +699,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                             }
                         },
                     }
+                    self[pathway[0]].total_measured_genes[query_key] = omic_measurment
                     self[pathway[0]].own_measured_genes.append(query_key)
             elif query_type == "metabolite":
                 if query_key in self[pathway[0]].total_measured_metabolites:
@@ -706,12 +715,11 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     }
                     self[pathway[0]].own_measured_metabolites.append(query_key)
                 else:
-                    self[pathway[0]].total_measured_metabolites[query_key] = {
-                        "measurement": entity_data["measurement"],
-                        "regressionData": get_regression_data(
-                            entity_data["measurement"]
-                        )
-                        if mode == "slope"
+                    measurement: List[float] | None = entity_data.get("measurement")
+                    omic_measurment: OmicMeasurement = {
+                        "measurement": measurement if measurement else [0],
+                        "regressionData": get_regression_data(measurement)
+                        if measurement and mode == "slope"
                         else None,
                         "forms": {
                             current_reactome_id: {
@@ -724,9 +732,12 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                             }
                         },
                     }
+                    self[pathway[0]].total_measured_metabolites[
+                        query_key
+                    ] = omic_measurment
                     self[pathway[0]].own_measured_metabolites.append(query_key)
 
-    def load_data(self, path, organism):
+    def load_data(self, path: Path, organism: str) -> None:
         """Load hierarchy data into datastructure
         Args:
             path: path to data folder
@@ -761,7 +772,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
             v.assert_leaf_root_state()
         self.add_hierarchy_levels()
 
-    def get_subtree_non_overview(self, tar_id):
+    def get_subtree_non_overview(self, tar_id: str) -> List[str]:
         """Gets all leaves found for target entry
 
         Args:
@@ -771,7 +782,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         self._get_subtree_non_overview_recursion(tar_id, subtree)
         return subtree
 
-    def _get_subtree_non_overview_recursion(self, entry_id, subtree):
+    def _get_subtree_non_overview_recursion(self, entry_id: str, subtree: List[str]):
         """Recursive function for leaf retrieval"""
         if entry_id is not None:
             if not self[entry_id].is_overview:
@@ -783,7 +794,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     self._get_subtree_non_overview_recursion(elem, subtree)
 
     def generate_overview_data(
-        self, omic_limits, verbose, mode, onlyCompletePathways=False
+        self, omic_limits, verbose: bool, mode: str, onlyCompletePathways: bool = False
     ):
         """Generates data to be exported to the frontend
         Args:
@@ -798,10 +809,10 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
             List of contained hierarchy nodes
         """
         out_data = []
-        central_nodes_out = []
-        central_nodes = []
+        central_nodes_out: List[str] = []
+        central_nodes: List[str] = []
         # pathway_ids = self.levels[level]
-        pathway_ids = []
+        pathway_ids: List[str] = []
         for root in self.levels[0]:
             central_nodes.extend(self.get_subtree_non_overview(root))
         # central_nodes.extend(self.levels[0])
@@ -903,18 +914,68 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
 ###
 # Auxilliary Functions
 ###
+def extract_measurement_data(
+    data: List[OmicMeasurement],
+    timepoint_index: int,
+    mode: str,
+) -> List[OmicMeasurement]:
+    """Extracts measurement data for each timepount from OmicMeasurement objects
+    Args:
+        data: dictionary of OmicMeasurement objects
+        timepoint_index: index of timepoint to extract
+        mode: string: "slope" or "fc"
+    Returns:
+        List of dictionaries, each containing one omic measurement
+
+    """
+    out_list: List[OmicMeasurement] = []
+    for elem in data:
+        if mode == "fc":
+            new_elem = elem.copy()
+            new_elem["measurement"] = [elem["measurement"][timepoint_index]]
+            out_list.append(new_elem)
+        else:
+            out_list.append(elem)
+    return out_list
+
+
+def add_data_to_pathway_dict(
+    entry: ReactomePathway,
+    timepoint_index: int,
+    mode: str,
+    pathway_Id: str,
+    pathway_dict: HierarchyEntryDict,
+    query_pathway_dict: Dict[str, List[str]],
+    data_type: Tuple[str, str],
+) -> None:
+    for k, v in entry[f"total_measured_{data_type[0]}"].items():
+        name = v["forms"][list(v["forms"].keys())[0]]["name"].split(" [")[0]
+        dict_entry: HierarchyEntryMeasurment = {
+            "queryId": k,
+            "value": v["measurement"][timepoint_index]
+            if mode == "fc"
+            else v["measurement"][0],
+            "name": name,
+            "forms": v["forms"],
+            "regressionData": v["regressionData"] if mode == "slope" else None,
+        }
+        pathway_dict["entries"][data_type[1]]["measured"][k] = dict_entry
+        if k in query_pathway_dict.keys():
+            query_pathway_dict[k].append(pathway_Id)
+        else:
+            query_pathway_dict[k] = [pathway_Id]
 
 
 def generate_overview_pathway_entry(
-    entry,
-    is_central,
-    pathway_Id,
-    mode,
-    timepoint_index,
-    amt_timesteps,
+    entry: ReactomePathway,
+    is_central: bool,
+    pathway_Id: str,
+    mode: str,
+    timepoint_index: int,
+    amt_timesteps: int,
     query_pathway_dict,
-    verbose,
-    omic_limits,
+    verbose: bool,
+    omic_limits: List[List[float]],
     omics_recieved: list[bool],
 ):
     """generates pathway entry for overview
@@ -934,13 +995,14 @@ def generate_overview_pathway_entry(
         formatted json file dictionary
 
     """
-    pathway_dict = {
+    pathway_dict: HierarchyEntryDict = {
         "pathwayName": "",
         "pathwayId": "",
         "rootId": "",
         "nodeType": "",
         "isCentral": is_central,
-        "maplinks": [],
+        "isOverview": False,
+        "maplinks": {},
         "subtreeIds": [],
         "parents": [],
         "children": [],
@@ -996,7 +1058,7 @@ def generate_overview_pathway_entry(
         "metabolomics"
     ] = entry.subdiagrams_measured_metabolites
 
-    pathway_dropdown_entry = {
+    pathway_dropdown_entry: dict[str, str] = {
         "text": entry.reactome_sID + ": " + entry.name + string_suffix,
         "value": entry.reactome_sID + string_suffix,
         "title": entry.name,
@@ -1021,37 +1083,16 @@ def generate_overview_pathway_entry(
     #         + list(entry.total_measured_metabolites.keys())
     #     )
     # )
-    values_per_omic = [
-        [
-            {
-                "measurement": elem["measurement"][timepoint_index]
-                if mode == "fc"
-                else elem["measurement"],
-                "regressionData": elem["regressionData"],
-                "forms": elem["forms"],
-            }
-            for elem in entry.total_measured_genes.values()
-        ],
-        [
-            {
-                "measurement": elem["measurement"][timepoint_index]
-                if mode == "fc"
-                else elem["measurement"],
-                "regressionData": elem["regressionData"],
-                "forms": elem["forms"],
-            }
-            for elem in entry.total_measured_proteins.values()
-        ],
-        [
-            {
-                "measurement": elem["measurement"][timepoint_index]
-                if mode == "fc"
-                else elem["measurement"],
-                "regressionData": elem["regressionData"],
-                "forms": elem["forms"],
-            }
-            for elem in entry.total_measured_metabolites.values()
-        ],
+    values_per_omic: list[list[OmicMeasurement]] = [
+        extract_measurement_data(
+            list(entry.total_measured_genes.values()), timepoint_index, mode
+        ),
+        extract_measurement_data(
+            list(entry.total_measured_proteins.values()), timepoint_index, mode
+        ),
+        extract_measurement_data(
+            list(entry.total_measured_metabolites.values()), timepoint_index, mode
+        ),
     ]
 
     num_entries_omics = [
@@ -1083,55 +1124,33 @@ def generate_overview_pathway_entry(
 
     # pathway_summary_data.append(len(entry.subtree_ids))
     pathway_summary_data["nonOmic_percentMeasured"] = perc_vals_total
-
-    for k in entry.total_measured_proteins:
-        v = entry.total_measured_proteins[k]
-        name = v["forms"][list(v["forms"].keys())[0]]["name"].split(" [")[0]
-        pathway_dict["entries"]["proteomics"]["measured"][k] = {
-            "queryId": k,
-            "value": v["measurement"][timepoint_index]
-            if mode == "fc"
-            else v["measurement"],
-            "name": name,
-            "forms": v["forms"],
-            "regressionData": v["regressionData"] if mode == "slope" else None,
-        }
-        if k in query_pathway_dict.keys():
-            query_pathway_dict[k].append(pathway_Id)
-        else:
-            query_pathway_dict[k] = [pathway_Id]
-    for k in entry.total_measured_genes:
-        v = entry.total_measured_genes[k]
-        name = v["forms"][list(v["forms"].keys())[0]]["name"].split(" [")[0]
-        pathway_dict["entries"]["transcriptomics"]["measured"][k] = {
-            "queryId": k,
-            "value": v["measurement"][timepoint_index]
-            if mode == "fc"
-            else v["measurement"],
-            "name": name,
-            "forms": v["forms"],
-            "regressionData": v["regressionData"] if mode == "slope" else None,
-        }
-        if k in query_pathway_dict.keys():
-            query_pathway_dict[k].append(pathway_Id)
-        else:
-            query_pathway_dict[k] = [pathway_Id]
-    for k in entry.total_measured_metabolites:
-        v = entry.total_measured_metabolites[k]
-        name = v["forms"][list(v["forms"].keys())[0]]["name"].split(" [")[0]
-        pathway_dict["entries"]["metabolomics"]["measured"][k] = {
-            "queryId": k,
-            "value": v["measurement"][timepoint_index]
-            if mode == "fc"
-            else v["measurement"],
-            "name": name,
-            "forms": v["forms"],
-            "regressionData": v["regressionData"] if mode == "slope" else None,
-        }
-        if k in query_pathway_dict.keys():
-            query_pathway_dict[k].append(pathway_Id)
-        else:
-            query_pathway_dict[k] = [pathway_Id]
+    add_data_to_pathway_dict(
+        entry,
+        timepoint_index,
+        mode,
+        pathway_Id,
+        pathway_dict,
+        query_pathway_dict,
+        ("proteins", "proteomics"),
+    )
+    add_data_to_pathway_dict(
+        entry,
+        timepoint_index,
+        mode,
+        pathway_Id,
+        pathway_dict,
+        query_pathway_dict,
+        ("genes", "transcriptomics"),
+    )
+    add_data_to_pathway_dict(
+        entry,
+        timepoint_index,
+        mode,
+        pathway_Id,
+        pathway_dict,
+        query_pathway_dict,
+        ("metabolites", "metabolomics"),
+    )
     return pathway_dict, pathway_dropdown_entry, pathway_summary_data
 
 

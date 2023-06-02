@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, TypedDict, Union
+from typing import Dict, List, Literal, TypedDict, Union, Tuple
 from pathlib import Path
 
 
@@ -8,11 +8,11 @@ class FormEntry(TypedDict):
 
     Attributes:
         name (str): The name of the form entry.
-        toplevelId (List[str]): A list of IDs for the top-level elements.
+        toplevelId (List[int]): A list of IDs for the top-level elements.
     """
 
     name: str
-    toplevelId: List[str]
+    toplevelId: List[int]
 
 
 class RegressionData(TypedDict):
@@ -22,14 +22,14 @@ class RegressionData(TypedDict):
     Attributes:
         slope (float): The slope of the regression line.
         intercept (float): The y-intercept of the regression line.
-        r2 (float): The coefficient of determination (R^2) for the regression line.
+        r_value (float): The coefficient of determination (R^2) for the regression line.
         p_value (float): The p-value for the regression line.
         std_err (float): The standard error of the regression line.
     """
 
     slope: float
     intercept: float
-    r2: float
+    r_value: float
     p_value: float
     std_err: float
 
@@ -39,12 +39,12 @@ class OmicMeasurement(TypedDict):
     A TypedDict that describes an omic measurement.
 
     Attributes:
-        measurement (Union[float, List[float]]): The measurement value(s) for the omic.
+        measurement (List[float]): The measurement value(s) for the omic.
         regressionData (Union[RegressionData, None]): The regression data for the omic, if available.
         forms
     """
 
-    measurement: Union[float, List[float]]
+    measurement: List[float]
     regressionData: Union[RegressionData, None]
     forms: Dict[str, FormEntry]
 
@@ -209,3 +209,84 @@ class EntityOccurrence(TypedDict):
 
     internalID: int
     stableID: str
+
+
+class HierarchyEntryMeasurment(TypedDict):
+    """
+    A TypedDict that describes a hierarchy entry measurement.
+    Attributes:
+        queryID (str): The query ID of the measurement.
+        value (float): The value of the measurement.
+        name (str): The name of the measurement.
+        forms (List[EntityOccurrence]): A list of entity occurrences for the measurement.
+        regressionData (Union[RegressionData,None]): The regression data for the measurement.
+    """
+
+    queryId: str
+    value: float
+    name: str
+    forms: Dict[str, FormEntry]
+    regressionData: Union[RegressionData, None]
+
+
+class OmicEntryDict(TypedDict):
+    """
+    A TypedDict that describes an omic entry.
+    Attributes:
+        measured (Dict[str, HierarchyEntryMeasurment]): A dictionary of omic data.
+        total (int): The total number of omic data entries.
+    """
+
+    measured: Dict[str, HierarchyEntryMeasurment]
+    total: Union[Dict[str, Dict[int, EntityOccurrence]], int]
+
+
+class HierarchyEntryDictEntries(TypedDict):
+    """
+    A TypedDict that describes the entries for a hierarchy entry.
+    Attributes:
+        proteomics (OmicEntryDict): The proteomics data for the hierarchy entry.
+        transcriptomics (OmicEntryDict): The transcriptomics data for the hierarchy entry.
+        metabolomics (OmicEntryDict): The metabolomics data for the hierarchy entry.
+    """
+
+    proteomics: OmicEntryDict
+    transcriptomics: OmicEntryDict
+    metabolomics: OmicEntryDict
+
+
+class HierarchyEntryDict(TypedDict):  #
+    """
+    A TypedDict that describes a hierarchy entry.
+    Attributes:
+        pathwayName (str): The name of the pathway.
+        pathwayId (str): The ID of the pathway.
+        rootId (str): The root ID of the pathway.
+        nodeType (str): The node type of the pathway.
+        isCentral (bool): Whether the pathway is central.
+        isOverview (bool): Whether the pathway is an overview.
+        maplinks (Dict[str, Dict[int, EntityOccurrence]]): A dictionary of maplinks.
+        subtreeIds (List[str]): A list of subtree IDs.
+        parents (List[str]): A list of parent IDs.
+        children (List[str]): A list of child IDs.
+        insetPathwayEntryIDs (Dict[str, Dict[str, SubdiagramOmicEntry]]): A dictionary of inset pathway entry IDs.
+        ownMeasuredEntryIDs (Dict[str, List[str]]): A dictionary of own measured entry IDs.
+        entries (HierarchyEntryDictEntries): The entries for the hierarchy entry.
+    """
+
+    pathwayName: str
+    pathwayId: str
+    rootId: str
+    nodeType: str
+    isCentral: bool
+    isOverview: bool
+    maplinks: Dict[str, Dict[int, EntityOccurrence]]
+    subtreeIds: List[str]
+    parents: List[str]
+    children: List[str]
+    insetPathwayEntryIDs: Dict[
+        Literal["proteomics", "transcriptomics", "metabolomics"],
+        Dict[str, SubdiagramOmicEntry],
+    ]
+    ownMeasuredEntryIDs: Dict[str, List[str]]
+    entries: HierarchyEntryDictEntries

@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from typing import Union, BinaryIO, List
-from visMOP.python_scripts.omicsTypeDefs import TableHeaders, SliderVals
+from visMOP.python_scripts.omicsTypeDefs import TableHeaders, sliderVals
 from flask import Request
 from flask_caching import Cache
 
@@ -79,7 +79,7 @@ def generate_vue_table_entries(df: pd.DataFrame) -> List[dict[str, str]]:
     return list(vue_entries.values)
 
 
-def table_request(request: Request, cache: Cache, requestType: str):
+def table_request(request: Request, cache: Cache, requestType: str) -> str:
     print("table recieve triggered")
 
     # recieve data-blob
@@ -111,8 +111,8 @@ def table_request(request: Request, cache: Cache, requestType: str):
 
 
 def format_omics_data(
-    colname: str, filter_obj: SliderVals, cache_name: str, cache: Cache
-):
+    colname: str, filter_obj: sliderVals, cache_name: str, cache: Cache
+) -> None:
     # create dict from protein dataframe
     print("colnames", colname)
     json_data = cache.get(cache_name)

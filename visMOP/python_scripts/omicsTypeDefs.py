@@ -45,19 +45,22 @@ class SliderVal(TypedDict):
     inside: bool
 
 
-class SliderVals(TypedDict):
+sliderVals = Dict[str, SliderVal]
+
+
+class AllSliderVals(TypedDict):
     """
-    A TypedDict that describes the slider values for an omics.
+    A TypedDict that describes the slider values for all omics.
 
     Attributes:
-        transcriptomics (SliderVal): The slider values for the transcriptomics omics.
-        proteomics (SliderVal): The slider values for the proteomics omics.
-        metabolomics (SliderVal): The slider values for the metabolomics omics.
+        transcriptomics (sliderVals): The slider values for the transcriptomics omics.
+        proteomics (sliderVals): The slider values for the proteomics omics.
+        metabolomics (sliderVals): The slider values for the metabolomics omics.
     """
 
-    transcriptomics: SliderVal
-    proteomics: SliderVal
-    metabolomics: SliderVal
+    transcriptomics: sliderVals
+    proteomics: sliderVals
+    metabolomics: sliderVals
 
 
 class OmicsIDs(TypedDict):

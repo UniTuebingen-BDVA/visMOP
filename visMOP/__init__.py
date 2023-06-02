@@ -9,7 +9,7 @@ from visMOP.python_scripts.reactome_query import ReactomeQuery
 from visMOP.python_scripts.omicsTypeDefs import (
     MeasurementData,
     OmicsInputVals,
-    SliderVals,
+    AllSliderVals,
 )
 
 import pandas as pd
@@ -115,7 +115,7 @@ def reactome_parsing():
     transcriptomics: OmicsInputVals = request.json["transcriptomics"]
     proteomics: OmicsInputVals = request.json["proteomics"]
     metabolomics: OmicsInputVals = request.json["metabolomics"]
-    slider_vals: SliderVals = request.json["sliderVals"]
+    slider_vals: AllSliderVals = request.json["sliderVals"]
     layout_settings_recieved = request.json["layoutSettings"]
     timeseries_mode = request.json["timeseriesMode"]
     cache.set("target_db", target_db)
@@ -128,7 +128,7 @@ def reactome_parsing():
         proteomics["recieved"],
         metabolomics["recieved"],
     ]
-    amt_timesteps: int | float = math.inf
+    amt_timesteps: int = 2**10000
     if transcriptomics["recieved"] and transcriptomics["amtTimesteps"] < amt_timesteps:
         amt_timesteps = transcriptomics["amtTimesteps"]
     if proteomics["recieved"] and proteomics["amtTimesteps"] < amt_timesteps:
@@ -150,10 +150,10 @@ def reactome_parsing():
     # Add query Data to Hierarchy
     ##
     node_pathway_dict = {}
-    fold_changes: Dict[str, List[Dict[str, MeasurementData]]] = {
-        "transcriptomics": [],
-        "proteomics": [],
-        "metabolomics": [],
+    fold_changes: Dict[str, Dict[str, MeasurementData]] = {
+        "transcriptomics": {},
+        "proteomics": {},
+        "metabolomics": {},
     }
     chebi_ids = {}
     ##
@@ -168,7 +168,10 @@ def reactome_parsing():
             "proteomics_data_cache",
             cache,
         )
-        proteomics_data = json.loads(cache.get("proteomics_data_cache_filtered"))
+        proteomics_cache_data = cache.get("proteomics_data_cache_filtered")
+        proteomics_data = json.loads(
+            proteomics_cache_data if proteomics_cache_data else "{}"
+        )
 
         for ID_number in proteomics_data:
             entry = proteomics_data[ID_number]
@@ -210,7 +213,11 @@ def reactome_parsing():
             "metabolomics_data_cache",
             cache,
         )
-        metabolomics_dict = json.loads(cache.get("metabolomics_data_cache_filtered"))
+
+        metabolomics_cache_data = cache.get("metabolomics_data_cache_filtered")
+        metabolomics_dict = json.loads(
+            metabolomics_cache_data if metabolomics_cache_data else "{}"
+        )
         metabolomics_IDs = list(metabolomics_dict.keys())
 
         if any(
@@ -275,9 +282,12 @@ def reactome_parsing():
             "transcriptomics_data_cache",
             cache,
         )
+
+        transcriptomics_cache_data = cache.get("transcriptomics_data_cache_filtered")
         transcriptomics_dict = json.loads(
-            cache.get("transcriptomics_data_cache_filtered")
+            transcriptomics_cache_data if transcriptomics_cache_data else "{}"
         )
+
         transcriptomics_IDs = list(transcriptomics_dict.keys())
         for ID_number in transcriptomics_IDs:
             transcriptomics_query_data_tuples.append(
@@ -340,10 +350,25 @@ def reactome_overview():
                                 list of Ids belonging to root nodes
     """
 
-    reactome_hierarchy: ReactomeHierarchy = cache.get("reactome_hierarchy")
-    layout_settings: dict[str, list] = cache.get("layout_settings")
+    # raise error if request is empty
+    if not request.json:
+        raise TypeError("Request is empty")
+
+    hierarchy_cache = cache.get("reactome_hierarchy")
+    if hierarchy_cache is None:
+        raise TypeError("Hierarchy cache is empty")
+
+    reactome_hierarchy: ReactomeHierarchy = hierarchy_cache
+
+    layout_settings_cache = cache.get("layout_settings")
+    if layout_settings_cache is None:
+        raise TypeError("Layout settings cache is empty")
+
+    layout_settings: dict[str, list] = layout_settings_cache
+
     layout_limits = layout_settings["limits"]
     layout_attributes_used = layout_settings["attributes"]
+
     umap_settings = {
         "cluster_min_size_quotient": request.json["cluster_min_size_quotient"],
         "use_umap": request.json["useUMAP"],
@@ -416,9 +441,13 @@ def reactome_overview():
 
 
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])
-def get_reactome_json(pathway):
+def get_reactome_json(pathway: str):
     pathway = pathway.split("_")[0]
     hierarchy = cache.get("reactome_hierarchy")
+    if hierarchy is None:
+        raise TypeError("Hierarchy cache is empty")
+
+    hierarchy: ReactomeHierarchy = hierarchy
     pathway_entry = hierarchy[pathway]
     if not pathway_entry.has_diagram:
         # fixes crash when pathways has no own diagram entry, this shouldnt happen tho?!
