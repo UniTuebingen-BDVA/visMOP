@@ -3,7 +3,8 @@ import statistics
 import pandas as pd
 import os
 from operator import itemgetter
-from typing import List, Dict, Tuple, Union, Any, Literal
+
+from typing import List, Dict, DefaultDict, Tuple, Union, Literal, Iterator
 import collections
 from visMOP.python_scripts.hierarchy_types import (
     HierarchyMetadata,
@@ -57,8 +58,8 @@ def get_PathwaySummaryData_omic(
     omics_type: str,
 ) -> Dict[str, Union[float, int]]:
     num_val_omic = len(all_values)
-    pathway_summary_data = {}
-    statics_to_calculate = [*stat_vals["common"], *stat_vals[mode]]
+    pathway_summary_data: Dict[str, float] = {}
+    statics_to_calculate: list[str] = [*stat_vals["common"], *stat_vals[mode]]
 
     # statistics for products produced in a significant higher amount
     def calculate_mean(vals: List[float]) -> float:
@@ -256,11 +257,17 @@ class ReactomePathway:
         self.total_measured_proteins: Dict[str, OmicMeasurement] = {}
         self.total_measured_genes: Dict[str, OmicMeasurement] = {}
         self.total_measured_metabolites: Dict[str, OmicMeasurement] = {}
-        self.total_measured_maplinks = {}
-        self.subdiagrams_measured_proteins: Dict[str, SubdiagramOmicEntry] = {}
-        self.subdiagrams_measured_genes: Dict[str, SubdiagramOmicEntry] = {}
-        self.subdiagrams_measured_metabolites: Dict[str, SubdiagramOmicEntry] = {}
-        self.subdiagrams_measured_maplinks: Dict[str, SubdiagramOmicEntry] = {}
+        self.total_measured_maplinks: Dict[str, OmicMeasurement] = {}
+        self.subdiagrams_measured_proteins: Dict[
+            Union[str, int], SubdiagramOmicEntry
+        ] = {}
+        self.subdiagrams_measured_genes: Dict[Union[str, int], SubdiagramOmicEntry] = {}
+        self.subdiagrams_measured_metabolites: Dict[
+            Union[str, int], SubdiagramOmicEntry
+        ] = {}
+        self.subdiagrams_measured_maplinks: Dict[
+            Union[str, int], SubdiagramOmicEntry
+        ] = {}
         self.total_proteins: Dict[str, Dict[int, EntityOccurrence]] = {}
         self.total_metabolites: Dict[str, Dict[int, EntityOccurrence]] = {}
         self.maplinks: Dict[str, Dict[int, EntityOccurrence]] = {}
@@ -297,21 +304,18 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
     functions as main datastructure for reactome data
     """
 
-    __getitem__ = dict.__getitem__
+    def __getitem__(self, key: str) -> ReactomePathway:
+        return super().__getitem__(key)
 
-    def __init__(self, metadata: HierarchyMetadata, *arg, **kw) -> None:
-        super(ReactomeHierarchy, self).__init__(*arg, **kw)
+    def __init__(self, metadata: HierarchyMetadata) -> None:
+        super(ReactomeHierarchy, self).__init__()
         self.levels: Dict[int, List[str]] = {}
         self.omics_recieved: List[bool] = []
         self.layout_settings = {}
-        self.amt_timesteps = metadata["amt_timesteps"]
+        self.amt_timesteps: int = metadata["amt_timesteps"]
         self.omics_recieved = metadata["omics_recieved"]
         self.load_data(metadata["relational_data_path"], metadata["target_organism"])
         self.add_json_data(metadata["json_data_path"])
-
-    def set_layout_settings(self, settings) -> None:
-        """Sets layout settings for all pathways"""
-        self.layout_settings = settings
 
     def add_hierarchy_levels(self) -> None:
         """Adds hierarchy levels to all entries.
@@ -320,8 +324,8 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         for k, v in self.items():
             final_entries: List[List[str]] = []
             self._hierarchy_levels_recursion(k, [], final_entries)
-            shortest_path = min(final_entries, key=len)
-            level = len(shortest_path) - 1
+            shortest_path: List[str] = min(final_entries, key=len)
+            level: int = len(shortest_path) - 1
             v.level = level
             v.root_id = shortest_path[level]
             if level in self.levels:
@@ -332,10 +336,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
     def _hierarchy_levels_recursion(
         self, entry_id: str, path: List[str], final_entries: List[List[str]]
     ) -> None:
-        at_root = False
-        current_entry = self[entry_id]
-
-        arrived_at_diagram = current_entry.has_diagram
+        current_entry: ReactomePathway = self[entry_id]
         path.append(entry_id)
         if self[entry_id].is_root:
             final_entries.append(path)
@@ -345,19 +346,19 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
 
     def hierarchyInfo(self) -> Dict[str, int]:
         """Prints info about hierarchy"""
-        entries = len(self.keys())
-        leafs = len([v for k, v in self.items() if v.is_leaf])
-        roots = len([v for k, v in self.items() if v.is_root])
+        entries: int = len(self.keys())
+        leafs: int = len([v for v in self.values() if v.is_leaf])
+        roots: int = len([v for v in self.values() if v.is_root])
         return {"size": entries, "leafs": leafs, "roots": roots}
 
     def generate_parents_children_with_data(self) -> None:
         for entry in self.values():
             for parent_entry in entry.parents:
-                entryObject = self[parent_entry]
+                entryObject: ReactomePathway = self[parent_entry]
                 if entryObject.has_data:
                     entry.parents_with_data.append(parent_entry)
             for child_entry in entry.children:
-                entryObject = self[child_entry]
+                entryObject: ReactomePathway = self[child_entry]
                 if entryObject.has_data:
                     entry.children_with_data.append(child_entry)
 
@@ -373,9 +374,9 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         key_list = list(self.levels.keys())
         key_list.sort()
         for current_level in key_list:
-            current_level_ids = self.levels[current_level]
+            current_level_ids: List[str] = self.levels[current_level]
             for key in current_level_ids:
-                entry = self[key]
+                entry: ReactomePathway = self[key]
                 if entry.has_diagram:
                     with open(json_path / (key + ".json"), encoding="utf8") as fh:
                         json_file_layout = json.load(fh)
@@ -439,9 +440,9 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         self, entry_id: str, final_entries: List[Tuple[str, int]], steps: int
     ) -> None:
         arrived_at_diagram = False
-        current_entry = self[entry_id]
+        current_entry: ReactomePathway = self[entry_id]
 
-        arrived_at_diagram = current_entry.has_diagram
+        arrived_at_diagram: bool = current_entry.has_diagram
         if arrived_at_diagram:
             final_entries.append((entry_id, steps))
         else:
@@ -459,32 +460,51 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         """
         # sort levels descending that propagation is correctly from the leaves to the root nodes
         # still strange bug that some insanely high levels > 20,50 are encountered
-        levels_descending = sorted(self.levels.keys(), reverse=True)
+        levels_descending: List[int] = sorted(self.levels.keys(), reverse=True)
         for level in levels_descending:
             for entry_key in self.levels[level]:
-                v = self[entry_key]
+                v: ReactomePathway = self[entry_key]
                 # if not v.is_leaf:
-                subtree = self.get_subtree_target(v.reactome_sID)
-                own_measured_proteins = list(set(v.own_measured_proteins))
-                own_measured_genes = list(set(v.own_measured_genes))
-                own_measured_metabolites = list(set(v.own_measured_metabolites))
-                own_measured_maplinks = list(set(v.own_measured_maplinks))
-                total_measured_proteins = v.total_measured_proteins
-                total_measured_genes = v.total_measured_genes
-                total_measured_metabolites = v.total_measured_metabolites
-                total_measured_maplinks = v.total_measured_maplinks  # ?
-                subdiagrams_measured_proteins = {}
-                subdiagrams_measured_genes = {}
-                subdiagrams_measured_metabolites = {}
-                subdiagrams_measured_maplinks = {}  # ?
-                total_proteins = v.total_proteins
-                total_metabolites = v.total_metabolites
-                total_maplinks = v.maplinks
+                subtree: List[str] = self.get_subtree_target(v.reactome_sID)
+                own_measured_proteins: List[str] = list(set(v.own_measured_proteins))
+                own_measured_genes: List[str] = list(set(v.own_measured_genes))
+                own_measured_metabolites: List[str] = list(
+                    set(v.own_measured_metabolites)
+                )
+                own_measured_maplinks: List[str] = list(set(v.own_measured_maplinks))
+                total_measured_proteins: Dict[
+                    str, OmicMeasurement
+                ] = v.total_measured_proteins
+                total_measured_genes: Dict[
+                    str, OmicMeasurement
+                ] = v.total_measured_genes
+                total_measured_metabolites: Dict[
+                    str, OmicMeasurement
+                ] = v.total_measured_metabolites
+                total_measured_maplinks: Dict[
+                    str, OmicMeasurement
+                ] = v.total_measured_maplinks  # ?
+                subdiagrams_measured_proteins: Dict[
+                    Union[str, int], SubdiagramOmicEntry
+                ] = {}
+                subdiagrams_measured_genes: Dict[
+                    Union[str, int], SubdiagramOmicEntry
+                ] = {}
+                subdiagrams_measured_metabolites: Dict[
+                    Union[str, int], SubdiagramOmicEntry
+                ] = {}
+                subdiagrams_measured_maplinks: Dict[
+                    Union[str, int], SubdiagramOmicEntry
+                ] = {}  # ?
+                total_proteins: Dict[
+                    str, Dict[int, EntityOccurrence]
+                ] = v.total_proteins
+                total_metabolites: Dict[
+                    str, Dict[int, EntityOccurrence]
+                ] = v.total_metabolites
                 subtree_ids = subtree
                 subtree_ids.append(v.reactome_sID)
                 v.subtree_ids = subtree_ids
-
-                tree_has_diagram = v.has_diagram
 
                 for node in v.children:
                     current_node = self[node]
@@ -576,8 +596,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                         **total_metabolites,
                         **current_node.total_metabolites,
                     }
-                    if current_node.has_diagram:
-                        tree_has_diagram = True
+
                 v.total_measured_proteins = total_measured_proteins
                 v.total_measured_genes = total_measured_genes
                 v.total_measured_metabolites = total_measured_metabolites
@@ -617,7 +636,9 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
             entry_id: String: entry id for which to retrieve leaves
             subtree: List: list of leaves
         """
-        if entry_id is not None:
+        if (
+            entry_id in self
+        ):  # NOTE was if entry_id is not None, so if its not working get back here
             if len(self[entry_id].children) == 0:
                 pass  # leaves.append(entry_id)
             for elem in self[entry_id].children:
@@ -768,7 +789,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     else:
                         self[right_entry].parents.append(left_entry)
 
-        for k, v in self.items():
+        for v in self.values():
             v.assert_leaf_root_state()
         self.add_hierarchy_levels()
 
@@ -778,13 +799,15 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         Args:
             tar_id: String: entry id for which to retrieve leaves
         """
-        subtree = []
+        subtree: List[str] = []
         self._get_subtree_non_overview_recursion(tar_id, subtree)
         return subtree
 
     def _get_subtree_non_overview_recursion(self, entry_id: str, subtree: List[str]):
         """Recursive function for leaf retrieval"""
-        if entry_id is not None:
+        if (
+            entry_id in self
+        ):  # NOTE was if entry_id is not None, so if its not working get back here
             if not self[entry_id].is_overview:
                 if not self[entry_id].is_root:
                     subtree.append(entry_id)
@@ -794,8 +817,22 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     self._get_subtree_non_overview_recursion(elem, subtree)
 
     def generate_overview_data(
-        self, omic_limits, verbose: bool, mode: str, onlyCompletePathways: bool = False
-    ):
+        self,
+        omic_limits: List[List[float]],
+        verbose: bool,
+        mode: str,
+        onlyCompletePathways: bool = False,
+    ) -> Tuple[
+        List[HierarchyEntryDict],
+        List[str],
+        Dict[str, List[str]],
+        List[Dict[str, str]],
+        List[str],
+        Dict[str, List[str]],
+        DefaultDict[str, List[str]],
+        pd.DataFrame,
+        List[bool],
+    ]:
         """Generates data to be exported to the frontend
         Args:
             omic_limits: dictionary: limits for omic data
@@ -808,7 +845,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
             List of pathways
             List of contained hierarchy nodes
         """
-        out_data = []
+        out_data: List[HierarchyEntryDict] = []
         central_nodes_out: List[str] = []
         central_nodes: List[str] = []
         # pathway_ids = self.levels[level]
@@ -821,19 +858,21 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
             pathway_ids.extend(self.get_subtree_target(root))
         pathway_ids.extend(self.levels[0])
         pathway_ids = list(set(pathway_ids))
-        query_pathway_dict = {}
-        root_subpathways = collections.defaultdict(list)
-        pathway_dropdown = []
-        root_ids = []
-        pathways_root_names = {}
+        query_pathway_dict: Dict[str, List[str]] = {}
+        root_subpathways: DefaultDict[str, List[str]] = collections.defaultdict(list)
+        pathway_dropdown: List[Dict[str, str]] = []
+        root_ids: List[str] = []
+        pathways_root_names: Dict[str, List[str]] = {}
         pathway_summary_stats_dict = {}
         self.generate_parents_children_with_data()
         for pathway in pathway_ids:
-            entry = self[pathway]
-            hierarchical_roots = self.get_hierachical_superpathways(entry)
+            entry: ReactomePathway = self[pathway]
             if entry.has_data:
                 amount_timesteps = self.amt_timesteps if mode == "individual" else 1
                 for timepoint in range(amount_timesteps):
+                    pathway_dict: HierarchyEntryDict
+                    dropdown_entry: Dict[str, str]
+                    pathway_summary_data: Dict[str, float]
                     (
                         pathway_dict,
                         dropdown_entry,
@@ -852,12 +891,23 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     )
                     # only consider entries which do have data for all supplied omics (recieved from frontend)
                     if onlyCompletePathways:
-                        omics_recived_strings = [
+                        zip_omics_recived_strings: Iterator[
+                            Tuple[
+                                Literal[
+                                    "transcriptomics", "proteomics", "metabolomics"
+                                ],
+                                bool,
+                            ]
+                        ] = zip(
+                            ["transcriptomics", "proteomics", "metabolomics"],
+                            self.omics_recieved,
+                        )
+
+                        omics_recived_strings: List[
+                            Literal["transcriptomics", "proteomics", "metabolomics"]
+                        ] = [
                             omic
-                            for (omic, boolean) in zip(
-                                ["transcriptomics", "proteomics", "metabolomics"],
-                                self.omics_recieved,
-                            )
+                            for (omic, boolean) in zip_omics_recived_strings
                             if boolean
                         ]
                         if not all(
@@ -901,14 +951,6 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
             pd.DataFrame.from_dict(pathway_summary_stats_dict, orient="index"),
             self.omics_recieved,
         )
-
-    def get_hierachical_superpathways(self, entry):
-        hierarchical_roots = []
-        for maplink in entry.maplinks:
-            pathway = self[maplink]
-            if pathway.is_root:
-                hierarchical_roots.append(pathway.name)
-        return hierarchical_roots
 
 
 ###
@@ -973,11 +1015,11 @@ def generate_overview_pathway_entry(
     mode: str,
     timepoint_index: int,
     amt_timesteps: int,
-    query_pathway_dict,
+    query_pathway_dict: Dict[str, List[str]],
     verbose: bool,
     omic_limits: List[List[float]],
     omics_recieved: list[bool],
-):
+) -> Tuple[HierarchyEntryDict, Dict[str, str], Dict[str, float]]:
     """generates pathway entry for overview
     Args:
         entry: entry object
@@ -1115,7 +1157,7 @@ def generate_overview_pathway_entry(
         if omic_recieved:
             omic_values = [vals for vals in omic_values_dict]
             # print(num_entries_omic, omic_values, limits)
-            pathway_summary_data = {
+            pathway_summary_data: Dict[str, Union[float, int]] = {
                 **pathway_summary_data,
                 **get_PathwaySummaryData_omic(
                     num_entries_omic, omic_values, limits, mode, omicsType
@@ -1245,7 +1287,14 @@ def get_contained_entities_graph_json(
 
 def get_subpathway_entities_graph_json(
     formatted_json: ModifiedReactomeGraphJSON, subpathwayID: str
-):
+) -> Tuple[
+    dict[str, Dict[int, EntityOccurrence]],
+    dict[str, Dict[int, EntityOccurrence]],
+    dict[str, Dict[int, EntityOccurrence]],
+    bool,
+    str,
+    int,
+]:
     """Gets entities for subpathways from higherlevel pathways
 
     Args:
@@ -1264,14 +1313,14 @@ def get_subpathway_entities_graph_json(
     db_Id = 0
     contained_events: List[int] = []
 
-    for k, v in formatted_json["subpathways"].items():
+    for v in formatted_json["subpathways"].values():
         # todo we can get pathway name here!!!
         if v["stId"] == subpathwayID:
             contained_events = v["events"]
             name = v["displayName"]
             db_Id = v["dbId"]
             break
-    entities = []
+    entities: List[int] = []
     for event in contained_events:
         event_node = formatted_json["edges"][event]
         try:
@@ -1361,7 +1410,9 @@ def _occurrences_recursive_graph_json(
         entry_id: id for which to collect the leaves
         occurrences: list of parents for a entity
     """
-    if entry_id is not None:
+    if (
+        entry_id in intermediate_node_dict
+    ):  # NOTE was if entry_id is not None, so if its not working get back here
         # print(intermediate_node_dict[entry_id]['children'])
         # TODO if cases do not make sense --> same
         entry = intermediate_node_dict[entry_id]
@@ -1409,7 +1460,9 @@ def _leaf_recursive_graph_json(
         entry_id: id for which to collect the leaves
         leaves: list of leaf-ids
     """
-    if entry_id is not None:
+    if (
+        entry_id in intermediate_node_dict
+    ):  # NOTE was if entry_id is not None, so if its not working get back here
         # print(intermediate_node_dict[entry_id]['children'])
         entry = intermediate_node_dict[entry_id]
         if "children" not in entry:

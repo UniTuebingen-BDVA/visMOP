@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, TypedDict, Union, Tuple
+from typing import Dict, List, Literal, TypedDict, Union
 from pathlib import Path
 
 
@@ -286,7 +286,7 @@ class HierarchyEntryDict(TypedDict):  #
     children: List[str]
     insetPathwayEntryIDs: Dict[
         Literal["proteomics", "transcriptomics", "metabolomics"],
-        Dict[str, SubdiagramOmicEntry],
+        Dict[Union[int, str], SubdiagramOmicEntry],
     ]
     ownMeasuredEntryIDs: Dict[str, List[str]]
     entries: HierarchyEntryDictEntries

@@ -112,3 +112,32 @@ class MeasurementData(TypedDict):
     """
 
     fc_values: List[float]
+
+
+
+class LayoutSetting(TypedDict):
+    """
+    A TypedDict that describes the layout settings for an omic.
+    
+    Attributes:
+        attributes (List[Dict[str, str]]): The attributes for the omic.
+        limits (List[int]): The limits for the omic.
+    """
+    attributes: List[Dict[str, str]]
+    limits: List[int]
+
+class LayoutSettings(TypedDict):
+    """
+    A TypedDict that describes the layout settings for the app.
+
+    Attributes:
+        transcriptomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the transcriptomics omics.
+        proteomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the proteomics omics.
+        metabolomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the metabolomics omics.
+        not related to specific omic (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the omics that are not related to a specific omic.
+    """
+
+    transcriptomics: Dict[str, LayoutSetting]
+    proteomics: Dict[str, LayoutSetting]
+    metabolomics: Dict[str, LayoutSetting]
+    "not related to specific omic": Dict[str, LayoutSetting]

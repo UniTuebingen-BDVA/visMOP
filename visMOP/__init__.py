@@ -1,4 +1,3 @@
-import math
 from random import random
 from flask import Flask, render_template, send_from_directory, request
 from visMOP.python_scripts.utils import kegg_to_chebi
@@ -10,6 +9,7 @@ from visMOP.python_scripts.omicsTypeDefs import (
     MeasurementData,
     OmicsInputVals,
     AllSliderVals,
+    LayoutSettings,
 )
 
 import pandas as pd
@@ -358,13 +358,13 @@ def reactome_overview():
     if hierarchy_cache is None:
         raise TypeError("Hierarchy cache is empty")
 
-    reactome_hierarchy: ReactomeHierarchy = hierarchy_cache
+    reactome_hierarchy: ReactomeHierarchy = hierarchy_cache  # type: ignore Until flask_caching is updated
 
     layout_settings_cache = cache.get("layout_settings")
     if layout_settings_cache is None:
         raise TypeError("Layout settings cache is empty")
 
-    layout_settings: dict[str, list] = layout_settings_cache
+    layout_settings: LayoutSettings = layout_settings_cache  # type: ignore Until flask_caching is updated
 
     layout_limits = layout_settings["limits"]
     layout_attributes_used = layout_settings["attributes"]

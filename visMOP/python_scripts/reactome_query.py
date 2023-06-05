@@ -1,6 +1,6 @@
 import pickle
 from pathlib import Path
-from typing import Literal, TypedDict, Tuple, List, Dict
+from typing import Literal, Tuple, List, Dict
 from visMOP.python_scripts.omicsTypeDefs import (
     OmicsDataTuples,
     ReactomePickleOrganism,
@@ -44,10 +44,6 @@ class ReactomeQuery:
         self.all_contained_pathways = []
         self.get_query_results(target_organism, id_database, pickle_path)
         self.calc_all_pathways()
-
-    def asdict(self) -> dict:
-        """Return the ReactomeQuery as dictionary"""
-        return {}
 
     def get_query_results(
         self,
@@ -103,8 +99,8 @@ class ReactomeQuery:
     def calc_all_pathways(self) -> None:
         """Calculates the set of all reactome low level pathways contained in the query"""
         pathways: List[Tuple[str, str]] = []
-        for k, v in self.query_results.items():
-            for reactome_id, physical_entity in v.items():
+        for v in self.query_results.values():
+            for physical_entity in v.values():
                 pathways.extend(physical_entity["pathways"])
         self.all_contained_pathways = list(set(pathways))
 
@@ -116,7 +112,7 @@ class ReactomeQuery:
         query_pathway_dict: Dict[str, List[str]] = {}
         for k, v in self.query_results.items():
             pathways: List[str] = []
-            for entity_k, entity in v.items():
+            for entity in v.values():
                 pathway_ids = [elem[0] for elem in entity["pathways"]]
                 pathways.extend(pathway_ids)
             query_pathway_dict[self.id_table_id[k]] = list(set(pathways))
