@@ -311,7 +311,6 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         super(ReactomeHierarchy, self).__init__()
         self.levels: Dict[int, List[str]] = {}
         self.omics_recieved: List[bool] = []
-        self.layout_settings = {}
         self.amt_timesteps: int = metadata["amt_timesteps"]
         self.omics_recieved = metadata["omics_recieved"]
         self.load_data(metadata["relational_data_path"], metadata["target_organism"])
@@ -828,7 +827,6 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         Dict[str, List[str]],
         List[Dict[str, str]],
         List[str],
-        Dict[str, List[str]],
         DefaultDict[str, List[str]],
         pd.DataFrame,
         List[bool],
@@ -946,7 +944,6 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
             query_pathway_dict,
             pathway_dropdown,
             list(set(root_ids)),
-            pathways_root_names,
             root_subpathways,
             pd.DataFrame.from_dict(pathway_summary_stats_dict, orient="index"),
             self.omics_recieved,

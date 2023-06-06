@@ -114,30 +114,48 @@ class MeasurementData(TypedDict):
     fc_values: List[float]
 
 
-
-class LayoutSetting(TypedDict):
+class LayoutSettingRecieved(TypedDict):
     """
     A TypedDict that describes the layout settings for an omic.
-    
+
     Attributes:
         attributes (List[Dict[str, str]]): The attributes for the omic.
         limits (List[int]): The limits for the omic.
     """
+
     attributes: List[Dict[str, str]]
     limits: List[int]
 
-class LayoutSettings(TypedDict):
+
+class LayoutSettingsRecieved(TypedDict):
     """
-    A TypedDict that describes the layout settings for the app.
+    A TypedDict that describes the layout settings for the graph-layout.
 
     Attributes:
         transcriptomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the transcriptomics omics.
         proteomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the proteomics omics.
         metabolomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the metabolomics omics.
-        not related to specific omic (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the omics that are not related to a specific omic.
+        nonSpecific (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the omics that are not related to a specific omic.
     """
 
-    transcriptomics: Dict[str, LayoutSetting]
-    proteomics: Dict[str, LayoutSetting]
-    metabolomics: Dict[str, LayoutSetting]
-    "not related to specific omic": Dict[str, LayoutSetting]
+    transcriptomics: Dict[str, LayoutSettingRecieved]
+    proteomics: Dict[str, LayoutSettingRecieved]
+    metabolomics: Dict[str, LayoutSettingRecieved]
+    nonSpecific: Dict[str, LayoutSettingRecieved]
+
+
+class TableRequestData(TypedDict):
+    """
+    A TypedDict that describes the data for a table request.
+
+    Attributes:
+        exitState (int): The exit state for the table request.
+        entry_IDs (List[str]): The entry IDs for the table request.
+        header (List[TableHeaders]): The headers for the table request.
+        entries (List[Dict[str, str]]): The entries for the table request.
+    """
+
+    exitState: int
+    entry_IDs: List[str]
+    header: List[TableHeaders]
+    entries: List[Dict[str, str]]

@@ -39,10 +39,7 @@
               </q-item>
             </template>
           </q-select>
-          <div
-            v-if="currentLayoutOmic != 'not related to specific omic'"
-            class="row"
-          >
+          <div v-if="currentLayoutOmic != 'nonSpecific'" class="row">
             <q-input
               v-model.number="
                 layoutSettingsInternal[currentLayoutOmic].limits[0]
@@ -140,7 +137,7 @@ const layoutSettingsInternal = computed({
 });
 const allOmicLayoutAttributes = computed(() => {
   const prefix =
-    currentLayoutOmic.value === 'not related to specific omic'
+    currentLayoutOmic.value === 'nonSpecific'
       ? ''
       : currentLayoutOmic.value[0] + '_';
   return {
@@ -203,15 +200,11 @@ const allNonOmicAttributes = [
 ];
 
 const currentLayoutOmic: Ref<
-  | 'transcriptomics'
-  | 'proteomics'
-  | 'metabolomics'
-  | 'not related to specific omic'
-  | ''
+  'transcriptomics' | 'proteomics' | 'metabolomics' | 'nonSpecific' | ''
 > = ref('');
 
 const layoutAttributes = computed(() => {
-  return currentLayoutOmic.value === 'not related to specific omic'
+  return currentLayoutOmic.value === 'nonSpecific'
     ? allNonOmicAttributes
     : [
         ...allOmicLayoutAttributes.value.common,

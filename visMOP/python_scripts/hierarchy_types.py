@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, TypedDict, Union
+from typing import Dict, List, Literal, TypedDict, Union, NotRequired
 from pathlib import Path
 
 
@@ -272,6 +272,9 @@ class HierarchyEntryDict(TypedDict):  #
         insetPathwayEntryIDs (Dict[str, Dict[str, SubdiagramOmicEntry]]): A dictionary of inset pathway entry IDs.
         ownMeasuredEntryIDs (Dict[str, List[str]]): A dictionary of own measured entry IDs.
         entries (HierarchyEntryDictEntries): The entries for the hierarchy entry.
+        initialPosX (float): The initial X position of the hierarchy entry.
+        initialPosY (float): The initial Y position of the hierarchy entry.
+        clusterNum (float): The cluster number of the hierarchy entry.
     """
 
     pathwayName: str
@@ -290,3 +293,6 @@ class HierarchyEntryDict(TypedDict):  #
     ]
     ownMeasuredEntryIDs: Dict[str, List[str]]
     entries: HierarchyEntryDictEntries
+    initialPosX: NotRequired[float]
+    initialPosY: NotRequired[float]
+    clusterNum: NotRequired[float]

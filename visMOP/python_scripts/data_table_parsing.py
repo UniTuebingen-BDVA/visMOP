@@ -1,7 +1,11 @@
 import json
-import pandas as pd
-from typing import Union, BinaryIO, List
-from visMOP.python_scripts.omicsTypeDefs import TableHeaders, sliderVals
+import pandas as pd  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+from typing import BinaryIO, List, Dict
+from visMOP.python_scripts.omicsTypeDefs import (
+    TableHeaders,
+    sliderVals,
+    TableRequestData,
+)
 from flask import Request
 from flask_caching import Cache
 
@@ -19,7 +23,7 @@ def create_df(data: BinaryIO, sheet_name: str) -> tuple[int, pd.DataFrame]:
         read_table: pd.DataFrame = pd.read_excel(
             data, sheet_name=sheet_name, header=None, engine="openpyxl"
         )
-    except ValueError as e:
+    except ValueError:
         return 1, pd.DataFrame()
     read_table = read_table.dropna(how="all")
     read_table = read_table.rename(
@@ -41,7 +45,7 @@ def generate_vue_table_header(df: pd.DataFrame) -> List[TableHeaders]:
         Return:
         vue_headers: vues data table style headers
     """
-    header = df.columns
+    header: List[str] = list(df.columns)
     vue_headers: List[TableHeaders] = []
     for entry in header:
         vue_header: TableHeaders = {
@@ -74,9 +78,13 @@ def generate_vue_table_entries(df: pd.DataFrame) -> List[dict[str, str]]:
     Return:
         vue_entries: vues data table style headers
     """
-    vue_entries = df.aggregate(lambda row: row.to_dict(), axis=1)
-    print(vue_entries)
-    return list(vue_entries.values)
+
+    def row_to_dict(row: pd.Series[str]) -> dict[str, str]:
+        return row.to_dict()
+
+    vue_entries: pd.Series[dict[str, str]] = df.aggregate(row_to_dict, axis=1)
+    vue_entries_out: List[Dict[str, str]] = list(vue_entries.values)
+    return vue_entries_out
 
 
 def table_request(request: Request, cache: Cache, requestType: str) -> str:
@@ -99,7 +107,7 @@ def table_request(request: Request, cache: Cache, requestType: str) -> str:
         data_table.copy(deep=True).to_json(orient="columns"),
     )
     entry_IDs: List[str] = list(data_table.iloc[:, 0])
-    out_data: dict[str, Union[int, list]] = {
+    out_data: TableRequestData = {
         "exitState": 0,
         "entry_IDs": entry_IDs,
         "header": generate_vue_table_header(data_table),

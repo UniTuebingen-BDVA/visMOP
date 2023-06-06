@@ -34,7 +34,7 @@ type LayoutSettings = {
     attributes: { text: string; value: string }[];
     limits: number[];
   };
-  'not related to specific omic': {
+  nonSpecific: {
     attributes: { text: string; value: string }[];
     limits: number[];
   };

@@ -197,9 +197,7 @@ const chosenOmics = computed((): string[] => {
   return chosen;
 });
 
-const layoutOmics = computed(() =>
-  chosenOmics.value.concat(['not related to specific omic'])
-);
+const layoutOmics = computed(() => chosenOmics.value.concat(['nonSpecific']));
 
 const timeseriesModeToggle = computed({
   get: () => mainStore.timeseriesModeToggle,
@@ -342,7 +340,7 @@ const layoutAttributes: Ref<LayoutSettings> = ref({
           ],
     limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
   },
-  'not related to specific omic': {
+  nonSpecific: {
     attributes: [
       {
         text: '% values measured over all omics',

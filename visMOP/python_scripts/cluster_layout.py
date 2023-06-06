@@ -1,6 +1,22 @@
+from typing import (
+    List,
+    Tuple,
+    Dict,
+    Union,
+    DefaultDict,
+    TypeVar,
+)
+from collections import defaultdict
+from visMOP.python_scripts.omicsTypeDefs import (
+    LayoutSettingRecieved,
+    LayoutSettingsRecieved,
+)
+from visMOP.python_scripts.create_overview import NodeAttributes
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
 from functools import partial
-import pickle
-import random
+import warnings
 from statistics import mean
 import pandas as pd
 import numpy as np
@@ -8,38 +24,42 @@ import math
 import networkx as nx
 import time
 
-# import matplotlib.pyplot as plt
 from multiprocessing import Pool
 
-from cmath import inf
-import scipy
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from umap import UMAP
-from sklearn.cluster import OPTICS, KMeans
-from collections import Counter, defaultdict
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
+    from umap import UMAP
+from sklearn.cluster import OPTICS
+from collections import Counter
 from itertools import combinations
 from scipy.spatial import distance
-from copy import deepcopy
 from sklearn import metrics
 from visMOP.python_scripts.networkx_layouting import generate_networkx_dict
-from multiprocessing import Process
+from visMOP.python_scripts.cluster_layout_types import UmapClusterSettings
 import pandas as pd
 
+from sklearn.ensemble import RandomForestClassifier
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
+import shap
+
+T = TypeVar("T")
 
 defaultVals = {}
 
 
 def getClusterLayout(
-    omics_recieved,
-    layout_targets,
-    up_down_reg_limits,
-    data_col_used,
-    statistic_data_complete,
-    pathway_connection_dict,
-    reactome_roots={},
-    pathways_root_names={},
-    umap_cluster_settings={
+    omics_recieved: List[bool],
+    layout_targets: List[str],
+    up_down_reg_limits: List[List[float]],
+    data_col_used: List[str],
+    statistic_data_complete: pd.DataFrame,
+    pathway_connection_dict: dict[str, NodeAttributes],
+    reactome_roots: DefaultDict[str, List[str]] = defaultdict(list),
+    umap_cluster_settings: UmapClusterSettings = {
         "cluster_min_size_quotient": 80,
         "use_umap": True,
         "automatic_cluster_target_dimensions": True,
@@ -60,7 +80,6 @@ def getClusterLayout(
             pathway_connection_dict,
             up_down_reg_means,
             reactome_roots,
-            pathways_root_names,
             umap_cluster_settings,
         )
     except ValueError as e:
@@ -73,93 +92,56 @@ def getClusterLayout(
     )
 
 
-def get_layout_settings(settings, timeseries_mode, omics_recieved):
-    possible_omic_attributes = {
-        "common": [
-            "Number of values",
-            "% regulated",
-            "% unregulated",
-            "% with measured value",
-        ],
-        "slope": [
-            "Mean Slope above limit",
-            "Mean Slope below limit",
-            "% slopes below limit",
-            "% slopes above limit",
-            "standard error above limit",
-            "standard error below limit",
-            "% standard error above limit",
-            "% standard error below limit",
-        ],
-        "fc": [
-            "Mean expression above limit",
-            "% values above limit",
-            "Mean expression below limit ",
-            "% values below limit ",
-        ],
-    }
-    possible_no_omic_attributes = ["% values measured over all omics"]
-    attributes = []
-    limits = []
+def get_layout_settings(
+    settings: LayoutSettingsRecieved, timeseries_mode: str, omics_recieved: List[bool]
+) -> Tuple[List[str], List[List[float]]]:
+    """
+    "common"
+        "Number of values",
+        "% regulated",
+        "% unregulated",
+        "% with measured value",
+
+    "slope"
+        "Mean Slope above limit",
+        "Mean Slope below limit",
+        "% slopes below limit",
+        "% slopes above limit",
+        "standard error above limit",
+        "standard error below limit",
+        "% standard error above limit",
+        "% standard error below limit",
+    ],
+    "fc"
+        "Mean expression above limit",
+        "% values above limit",
+        "Mean expression below limit ",
+        "% values below limit ",
+
+
+    """
+    attributes: List[str] = []
+    limits: List[List[float]] = []
     # print(settings.items())
     omics_recieved.append(True)
+    omic: str
+    recieved: bool
+    layout_settings: LayoutSettingRecieved
     for recieved, (omic, layout_settings) in zip(omics_recieved, settings.items()):
         omic_limits = [float(i) for i in layout_settings["limits"]]
         limits.append(omic_limits)
-        if recieved and omic != "not related to specific omic ":
-            # attribute_boolean = [
-            #     (
-            #         (layout_settings["attributes"] is not None)
-            #         and att in layout_settings["attributes"]
-            #     )
-            #     for att in [
-            #         *possible_omic_attributes["common"],
-            #         *possible_omic_attributes[timeseries_mode],
-            #     ]
-            # ]
-            # attributes += attribute_boolean
+        if recieved and omic != "nonSpecific ":
             attributes.extend([att["value"] for att in layout_settings["attributes"]])
 
         elif recieved:
-            # attribute_boolean = [
-            #     att in layout_settings["attributes"]
-            #     for att in possible_no_omic_attributes
-            # ]
-            # attributes += attribute_boolean
             attributes.extend([att["value"] for att in layout_settings["attributes"]])
 
-    return {"attributes": attributes, "limits": limits}
+    return attributes, limits
 
 
-def timepoint_analysis(input_lists):
-    in_same_cluster = []
-    in_different_cluster = []
-
-    for cluster in input_lists:
-        cleaned_cluster = [elem.split("_")[0] for elem in cluster]
-        series = pd.Series(cleaned_cluster)
-        duplicate_mask = series.duplicated(keep=False)
-        duplicates = series[duplicate_mask]
-        non_duplicates = series[~duplicate_mask]
-        in_same_cluster.extend(list(duplicates))
-        in_different_cluster.extend(list(non_duplicates))
-
-    in_same_cluster = list(set(in_same_cluster))
-    in_different_cluster = list(set(in_different_cluster))
-    print("Stayed in Same Cluster: ", in_same_cluster)
-    print("In Different Cluster: ", in_different_cluster)
-    print(
-        "Swap Percentage: ",
-        len(in_different_cluster) / (len(in_different_cluster) + len(in_same_cluster)),
-    )
-
-
-def most_frequent(List):
-    maximum = max(set(List), key=List.count)
-    return maximum
-
-
-def get_area_size(area, get_side_ratio_ok=False, l_max=1):
+def get_area_size(
+    area: List[float], get_side_ratio_ok: bool = False, l_max: int = 1
+) -> Tuple(float, float):
     """determine the area given array of min and max x and y positions
 
     Args:
@@ -168,27 +150,28 @@ def get_area_size(area, get_side_ratio_ok=False, l_max=1):
 
     """
 
-    x_side = area[1] - area[0]
-    y_side = area[3] - area[2]
-    area_size = x_side * y_side
+    x_side: float = area[1] - area[0]
+    y_side: float = area[3] - area[2]
+    area_size: float = x_side * y_side
     if not get_side_ratio_ok:
         return area_size
-    min_side = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
+    min_side: float = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
     return area_size, min_side
 
 
-def get_min_max_side(area, l_max):
+def get_min_max_side(area: List[float], l_max: int) -> Tuple[float, float]:
+    x_side: float = area[1] - area[0]
+    y_side: float = area[3] - area[2]
 
-    x_side = area[1] - area[0]
-    y_side = area[3] - area[2]
-
-    min_side = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
-    max_side = normalize_val_in_range(max(x_side, y_side), 0, l_max, [0, 1])
+    min_side: float = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
+    max_side: float = normalize_val_in_range(max(x_side, y_side), 0, l_max, [0, 1])
 
     return min_side, max_side
 
 
-def get_sorted_list_by_list_B_sorting_order(list_to_sort, sorting_list, reverse=False):
+def get_sorted_list_by_list_B_sorting_order(
+    list_to_sort: List[T], sorting_list: List[T], reverse: bool = False
+) -> List[T]:
     """return list in order of the sorted version of another list
 
     Args:
@@ -204,7 +187,7 @@ def get_sorted_list_by_list_B_sorting_order(list_to_sort, sorting_list, reverse=
     return sorted_list
 
 
-def cluster_center_in_area(cluster_center, area):
+def cluster_center_in_area(cluster_center: List[float], area: List[float]) -> bool:
     """Determine if the cluster center lies in area
     Args:
        cluster_center: [x_pos, y_pos]
@@ -217,7 +200,9 @@ def cluster_center_in_area(cluster_center, area):
     return in_area
 
 
-def normalize_val_in_range(val, min_val, max_val, val_space):
+def normalize_val_in_range(
+    val: Union[int, float], min_val: float, max_val: float, val_space: List[float]
+) -> float:
     """normalize Value in range
 
     Args:
@@ -227,16 +212,24 @@ def normalize_val_in_range(val, min_val, max_val, val_space):
         val_space: Value space in which to normalise
 
     """
-    numerator = (val_space[1] - val_space[0]) * (val - min_val)
-    devisor = max_val - min_val
-    if devisor == 0:
+    numerator: float = (val_space[1] - val_space[0]) * (val - min_val)
+    divisor: float = max_val - min_val
+    if divisor == 0:
         return val_space[0]
-    return numerator / devisor + val_space[0]
+    return numerator / divisor + val_space[0]
 
 
-def normalize_value_list_in_range(points_pos, norm_range):
+def normalize_value_list_in_range(
+    points_pos: List[List[float]], norm_range: List[float]
+) -> List[List[float]]:
+    """normalize all values in list of lists in range
+
+    Args:
+        points_pos: list of lists of values to normalize
+        norm_range: range to normalize to
+    """
     # Transpose_list_ to that we have a list for each coordinate_dimension
-    points_pos_per_dim = list(map(list, zip(*points_pos)))
+    points_pos_per_dim: List[List[float]] = list(map(list, zip(*points_pos)))
     vals_all_axis = []
     for pos_in_dim in points_pos_per_dim:
         org_min, org_max = min(pos_in_dim), max(pos_in_dim)
@@ -246,11 +239,15 @@ def normalize_value_list_in_range(points_pos, norm_range):
         ]
         vals_all_axis.append(norm_vals)
     # Transpose_list back that we have again alls dim pos per point
-    vals_all_axis_per_point = list(map(list, zip(*vals_all_axis)))
+    vals_all_axis_per_point: List[List[float]] = list(map(list, zip(*vals_all_axis)))
     return vals_all_axis_per_point
 
 
-def normalize_2D_node_pos_in_range(node_positions, x_y_ranges, with_cluster_num=False):
+def normalize_2D_node_pos_in_range(
+    node_positions: Dict[str, List[float]],
+    x_y_ranges: List[float],
+    with_cluster_num: bool = False,
+) -> dict[str, list[float]]:
     """normalize all node positions in area
 
     Args:
@@ -317,14 +314,13 @@ class Cluster_layout:
         graph_dict,
         up_down_reg_means,
         reactome_roots,
-        pathways_root_names,
         umap_cluster_settings,
         node_size=2,
     ):
         self.pool_size = 8
-        self.cluster_min_size_quotient = umap_cluster_settings[
-            "cluster_min_size_quotient"
-        ]
+        self.cluster_min_size_quotient = int(
+            umap_cluster_settings["cluster_min_size_quotient"]
+        )
         self.use_umap = umap_cluster_settings["use_umap"]
         self.umap_distance_metric = umap_cluster_settings["umap_distance_metric"]
         self.automatic_cluster_target_dimensions = umap_cluster_settings[
@@ -445,13 +441,14 @@ class Cluster_layout:
     # for clustering higer n_components and n_neighbors and lower min_dist
     def get_umap_layout_pos(
         self,
-        log_arg,
-        n_components=2,
-        n_neighbors=5,
-        min_dist=0.1,
-        norm_lower=0,
-        norm_upper=1,
-        metric="correlation",
+        log_arg: str,
+        n_components: int = 2,
+        n_neighbors: int = 5,
+        min_dist: float = 0.1,
+        norm_lower: float = 0,
+        norm_upper: float = 1,
+        metric: str = "correlation",
+        output_metric: str = "correlation",
     ):
         """Performs UMAP on scaled data returns new normalizied in [0,1] n-D Positions in node dict and postion list of lists
 
@@ -463,13 +460,15 @@ class Cluster_layout:
         print(
             f"Applying UMAP {log_arg} with n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}, metric={metric}"
         )
-        new_pos = UMAP(
+        new_pos: List[List[float]] = UMAP(
             n_components=n_components,
             n_neighbors=n_neighbors,
             min_dist=min_dist,
-            metric=metric
+            metric=metric,
+            output_metric=metric,
             # random_state=10,
         ).fit_transform(self.data_table_scaled_filled)
+        print("UMAP done")
         new_pos_norm = normalize_value_list_in_range(new_pos, [norm_lower, norm_upper])
         pos_norm_dic = {
             node_name: row
@@ -477,7 +476,7 @@ class Cluster_layout:
         }
         return pos_norm_dic, new_pos_norm
 
-    def get_cluster_for_min_sample(self, min_samples, data):
+    def get_cluster_for_min_sample(self, min_samples, data, metric="euclidean"):
         optics = OPTICS(min_samples=min_samples)
         optics_fit = optics.fit(data)
 
@@ -492,7 +491,9 @@ class Cluster_layout:
             clustering_labels_for_sil = [x for x in clustering_labels if x != -1]
 
         ss = metrics.silhouette_score(
-            data_for_sil, clustering_labels_for_sil, metric="euclidean"
+            data_for_sil,
+            clustering_labels_for_sil,
+            metric=metric,  # TODO metric is fixed
         )
         # print("Reached End of Pool func. ",min_samples, max(clustering_labels) + 2, ss)
 
@@ -525,6 +526,7 @@ class Cluster_layout:
                 norm_lower=-125,
                 norm_upper=125,
                 metric=self.umap_distance_metric,
+                output_metric="euclidean",
             )
         else:
             position_list = self.data_table_scaled_filled
@@ -533,7 +535,11 @@ class Cluster_layout:
                 for row, node_name in zip(position_list, list(self.data_table.index))
             }
         pool = Pool(self.pool_size)
-        simplified_func = partial(self.get_cluster_for_min_sample, data=position_list)
+        simplified_func = partial(
+            self.get_cluster_for_min_sample,
+            data=position_list,
+            metric="euclidean",
+        )
         clustering_labels = None
         ss = -1
         for result in pool.imap_unordered(
@@ -553,6 +559,7 @@ class Cluster_layout:
                     clustering_labels = result[1]
         pool.close()
         pool.join()
+        print("clustering labels", clustering_labels)
         self.noise_cluster_exists = -1 in clustering_labels
 
         ordered_nodes = get_sorted_list_by_list_B_sorting_order(
@@ -562,6 +569,25 @@ class Cluster_layout:
         split_array = [sum(nums_in_cl[: i + 1]) for i, _ in enumerate(nums_in_cl)]
         cl_list = np.split(ordered_nodes, split_array)[:-1]
 
+        # test for random forest + SHAP values
+        test = False
+        mpl.use("Agg")
+        plt.ioff()
+        dataDF = pd.DataFrame.from_records(self.data_table_scaled_filled)
+        dataDF.columns = self.data_table.columns.values
+        forest_classifier = RandomForestClassifier()
+        forest_classifier.fit(dataDF, clustering_labels)
+        explainer = shap.TreeExplainer(forest_classifier)
+        shap_values = explainer(dataDF)
+        # shap.plots.waterfall(shap_values[0, :, 1], show=False)
+        # plt.tight_layout()
+        # plt.savefig("shap_all.png")
+        # plt.close()
+        for i in range((max(clustering_labels) + 2)):
+            shap.plots.beeswarm(shap_values[:, :, i], show=False)
+            plt.tight_layout()
+            plt.savefig("shap_{}.png".format(i - 1))
+            plt.close()
         return cl_list, max(clustering_labels) + 2, positions_dict
 
     def get_initial_node_pos(self):
@@ -574,6 +600,7 @@ class Cluster_layout:
         node_pos_dic, node_pos_list = self.get_umap_layout_pos(
             "for visualization",
             metric=self.umap_distance_metric,
+            output_metric="euclidean",
         )
         return node_pos_dic, node_pos_list
 

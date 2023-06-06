@@ -1,4 +1,5 @@
 from random import random
+from collections import defaultdict
 from flask import Flask, render_template, send_from_directory, request
 from visMOP.python_scripts.utils import kegg_to_chebi
 from visMOP.python_scripts.data_table_parsing import table_request, format_omics_data
@@ -9,19 +10,17 @@ from visMOP.python_scripts.omicsTypeDefs import (
     MeasurementData,
     OmicsInputVals,
     AllSliderVals,
-    LayoutSettings,
+    LayoutSettingsRecieved,
+    OmicsDataTuples,
 )
 
-import pandas as pd
 import pathlib
 import json
 from visMOP.python_scripts.cluster_layout import (
     get_layout_settings,
     getClusterLayout,
-    timepoint_analysis,
 )
-from numpy.core.fromnumeric import mean
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple, DefaultDict
 
 import secrets
 from flask_caching import Cache
@@ -54,7 +53,7 @@ Default app routes for index and favicon
 
 
 @app.route("/icons/<path:filename>", methods=["GET"])
-def icons(filename):
+def icons(filename: str):
     return send_from_directory(app.config["ICON_FOLDER"], filename)
 
 
@@ -116,7 +115,7 @@ def reactome_parsing():
     proteomics: OmicsInputVals = request.json["proteomics"]
     metabolomics: OmicsInputVals = request.json["metabolomics"]
     slider_vals: AllSliderVals = request.json["sliderVals"]
-    layout_settings_recieved = request.json["layoutSettings"]
+    layout_settings_recieved: LayoutSettingsRecieved = request.json["layoutSettings"]
     timeseries_mode = request.json["timeseriesMode"]
     cache.set("target_db", target_db)
 
@@ -149,18 +148,18 @@ def reactome_parsing():
     ##
     # Add query Data to Hierarchy
     ##
-    node_pathway_dict = {}
+    node_pathway_dict: Dict[str, List[str]] = {}
     fold_changes: Dict[str, Dict[str, MeasurementData]] = {
         "transcriptomics": {},
         "proteomics": {},
         "metabolomics": {},
     }
-    chebi_ids = {}
+    chebi_ids: DefaultDict[str, List[str]] = defaultdict(list)
     ##
     # Add Proteomics Data
     ##
     if proteomics["recieved"]:
-        proteomics_query_data_tuples = []
+        proteomics_query_data_tuples: List[OmicsDataTuples] = []
 
         format_omics_data(
             proteomics["symbol"],
@@ -175,12 +174,11 @@ def reactome_parsing():
 
         for ID_number in proteomics_data:
             entry = proteomics_data[ID_number]
-            proteomics_query_data_tuples.append(
-                (
-                    {"ID": ID_number, "table_id": ID_number},
-                    [entry[valCol] for valCol in proteomics["value"]],
-                )
+            tuple_entry: OmicsDataTuples = (
+                {"ID": ID_number, "table_id": ID_number},
+                [entry[valCol] for valCol in proteomics["value"]],
             )
+            proteomics_query_data_tuples.append(tuple_entry)
         # target organism is a little bit annoying at the moment
         tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
         print(tar_organism)
@@ -197,7 +195,7 @@ def reactome_parsing():
             **protein_query.get_query_pathway_dict(),
         }
         for query_key, query_result in protein_query.query_results.items():
-            for entity_id, entity_data in query_result.items():
+            for entity_data in query_result.values():
                 reactome_hierarchy.add_query_data(
                     entity_data, "protein", query_key, timeseries_mode
                 )
@@ -205,7 +203,7 @@ def reactome_parsing():
     # Add Metabolomics Data
     ##
     if metabolomics["recieved"]:
-        metabolomics_query_data_tuples = []
+        metabolomics_query_data_tuples: List[OmicsDataTuples] = []
 
         format_omics_data(
             metabolomics["symbol"],
@@ -227,28 +225,27 @@ def reactome_parsing():
             chebi_ids = kegg_to_chebi(metabolomics_IDs)
             for k in chebi_ids.keys():
                 for entry in chebi_ids[k]:
-                    metabolomics_query_data_tuples.append(
-                        (
-                            {"ID": entry, "table_id": k},
-                            [
-                                metabolomics_dict[k][valCol]
-                                for valCol in metabolomics["value"]
-                            ],
-                        )
+                    tuple_entry: OmicsDataTuples = (
+                        {"ID": entry, "table_id": k},
+                        [
+                            metabolomics_dict[k][valCol]
+                            for valCol in metabolomics["value"]
+                        ],
                     )
+                    metabolomics_query_data_tuples.append(tuple_entry)
         else:
             for ID_entry in metabolomics_IDs:
                 # TODO handle KEGGIDS
                 ID_number = str(ID_entry).replace("CHEBI:", "")
-                metabolomics_query_data_tuples.append(
-                    (
-                        {"ID": ID_number, "table_id": ID_number},
-                        [
-                            metabolomics_dict[ID_entry][valCol]
-                            for valCol in metabolomics["value"]
-                        ],
-                    )
+                tuple_entry: OmicsDataTuples = (
+                    {"ID": ID_number, "table_id": ID_number},
+                    [
+                        metabolomics_dict[ID_entry][valCol]
+                        for valCol in metabolomics["value"]
+                    ],
                 )
+
+                metabolomics_query_data_tuples.append(tuple_entry)
 
         # target organism is a little bit annoying at the moment
         tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
@@ -267,7 +264,7 @@ def reactome_parsing():
         }
 
         for query_key, query_result in metabolite_query.query_results.items():
-            for entity_id, entity_data in query_result.items():
+            for entity_data in query_result.values():
                 reactome_hierarchy.add_query_data(
                     entity_data, "metabolite", query_key, timeseries_mode
                 )
@@ -275,7 +272,7 @@ def reactome_parsing():
     # Add Transcriptomics Data Data
     ##
     if transcriptomics["recieved"]:
-        transcriptomics_query_data_tuples = []
+        transcriptomics_query_data_tuples: List[OmicsDataTuples] = []
         format_omics_data(
             transcriptomics["symbol"],
             slider_vals["transcriptomics"],
@@ -290,15 +287,14 @@ def reactome_parsing():
 
         transcriptomics_IDs = list(transcriptomics_dict.keys())
         for ID_number in transcriptomics_IDs:
-            transcriptomics_query_data_tuples.append(
-                (
-                    {"ID": ID_number, "table_id": ID_number},
-                    [
-                        transcriptomics_dict[ID_number][valCol]
-                        for valCol in transcriptomics["value"]
-                    ],
-                )
+            tuple_entry: OmicsDataTuples = (
+                {"ID": ID_number, "table_id": ID_number},
+                [
+                    transcriptomics_dict[ID_number][valCol]
+                    for valCol in transcriptomics["value"]
+                ],
             )
+            transcriptomics_query_data_tuples.append(tuple_entry)
 
         # target organism is a little bit annoying at the moment
         tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
@@ -317,7 +313,7 @@ def reactome_parsing():
             **transcriptomics_query.get_query_pathway_dict(),
         }
         for query_key, query_result in transcriptomics_query.query_results.items():
-            for entity_id, entity_data in query_result.items():
+            for entity_data in query_result.values():
                 reactome_hierarchy.add_query_data(
                     entity_data, "gene", query_key, timeseries_mode
                 )
@@ -364,10 +360,11 @@ def reactome_overview():
     if layout_settings_cache is None:
         raise TypeError("Layout settings cache is empty")
 
-    layout_settings: LayoutSettings = layout_settings_cache  # type: ignore Until flask_caching is updated
+    layout_settings: Tuple[List[List[str]], List[List[float]]] = layout_settings_cache  # type: ignore Until flask_caching is updated
 
-    layout_limits = layout_settings["limits"]
-    layout_attributes_used = layout_settings["attributes"]
+    layout_attributes_used: List[str]  #
+    layout_limits: List[List[float]]
+    layout_attributes_used, layout_limits = layout_settings
 
     umap_settings = {
         "cluster_min_size_quotient": request.json["cluster_min_size_quotient"],
@@ -389,7 +386,6 @@ def reactome_overview():
         query_pathway_dict,
         dropdown_data,
         root_ids,
-        pathways_root_names,
         root_subpathways,
         statistic_data_complete,
         omics_recieved,
@@ -399,6 +395,11 @@ def reactome_overview():
     pathway_connection_dict = create_overview_data(out_data, central_nodes)
 
     # cluster_node_pos, cluster_areas = getClusterLayout(
+    
+    clusters:
+    cluster_centers:
+    noiseClusterExists: bool
+
     clusters, cluster_centers, noiseClusterExists = getClusterLayout(
         omics_recieved,
         central_nodes,
@@ -407,7 +408,6 @@ def reactome_overview():
         statistic_data_complete,
         pathway_connection_dict,
         root_subpathways,
-        pathways_root_names,
         umap_settings,
     )
 
@@ -441,7 +441,7 @@ def reactome_overview():
 
 
 @app.route("/get_reactome_json_files/<pathway>", methods=["GET"])
-def get_reactome_json(pathway: str):
+def get_reactome_json(pathway: str) -> str:
     pathway = pathway.split("_")[0]
     hierarchy = cache.get("reactome_hierarchy")
     if hierarchy is None:
