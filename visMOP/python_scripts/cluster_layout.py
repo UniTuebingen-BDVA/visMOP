@@ -23,6 +23,8 @@ import numpy as np
 import math
 import networkx as nx
 import time
+from numba.core.errors import NumbaDeprecationWarning
+
 
 from multiprocessing import Pool
 
@@ -33,18 +35,16 @@ with warnings.catch_warnings():
     from umap import UMAP
 from sklearn.cluster import OPTICS
 from collections import Counter
-from itertools import combinations
-from scipy.spatial import distance
 from sklearn import metrics
 from visMOP.python_scripts.networkx_layouting import generate_networkx_dict
 from visMOP.python_scripts.cluster_layout_types import UmapClusterSettings
-import pandas as pd
 
 from sklearn.ensemble import RandomForestClassifier
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
-import shap
+from shap import TreeExplainer
+from shap.plots import beeswarm
 
 T = TypeVar("T")
 
@@ -139,36 +139,6 @@ def get_layout_settings(
     return attributes, limits
 
 
-def get_area_size(
-    area: List[float], get_side_ratio_ok: bool = False, l_max: int = 1
-) -> Tuple(float, float):
-    """determine the area given array of min and max x and y positions
-
-    Args:
-        area: [x_min, x_max, y_min, y_max ]
-        get_smallest_side: boolean to deterine whether to return legth of smallest side
-
-    """
-
-    x_side: float = area[1] - area[0]
-    y_side: float = area[3] - area[2]
-    area_size: float = x_side * y_side
-    if not get_side_ratio_ok:
-        return area_size
-    min_side: float = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
-    return area_size, min_side
-
-
-def get_min_max_side(area: List[float], l_max: int) -> Tuple[float, float]:
-    x_side: float = area[1] - area[0]
-    y_side: float = area[3] - area[2]
-
-    min_side: float = normalize_val_in_range(min(x_side, y_side), 0, l_max, [0, 1])
-    max_side: float = normalize_val_in_range(max(x_side, y_side), 0, l_max, [0, 1])
-
-    return min_side, max_side
-
-
 def get_sorted_list_by_list_B_sorting_order(
     list_to_sort: List[T], sorting_list: List[T], reverse: bool = False
 ) -> List[T]:
@@ -185,19 +155,6 @@ def get_sorted_list_by_list_B_sorting_order(
         for _, element in sorted(zip(sorting_list, list_to_sort), reverse=reverse)
     ]
     return sorted_list
-
-
-def cluster_center_in_area(cluster_center: List[float], area: List[float]) -> bool:
-    """Determine if the cluster center lies in area
-    Args:
-       cluster_center: [x_pos, y_pos]
-       area: [x_min, x_max, y_min, y_max ]
-    """
-    in_area = (
-        area[0] <= cluster_center[0] <= area[1]
-        and area[2] <= cluster_center[1] <= area[3]
-    )
-    return in_area
 
 
 def normalize_val_in_range(
@@ -309,13 +266,13 @@ def normalize_2D_node_pos_in_range(
 class Cluster_layout:
     def __init__(
         self,
-        data_table,
-        layout_targets,
-        graph_dict,
-        up_down_reg_means,
-        reactome_roots,
-        umap_cluster_settings,
-        node_size=2,
+        data_table: pd.DataFrame,
+        layout_targets: List[str],
+        graph_dict: Dict[str, NodeAttributes],
+        up_down_reg_means: Dict[str, float],
+        reactome_roots: DefaultDict[str, List[str]],
+        umap_cluster_settings: UmapClusterSettings,
+        node_size: int = 2,
     ):
         self.pool_size = 8
         self.cluster_min_size_quotient = int(
@@ -359,7 +316,7 @@ class Cluster_layout:
                     graph_dict, up_down_reg_means, reactome_root_ids
                 )
             )
-        except ValueError as e:
+        except ValueError:
             raise ValueError
         print("Scaled input data")
         self.initial_node_pos, _ = self.get_initial_node_pos()
@@ -380,11 +337,7 @@ class Cluster_layout:
 
         initial_clusters_center = self.get_cluster_centers(self.initial_node_pos)
         self.clusters_center = initial_clusters_center
-        self.weights = self.getClustersWeights()
 
-        self.relative_distances = self.getRealtiveDistancesBetweenClusters(
-            self.get_cluster_centers(self.positions_dict_clustering)
-        )
         print("Clusters identified")
         print(cluster_length)
         endTime = time.time()
@@ -396,16 +349,19 @@ class Cluster_layout:
 
     # default values per omic and pos
     def fill_missing_values_with_neighbor_mean(
-        self, graph_dict, default_means, root_ids
-    ):
-        node_names = list(self.data_table.index)
+        self,
+        graph_dict: Dict[str, NodeAttributes],
+        default_means: Dict[str, float],
+        root_ids: List[str],
+    ) -> pd.DataFrame:
+        node_names: List[str] = self.data_table.index.tolist()
         new_data = {}
         default_val_0 = ["numVals", "percent"]
         for node_name in node_names:
-            new_node_vec = []
-            for ind, val in zip(
-                list(self.data_table.columns), self.data_table.loc[node_name]
-            ):
+            new_node_vec: List[float] = []
+            current_col: List[float] = self.data_table.loc[node_name].to_list()
+            cols: List[str] = self.data_table.columns.to_list()
+            for ind, val in zip(cols, current_col):
                 # kinda fishy, as default means are always 0
                 # TODO get defaults working,
                 default_val = (
@@ -420,7 +376,9 @@ class Cluster_layout:
                     for node_info in neighbor_nodes:
                         neighbor_name = node_info["target"]
                         if graph_dict[neighbor_name]["isCentral"]:
-                            neighbor_val = self.data_table.loc[neighbor_name][ind]
+                            neighbor_val: float = self.data_table.loc[neighbor_name][
+                                ind
+                            ]
                             if (
                                 not math.isnan(neighbor_val)
                                 and neighbor_name not in root_ids
@@ -449,7 +407,7 @@ class Cluster_layout:
         norm_upper: float = 1,
         metric: str = "correlation",
         output_metric: str = "correlation",
-    ):
+    ) -> Tuple[Dict[str, List[float]], List[List[float]]]:
         """Performs UMAP on scaled data returns new normalizied in [0,1] n-D Positions in node dict and postion list of lists
 
         Args:
@@ -460,23 +418,32 @@ class Cluster_layout:
         print(
             f"Applying UMAP {log_arg} with n_components={n_components}, n_neighbors={n_neighbors}, min_dist={min_dist}, metric={metric}"
         )
-        new_pos: List[List[float]] = UMAP(
+        umap_ndarray: np.ndarray[Tuple[int, int], np.dtype[np.float64]] = UMAP(
             n_components=n_components,
             n_neighbors=n_neighbors,
             min_dist=min_dist,
             metric=metric,
             output_metric=metric,
             # random_state=10,
-        ).fit_transform(self.data_table_scaled_filled)
+        ).fit_transform(
+            self.data_table_scaled_filled
+        )  # type: ignore
+
+        new_pos: List[List[float]] = umap_ndarray.tolist()
+
         print("UMAP done")
-        new_pos_norm = normalize_value_list_in_range(new_pos, [norm_lower, norm_upper])
-        pos_norm_dic = {
-            node_name: row
-            for row, node_name in zip(new_pos_norm, list(self.data_table.index))
+        new_pos_norm: List[List[float]] = normalize_value_list_in_range(
+            new_pos, [norm_lower, norm_upper]
+        )
+        data_table_index: List[float] = self.data_table.index.tolist()
+        pos_norm_dic: Dict[str, List[float]] = {
+            node_name: row for row, node_name in zip(new_pos_norm, data_table_index)
         }
         return pos_norm_dic, new_pos_norm
 
-    def get_cluster_for_min_sample(self, min_samples, data, metric="euclidean"):
+    def get_cluster_for_min_sample(
+        self, min_samples: int, data, metric: str = "euclidean"
+    ):
         optics = OPTICS(min_samples=min_samples)
         optics_fit = optics.fit(data)
 
@@ -570,33 +537,34 @@ class Cluster_layout:
         cl_list = np.split(ordered_nodes, split_array)[:-1]
 
         # test for random forest + SHAP values
-        test = False
-        mpl.use("Agg")
-        plt.ioff()
-        dataDF = pd.DataFrame.from_records(self.data_table_scaled_filled)
-        dataDF.columns = self.data_table.columns.values
-        forest_classifier = RandomForestClassifier()
-        forest_classifier.fit(dataDF, clustering_labels)
-        explainer = shap.TreeExplainer(forest_classifier)
-        shap_values = explainer(dataDF)
-        # shap.plots.waterfall(shap_values[0, :, 1], show=False)
-        # plt.tight_layout()
-        # plt.savefig("shap_all.png")
-        # plt.close()
-        for i in range((max(clustering_labels) + 2)):
-            shap.plots.beeswarm(shap_values[:, :, i], show=False)
-            plt.tight_layout()
-            plt.savefig("shap_{}.png".format(i - 1))
-            plt.close()
+        # mpl.use("Agg")
+        # plt.ioff()
+        # dataDF = pd.DataFrame.from_records(self.data_table_scaled_filled)
+        # dataDF.columns = self.data_table.columns.values
+        # forest_classifier = RandomForestClassifier()
+        # forest_classifier.fit(dataDF, clustering_labels)
+        # explainer = TreeExplainer(forest_classifier)
+        # shap_values = explainer(dataDF)
+        # # shap.plots.waterfall(shap_values[0, :, 1], show=False)
+        # # plt.tight_layout()
+        # # plt.savefig("shap_all.png")
+        # # plt.close()
+        # for i in range((max(clustering_labels) + 2)):
+        #     beeswarm(shap_values[:, :, i], show=False)
+        #     plt.tight_layout()
+        #     plt.savefig("shap_{}.png".format(i - 1))
+        #     plt.close()
         return cl_list, max(clustering_labels) + 2, positions_dict
 
-    def get_initial_node_pos(self):
+    def get_initial_node_pos(self) -> Tuple[Dict[str, List[float]], List[List[float]]]:
         """Get node positions using dimensionality reduction drm
 
         Args:
             drm: dimensionality reduction method
 
         """
+        node_pos_dic: Dict[str, List[float]]
+        node_pos_list: List[List[float]]
         node_pos_dic, node_pos_list = self.get_umap_layout_pos(
             "for visualization",
             metric=self.umap_distance_metric,
@@ -604,22 +572,7 @@ class Cluster_layout:
         )
         return node_pos_dic, node_pos_list
 
-    def getClustersWeights(self):
-        """returns weights between all cluster-pairs equal to the number of nodes sharing edges between the"""
-        num_clusters = len(self.clusters)
-        weights = np.zeros((num_clusters, num_clusters))
-        for cluster_pair in combinations(range(len(self.clusters)), 2):
-            num_edges = sum(
-                [
-                    self.full_graph.has_edge(n_1, n_2)
-                    for n_1 in self.clusters[cluster_pair[0]]
-                    for n_2 in self.clusters[cluster_pair[1]]
-                ]
-            )
-            weights[cluster_pair[0], cluster_pair[1]] = num_edges
-        return weights
-
-    def get_cluster_centers(self, node_pos):
+    def get_cluster_centers(self, node_pos: Dict[str, List[float]]):
         """for every cluster get cluster center defined as the median position of all nodes in cluster
 
         Args:
@@ -640,23 +593,3 @@ class Cluster_layout:
 
         # cluster_centers = [[np.median(cluster_coords[0]),np.median(cluster_coords[1])] for cluster_coords in cluster_centers]
         return cluster_centers_med
-
-    def getRealtiveDistancesBetweenClusters(self, cur_cluster_centers):
-        """
-        1. get median node positions of all clusters using UMAP
-        2. calculated  Manhattan distance between all clusters
-        3. calculated distances as multiple of the distance between the node pair
-            that has the smallest distance in the initial UMAP layout
-        """
-        all_vecs = [
-            cur_cluster_centers[cluster] for cluster in range(len(self.clusters))
-        ]
-
-        all_distances = distance.pdist(all_vecs, "cityblock")
-        if self.greatest_dist_in_initial_layout is None:
-            self.greatest_dist_in_initial_layout = np.max(all_distances)
-
-        max_distance = self.greatest_dist_in_initial_layout
-        relative_distances = [dist / max_distance for dist in all_distances]
-
-        return relative_distances

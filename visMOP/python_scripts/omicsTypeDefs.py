@@ -127,21 +127,10 @@ class LayoutSettingRecieved(TypedDict):
     limits: List[int]
 
 
-class LayoutSettingsRecieved(TypedDict):
-    """
-    A TypedDict that describes the layout settings for the graph-layout.
-
-    Attributes:
-        transcriptomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the transcriptomics omics.
-        proteomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the proteomics omics.
-        metabolomics (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the metabolomics omics.
-        nonSpecific (Dict[str, Union[List[Dict[str, str]], List[int]]]): The layout settings for the omics that are not related to a specific omic.
-    """
-
-    transcriptomics: Dict[str, LayoutSettingRecieved]
-    proteomics: Dict[str, LayoutSettingRecieved]
-    metabolomics: Dict[str, LayoutSettingRecieved]
-    nonSpecific: Dict[str, LayoutSettingRecieved]
+LayoutSettingsRecieved = Dict[str, LayoutSettingRecieved]
+"""
+A TypedDict that describes the layout settings for the graph-layout.
+"""
 
 
 class TableRequestData(TypedDict):

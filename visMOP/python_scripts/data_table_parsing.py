@@ -79,7 +79,7 @@ def generate_vue_table_entries(df: pd.DataFrame) -> List[dict[str, str]]:
         vue_entries: vues data table style headers
     """
 
-    def row_to_dict(row: pd.Series[str]) -> dict[str, str]:
+    def row_to_dict(row: pd.Series) -> dict[str, str]:
         return row.to_dict()
 
     vue_entries: pd.Series[dict[str, str]] = df.aggregate(row_to_dict, axis=1)

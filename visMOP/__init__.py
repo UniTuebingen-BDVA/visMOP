@@ -395,9 +395,9 @@ def reactome_overview():
     pathway_connection_dict = create_overview_data(out_data, central_nodes)
 
     # cluster_node_pos, cluster_areas = getClusterLayout(
-    
-    clusters:
-    cluster_centers:
+
+    clusters: any
+    cluster_centers: any
     noiseClusterExists: bool
 
     clusters, cluster_centers, noiseClusterExists = getClusterLayout(

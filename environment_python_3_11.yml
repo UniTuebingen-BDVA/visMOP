@@ -14,4 +14,4 @@ dependencies:
   - pip:
       - reactome2py
       - git+https://github.com/lmcinnes/umap.git
-      - git+https://github.com/dsgibbons/shap.git
+      - git+https://github.com/slundberg/shap.git
