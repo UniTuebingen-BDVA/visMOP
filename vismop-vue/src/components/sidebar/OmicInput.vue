@@ -112,7 +112,7 @@ import { computed, ref, defineProps, watch, defineEmits } from 'vue';
 import type { Ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { ColType } from '@/core/generalTypes';
-import * as XLSX from 'xlsx';
+import * as Excel from 'exceljs';
 
 const emit = defineEmits([
   'update:recievedOmicsData',
@@ -182,14 +182,21 @@ const setSheetOptions = () => {
   if (omicsFile.value) {
     const reader = new FileReader();
 
-    reader.onload = (e) => {
-      const data = e.target?.result;
-      const workbook = XLSX.read(data, { type: 'binary' });
-      const sheetNames = workbook.SheetNames;
-      sheetOptions.value = sheetNames;
+    reader.onload = () => {
+      const data = reader.result as ArrayBuffer;
+      const workbook = new Excel.Workbook();
+      workbook.xlsx.load(data).then(
+        (workbookThen) => {
+          const sheetNames = workbookThen.worksheets.map((sheet) => sheet.name);
+          sheetOptions.value = sheetNames;
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
     };
 
-    reader.readAsBinaryString(omicsFile.value);
+    reader.readAsArrayBuffer(omicsFile.value);
   }
 };
 
