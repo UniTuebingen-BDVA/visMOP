@@ -142,6 +142,7 @@
         <keep-alive>
           <reactome-overview-component-vue
             context-i-d="overviewContext"
+            back-ground-i-d="backgroundSVG"
             :transcriptomics-selection="selectedTranscriptomics"
             :proteomics-selection="selectedProteomics"
             :metabolomics-selection="selectedMetabolomics"

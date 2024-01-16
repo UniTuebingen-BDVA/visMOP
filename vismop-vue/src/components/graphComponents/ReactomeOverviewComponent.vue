@@ -73,6 +73,7 @@
         </q-expansion-item>
       </q-fab-action>
     </q-fab>
+    <!-- <svg :id="backGroundID" class="svgContainer"></svg> -->
     <div :id="contextID" class="webglContainer"></div>
   </q-card>
 </template>
@@ -108,6 +109,7 @@ import _ from 'lodash';
 
 const props = defineProps({
   contextID: { type: String, required: true },
+  backGroundID: { type: String, required: true },
   transcriptomicsSelection: {
     type: Array as PropType<{ [key: string]: string }[]>,
     required: true,
@@ -622,6 +624,12 @@ const drawNetwork = () => {
 <style lang="scss">
 .graphControl {
   min-width: 10vw;
+}
+.svgContainer {
+  height: 100%;
+  min-height: 100%;
+  position: fixed;
+  z-index: 1;
 }
 .webglContainer {
   height: 100%;

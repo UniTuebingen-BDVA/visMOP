@@ -13,13 +13,13 @@
  * the use of indices.
  * @module
  */
-import { floatColor, canUse32BitsIndices } from 'sigma/utils';
+import { floatColor } from 'sigma/utils';
 import { NodeDisplayData } from 'sigma/types';
 import { ColorfadeEdgeDisplayData } from './types';
 import vertexShaderSource from './bezier-curve-vertex-shader.glsl?raw';
 import fragmentShaderSource from './bezier-curve-fragment-shader.glsl?raw';
-import { AbstractEdgeProgram } from 'sigma/rendering/webgl/programs/common/edge';
-import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
+import { AbstractEdgeProgram } from 'sigma/rendering/edge';
+//import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
 
 const bez_sample_count = 30;
 const POINTS = (bez_sample_count - 1) * 4;
@@ -27,11 +27,13 @@ const ATTRIBUTES = 6;
 const STRIDE = POINTS * ATTRIBUTES;
 
 export class BezierEdgeProgram extends AbstractEdgeProgram {
+  reallocate(capacity: number): void {
+    throw new Error('Method not implemented.');
+  }
   IndicesArray: Uint32ArrayConstructor | Uint16ArrayConstructor;
   indicesArray: Uint32Array | Uint16Array;
   indicesBuffer: WebGLBuffer;
   indicesType: GLenum;
-  canUse32BitsIndices: boolean;
   positionLocation: GLint;
   colorLocation: GLint;
   normalLocation: GLint;
@@ -114,12 +116,9 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     // `OES_element_index_uint` is quite everywhere so we'll handle
     // the potential issue if it really arises.
     // NOTE: when using webgl2, the extension is enabled by default
-    this.canUse32BitsIndices = canUse32BitsIndices(gl);
-    this.IndicesArray = this.canUse32BitsIndices ? Uint32Array : Uint16Array;
+    this.IndicesArray = Uint32Array;
     this.indicesArray = new this.IndicesArray();
-    this.indicesType = this.canUse32BitsIndices
-      ? gl.UNSIGNED_INT
-      : gl.UNSIGNED_SHORT;
+    this.indicesType = gl.UNSIGNED_INT;
 
     this.bind();
   }
@@ -362,7 +361,7 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     }
   }
 
-  render(params: RenderParams): void {
+  render(params): void {
     if (this.hasNothingToRender()) return;
 
     const gl = this.gl;

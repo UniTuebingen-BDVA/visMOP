@@ -1,6 +1,8 @@
 import Graph, { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
-import getNodeProgramImage from '@/core/custom-nodes/custom-image-node-program';
+//import getNodeProgramImage from '@/core/custom-nodes/custom-image-node-program';
+import getNodeProgramImage from 'sigma/rendering/programs/node-image';
+
 import {
   fa2LayoutParams,
   overviewNodeAttr,
@@ -33,8 +35,10 @@ import { overviewColors } from '@/core/colors';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
 import { Coordinates, PlainObject } from 'sigma/types';
 import { vec2 } from 'gl-matrix';
-import { BezierEdgeProgram } from '@/core/custom-nodes/bezier-curve-program';
-import { DontRender } from '@/core/custom-nodes/dont-render';
+import BezierEdgeProgram from '@/core/custom-nodes/bezier-curve-new-program';
+import EdgeLineProgram from 'sigma/rendering/programs/edge-line';
+import DontRender from '@/core/custom-nodes/dont-render-new';
+import defaultNode from 'sigma/rendering/programs/node-circle';
 import { createNormalizationFunction, graphExtent } from 'sigma/utils';
 
 export default class OverviewGraph {
@@ -121,8 +125,8 @@ export default class OverviewGraph {
     this.calculateGraphWidth();
     this.layoutRoots();
     this.relayoutGraph(this.initialFa2Params);
-    this.generateHelperEdges();
-    this.generateBezierControlPoints();
+    //this.generateHelperEdges();
+    //this.generateBezierControlPoints();
     this.setSize(windowWidth);
 
     this.refreshCurrentPathway();
@@ -145,40 +149,34 @@ export default class OverviewGraph {
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
     // construct Sigma main instance
-    const renderer = new Sigma(
-      this.graph,
-      elem,
-      {
-        nodeReducer: nodeReducer.bind(this),
-        edgeReducer: edgeReducer.bind(this),
-        zIndex: true, // enabling zIndex parameter
-        renderLabels: true,
-        labelRenderedSizeThreshold: 999999,
-        edgeProgramClasses: {
-          ...DEFAULT_SETTINGS.edgeProgramClasses,
-          dashed: BezierEdgeProgram,
-          line: BezierEdgeProgram,
-          helper: DontRender,
-        },
-        nodeProgramClasses: {
-          ...DEFAULT_SETTINGS.nodeProgramClasses,
-          image: getNodeProgramImage(),
-        },
-        hoverRenderer: drawHover,
-        labelRenderer: drawLabel,
-        getCameraSizeRatio: (x) => Math.pow(x, 0.7),
-        clusterVis: 'ConvexHull',
+    const renderer = new Sigma(this.graph, elem, {
+      nodeReducer: nodeReducer.bind(this),
+      edgeReducer: edgeReducer.bind(this),
+      zIndex: true, // enabling zIndex parameter
+      renderLabels: true,
+      renderEdgeLabels: false,
+      labelRenderedSizeThreshold: 999999,
+      edgeProgramClasses: {
+        ...DEFAULT_SETTINGS.edgeProgramClasses,
+        dashed: EdgeLineProgram,
+        line: EdgeLineProgram,
+        helper: DontRender,
       },
-      this.additionalData
-    );
+      nodeProgramClasses: {
+        ...DEFAULT_SETTINGS.nodeProgramClasses,
+        image: getNodeProgramImage(),
+      },
+      defaultDrawNodeHover: drawHover,
+      defaultDrawNodeLabel: drawLabel,
+    });
     renderer.on('beforeRender', () => {
       zoomLod.bind(this)();
       this.filter.filterElements();
     });
 
-    // TODO: from events example:
+    //TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
-      // console.log('Entering: ', node)
+      console.log('Entering: ', node);
       this.highlightedNodesHover = new Set(this.graph.neighbors(node));
       this.highlightedNodesHover.add(node);
       this.highlightedCenterHover = node;
@@ -194,6 +192,7 @@ export default class OverviewGraph {
     });
 
     renderer.on('clickNode', ({ node, event }) => {
+      console.log('clickNode', node, event);
       if (this.graph.getNodeAttribute(node, 'nodeType') != 'cluster') {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
@@ -241,13 +240,13 @@ export default class OverviewGraph {
             attributes.size = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'cluster'
-              ? this.CLUSTER_DEFAULT_SIZE
-              : this.DEFAULT_SIZE;
+                ? this.CLUSTER_DEFAULT_SIZE
+                : this.DEFAULT_SIZE;
             attributes.nonHoverSize = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'cluster'
-              ? this.CLUSTER_DEFAULT_SIZE
-              : this.DEFAULT_SIZE;
+                ? this.CLUSTER_DEFAULT_SIZE
+                : this.DEFAULT_SIZE;
           }
         });
 
@@ -456,8 +455,8 @@ export default class OverviewGraph {
             resetMode
               ? this.hierarchyStepIn
               : callbackMode
-              ? callback
-              : undefined,
+                ? callback
+                : undefined,
             resetMode
               ? [this.hierarchyClickStack.length > 0, callbackMode, callback]
               : [undefined]

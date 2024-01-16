@@ -36,7 +36,7 @@
     "pinia": "^2.1.7",
     "quasar": "^2.14.2",
     "roboto-fontface": "*",
-    "sigma": "github:UniTuebingen-BDVA/sigma.js#bdvaCustomSigma",
+    "sigma": "^3.0.0-beta.4",
     "sortablejs": "^1.15.1",
     "sortablejs-vue3": "^1.2.11",
     "vite-plugin-glsl": "^1.2.1",
