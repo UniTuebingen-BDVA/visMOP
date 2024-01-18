@@ -9,9 +9,6 @@ import {
   overviewGraphData,
   additionalData,
 } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
-import { baseEdgeAttr, edge } from '@/core/graphTypes';
-//import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
-import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
@@ -19,11 +16,7 @@ import { animateNodes } from 'sigma/utils/animate';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import OverviewFilter from './filter';
-import {
-  bidirectional,
-  dijkstra,
-  edgePathFromNodePath,
-} from 'graphology-shortest-path';
+import { dijkstra, edgePathFromNodePath } from 'graphology-shortest-path';
 import { Attributes } from 'graphology-types';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
@@ -38,7 +31,6 @@ import { vec2 } from 'gl-matrix';
 import BezierEdgeProgram from '@/core/custom-nodes/bezier-curve-new-program';
 import EdgeLineProgram from 'sigma/rendering/programs/edge-line';
 import DontRender from '@/core/custom-nodes/dont-render-new';
-import defaultNode from 'sigma/rendering/programs/node-circle';
 import { createNormalizationFunction, graphExtent } from 'sigma/utils';
 
 export default class OverviewGraph {
@@ -81,6 +73,7 @@ export default class OverviewGraph {
   lodRatio = 1.3;
   lastClickedClusterNode = -1;
   additionalData!: additionalData;
+  polygonLayerID: string;
   animationStack: PlainObject<PlainObject<number>> = {};
   nodeAttributeStack: {
     [key: string]: { [key: string]: string | number | boolean };
@@ -95,6 +88,7 @@ export default class OverviewGraph {
   filter = new OverviewFilter(this);
 
   polygons: { [key: number]: ConvexPolygon };
+  currentlyRenderedPolygons: { [key: number]: ConvexPolygon };
   initialFa2Params: fa2LayoutParams;
   clusterWeights: number[];
   maxClusterWeight: number;
@@ -103,6 +97,7 @@ export default class OverviewGraph {
 
   constructor(
     containerID: string,
+    polygonLayerID: string,
     graphData: overviewGraphData,
     polygons: { [key: number]: ConvexPolygon },
     layoutParams: fa2LayoutParams,
@@ -110,10 +105,12 @@ export default class OverviewGraph {
     windowWidth: number
   ) {
     console.log('GraphData:', graphData);
+    this.polygonLayerID = polygonLayerID;
     this.graph = UndirectedGraph.from(graphData);
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
+    this.currentlyRenderedPolygons = polygons;
     this.rootOrder = 0;
     this.clusterWeights = clusterWeights;
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
@@ -128,8 +125,62 @@ export default class OverviewGraph {
     //this.generateHelperEdges();
     //this.generateBezierControlPoints();
     this.setSize(windowWidth);
+    this.drawPolygons(
+      polygonLayerID,
+      polygons,
+      graphData.clusterData.clusterColors
+    );
 
     this.refreshCurrentPathway();
+  }
+
+  /**
+   * draw the polygons for the clusters in the overview graph
+   * @param polygonLayerID
+   * @param polygons
+   * @param clusterColors
+   *
+   */
+  drawPolygons(
+    polygonLayerID: string,
+    polygons: { [key: number]: ConvexPolygon },
+    clusterColors: number[][]
+  ) {
+    const canvas = document.getElementById(polygonLayerID);
+    if (canvas) {
+      canvas.width = this.windowWidth;
+      canvas.height = canvas.clientHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // draw polygons on the canvas
+        Object.keys(polygons).forEach((element) => {
+          const polygonIdx = parseInt(element);
+          const currentPolygon = polygons[polygonIdx];
+          const polygonVertices = currentPolygon.verticesToArray();
+          const currentColor = clusterColors[polygonIdx];
+          const currentColorRgb = [0.5, 0.5, 0.5];
+          ctx.fillStyle = `rgba(${currentColor[0]},${currentColor[1]},${currentColor[2]},${currentColor[3]})`;
+          ctx.strokeStyle = `rgba(${currentColor[0]},${currentColor[1]},${currentColor[2]},${currentColor[3]})`;
+          ctx.beginPath();
+          const trafoCoord = this.renderer.graphToViewport({
+            x: polygonVertices[0][0],
+            y: polygonVertices[0][1],
+          });
+          ctx.moveTo(trafoCoord.x, trafoCoord.y);
+          for (let i = 1; i < polygonVertices.length; i++) {
+            const trafoCoord = this.renderer.graphToViewport({
+              x: polygonVertices[i][0],
+              y: polygonVertices[i][1],
+            });
+            ctx.lineTo(trafoCoord.x, trafoCoord.y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fill();
+        });
+      }
+    }
   }
 
   /**
@@ -173,7 +224,16 @@ export default class OverviewGraph {
       zoomLod.bind(this)();
       this.filter.filterElements();
     });
-
+    renderer.on('afterRender', () => {
+      this.drawPolygons(
+        this.polygonLayerID,
+        this.currentlyRenderedPolygons,
+        this.clusterData.clusterColors
+      );
+    });
+    renderer.on('clickStage', () => {
+      console.log('clickStage');
+    });
     //TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
       console.log('Entering: ', node);

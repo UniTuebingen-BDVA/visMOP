@@ -133,10 +133,10 @@ export function generateGraphData(
           entry.rootId === entry.pathwayId
             ? 'root'
             : entry.isCentral
-            ? 'regular'
-            : entry.isOverview
-            ? 'hierarchical'
-            : 'other',
+              ? 'regular'
+              : entry.isOverview
+                ? 'hierarchical'
+                : 'other',
         size: !entry.isCentral
           ? OverviewGraph.ROOT_DEFAULT_SIZE
           : OverviewGraph.DEFAULT_SIZE,
@@ -296,7 +296,7 @@ export function generateGraphData(
       if (clusterNum >= firstNoneNoiseCluster) {
         for (const [omic, omicsVal] of Object.entries(omicsRecieved) as [
           'transcriptomics' | 'proteomics' | 'metabolomics',
-          boolean
+          boolean,
         ][]) {
           if (omicsVal) {
             omicColors.push(clusterOmicsToColor(clusterNum, omic));

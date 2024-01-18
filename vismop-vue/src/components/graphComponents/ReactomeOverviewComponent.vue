@@ -73,7 +73,7 @@
         </q-expansion-item>
       </q-fab-action>
     </q-fab>
-    <!-- <svg :id="backGroundID" class="svgContainer"></svg> -->
+    <canvas :id="backGroundID" class="svgContainer"></canvas>
     <div :id="contextID" class="webglContainer"></div>
   </q-card>
 </template>
@@ -613,6 +613,7 @@ const drawNetwork = () => {
   );
   networkGraph.value = new OverviewGraph(
     props.contextID ? props.contextID : '',
+    props.backGroundID ? props.backGroundID : '',
     networkData,
     polygons,
     fa2LayoutParams.value,
@@ -629,7 +630,7 @@ const drawNetwork = () => {
   height: 100%;
   min-height: 100%;
   position: fixed;
-  z-index: 1;
+  z-index: 0;
 }
 .webglContainer {
   height: 100%;
