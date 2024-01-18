@@ -81,17 +81,12 @@ type overviewNode = node & {
 };
 
 /**
- * Type defining the points of the convex hull describing the clusters boundary
- */
-type hullPoints = number[][][];
-
-/**
  * Data needed for sigma to display the convex cluster hulls
  */
 type additionalData = {
   clusterAreas: {
-    hullPoints: hullPoints;
-    clusterColors: [number, number, number, number][];
+    hullPoints: { [key: number]: ConvexPolygon };
+    clusterColors: { [key: number]: color };
   };
 };
 
@@ -99,9 +94,9 @@ type additionalData = {
  * Data decsribing the cluster hulls and their coloring
  */
 type clusterData = {
-  normalHullPoints: hullPoints;
-  focusHullPoints: hullPoints;
-  clusterColors: [number, number, number, number][];
+  normalHullPoints: { [key: number]: ConvexPolygon };
+  focusHullPoints: { [key: number]: ConvexPolygon };
+  clusterColors: { [key: number]: color };
 };
 /**
  * Defines the overview Graph Data

@@ -41,9 +41,9 @@ export function generateGraphData(
     nodes: [],
     edges: [],
     clusterData: {
-      normalHullPoints: [[[]]],
-      focusHullPoints: [[[]]],
-      clusterColors: [],
+      normalHullPoints: {},
+      focusHullPoints: {},
+      clusterColors: {},
     },
     options: [],
   };
@@ -203,9 +203,9 @@ export function generateGraphData(
     index += 1;
   }
   const clusterHullsAdjustment = new ClusterHulls(60);
-  const clusterHulls = [] as number[][][];
-  const focusClusterHulls = [] as number[][][];
-  const clusterColors: color[] = [];
+  const clusterHulls: { [key: number]: ConvexPolygon } = {};
+  const focusClusterHulls: { [key: number]: ConvexPolygon } = {};
+  const clusterColors: { [key: number]: color } = {};
   const firstNoneNoiseCluster = useMainStore().clusterData.noiseClusterExists
     ? 1
     : 0;
@@ -284,7 +284,8 @@ export function generateGraphData(
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
   Object.keys(voronoiPolygons).forEach((polygonKey) => {
-    const polygon = voronoiPolygons[parseInt(polygonKey)];
+    const intPolygonKey = parseInt(polygonKey);
+    const polygon = voronoiPolygons[intPolygonKey];
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
         polygon,
@@ -305,17 +306,17 @@ export function generateGraphData(
 
         const clusterColor = mixOmicsColors(omicColors);
         const lighterColor = lightenColor(clusterColor);
-        clusterColors.push(lighterColor);
+        clusterColors[intPolygonKey] = lighterColor;
       } else {
-        clusterColors.push([
+        clusterColors[intPolygonKey] = [
           noiseClusterGreyValue,
           noiseClusterGreyValue,
           noiseClusterGreyValue,
           1.0,
-        ]);
+        ];
       }
-      clusterHulls.push(hullAdjustment.finalHullNodes);
-      focusClusterHulls.push(hullAdjustment.focusHullPoints);
+      clusterHulls[intPolygonKey] = hullAdjustment.finalHullNodes;
+      focusClusterHulls[intPolygonKey] = hullAdjustment.focusHullPoints;
     }
     clusterNum += 1;
   });

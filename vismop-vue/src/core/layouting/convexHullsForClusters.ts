@@ -1,47 +1,6 @@
 import _ from 'lodash';
 import { ConvexPolygon } from './ConvexPolygon';
 
-export function getRightResultFormForRectangle(
-  clusterRectangles: [number[]]
-): [
-  { hullPoints: number[][]; clusterColors: [number, number, number, number][] },
-  number[][]
-] {
-  const focusClusterHulls = [];
-  const max_ext = 20;
-  const clusterColors: [number, number, number, number][] = [];
-  const firstNoneNoiseCluster = clusterRectangles[0].length > 1 ? 1 : 0;
-  if (clusterRectangles[0].length <= 1) {
-    clusterRectangles.shift();
-  }
-  for (let i = 0; i < clusterRectangles.length; i++) {
-    const greyVal =
-      i >= firstNoneNoiseCluster
-        ? ((i - firstNoneNoiseCluster) /
-            (clusterRectangles.length - 1 - firstNoneNoiseCluster)) *
-            (215 - 80) +
-          80
-        : 255;
-    clusterColors.push([greyVal, greyVal, greyVal, 1.0]);
-
-    const allPos = clusterRectangles[i].flat();
-    const minPos = Math.min(...allPos);
-    const maxPos = Math.max(...allPos);
-    const focusHullPoints = [] as number[];
-
-    _.forEach(clusterRectangles[i], (direction) => {
-      focusHullPoints.push(
-        (max_ext * (direction - minPos)) / (maxPos - minPos)
-      );
-    });
-
-    focusClusterHulls.push(focusHullPoints);
-  }
-  return [
-    { hullPoints: clusterRectangles, clusterColors: clusterColors },
-    focusClusterHulls,
-  ];
-}
 function vecLength(vec: number[]): number {
   const len = Math.sqrt(vec[0] ** 2 + vec[1] ** 2);
   return len;
@@ -52,7 +11,7 @@ function normalize(vec: number[]): number[] {
   return [vec[0] / vecLen, vec[1] / vecLen];
 }
 
-function adjustHullPoints(
+export function adjustHullPoints(
   currentHullPoints: [number, number][],
   radianThreshold: number
 ): number[][] {
@@ -186,17 +145,17 @@ export default class ClusterHulls {
     const maxY = polygonBB.vertices[2][1];
     const maxXY = Math.min(maxX, maxY);
 
-    const focusHullPoints = [] as number[][];
-    _.forEach(polygonPoints, (hullPoint) => {
+    const focusHullPoints = new ConvexPolygon();
+    polygonPoints.forEach((hullPoint) => {
       const centeredX = hullPoint[0] - polygon.getCenter()[0];
       const centeredY = hullPoint[1] - polygon.getCenter()[1];
       const normX = (max_ext * centeredX) / (maxXY - minXY);
       const normY = (max_ext * centeredY) / (maxXY - minXY);
-      focusHullPoints.push([normX, normY]);
+      focusHullPoints.addVertex(normX, normY);
     });
 
     return {
-      finalHullNodes: polygonPoints,
+      finalHullNodes: polygon,
       focusHullPoints: focusHullPoints,
     };
   }
