@@ -32,6 +32,7 @@ import BezierEdgeProgram from '@/core/custom-nodes/bezier-curve-new-program';
 import EdgeLineProgram from 'sigma/rendering/programs/edge-line';
 import DontRender from '@/core/custom-nodes/dont-render-new';
 import { createNormalizationFunction, graphExtent } from 'sigma/utils';
+import { color } from '@/core/graphTypes';
 
 export default class OverviewGraph {
   // constants
@@ -110,7 +111,7 @@ export default class OverviewGraph {
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
-    this.currentlyRenderedPolygons = polygons;
+    this.currentlyRenderedPolygons = graphData.clusterData.normalHullPoints;
     this.rootOrder = 0;
     this.clusterWeights = clusterWeights;
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
@@ -127,7 +128,7 @@ export default class OverviewGraph {
     this.setSize(windowWidth);
     this.drawPolygons(
       polygonLayerID,
-      polygons,
+      graphData.clusterData.normalHullPoints,
       graphData.clusterData.clusterColors
     );
 
@@ -144,7 +145,7 @@ export default class OverviewGraph {
   drawPolygons(
     polygonLayerID: string,
     polygons: { [key: number]: ConvexPolygon },
-    clusterColors: number[][]
+    clusterColors: { [key: number]: color }
   ) {
     const canvas = document.getElementById(polygonLayerID);
     if (canvas) {
@@ -159,7 +160,6 @@ export default class OverviewGraph {
           const currentPolygon = polygons[polygonIdx];
           const polygonVertices = currentPolygon.verticesToArray();
           const currentColor = clusterColors[polygonIdx];
-          const currentColorRgb = [0.5, 0.5, 0.5];
           ctx.fillStyle = `rgba(${currentColor[0]},${currentColor[1]},${currentColor[2]},${currentColor[3]})`;
           ctx.strokeStyle = `rgba(${currentColor[0]},${currentColor[1]},${currentColor[2]},${currentColor[3]})`;
           ctx.beginPath();
@@ -311,12 +311,10 @@ export default class OverviewGraph {
         });
 
         this.additionalData = defocus
-          ? Object.assign(this.additionalData, {
-              clusterAreas: {
-                hullPoints: this.clusterData.normalHullPoints,
-                clusterColors: this.clusterData.clusterColors,
-              },
-            })
+          ? Object.assign(
+              this.currentlyRenderedPolygons,
+              this.clusterData.normalHullPoints
+            )
           : Object.assign(this.additionalData, {
               clusterAreas: {
                 hullPoints: [this.clusterData.focusHullPoints[parseInt(node)]],
