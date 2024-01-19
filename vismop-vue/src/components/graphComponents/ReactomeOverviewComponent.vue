@@ -1,5 +1,5 @@
 <template>
-  <q-card class="fit col-12">
+  <q-card ref="overviewComponent" class="fit col-12">
     <q-fab
       icon="keyboard_arrow_down"
       label="Overview Actions"
@@ -73,7 +73,6 @@
         </q-expansion-item>
       </q-fab-action>
     </q-fab>
-    <canvas :id="backGroundID" class="svgContainer"></canvas>
     <div :id="contextID" class="webglContainer"></div>
   </q-card>
 </template>
@@ -93,6 +92,7 @@ import {
   watch,
   defineProps,
   onMounted,
+  h,
 } from 'vue';
 import { reactomeEntry, glyphData } from '@/core/reactomeGraphs/reactomeTypes';
 import { useMainStore } from '@/stores';
@@ -206,6 +206,7 @@ onMounted(() => {
 
 const refreshSize = () => {
   console.log('refreshing size Overview');
+  networkGraph.value?.setSize();
   networkGraph.value?.refreshRenderer();
 };
 const overviewData = computed(() => mainStore.overviewData);
@@ -216,8 +217,7 @@ const queryToPathwayDictionary = computed(
 const rootIds = computed(() => mainStore.rootIds);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
-
-const width = computed(() => window.innerWidth);
+const overviewComponent = ref<HTMLElement | undefined>(undefined);
 
 const combinedIntersection = computed((): string[] => {
   const combinedElements = [];
@@ -265,9 +265,6 @@ const generateNewBundling = () => {
   );
   $q.loading.hide();
 };
-watch(width, () => {
-  networkGraph.value?.setSize(width.value);
-});
 watch(combinedIntersection, () => {
   networkGraph.value?.setPathwaysContainingIntersecion(
     combinedIntersection.value
@@ -617,8 +614,7 @@ const drawNetwork = () => {
     networkData,
     polygons,
     fa2LayoutParams.value,
-    clusterWeights,
-    width.value
+    clusterWeights
   );
 };
 </script>
@@ -626,11 +622,10 @@ const drawNetwork = () => {
 .graphControl {
   min-width: 10vw;
 }
-.svgContainer {
-  height: 100%;
-  min-height: 100%;
+.polygonCanvas {
   position: fixed;
   z-index: 0;
+  aspect-ratio: unset;
 }
 .webglContainer {
   height: 100%;

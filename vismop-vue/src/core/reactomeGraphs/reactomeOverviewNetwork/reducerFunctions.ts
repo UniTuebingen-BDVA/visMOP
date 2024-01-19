@@ -29,20 +29,20 @@ export function nodeReducer(
     const currentView = this.renderer.viewRectangle();
     xDisplay = this.renderer.getNodeDisplayData(node)?.x;
     yDisplay = this.renderer.getNodeDisplayData(node)?.y;
-
     if (!xDisplay) {
       xDisplay = -100;
     }
     if (!yDisplay) {
       yDisplay = -100;
     }
-    lodCondition =
-      this.renderer.getCamera().ratio < 0.4 &&
-      xDisplay >= currentView.x1 &&
-      xDisplay <= currentView.x2 &&
-      yDisplay >= currentView.y1 - currentView.height &&
-      yDisplay <= currentView.y2;
-
+    lodCondition = this.renderer.getCamera().ratio < 0.4;
+    // for some reason getNodeDisplayData is not working normally so we omitt the frustum-culling
+    // &&
+    // xDisplay >= currentView.x1 &&
+    // xDisplay <= currentView.x2 &&
+    // yDisplay >= currentView.y1 - currentView.height &&
+    // yDisplay <= currentView.y2;
+    console.log('lodCondition', lodCondition, xDisplay, yDisplay, currentView);
     const lodImage = lodCondition ? data.imageHighDetail : data.imageLowDetail;
 
     // handle node size

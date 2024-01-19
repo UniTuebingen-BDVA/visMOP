@@ -70,7 +70,6 @@ export default class OverviewGraph {
   graph;
   clusterData;
   graphWidth = 0;
-  windowWidth = 1080;
   lodRatio = 1.3;
   lastClickedClusterNode = -1;
   additionalData!: additionalData;
@@ -95,6 +94,7 @@ export default class OverviewGraph {
   maxClusterWeight: number;
   clusterSizeScalingFactor: number;
   rootOrder: number;
+  containerID: string;
 
   constructor(
     containerID: string,
@@ -102,11 +102,11 @@ export default class OverviewGraph {
     graphData: overviewGraphData,
     polygons: { [key: number]: ConvexPolygon },
     layoutParams: fa2LayoutParams,
-    clusterWeights: number[],
-    windowWidth: number
+    clusterWeights: number[]
   ) {
     console.log('GraphData:', graphData);
     this.polygonLayerID = polygonLayerID;
+    this.containerID = containerID;
     this.graph = UndirectedGraph.from(graphData);
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
@@ -125,11 +125,13 @@ export default class OverviewGraph {
     this.relayoutGraph(this.initialFa2Params);
     //this.generateHelperEdges();
     //this.generateBezierControlPoints();
-    this.setSize(windowWidth);
+    this.setSize();
     this.drawPolygons(
       polygonLayerID,
+      containerID,
       graphData.clusterData.normalHullPoints,
-      graphData.clusterData.clusterColors
+      graphData.clusterData.clusterColors,
+      true
     );
 
     this.refreshCurrentPathway();
@@ -144,18 +146,35 @@ export default class OverviewGraph {
    */
   drawPolygons(
     polygonLayerID: string,
+    containerId: string,
     polygons: { [key: number]: ConvexPolygon },
-    clusterColors: { [key: number]: color }
+    clusterColors: { [key: number]: color },
+    init: boolean = false
   ) {
-    const canvas = document.getElementById(polygonLayerID);
+    const container = document.getElementById(containerId);
+    if (init) {
+      //append canvas to container
+      const createdCanvas = document.createElement('canvas');
+      createdCanvas?.setAttribute('id', polygonLayerID);
+      createdCanvas?.setAttribute('style', 'position: absolute;');
+      container?.insertBefore(createdCanvas, container.firstChild);
+    }
+    //select the canvas that is child of polygonLayerID
+    const canvas = container?.querySelector('#' + polygonLayerID);
     if (canvas) {
-      canvas.width = this.windowWidth;
-      canvas.height = canvas.clientHeight;
+      canvas.setAttribute('width', container?.offsetWidth + 'px');
+      canvas.setAttribute('height', container?.offsetHeight + 'px');
+      canvas.style.width = container?.offsetWidth + 'px';
+      canvas.style.height = container?.offsetHeight + 'px';
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // draw polygons on the canvas
-        Object.keys(polygons).forEach((element) => {
+        const iterateKeys =
+          this.lastClickedClusterNode == -1
+            ? Object.keys(polygons)
+            : [this.lastClickedClusterNode];
+        iterateKeys.forEach((element) => {
           const polygonIdx = parseInt(element);
           const currentPolygon = polygons[polygonIdx];
           const polygonVertices = currentPolygon.verticesToArray();
@@ -227,7 +246,10 @@ export default class OverviewGraph {
     renderer.on('afterRender', () => {
       this.drawPolygons(
         this.polygonLayerID,
-        this.currentlyRenderedPolygons,
+        this.containerID,
+        this.lastClickedClusterNode == -1
+          ? this.clusterData.normalHullPoints
+          : this.clusterData.focusHullPoints,
         this.clusterData.clusterColors
       );
     });
@@ -309,18 +331,6 @@ export default class OverviewGraph {
                 : this.DEFAULT_SIZE;
           }
         });
-
-        this.additionalData = defocus
-          ? Object.assign(
-              this.currentlyRenderedPolygons,
-              this.clusterData.normalHullPoints
-            )
-          : Object.assign(this.additionalData, {
-              clusterAreas: {
-                hullPoints: [this.clusterData.focusHullPoints[parseInt(node)]],
-                clusterColors: [this.clusterData.clusterColors[parseInt(node)]],
-              },
-            });
         this.lastClickedClusterNode = defocus ? -1 : parseInt(node);
       }
     });
@@ -1054,10 +1064,10 @@ export default class OverviewGraph {
 
   /**
    * changes the default sizes depending on the supplied parameter
-   * @param windowWidth size of the window/container in which the overview graph should be displayed
    */
-  setSize(windowWidth: number) {
-    this.windowWidth = windowWidth;
+  setSize() {
+    const windowWidth =
+      document.getElementById(this.containerID)?.offsetWidth || 0;
     console.log('Window Size', windowWidth);
     if (windowWidth < 1000) {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 0.7;
