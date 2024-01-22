@@ -19,9 +19,7 @@ const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 const UNIFORMS = ['u_matrix'] as const;
 
 const bez_sample_count = 30;
-const POINTS = (bez_sample_count - 1) * 4;
-const ATTRIBUTES = 3;
-const STRIDE = POINTS * ATTRIBUTES;
+const POINTS = (bez_sample_count - 1) * 2;
 
 export default class BezierEdgeProgram extends EdgeProgram<
   (typeof UNIFORMS)[number]
@@ -35,6 +33,7 @@ export default class BezierEdgeProgram extends EdgeProgram<
       UNIFORMS,
       ATTRIBUTES: [
         { name: 'a_position', size: 2, type: FLOAT },
+        { name: 'a_normal', size: 2, type: FLOAT },
         { name: 'a_color', size: 4, type: UNSIGNED_BYTE, normalized: true },
         { name: 'a_id', size: 4, type: UNSIGNED_BYTE, normalized: true },
       ],
@@ -57,6 +56,7 @@ export default class BezierEdgeProgram extends EdgeProgram<
     const y2 = targetData.y;
     const color = floatColor(data.color);
     const bezeierControlPoints = data.bezeierControlPoints;
+    console.log('data', data);
 
     // Computing normals
     const dx = x2 - x1;
@@ -110,6 +110,7 @@ export default class BezierEdgeProgram extends EdgeProgram<
       array[startIndex++] = n1;
       array[startIndex++] = n2;
       array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
 
       // Second point
       array[startIndex++] = p2x;
@@ -117,18 +118,9 @@ export default class BezierEdgeProgram extends EdgeProgram<
       array[startIndex++] = n1;
       array[startIndex++] = n2;
       array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
     }
-    // First point
-    array[startIndex++] = x1;
-    array[startIndex++] = y1;
-    array[startIndex++] = color;
-    array[startIndex++] = edgeIndex;
-
-    // Second point
-    array[startIndex++] = x2;
-    array[startIndex++] = y2;
-    array[startIndex++] = color;
-    array[startIndex++] = edgeIndex;
+    console.log('array', array);
   }
 
   fact(n: number): number {

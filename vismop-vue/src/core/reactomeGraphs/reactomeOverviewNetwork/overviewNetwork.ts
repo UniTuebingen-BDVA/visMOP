@@ -124,7 +124,7 @@ export default class OverviewGraph {
     this.layoutRoots();
     this.relayoutGraph(this.initialFa2Params);
     //this.generateHelperEdges();
-    //this.generateBezierControlPoints();
+    this.generateBezierControlPoints();
     this.setSize();
     this.drawPolygons(
       polygonLayerID,
@@ -160,7 +160,8 @@ export default class OverviewGraph {
       container?.insertBefore(createdCanvas, container.firstChild);
     }
     //select the canvas that is child of polygonLayerID
-    const canvas = container?.querySelector('#' + polygonLayerID);
+    const canvas: HTMLCanvasElement | undefined | null =
+      container?.querySelector('#' + polygonLayerID);
     if (canvas) {
       canvas.setAttribute('width', container?.offsetWidth + 'px');
       canvas.setAttribute('height', container?.offsetHeight + 'px');
@@ -175,7 +176,7 @@ export default class OverviewGraph {
             ? Object.keys(polygons)
             : [this.lastClickedClusterNode];
         iterateKeys.forEach((element) => {
-          const polygonIdx = parseInt(element);
+          const polygonIdx = parseInt(String(element));
           const currentPolygon = polygons[polygonIdx];
           const polygonVertices = currentPolygon.verticesToArray();
           const currentColor = clusterColors[polygonIdx];
@@ -228,8 +229,8 @@ export default class OverviewGraph {
       labelRenderedSizeThreshold: 999999,
       edgeProgramClasses: {
         ...DEFAULT_SETTINGS.edgeProgramClasses,
-        dashed: EdgeLineProgram,
-        line: EdgeLineProgram,
+        dashed: BezierEdgeProgram,
+        line: BezierEdgeProgram,
         helper: DontRender,
       },
       nodeProgramClasses: {
@@ -1264,9 +1265,11 @@ export default class OverviewGraph {
 
   // generates bezier control points based on the edge-path bundling algorithm
   generateBezierControlPoints(k = 2, d = 2) {
+    console.log('generating bezier control points');
     this.generateHelperEdges();
 
     const graph = this.renderer.getGraph();
+    const dijkstraGraph = graph.copy();
     const edgeKeys = this.renderer.getGraph().edges();
     const skip: {
       edgeKey: string;
@@ -1307,6 +1310,8 @@ export default class OverviewGraph {
     ); // sorting edgeKeys by weight descending
 
     edgeKeys.forEach((edgeKey) => {
+      console.log('For each edge');
+      const t0 = performance.now();
       const edge = graph.getEdgeAttributes(edgeKey);
       if (edge.lock) {
         return;
@@ -1322,20 +1327,29 @@ export default class OverviewGraph {
         target: target,
         attributes: graph.getEdgeAttributes(edgeKey),
       });
-      skip.forEach((edgeDict) => {
-        graph.dropEdge(edgeDict.edgeKey);
-      });
-      const nodePath = dijkstra.bidirectional(graph, source, target, 'weight');
+      dijkstraGraph.dropEdge(edgeKey);
+      const t1 = performance.now();
+      // skip.forEach((edgeDict) => {
+      //   graph.dropEdge(edgeDict.edgeKey);
+      // });
+      const t2 = performance.now();
+      const nodePath = dijkstra.bidirectional(
+        dijkstraGraph,
+        source,
+        target,
+        'weight'
+      );
+      const t3 = performance.now();
       // restore edges dropped for skip
-      skip.forEach((edgeDict) => {
-        graph.addEdgeWithKey(
-          edgeDict.edgeKey,
-          edgeDict.source,
-          edgeDict.target,
-          edgeDict.attributes
-        );
-      });
-
+      // skip.forEach((edgeDict) => {
+      //   graph.addEdgeWithKey(
+      //     edgeDict.edgeKey,
+      //     edgeDict.source,
+      //     edgeDict.target,
+      //     edgeDict.attributes
+      //   );
+      // });
+      const t4 = performance.now();
       let path = null;
       if (nodePath != null) {
         path = edgePathFromNodePath(graph, nodePath);
@@ -1344,18 +1358,29 @@ export default class OverviewGraph {
       if (path === null) {
         graph.setEdgeAttribute(edgeKey, 'skip', false);
         skip.pop();
+        dijkstraGraph.addEdgeWithKey(
+          edgeKey,
+          source,
+          target,
+          graph.getEdgeAttributes(edgeKey)
+        );
         return;
-      }
-      if (this.pathLength(path) > k * edge.len) {
+      } else if (this.pathLength(path) > k * edge.len) {
         graph.setEdgeAttribute(edgeKey, 'skip', false);
         skip.pop();
+        dijkstraGraph.addEdgeWithKey(
+          edgeKey,
+          source,
+          target,
+          graph.getEdgeAttributes(edgeKey)
+        );
         return;
       }
 
       path.forEach((pathEdge) => {
         graph.setEdgeAttribute(pathEdge, 'lock', true);
       });
-
+      const t5 = performance.now();
       const nodeExtent = graphExtent(graph);
       const normalizationFunction = createNormalizationFunction(nodeExtent);
 
@@ -1369,8 +1394,20 @@ export default class OverviewGraph {
         normalizationFunction.applyTo(norm_xy);
         vertices.push(norm_xy.x, norm_xy.y);
       });
-
+      const t6 = performance.now();
       graph.setEdgeAttribute(edgeKey, 'bezeierControlPoints', vertices);
+      // console.log(
+      //   `edge ${edgeKey} took ${
+      //     t6 - t0
+      //   }ms to calculate bezier control points with subtimings of
+      //   ${t1 - t0}ms for skip
+      //   ${t2 - t1}ms for drop
+      //   ${t3 - t2}ms for dijkstra
+      //   ${t4 - t3}ms for restore
+      //   ${t5 - t4}ms for lock
+      //   ${t6 - t5}ms for vertices
+      //   `
+      // );
     });
 
     this.dropHelperEdges();

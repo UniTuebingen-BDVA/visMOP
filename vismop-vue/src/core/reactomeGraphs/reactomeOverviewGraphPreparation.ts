@@ -391,6 +391,7 @@ function generateForceGraphEdge(
       bezeierControlPoints: [],
       showBundling: true,
       zIndex: 0,
+      size: 2,
       hidden: type === 'temporal' ? false : true,
       edgeType: type,
       hierarchyHidden: type === 'temporal' ? false : true,

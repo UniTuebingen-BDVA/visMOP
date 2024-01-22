@@ -42,7 +42,7 @@ export function nodeReducer(
     // xDisplay <= currentView.x2 &&
     // yDisplay >= currentView.y1 - currentView.height &&
     // yDisplay <= currentView.y2;
-    console.log('lodCondition', lodCondition, xDisplay, yDisplay, currentView);
+    //console.log('lodCondition', lodCondition, xDisplay, yDisplay, currentView);
     const lodImage = lodCondition ? data.imageHighDetail : data.imageLowDetail;
 
     // handle node size
