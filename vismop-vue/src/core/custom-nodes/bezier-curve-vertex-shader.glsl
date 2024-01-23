@@ -1,60 +1,54 @@
-#version 300 es
-//based on sigma src code and https://stackoverflow.com/questions/52928678/dashed-line-in-opengl3/54543267 TODO LICENSE
-
-in vec2 a_position;
-in vec2 a_normal;
-in vec4 a_color;
-in float a_dashed;
+attribute vec4 a_id;
+attribute vec4 a_color;
+attribute vec2 a_normal;
+attribute vec2 a_position;
 
 uniform mat3 u_matrix;
-uniform float u_sqrtZoomRatio;
+uniform float u_sizeRatio;
+uniform float u_zoomRatio;
 uniform float u_correctionRatio;
 
-out vec4 v_color;
-out vec2 v_normal;
-out float v_thickness;
-flat out float v_dashed;
-
-out vec3 vertexPos;
-flat out vec3 startPos;
+varying vec4 v_color;
+varying vec2 v_normal;
+varying float v_thickness;
 
 const float minThickness = 1.7;
 const float bias = 255.0 / 254.0;
 
-
 void main() {
-  float normalLength = length(a_normal);
-  vec2 unitNormal = a_normal / normalLength;
+  vec2 normal = a_normal;
+  vec2 position = a_position;
+
+  float normalLength = length(normal);
+  vec2 unitNormal = normal / normalLength;
 
   // We require edges to be at least `minThickness` pixels thick *on screen*
-  // (so we need to compensate the SQRT zoom ratio):
-  float pixelsThickness = max(normalLength, minThickness * u_sqrtZoomRatio);
+  // (so we need to compensate the size ratio):
+  float pixelsThickness = max(normalLength, minThickness * u_sizeRatio);
 
   // Then, we need to retrieve the normalized thickness of the edge in the WebGL
   // referential (in a ([0, 1], [0, 1]) space), using our "magic" correction
   // ratio:
-  float webGLThickness = pixelsThickness * u_correctionRatio;
-
-  // Finally, we adapt the edge thickness to the "SQRT rule" in sigma (so that
-  // items are not too big when zoomed in, and not too small when zoomed out).
-  // The exact computation should be `adapted = value * zoom / sqrt(zoom)`, but
-  // it's simpler like this:
-  float adaptedWebGLThickness = webGLThickness * u_sqrtZoomRatio;
+  float webGLThickness = pixelsThickness * u_correctionRatio / u_sizeRatio;
 
   // Here is the proper position of the vertex
-  vec2 position = vec3(u_matrix * vec3(a_position + unitNormal * adaptedWebGLThickness, 1)).xy;
-  gl_Position = vec4(position, 0, 1);
-  vertexPos = vec3(position,0);
-  startPos = vertexPos;
+  gl_Position = vec4((u_matrix * vec3(position + unitNormal * webGLThickness, 1)).xy, 0, 1);
 
   // For the fragment shader though, we need a thickness that takes the "magic"
   // correction ratio into account (as in webGLThickness), but so that the
-  // antialiasint effect does not depend on the zoom level. So here's yet
+  // antialiasing effect does not depend on the zoom level. So here's yet
   // another thickness version:
-  v_thickness = webGLThickness / u_sqrtZoomRatio;
+  v_thickness = webGLThickness / u_zoomRatio;
 
   v_normal = unitNormal;
+
+  #ifdef PICKING_MODE
+  // For picking mode, we use the ID as the color:
+  v_color = a_id;
+  #else
+  // For normal mode, we use the color:
   v_color = a_color;
+  #endif
+
   v_color.a *= bias;
-  v_dashed = a_dashed;
 }

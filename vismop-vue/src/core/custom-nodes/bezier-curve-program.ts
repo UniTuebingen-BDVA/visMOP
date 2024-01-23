@@ -1,198 +1,152 @@
-/**
- * Adapted from dashed edge program
- * TODO: LICENSE
- */
-
-/**
- * Bezier Curve Program
- * =====================================
- *
- * Program rendering edges as thick bezier curves.
- *
- * Rendering two triangles by using only four points is made possible through
- * the use of indices.
- * @module
- */
+import { NodeDisplayData, RenderParams } from 'sigma/types';
 import { floatColor } from 'sigma/utils';
-import { NodeDisplayData } from 'sigma/types';
-import { ColorfadeEdgeDisplayData } from './types';
-import vertexShaderSource from './bezier-curve-vertex-shader.glsl?raw';
-import fragmentShaderSource from './bezier-curve-fragment-shader.glsl?raw';
-import { AbstractEdgeProgram } from 'sigma/rendering/edge';
-//import { RenderParams } from 'sigma/rendering/webgl/programs/common/program';
+import { EdgeProgram } from 'sigma/rendering/edge';
+import { BezierEdgeDisplayData } from './types';
+import VERTEX_SHADER_SOURCE from './bezier-curve-vertex-shader.glsl?raw';
+import FRAGMENT_SHADER_SOURCE from './bezier-curve-fragment-shader.glsl?raw';
+import { ProgramInfo } from 'sigma/rendering/program';
+
+const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
+
+const UNIFORMS = [
+  'u_matrix',
+  'u_zoomRatio',
+  'u_sizeRatio',
+  'u_correctionRatio',
+] as const;
 
 const bez_sample_count = 30;
-const POINTS = (bez_sample_count - 1) * 4;
-const ATTRIBUTES = 6;
-const STRIDE = POINTS * ATTRIBUTES;
+const POINTS = (bez_sample_count - 1) * 6;
 
-export class BezierEdgeProgram extends AbstractEdgeProgram {
-  reallocate(capacity: number): void {
-    throw new Error('Method not implemented.');
-  }
-  IndicesArray: Uint32ArrayConstructor | Uint16ArrayConstructor;
-  indicesArray: Uint32Array | Uint16Array;
-  indicesBuffer: WebGLBuffer;
-  indicesType: GLenum;
-  positionLocation: GLint;
-  colorLocation: GLint;
-  normalLocation: GLint;
-  dashedLocation: GLint;
-  matrixLocation: WebGLUniformLocation;
-  sqrtZoomRatioLocation: WebGLUniformLocation;
-  correctionRatioLocation: WebGLUniformLocation;
-  dashLengthLocation: WebGLUniformLocation;
-  gapLengthLocation: WebGLUniformLocation;
-  viewportResolutionLocation: WebGLUniformLocation;
-
-  constructor(gl: WebGLRenderingContext) {
-    super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES);
-
-    // Initializing indices buffer
-    const indicesBuffer = gl.createBuffer();
-    if (indicesBuffer === null)
-      throw new Error('EdgeProgram: error while creating indicesBuffer');
-    this.indicesBuffer = indicesBuffer;
-
-    // Locations
-    this.positionLocation = gl.getAttribLocation(this.program, 'a_position');
-    this.colorLocation = gl.getAttribLocation(this.program, 'a_color');
-    this.normalLocation = gl.getAttribLocation(this.program, 'a_normal');
-    this.dashedLocation = gl.getAttribLocation(this.program, 'a_dashed');
-
-    const matrixLocation = gl.getUniformLocation(this.program, 'u_matrix');
-    if (matrixLocation === null)
-      throw new Error('EdgeProgram: error while getting matrixLocation');
-    this.matrixLocation = matrixLocation;
-
-    const correctionRatioLocation = gl.getUniformLocation(
-      this.program,
-      'u_correctionRatio'
-    );
-    if (correctionRatioLocation === null)
-      throw new Error(
-        'EdgeProgram: error while getting correctionRatioLocation'
-      );
-    this.correctionRatioLocation = correctionRatioLocation;
-
-    const sqrtZoomRatioLocation = gl.getUniformLocation(
-      this.program,
-      'u_sqrtZoomRatio'
-    );
-    if (sqrtZoomRatioLocation === null)
-      throw new Error('EdgeProgram: error while getting sqrtZoomRatioLocation');
-    this.sqrtZoomRatioLocation = sqrtZoomRatioLocation;
-
-    const dashLengthLocation = gl.getUniformLocation(
-      this.program,
-      'u_dashLength'
-    );
-    if (dashLengthLocation === null)
-      throw new Error('EdgeProgram: error while getting dashLengthLocation');
-    this.dashLengthLocation = dashLengthLocation;
-
-    const gapLengthLocation = gl.getUniformLocation(
-      this.program,
-      'u_gapLength'
-    );
-    if (gapLengthLocation === null)
-      throw new Error('EdgeProgram: error while getting gapLengthLocation');
-    this.gapLengthLocation = gapLengthLocation;
-
-    const viewportResolutionLocation = gl.getUniformLocation(
-      this.program,
-      'u_viewportResolution'
-    );
-    if (viewportResolutionLocation === null) {
-      throw new Error(
-        'EdgeProgram: error while getting viewportResolutionLocation'
-      );
-    }
-    this.viewportResolutionLocation = viewportResolutionLocation;
-
-    // Enabling the OES_element_index_uint extension
-    // NOTE: on older GPUs, this means that really large graphs won't
-    // have all their edges rendered. But it seems that the
-    // `OES_element_index_uint` is quite everywhere so we'll handle
-    // the potential issue if it really arises.
-    // NOTE: when using webgl2, the extension is enabled by default
-    this.IndicesArray = Uint32Array;
-    this.indicesArray = new this.IndicesArray();
-    this.indicesType = gl.UNSIGNED_INT;
-
-    this.bind();
+export default class BezierEdgeProgram extends EdgeProgram<
+  (typeof UNIFORMS)[number]
+> {
+  getDefinition() {
+    return {
+      VERTICES: POINTS,
+      VERTEX_SHADER_SOURCE,
+      FRAGMENT_SHADER_SOURCE,
+      METHOD: WebGLRenderingContext.TRIANGLES,
+      UNIFORMS,
+      ATTRIBUTES: [
+        { name: 'a_position', size: 2, type: FLOAT },
+        { name: 'a_normal', size: 2, type: FLOAT },
+        { name: 'a_color', size: 4, type: UNSIGNED_BYTE, normalized: true },
+        { name: 'a_id', size: 4, type: UNSIGNED_BYTE, normalized: true },
+      ],
+    };
   }
 
-  bind(): void {
-    const gl = this.gl;
+  processVisibleItem(
+    edgeIndex: number,
+    startIndex: number,
+    sourceData: NodeDisplayData,
+    targetData: NodeDisplayData,
+    data: BezierEdgeDisplayData
+  ) {
+    const array = this.array;
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indicesBuffer);
+    const thickness = data.size || 1;
+    const x1 = sourceData.x;
+    const y1 = sourceData.y;
+    const x2 = targetData.x;
+    const y2 = targetData.y;
+    const color = floatColor(data.color);
+    const bezeierControlPoints = data.bezeierControlPoints;
 
-    // Bindings
-    gl.enableVertexAttribArray(this.positionLocation);
-    gl.enableVertexAttribArray(this.normalLocation);
-    gl.enableVertexAttribArray(this.colorLocation);
-    gl.enableVertexAttribArray(this.dashedLocation);
+    // Computing normals
+    const dx = x2 - x1;
+    const dy = y2 - y1;
 
-    gl.vertexAttribPointer(
-      this.positionLocation,
-      2,
-      gl.FLOAT,
-      false,
-      ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
-      0
-    );
-    gl.vertexAttribPointer(
-      this.normalLocation,
-      2,
-      gl.FLOAT,
-      false,
-      ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
-      8
-    );
-    gl.vertexAttribPointer(
-      this.colorLocation,
-      4,
-      gl.UNSIGNED_BYTE,
-      true,
-      ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
-      16
-    );
-    gl.vertexAttribPointer(
-      this.dashedLocation,
-      1,
-      gl.FLOAT,
-      false,
-      ATTRIBUTES * Float32Array.BYTES_PER_ELEMENT,
-      20
-    );
-  }
+    const len = dx * dx + dy * dy;
+    let n1 = 0;
+    let n2 = 0;
 
-  computeIndices(): void {
-    const l = this.array.length / ATTRIBUTES;
-    const size = l + l / 2;
-    const indices = new this.IndicesArray(size);
+    if (len) {
+      const inv_len = 1 / Math.sqrt(len);
 
-    for (let i = 0, c = 0; i < l; i += 4) {
-      // triangle 1
-      indices[c++] = i;
-      indices[c++] = i + 1;
-      indices[c++] = i + 2;
-      // triangle 2
-      indices[c++] = i + 2;
-      indices[c++] = i + 1;
-      indices[c++] = i + 3;
+      n1 = -dy * inv_len * thickness;
+      n2 = dx * inv_len * thickness;
     }
 
-    this.indicesArray = indices;
-  }
+    const control_points = [];
+    // source node
+    control_points.push([x1, y1]);
+    if (bezeierControlPoints.length >= 2 && data.showBundling) {
+      // add all control-points to points except the first and the last
+      // the first and the last are added with "points.push([x1,y1]);" and "points.push([x2,y2]);"
+      // before and after this code block
+      for (let i = 1; i < bezeierControlPoints.length / 2 - 1; ++i) {
+        control_points.push([
+          bezeierControlPoints[i * 2],
+          bezeierControlPoints[i * 2 + 1],
+        ]);
+      }
+    }
+    // target node
+    control_points.push([x2, y2]);
 
-  bufferData(): void {
-    super.bufferData();
+    const bez_samples = this.evaluate_bezier(control_points, bez_sample_count);
 
-    // Indices data
-    const gl = this.gl;
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indicesArray, gl.STATIC_DRAW);
+    // for each sample point pair from the bezier curve create
+    // four vertecies (to form a line segment)
+    for (let n = 0; n < bez_samples.length - 1; ++n) {
+      const p1 = bez_samples[n];
+      const p2 = bez_samples[n + 1];
+
+      const p1x = p1[0];
+      const p1y = p1[1];
+
+      const p2x = p2[0];
+      const p2y = p2[1];
+
+      // Fill the line coordinate buffer
+      array[startIndex++] = p1x;
+      array[startIndex++] = p1y;
+      array[startIndex++] = n1;
+      array[startIndex++] = n2;
+      array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
+
+      // Fill the line coordinate buffer
+      array[startIndex++] = p1x;
+      array[startIndex++] = p1y;
+      array[startIndex++] = -n1;
+      array[startIndex++] = -n2;
+      array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
+
+      // Fill the line coordinate buffer
+
+      array[startIndex++] = p2x;
+      array[startIndex++] = p2y;
+      array[startIndex++] = n1;
+      array[startIndex++] = n2;
+      array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
+
+      // Fill the line coordinate buffer
+      array[startIndex++] = p2x;
+      array[startIndex++] = p2y;
+      array[startIndex++] = n1;
+      array[startIndex++] = n2;
+      array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
+      // Fill the line coordinate buffer
+      array[startIndex++] = p1x;
+      array[startIndex++] = p1y;
+      array[startIndex++] = -n1;
+      array[startIndex++] = -n2;
+      array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
+      // Fill the line coordinate buffer
+      array[startIndex++] = p2x;
+      array[startIndex++] = p2y;
+      array[startIndex++] = -n1;
+      array[startIndex++] = -n2;
+      array[startIndex++] = color;
+      array[startIndex++] = edgeIndex;
+    }
   }
 
   fact(n: number): number {
@@ -224,7 +178,6 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
       return [sum_x, sum_y];
     };
   }
-
   // input: control points, number of samples
   // returns: [[x1,y1],...[xn,yn]] points along the curve
   evaluate_bezier(
@@ -241,146 +194,16 @@ export class BezierEdgeProgram extends AbstractEdgeProgram {
     return new_points;
   }
 
-  process(
-    sourceData: NodeDisplayData,
-    targetData: NodeDisplayData,
-    data: ColorfadeEdgeDisplayData,
-    hidden: boolean,
-    offset: number
+  setUniforms(
+    params: RenderParams,
+    { gl, uniformLocations }: ProgramInfo
   ): void {
-    if (hidden) {
-      for (let i = offset * STRIDE, l = i + STRIDE; i < l; i++)
-        this.array[i] = 0;
-      return;
-    }
+    const { u_matrix, u_zoomRatio, u_correctionRatio, u_sizeRatio } =
+      uniformLocations;
 
-    const thickness = data.size || 1;
-    const x1 = sourceData.x;
-    const y1 = sourceData.y;
-    const x2 = targetData.x;
-    const y2 = targetData.y;
-    const color = floatColor(data.color);
-    const dashed = data.type === 'dashed' ? 1 : 0;
-    const bezeierControlPoints = data.bezeierControlPoints;
-
-    // Computing normals
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-
-    const len = dx * dx + dy * dy;
-    let n1 = 0;
-    let n2 = 0;
-
-    if (len) {
-      const inv_len = 1 / Math.sqrt(len);
-
-      n1 = -dy * inv_len * thickness;
-      n2 = dx * inv_len * thickness;
-    }
-
-    const array = this.array;
-    const control_points = [];
-    let i = POINTS * ATTRIBUTES * offset;
-
-    // source node
-    control_points.push([x1, y1]);
-    if (bezeierControlPoints.length >= 2 && data.showBundling) {
-      // add all control-points to points except the first and the last
-      // the first and the last are added with "points.push([x1,y1]);" and "points.push([x2,y2]);"
-      // before and after this code block
-      for (let i = 1; i < bezeierControlPoints.length / 2 - 1; ++i) {
-        control_points.push([
-          bezeierControlPoints[i * 2],
-          bezeierControlPoints[i * 2 + 1],
-        ]);
-      }
-    }
-    // target node
-    control_points.push([x2, y2]);
-
-    const bez_samples = this.evaluate_bezier(control_points, bez_sample_count);
-
-    // for each sample point pair from the bezier curve create
-    // four vertecies (to form a line segment)
-    for (let n = 0; n < bez_samples.length - 1; ++n) {
-      const p1 = bez_samples[n];
-      const p2 = bez_samples[n + 1];
-
-      const p1x = p1[0];
-      const p1y = p1[1];
-
-      const p2x = p2[0];
-      const p2y = p2[1];
-
-      // Computing normals
-      const dx = p2x - p1x;
-      const dy = p2y - p1y;
-
-      const len = dx * dx + dy * dy;
-      let n1 = 0;
-      let n2 = 0;
-
-      if (len) {
-        const inv_len = 1 / Math.sqrt(len);
-
-        n1 = -dy * inv_len * thickness;
-        n2 = dx * inv_len * thickness;
-      }
-
-      // First point
-      array[i++] = p1x;
-      array[i++] = p1y;
-      array[i++] = n1;
-      array[i++] = n2;
-      array[i++] = color;
-      array[i++] = dashed;
-
-      // First point flipped
-      array[i++] = p1x;
-      array[i++] = p1y;
-      array[i++] = -n1;
-      array[i++] = -n2;
-      array[i++] = color;
-      array[i++] = dashed;
-
-      // Second point
-      array[i++] = p2x;
-      array[i++] = p2y;
-      array[i++] = n1;
-      array[i++] = n2;
-      array[i++] = color;
-      array[i++] = dashed;
-
-      // Second point flipped
-      array[i++] = p2x;
-      array[i++] = p2y;
-      array[i++] = -n1;
-      array[i++] = -n2;
-      array[i++] = color;
-      array[i++] = dashed;
-    }
-  }
-
-  render(params): void {
-    if (this.hasNothingToRender()) return;
-
-    const gl = this.gl;
-    const program = this.program;
-
-    gl.useProgram(program);
-
-    gl.uniformMatrix3fv(this.matrixLocation, false, params.matrix);
-    gl.uniform1f(this.sqrtZoomRatioLocation, Math.sqrt(params.ratio));
-    gl.uniform1f(this.correctionRatioLocation, params.correctionRatio);
-    gl.uniform1f(this.dashLengthLocation, 3 * (1 / params.ratio));
-    gl.uniform1f(this.gapLengthLocation, 6 * (1 / params.ratio));
-    gl.uniform2f(this.viewportResolutionLocation, params.width, params.height);
-    // Drawing:
-    gl.drawElements(
-      gl.TRIANGLES,
-      this.indicesArray.length,
-      this.indicesType,
-      0
-    );
+    gl.uniformMatrix3fv(u_matrix, false, params.matrix);
+    gl.uniform1f(u_zoomRatio, params.zoomRatio);
+    gl.uniform1f(u_sizeRatio, params.sizeRatio);
+    gl.uniform1f(u_correctionRatio, params.correctionRatio);
   }
 }

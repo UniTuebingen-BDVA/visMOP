@@ -1,17 +1,6 @@
-import { NodeDisplayData, EdgeDisplayData } from 'sigma/types';
+import { EdgeDisplayData } from 'sigma/types';
 
-export interface OutlineNodeDisplayData extends NodeDisplayData {
-  outlineColor: string;
-}
-
-export interface SplitNodeDisplayData extends NodeDisplayData {
-  secondaryColor: string;
-  outlineColor: string;
-}
-
-export interface ColorfadeEdgeDisplayData extends EdgeDisplayData {
-  sourceColor: string;
-  targetColor: string;
+export interface BezierEdgeDisplayData extends EdgeDisplayData {
   bezeierControlPoints: number[];
   showBundling: boolean;
   type: string;

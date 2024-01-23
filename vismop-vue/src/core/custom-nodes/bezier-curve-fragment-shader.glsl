@@ -1,12 +1,8 @@
-#version 300 es
+precision mediump float;
 
-precision highp float;
-
-in vec4 v_color;
-in vec2 v_normal;
-in float v_thickness;
-
-out vec4 fragColor;
+varying vec4 v_color;
+varying vec2 v_normal;
+varying float v_thickness;
 
 const float feather = 0.001;
 const vec4 transparent = vec4(0.0, 0.0, 0.0, 0.0);
@@ -24,6 +20,6 @@ void main(void) {
     dist
   );
 
-  fragColor = mix(v_color, transparent, t);
+  gl_FragColor = mix(v_color, transparent, t);
   #endif
 }

@@ -1310,7 +1310,6 @@ export default class OverviewGraph {
     ); // sorting edgeKeys by weight descending
 
     edgeKeys.forEach((edgeKey) => {
-      console.log('For each edge');
       const t0 = performance.now();
       const edge = graph.getEdgeAttributes(edgeKey);
       if (edge.lock) {
