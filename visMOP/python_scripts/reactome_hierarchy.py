@@ -3,6 +3,7 @@ import statistics
 import pandas as pd
 import os
 from operator import itemgetter
+import redis
 
 from typing import List, Dict, DefaultDict, Tuple, Union, Literal, Iterator
 import collections
@@ -19,7 +20,7 @@ from visMOP.python_scripts.hierarchy_types import (
     HierarchyEntryDict,
     HierarchyEntryMeasurment,
 )
-from visMOP.python_scripts.omicsTypeDefs import ReactomePickleEntry
+from visMOP.python_scripts.omicsTypeDefs import ReactomeDBEntry
 from pathlib import Path
 
 from visMOP.python_scripts.timeseries_analysis import get_regression_data
@@ -313,8 +314,8 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         self.omics_recieved: List[bool] = []
         self.amt_timesteps: int = metadata["amt_timesteps"]
         self.omics_recieved = metadata["omics_recieved"]
-        self.load_data(metadata["relational_data_path"], metadata["target_organism"])
-        self.add_json_data(metadata["json_data_path"])
+        self.load_data(metadata["target_organism"])
+        self.add_json_data()
 
     def add_hierarchy_levels(self) -> None:
         """Adds hierarchy levels to all entries.
@@ -361,7 +362,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                 if entryObject.has_data:
                     entry.children_with_data.append(child_entry)
 
-    def add_json_data(self, json_path: Path) -> None:
+    def add_json_data(self) -> None:
         """Adds json data to the pathways
 
         this includes names, aswell as detail level pathway information
@@ -372,19 +373,25 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         current_level = 0
         key_list = list(self.levels.keys())
         key_list.sort()
+        # connect to diagram redis
+        r = redis.Redis(host="localhost", port=6379, db=1)
         for current_level in key_list:
             current_level_ids: List[str] = self.levels[current_level]
             for key in current_level_ids:
                 entry: ReactomePathway = self[key]
                 if entry.has_diagram:
-                    with open(json_path / (key + ".json"), encoding="utf8") as fh:
-                        json_file_layout = json.load(fh)
+                    redis_query = r.get(key)
+                    if redis_query is not None:
+                        json_file_layout = json.loads(redis_query.decode("utf-8"))
                         entry.layout_json_file = json_file_layout
                         entry.name = json_file_layout["displayName"]
 
                 if entry.has_diagram:
-                    with open(json_path / (key + ".graph.json"), encoding="utf8") as fh:
-                        json_file_graph: ReactomeGraphJSON = json.load(fh)
+                    redis_query = r.get(key + ".graph")
+                    if redis_query is not None:
+                        json_file_graph: ReactomeGraphJSON = json.loads(
+                            redis_query.decode("utf-8")
+                        )
                         json_file_mod: ModifiedReactomeGraphJSON = format_graph_json(
                             json_file_graph
                         )
@@ -646,7 +653,7 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
 
     def add_query_data(
         self,
-        entity_data: ReactomePickleEntry,
+        entity_data: ReactomeDBEntry,
         query_type: Literal["protein", "gene", "metabolite"],
         query_key: str,
         mode: Literal["slope", "fc"],
@@ -757,36 +764,44 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
                     ] = omic_measurment
                     self[pathway[0]].own_measured_metabolites.append(query_key)
 
-    def load_data(self, path: Path, organism: str) -> None:
+    def load_data(self, organism: str) -> None:
         """Load hierarchy data into datastructure
         Args:
             path: path to data folder
 
             organism: 3 letter abbrev for target organism
         """
-        diagram_files = os.listdir(path / "diagram")
-        with open(path / "ReactomePathwaysRelation.txt") as fh:
-            for line in fh:
-                line_list = line.strip().split("\t")
-                left_entry = line_list[0]
-                right_entry = line_list[1]
-                left_entry_has_diagram = left_entry + ".graph.json" in diagram_files
-                right_entry_has_diagram = right_entry + ".graph.json" in diagram_files
-                if organism in left_entry:
-                    if left_entry not in self.keys():
-                        self[left_entry] = ReactomePathway(
-                            left_entry, left_entry_has_diagram
-                        )
-                        self[left_entry].children.append(right_entry)
-                    else:
-                        self[left_entry].children.append(right_entry)
-                    if right_entry not in self.keys():
-                        self[right_entry] = ReactomePathway(
-                            right_entry, right_entry_has_diagram
-                        )
-                        self[right_entry].parents.append(left_entry)
-                    else:
-                        self[right_entry].parents.append(left_entry)
+
+        # get the diagram files as keys from redis
+        # connect to redis
+        r1 = redis.Redis(host="localhost", port=6379, db=1)
+        r2 = redis.Redis(host="localhost", port=6379, db=2)
+        reactomeRelations = r2.get("ReactomePathwaysRelation")
+        if reactomeRelations is None:
+            raise Exception("Could not find ReactomePathwaysRelation in redis")
+
+        for line in reactomeRelations.splitlines():
+            line = line.decode("utf-8")
+            line_list = line.strip().split("\t")
+            left_entry = line_list[0]
+            right_entry = line_list[1]
+            left_entry_has_diagram = r1.exists(left_entry + ".graph") != 0
+            right_entry_has_diagram = r1.exists(right_entry + ".graph") != 0
+            if organism in left_entry:
+                if left_entry not in self.keys():
+                    self[left_entry] = ReactomePathway(
+                        left_entry, left_entry_has_diagram
+                    )
+                    self[left_entry].children.append(right_entry)
+                else:
+                    self[left_entry].children.append(right_entry)
+                if right_entry not in self.keys():
+                    self[right_entry] = ReactomePathway(
+                        right_entry, right_entry_has_diagram
+                    )
+                    self[right_entry].parents.append(left_entry)
+                else:
+                    self[right_entry].parents.append(left_entry)
 
         for v in self.values():
             v.assert_leaf_root_state()

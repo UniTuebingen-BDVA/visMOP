@@ -78,9 +78,9 @@ A Tuple that describes the data for an omics.
 """
 
 
-class ReactomePickleEntry(TypedDict):
+class ReactomeDBEntry(TypedDict):
     """
-    A TypedDict that describes an entry in a Reactome pickle file.
+    A TypedDict that describes an entry in the Reactome.
 
     Attributes:
         reactome_id (str): The Reactome ID for the entry.
@@ -94,13 +94,13 @@ class ReactomePickleEntry(TypedDict):
     measurement: NotRequired[List[float]]
 
 
-ReactomeQueryEntry = Dict[str, ReactomePickleEntry]
+ReactomeQueryEntry = Dict[str, ReactomeDBEntry]
 """
-A dictionary that maps Reactome IDs to ReactomePickleEntry objects.
+A dictionary that maps Reactome IDs to ReactomeDBEntry objects.
 """
 
 
-ReactomePickleOrganism = Dict[str, ReactomeQueryEntry]
+ReactomeDBOrganism = Dict[str, ReactomeQueryEntry]
 """
 A dictionary that maps organism IDs to ReactomeQueryEntry objects.
 """

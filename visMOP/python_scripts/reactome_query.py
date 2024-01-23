@@ -1,9 +1,8 @@
-import pickle
-from pathlib import Path
+import json
+import redis
 from typing import Literal, Tuple, List, Dict
 from visMOP.python_scripts.omicsTypeDefs import (
     OmicsDataTuples,
-    ReactomePickleOrganism,
     ReactomeQueryEntry,
     MeasurementData,
 )
@@ -35,21 +34,19 @@ class ReactomeQuery:
         query_data: List[OmicsDataTuples],
         target_organism: Literal["Mus_musculus", "Homo_sapiens"],
         id_database: Literal["ChEBI", "UniProt", "Ensembl"],
-        pickle_path: Path,
     ):
         """ """
         self.query_data = query_data
         self.query_results: Dict[str, ReactomeQueryEntry] = {}
         self.id_table_id = {elem[0]["ID"]: elem[0]["table_id"] for elem in query_data}
         self.all_contained_pathways = []
-        self.get_query_results(target_organism, id_database, pickle_path)
+        self.get_query_results(target_organism, id_database)
         self.calc_all_pathways()
 
     def get_query_results(
         self,
         target_organism: str,
         id_database: Literal["UniProt", "ChEBI", "Ensembl"],
-        pickle_path: Path,
     ) -> None:
         """Load the query results
 
@@ -58,43 +55,31 @@ class ReactomeQuery:
 
             id_database: database for which to map the ids to reactome (e.g. uniprot, ensmbl)
 
-            pickle_path: path to picle files
 
         """
-        with open(
-            pickle_path
-            / ("{}_{}2Reactome.pickle".format(target_organism, id_database)),
-            "rb",
-        ) as handle:
-            reactome_data: ReactomePickleOrganism = pickle.load(handle)
-            not_found = 0
-            for elem in self.query_data:
-                query_id = elem[0]["ID"]
-                try:
-                    reactome_elem = reactome_data[query_id]
-                    for pathway_id in reactome_elem:
-                        reactome_elem[pathway_id]["measurement"] = elem[1]
-                    self.query_results[query_id] = reactome_elem
-                except:
-                    if id_database == "Ensembl":
-                        # if "G" in query_id:
-                        #   query_id_mod = query_id.replace('G', 'P')
-                        # else:
-                        #   query_id_mod = query_id.replace('P', 'G')
-                        try:
-                            reactome_elem = reactome_data[query_id]
-                            for pathway_id in reactome_elem:
-                                reactome_elem[pathway_id]["measurement"] = elem[1]
-                            self.query_results[query_id] = reactome_elem
-                        except:
-                            not_found += 1
-                    else:
-                        not_found += 1
-            print(
-                "{} entries from {} were not found in REACTOME DB".format(
-                    not_found, id_database
-                )
+        r = redis.Redis(host="localhost", port=6379, db=0)  # connect to local redis
+        not_found = 0
+        for elem in self.query_data:
+            query_id = elem[0]["ID"]
+            reactome_elem_str = r.hget(f"{id_database}:{target_organism}", query_id)
+            if reactome_elem_str is not None:
+                reactome_elem = json.loads(
+                    reactome_elem_str
+                )  # convert string back to Python object
+
+                for pathway_id in reactome_elem:
+                    reactome_elem[pathway_id]["measurement"] = elem[1]
+                    reactome_elem[pathway_id]["pathways"] = [
+                        tuple(elem) for elem in reactome_elem[pathway_id]["pathways"]
+                    ]
+                self.query_results[query_id] = reactome_elem
+            else:
+                not_found += 1
+        print(
+            "{} entries from {} were not found in REACTOME DB".format(
+                not_found, id_database
             )
+        )
 
     def calc_all_pathways(self) -> None:
         """Calculates the set of all reactome low level pathways contained in the query"""

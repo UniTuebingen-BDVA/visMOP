@@ -139,9 +139,7 @@ def reactome_parsing():
         {
             "amt_timesteps": amt_timesteps,
             "omics_recieved": omics_recieved,
-            "relational_data_path": data_path / "reactome_data",
             "target_organism": target_db.upper(),
-            "json_data_path": data_path / "reactome_data" / "diagram",
         }
     )
 
@@ -186,7 +184,6 @@ def reactome_parsing():
             proteomics_query_data_tuples,
             tar_organism,
             "UniProt",
-            data_path / "reactome_data/pickles/",
         )
         fold_changes["proteomics"] = protein_query.get_measurement_levels()
         # add entries to hierarchy
@@ -254,7 +251,6 @@ def reactome_parsing():
             metabolomics_query_data_tuples,
             tar_organism,
             "ChEBI",
-            data_path / "reactome_data/pickles/",
         )
         fold_changes["metabolomics"] = metabolite_query.get_measurement_levels()
         # add entries to hierarchy
@@ -304,7 +300,6 @@ def reactome_parsing():
             transcriptomics_query_data_tuples,
             tar_organism,
             "Ensembl",
-            data_path / "reactome_data/pickles/",
         )
         fold_changes["transcriptomics"] = transcriptomics_query.get_measurement_levels()
         # add entries to hierarchy
