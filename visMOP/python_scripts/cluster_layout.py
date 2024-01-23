@@ -12,9 +12,6 @@ from visMOP.python_scripts.omicsTypeDefs import (
     LayoutSettingsRecieved,
 )
 from visMOP.python_scripts.create_overview import NodeAttributes
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
 from functools import partial
 import warnings
 from statistics import mean
@@ -24,8 +21,6 @@ import math
 import networkx as nx
 import time
 from numba.core.errors import NumbaDeprecationWarning
-
-
 from multiprocessing import Pool
 
 from sklearn.preprocessing import StandardScaler
@@ -39,13 +34,8 @@ from sklearn import metrics
 from visMOP.python_scripts.networkx_layouting import generate_networkx_dict
 from visMOP.python_scripts.cluster_layout_types import UmapClusterSettings
 
-from sklearn.ensemble import RandomForestClassifier
-
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
-from shap import TreeExplainer
-from shap.plots import beeswarm
-
 T = TypeVar("T")
 
 defaultVals = {}
@@ -535,25 +525,6 @@ class Cluster_layout:
         nums_in_cl = list(dict(sorted(Counter(clustering_labels).items())).values())
         split_array = [sum(nums_in_cl[: i + 1]) for i, _ in enumerate(nums_in_cl)]
         cl_list = np.split(ordered_nodes, split_array)[:-1]
-
-        # test for random forest + SHAP values
-        # mpl.use("Agg")
-        # plt.ioff()
-        # dataDF = pd.DataFrame.from_records(self.data_table_scaled_filled)
-        # dataDF.columns = self.data_table.columns.values
-        # forest_classifier = RandomForestClassifier()
-        # forest_classifier.fit(dataDF, clustering_labels)
-        # explainer = TreeExplainer(forest_classifier)
-        # shap_values = explainer(dataDF)
-        # # shap.plots.waterfall(shap_values[0, :, 1], show=False)
-        # # plt.tight_layout()
-        # # plt.savefig("shap_all.png")
-        # # plt.close()
-        # for i in range((max(clustering_labels) + 2)):
-        #     beeswarm(shap_values[:, :, i], show=False)
-        #     plt.tight_layout()
-        #     plt.savefig("shap_{}.png".format(i - 1))
-        #     plt.close()
         return cl_list, max(clustering_labels) + 2, positions_dict
 
     def get_initial_node_pos(self) -> Tuple[Dict[str, List[float]], List[List[float]]]:

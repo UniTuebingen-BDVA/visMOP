@@ -9,9 +9,9 @@ dependencies:
   - networkx
   - openpyxl
   - gunicorn
+  - redis-py
   - numba
   - pip
   - pip:
       - reactome2py
       - git+https://github.com/lmcinnes/umap.git
-      - git+https://github.com/slundberg/shap.git
