@@ -33,7 +33,14 @@ A dictionary that maps organism IDs to ReactomeQueryEntry objects.
 """
 
 
-def populate_redis_mapping(file_path: str, mapping_file_name: str, omics_type: str):
+def populate_redis_mapping(
+    redis_pw: str,
+    file_path: str,
+    mapping_file_name: str,
+    omics_type: str,
+    redis_host: str = "localhost",
+    redis_port: int = 6379,
+):
     """generate Redis mapping objects from mapping files. This is function should be run when updating the reactome data
 
     Args:
@@ -44,7 +51,9 @@ def populate_redis_mapping(file_path: str, mapping_file_name: str, omics_type: s
     """
     data_path = pathlib.Path(file_path)
     database_2_reactome: Dict[str, ReactomeDBOrganism] = {}
-    r = redis.Redis(host="localhost", port=6379, db=0)  # connect to local redis
+    r = redis.Redis(
+        host=redis_host, port=redis_port, db=0, password=redis_pw
+    )  # connect to local redis
 
     # mapping_file e.g. 'UniProt2Reactome_PE_Pathway.txt' for uniprot
     with open(data_path / mapping_file_name, encoding="utf8") as fh:
@@ -110,24 +119,32 @@ def populate_redis_mapping(file_path: str, mapping_file_name: str, omics_type: s
             )  # store data in redis
 
 
-def populate_redis_diagram(file_path: str):
+def populate_redis_diagram(
+    redis_pw: str, file_path: str, redis_host: str = "localhost", redis_port: int = 6379
+):
     """
     save the diagram json files in file_path to redis
     """
     data_path = pathlib.Path(file_path) / "diagram"
-    r = redis.Redis(host="localhost", port=6379, db=1)  # connect to local redis
+    r = redis.Redis(
+        host=redis_host, port=redis_port, db=1, password=redis_pw
+    )  # connect to local redis
     for file in data_path.glob("*.json"):
         with open(file) as fh:
             data = json.load(fh)
             r.set(file.stem, json.dumps(data))
 
 
-def populate_relations(file_path: str):
+def populate_relations(
+    redis_pw: str, file_path: str, redis_host: str = "localhost", redis_port: int = 6379
+):
     """
     save the content, as a whole, from file_path/ReactomePathwaysRelation.txt to redis
     """
     data_path = pathlib.Path(file_path)
-    r = redis.Redis(host="localhost", port=6379, db=2)  # connect to local redis
+    r = redis.Redis(
+        host=redis_host, port=redis_port, db=2, password=redis_pw
+    )  # connect to local redis
     with open(data_path / "ReactomePathwaysRelation.txt") as fh:
         data = fh.read()
         r.set("ReactomePathwaysRelation", data)
@@ -141,7 +158,14 @@ if __name__ == "__main__":
         "UniProt2Reactome_PE_Pathway.txt",
         "ChEBI2Reactome_PE_Pathway.txt",
     ]
-    populate_redis_diagram(sys.argv[1])
-    populate_relations(sys.argv[1])
+    populate_redis_diagram(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]))
+    populate_relations(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]))
     for omics_type, file_name in zip(omics_types, file_names):
-        populate_redis_mapping(sys.argv[1], file_name, omics_type)
+        populate_redis_mapping(
+            sys.argv[1],
+            file_name,
+            omics_type,
+            sys.argv[2],
+            sys.argv[3],
+            int(sys.argv[4]),
+        )

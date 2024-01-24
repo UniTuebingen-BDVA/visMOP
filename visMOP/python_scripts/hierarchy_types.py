@@ -69,16 +69,12 @@ class HierarchyMetadata(TypedDict):
     Attributes:
         amt_timesteps (int): The number of timesteps for the hierarchy.
         omics_recieved (List[bool]): Whether the hierarchy received omics the specific or not.
-        relational_data_path (Path): The path to the relational data for the hierarchy.
         target_organism (str): The target organism for the hierarchy.
-        json_data_path (Path): The path to the JSON data for the hierarchy.
     """
 
     amt_timesteps: int
     omics_recieved: List[bool]
-    relational_data_path: Path
     target_organism: str
-    json_data_path: Path
 
 
 class GraphNode(TypedDict):

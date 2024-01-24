@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1
+# first stage build the frontend
+FROM node:20-alpine3.19 as build
+
+# Set the working directory in the container to /app
+WORKDIR /build
+# Copy the current directory contents into the container at /app
+COPY . .
+
+RUN apk add --no-cache git
+RUN corepack enable
+
+RUN git clone https://github.com/jacomyal/sigma.js.git
+RUN cd sigma.js && git checkout v3 && npm install && npm run sigma:transpile && npm run sigma:build
+
+RUN cd sigma.js/packages/sigma && npm link
+
+RUN cd vismop-vue && npm link sigma --save && npm install && npm run build
+
+FROM python:3.12-slim
+ARG REDIS_HOST
+ARG REDIS_PORT
+ARG REDIS_PASSWORD
+ARG GUNICORN_PORT
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# copy the server directory and dist from previous buildstage into the container at /app
+COPY --from=build /build/dist /app/dist
+COPY /visMOP /app/visMOP
+COPY /wsgi.py /app
+COPY reactome_redis.py /app
+COPY redisDockerPrepare.sh /app
+COPY /requirementsPip.txt /app
+COPY /setup.py /app
+RUN mkdir numbaCache
+RUN mkdir session_cache
+
+# install python dependencies
+RUN pip install --upgrade pip
+RUN pip install -r requirementsPip.txt
+# Install the server package
+RUN pip install -e .
+# Make port 5001 available to the world outside this container
+EXPOSE 5001
+# The command that will be executed when the container is run
+CMD ["bash","redisDockerPrepare.sh",${REDIS_HOST}, ${REDIS_PORT}, ${REDIS_PASSWORD},"&&","gunicorn","--workers", "3","--timeout","500","--graceful-timeout", "500", "--bind", "0.0.0.0:"${GUNICORN_PORT},"wsgi:create_app("${REDIS_HOST}", "${REDIS_PORT}","${REDIS_PASSWORD}")"]

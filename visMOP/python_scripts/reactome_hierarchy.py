@@ -308,8 +308,17 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
     def __getitem__(self, key: str) -> ReactomePathway:
         return super().__getitem__(key)
 
-    def __init__(self, metadata: HierarchyMetadata) -> None:
+    def __init__(
+        self,
+        redis_host: str,
+        redis_port: int,
+        redis_pw: str,
+        metadata: HierarchyMetadata,
+    ) -> None:
         super(ReactomeHierarchy, self).__init__()
+        self.redis_host = redis_host
+        self.redis_port = redis_port
+        self.redis_pw = redis_pw
         self.levels: Dict[int, List[str]] = {}
         self.omics_recieved: List[bool] = []
         self.amt_timesteps: int = metadata["amt_timesteps"]
@@ -374,7 +383,9 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         key_list = list(self.levels.keys())
         key_list.sort()
         # connect to diagram redis
-        r = redis.Redis(host="localhost", port=6379, db=1)
+        r = redis.Redis(
+            host=self.redis_host, port=self.redis_port, db=1, password=self.redis_pw
+        )
         for current_level in key_list:
             current_level_ids: List[str] = self.levels[current_level]
             for key in current_level_ids:
@@ -774,8 +785,12 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
 
         # get the diagram files as keys from redis
         # connect to redis
-        r1 = redis.Redis(host="localhost", port=6379, db=1)
-        r2 = redis.Redis(host="localhost", port=6379, db=2)
+        r1 = redis.Redis(
+            host=self.redis_host, port=self.redis_port, db=1, password=self.redis_pw
+        )
+        r2 = redis.Redis(
+            host=self.redis_host, port=self.redis_port, db=2, password=self.redis_pw
+        )
         reactomeRelations = r2.get("ReactomePathwaysRelation")
         if reactomeRelations is None:
             raise Exception("Could not find ReactomePathwaysRelation in redis")

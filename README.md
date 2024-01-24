@@ -114,3 +114,6 @@ Mocha and Chai are already included es dev-dependencies
 ```
 npm run test
 ```
+
+local docker
+docker build -t vismop -f dockerfileFrontEndFlask . $(cat localSecrets.txt | sed 's@^@--build-arg @g' | paste -s -d " ")

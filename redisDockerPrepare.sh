@@ -1,4 +1,10 @@
 #!/bin/bash
+
+#$1
+#$2
+#$3
+#$4
+
 echo "Verifying folder structure"
 mkdir reactome_data
 echo "Verifying reactome files"
@@ -50,4 +56,4 @@ fi
 
 cd ..
 echo "Setting up redis"
-python reactome_redis.py "reactome_data"
+python reactome_redis.py /reactome_data $1 $2 $3
