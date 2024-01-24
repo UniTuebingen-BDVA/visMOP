@@ -37,6 +37,9 @@ COPY /setup.py /app
 RUN mkdir numbaCache
 RUN mkdir session_cache
 
+# maybe apt-get update/upgrade
+RUN apt-get install git
+RUN apt-get install build-essential
 # install python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirementsPip.txt
