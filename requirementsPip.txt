@@ -8,5 +8,4 @@ redis
 pandas
 numpy
 scikit-learn
-git+https://github.com/numba/numba.git@0.59.0rc1
-git+https://github.com/lmcinnes/umap.git
+umap-learn

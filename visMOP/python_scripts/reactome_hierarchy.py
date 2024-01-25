@@ -21,7 +21,6 @@ from visMOP.python_scripts.hierarchy_types import (
     HierarchyEntryMeasurment,
 )
 from visMOP.python_scripts.omicsTypeDefs import ReactomeDBEntry
-from pathlib import Path
 
 from visMOP.python_scripts.timeseries_analysis import get_regression_data
 
@@ -384,7 +383,10 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         key_list.sort()
         # connect to diagram redis
         r = redis.Redis(
-            host=self.redis_host, port=self.redis_port, db=1, password=self.redis_pw
+            host=self.redis_host,
+            port=self.redis_port,
+            db=1,
+            password=self.redis_pw,
         )
         for current_level in key_list:
             current_level_ids: List[str] = self.levels[current_level]
@@ -786,10 +788,16 @@ class ReactomeHierarchy(dict[str, ReactomePathway]):
         # get the diagram files as keys from redis
         # connect to redis
         r1 = redis.Redis(
-            host=self.redis_host, port=self.redis_port, db=1, password=self.redis_pw
+            host=self.redis_host,
+            port=self.redis_port,
+            db=1,
+            password=self.redis_pw,
         )
         r2 = redis.Redis(
-            host=self.redis_host, port=self.redis_port, db=2, password=self.redis_pw
+            host=self.redis_host,
+            port=self.redis_port,
+            db=2,
+            password=self.redis_pw,
         )
         reactomeRelations = r2.get("ReactomePathwaysRelation")
         if reactomeRelations is None:

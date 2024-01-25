@@ -47,4 +47,4 @@ RUN pip install -e .
 # Make port 5001 available to the world outside this container
 EXPOSE 5001
 # The command that will be executed when the container is run
-CMD bash redisDockerPrepare.sh ${REDIS_PASSWORD} ${REDIS_HOST} ${REDIS_PORT} && gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:${GUNICORN_PORT} "wsgi:create_app("${REDIS_HOST},${REDIS_PORT},${REDIS_PASSWORD}")"
+CMD bash redisDockerPrepare.sh ${REDIS_PASSWORD} ${REDIS_HOST} ${REDIS_PORT} && gunicorn --workers 3 --timeout 500 --graceful-timeout 500 --bind 0.0.0.0:${GUNICORN_PORT} "wsgi:create_app('"${REDIS_HOST}"','"${REDIS_PORT}"','"${REDIS_PASSWORD}"')"

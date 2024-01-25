@@ -31,11 +31,17 @@ class ReactomeQuery:
 
     def __init__(
         self,
+        redis_host: str,
+        redis_port: int,
+        redis_pw: str,
         query_data: List[OmicsDataTuples],
         target_organism: Literal["Mus_musculus", "Homo_sapiens"],
         id_database: Literal["ChEBI", "UniProt", "Ensembl"],
     ):
         """ """
+        self.redis_host = redis_host
+        self.redis_port = redis_port
+        self.redis_pw = redis_pw
         self.query_data = query_data
         self.query_results: Dict[str, ReactomeQueryEntry] = {}
         self.id_table_id = {elem[0]["ID"]: elem[0]["table_id"] for elem in query_data}
@@ -57,7 +63,12 @@ class ReactomeQuery:
 
 
         """
-        r = redis.Redis(host="localhost", port=6379, db=0)  # connect to local redis
+        r = redis.Redis(
+            host=self.redis_host,
+            port=self.redis_port,
+            db=0,
+            password=self.redis_pw,
+        )  # connect to local redis
         not_found = 0
         for elem in self.query_data:
             query_id = elem[0]["ID"]

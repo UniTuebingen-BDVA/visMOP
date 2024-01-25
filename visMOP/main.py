@@ -184,6 +184,9 @@ def create_app(
             tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
             print(tar_organism)
             protein_query = ReactomeQuery(
+                redis_host,
+                redis_port,
+                redis_pw,
                 proteomics_query_data_tuples,
                 tar_organism,
                 "UniProt",
@@ -251,6 +254,9 @@ def create_app(
             tar_organism = "Mus_musculus" if target_db == "mmu" else "Homo_sapiens"
             print(tar_organism)
             metabolite_query = ReactomeQuery(
+                redis_host,
+                redis_port,
+                redis_pw,
                 metabolomics_query_data_tuples,
                 tar_organism,
                 "ChEBI",
@@ -302,6 +308,9 @@ def create_app(
             print(tar_organism)
             # Some entries do not exist for ENMUSG but do exist for ENSMUSP
             transcriptomics_query = ReactomeQuery(
+                redis_host,
+                redis_port,
+                redis_pw,
                 transcriptomics_query_data_tuples,
                 tar_organism,
                 "Ensembl",

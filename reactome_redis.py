@@ -163,9 +163,9 @@ if __name__ == "__main__":
     for omics_type, file_name in zip(omics_types, file_names):
         populate_redis_mapping(
             sys.argv[1],
+            sys.argv[2],
             file_name,
             omics_type,
-            sys.argv[2],
             sys.argv[3],
             int(sys.argv[4]),
         )

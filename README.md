@@ -116,4 +116,4 @@ npm run test
 ```
 
 local docker
-docker build -t vismop -f dockerfileFrontEndFlask . $(cat localSecrets.txt | sed 's@^@--build-arg @g' | paste -s -d " ")
+docker build -t vismop -f dockerfileFrontEndFlaskLocal . $(cat localSecrets.env | sed 's@^@--build-arg @g' | paste -s -d " ")
