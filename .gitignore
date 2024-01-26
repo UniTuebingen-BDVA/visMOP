@@ -6,6 +6,8 @@ kegg_cache/*.json
 package-lock.json
 __pycache__
 /session_cache/*
+/numba_cache/*
+/visMOP.egg-info/
 *.pickle
 **/diagram/
 **.ipynb
