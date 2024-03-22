@@ -1,4 +1,5 @@
 import json
+import io
 import pandas as pd  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
 from typing import BinaryIO, List, Dict
 from visMOP.python_scripts.omicsTypeDefs import (
@@ -21,7 +22,7 @@ def create_df(data: BinaryIO, sheet_name: str) -> tuple[int, pd.DataFrame]:
     """
     try:
         read_table: pd.DataFrame = pd.read_excel(
-            data, sheet_name=sheet_name, header=None, engine="openpyxl"
+            io.BytesIO(data), sheet_name=sheet_name, header=None, engine="openpyxl"
         )
     except ValueError:
         return 1, pd.DataFrame()
@@ -125,7 +126,7 @@ def format_omics_data(
     print("colnames", colname)
     json_data = cache.get(cache_name)
     json_str: str = str(json_data) if json_data is not None else ""
-    data_table = pd.read_json(json_str, orient="columns")
+    data_table = pd.read_json(io.StringIO(json_str), orient="columns")
 
     id_col = colname
     data_table = data_table.drop_duplicates(subset=id_col).set_index(id_col)

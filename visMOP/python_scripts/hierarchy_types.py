@@ -1,5 +1,4 @@
 from typing import Dict, List, Literal, TypedDict, Union, NotRequired
-from pathlib import Path
 
 
 class FormEntry(TypedDict):

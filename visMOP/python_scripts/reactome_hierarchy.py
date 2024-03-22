@@ -1,7 +1,6 @@
 import json
 import statistics
 import pandas as pd
-import os
 from operator import itemgetter
 import redis
 

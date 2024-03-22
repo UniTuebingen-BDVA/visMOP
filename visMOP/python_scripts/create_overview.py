@@ -3,6 +3,10 @@ from visMOP.python_scripts.hierarchy_types import HierarchyEntryDict
 
 
 class EdgeAttribute(TypedDict):
+    """
+    The attributes of an edge.
+    """
+
     edgeType: str
     relationID: str
     source: str
@@ -13,6 +17,10 @@ class EdgeAttribute(TypedDict):
 
 
 class NodeAttributes(TypedDict):
+    """
+    The attributes of a node.
+    """
+
     incoming_edges: List[EdgeAttribute]
     outgoingEdges: List[EdgeAttribute]
     outgoingOnceRemoved: List[EdgeAttribute]
@@ -40,9 +48,9 @@ def create_overview_data(
     # print("+++++NOTE: pathways that are not in global_dict_entries are NOT USED!!+++++")
     # Get pathways from dropdown menu --> main pathways for overview
 
-    pathway_connection_dict: Dict[
-        str, NodeAttributes
-    ] = {}  # same format as with_init_pos #pathwayName
+    pathway_connection_dict: Dict[str, NodeAttributes] = (
+        {}
+    )  # same format as with_init_pos #pathwayName
     displayed_pathway_names = [pathway["pathwayId"] for pathway in displayed_pathways]
 
     # remove all genes from the without_empty --> keep only pathways to identify relevant maplinks

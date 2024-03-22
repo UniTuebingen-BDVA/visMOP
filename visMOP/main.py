@@ -1,6 +1,7 @@
 from random import random
 from collections import defaultdict
 from flask import Flask, render_template, send_from_directory, request
+from visMOP.python_scripts.cluster_layout_types import UmapClusterSettings
 from visMOP.python_scripts.utils import kegg_to_chebi
 from visMOP.python_scripts.data_table_parsing import table_request, format_omics_data
 from visMOP.python_scripts.create_overview import create_overview_data
@@ -315,9 +316,9 @@ def create_app(
                 tar_organism,
                 "Ensembl",
             )
-            fold_changes[
-                "transcriptomics"
-            ] = transcriptomics_query.get_measurement_levels()
+            fold_changes["transcriptomics"] = (
+                transcriptomics_query.get_measurement_levels()
+            )
             # add entries to hierarchy
             node_pathway_dict = {
                 **node_pathway_dict,
@@ -376,7 +377,7 @@ def create_app(
         layout_limits: List[List[float]]
         layout_attributes_used, layout_limits = layout_settings
 
-        umap_settings = {
+        umap_settings: UmapClusterSettings = {
             "cluster_min_size_quotient": request.json["cluster_min_size_quotient"],
             "use_umap": request.json["useUMAP"],
             "automatic_cluster_target_dimensions": request.json[

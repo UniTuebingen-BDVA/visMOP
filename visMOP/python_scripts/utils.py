@@ -4,17 +4,28 @@ from typing import List, DefaultDict, TypedDict
 
 
 class mapsTo(TypedDict):
+    """
+    A TypedDict that describes a mapping to a resource.
+    """
+
     identifier: str
     interactsWith: List[str]
     resource: str
 
 
 class ReactomeAnalysisResult(TypedDict):
+    """
+    A TypedDict that describes a Reactome analysis result.
+    """
+
     identifier: str
     mapsTo: List[mapsTo]
 
 
 def kegg_to_chebi(keggIDlist: List[str]) -> DefaultDict[str, List[str]]:
+    """
+    Maps KEGG IDs to ChEBI IDs.
+    """
     results: List[ReactomeAnalysisResult] = analysis.identifiers_mapping(
         ids=",".join(keggIDlist)
     )  # type: ignore
