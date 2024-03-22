@@ -1,7 +1,7 @@
 import Graph, { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
 //import getNodeProgramImage from '@/core/custom-nodes/custom-image-node-program';
-import getNodeProgramImage from 'sigma/rendering/programs/node-image';
+import { NodeImageProgram } from '@sigma/node-image';
 
 import {
   fa2LayoutParams,
@@ -12,7 +12,7 @@ import {
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
-import { animateNodes } from 'sigma/utils/animate';
+import { animateNodes } from 'sigma/utils';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
 import OverviewFilter from './filter';
@@ -234,7 +234,7 @@ export default class OverviewGraph {
       },
       nodeProgramClasses: {
         ...DEFAULT_SETTINGS.nodeProgramClasses,
-        image: getNodeProgramImage(),
+        image: NodeImageProgram,
       },
       defaultDrawNodeHover: drawHover,
       defaultDrawNodeLabel: drawLabel,

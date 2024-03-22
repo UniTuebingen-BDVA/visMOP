@@ -1,10 +1,10 @@
 import { NodeDisplayData, RenderParams } from 'sigma/types';
 import { floatColor } from 'sigma/utils';
-import { EdgeProgram } from 'sigma/rendering/edge';
+import { EdgeProgram } from 'sigma/rendering';
 import { BezierEdgeDisplayData } from './types';
-import VERTEX_SHADER_SOURCE from './bezier-curve-vertex-shader.glsl?raw';
-import FRAGMENT_SHADER_SOURCE from './bezier-curve-fragment-shader.glsl?raw';
-import { ProgramInfo } from 'sigma/rendering/program';
+import VERTEX_SHADER_SOURCE from './bezier-curve-vertex-shader.glsl';
+import FRAGMENT_SHADER_SOURCE from './bezier-curve-fragment-shader.glsl';
+import { ProgramInfo } from 'sigma/rendering';
 
 const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 

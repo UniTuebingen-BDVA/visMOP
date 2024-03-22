@@ -72,14 +72,16 @@ def getClusterLayout(
             reactome_roots,
             umap_cluster_settings,
         )
+        print("Cluster layout calculated")
+        print(cluster_layout)
+        return (
+            cluster_layout.clusters,
+            cluster_layout.clusters_center,
+            cluster_layout.noise_cluster_exists,
+        )
     except ValueError as e:
         print("LayoutError", e)
         return -1, -1
-    return (
-        cluster_layout.clusters,
-        cluster_layout.clusters_center,
-        cluster_layout.noise_cluster_exists,
-    )
 
 
 def get_layout_settings(

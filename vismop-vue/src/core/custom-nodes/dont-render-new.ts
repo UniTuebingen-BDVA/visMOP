@@ -7,10 +7,10 @@
  * @module
  */
 import { NodeDisplayData, EdgeDisplayData, RenderParams } from 'sigma/types';
-import { EdgeProgram } from 'sigma/rendering/edge';
-import VERTEX_SHADER_SOURCE from 'sigma/rendering/programs/edge-line/vert.glsl.js';
-import FRAGMENT_SHADER_SOURCE from 'sigma/rendering/programs/edge-line/frag.glsl.js';
-import { ProgramInfo } from 'sigma/rendering/program';
+import { EdgeProgram } from 'sigma/rendering';
+import VERTEX_SHADER_SOURCE from './bezier-curve-vertex-shader.glsl';
+import FRAGMENT_SHADER_SOURCE from './bezier-curve-fragment-shader.glsl';
+import { ProgramInfo } from 'sigma/rendering';
 
 const { UNSIGNED_BYTE, FLOAT } = WebGLRenderingContext;
 

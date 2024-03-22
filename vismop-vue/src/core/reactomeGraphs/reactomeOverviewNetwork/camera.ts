@@ -1,6 +1,6 @@
 import Sigma from 'sigma';
 import { PlainObject } from 'sigma/types';
-import { animateNodes } from 'sigma/utils/animate';
+import { animateNodes } from 'sigma/utils';
 import OverviewGraph from './overviewNetwork';
 
 /**

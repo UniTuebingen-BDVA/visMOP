@@ -1,4 +1,5 @@
-precision mediump float;
+//language=GLSL
+const SHADER_SOURCE = `precision mediump float;
 
 varying vec4 v_color;
 varying vec2 v_normal;
@@ -22,4 +23,5 @@ void main(void) {
 
   gl_FragColor = mix(v_color, transparent, t);
   #endif
-}
+}`;
+export default SHADER_SOURCE;

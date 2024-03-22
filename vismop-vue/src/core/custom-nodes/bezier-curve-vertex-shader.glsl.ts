@@ -1,4 +1,6 @@
-attribute vec4 a_id;
+//language=GLSL
+
+const SHADER_SOURCE = `attribute vec4 a_id;
 attribute vec4 a_color;
 attribute vec2 a_normal;
 attribute vec2 a_position;
@@ -22,7 +24,7 @@ void main() {
   float normalLength = length(normal);
   vec2 unitNormal = normal / normalLength;
 
-  // We require edges to be at least `minThickness` pixels thick *on screen*
+  // We require edges to be at least minThickness pixels thick *on screen*
   // (so we need to compensate the size ratio):
   float pixelsThickness = max(normalLength, minThickness * u_sizeRatio);
 
@@ -52,3 +54,5 @@ void main() {
 
   v_color.a *= bias;
 }
+`;
+export default SHADER_SOURCE;

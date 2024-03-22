@@ -10,12 +10,7 @@ COPY . .
 RUN apk add --no-cache git
 RUN corepack enable
 
-RUN git clone https://github.com/jacomyal/sigma.js.git
-RUN cd sigma.js && git checkout v3 && npm install && npm run sigma:transpile && npm run sigma:build
-
-RUN cd sigma.js/packages/sigma && npm link
-
-RUN cd vismop-vue && npm link sigma --save && npm install && npm run build
+RUN cd vismop-vue && npm install && npm run build
 
 FROM python:3.11-slim
 
