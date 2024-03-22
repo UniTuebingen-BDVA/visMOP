@@ -31,7 +31,7 @@ def create_df(data: BinaryIO, sheet_name: str) -> tuple[int, pd.DataFrame]:
         columns=read_table.iloc[0].to_dict()
     )  # NOTE check if program is broken --> this might be at fault
     read_table = read_table.drop(read_table.index[0])
-    read_table = read_table.fillna(value="None")
+    read_table = read_table.fillna(value="None").infer_objects(copy=False)
     read_table["_reserved_sort_id"] = read_table.index
     read_table["_reserved_available"] = "No"
     read_table["_reserved_inSelected"] = "No"

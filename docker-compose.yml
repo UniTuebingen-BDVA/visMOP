@@ -11,7 +11,7 @@ services:
     image: vismop
     build:
       context: .
-      dockerfile: dockerfileFrontEndFlaskLocal
+      dockerfile: dockerfileFrontEndFlask
     environment:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}

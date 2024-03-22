@@ -117,3 +117,5 @@ npm run test
 
 local docker
 docker build -t vismop -f dockerfileFrontEndFlaskLocal . $(cat localSecrets.env | sed 's@^@--build-arg @g' | paste -s -d " ")
+docker compose --env-file localSecrets.env build
+docker compose --env-file localSecrets.env up
