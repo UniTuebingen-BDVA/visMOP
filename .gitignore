@@ -13,6 +13,7 @@ __pycache__
 **.ipynb
 /reactome_testing_files
 /reactome_data
+build/
 # local env files
 .env.local
 .env.*.local
