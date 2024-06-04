@@ -8,6 +8,9 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     sourcemap: true,
+    commonjsOptions: {
+      include: [/node_modules/, /sigma/],
+    },
   },
   plugins: [
     //glsl(),
@@ -20,6 +23,9 @@ export default defineConfig({
       sassVariables: 'src/css/quasar-variables.sass',
     }),
   ],
+  optimizeDeps: {
+    include: ['sigma'],
+  },
   resolve: {
     extensions: [
       '.mjs',

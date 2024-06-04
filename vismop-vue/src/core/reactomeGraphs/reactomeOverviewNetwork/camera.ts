@@ -1,6 +1,6 @@
 import Sigma from 'sigma';
 import { PlainObject } from 'sigma/types';
-import { animateNodes } from 'sigma/utils/animate';
+import { animateNodes } from 'sigma/utils';
 import OverviewGraph from './overviewNetwork';
 
 /**
@@ -43,10 +43,10 @@ export function zoomLod(this: OverviewGraph): void {
     if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      if (attributes.nodeType == 'regular' && !attributes.moduleFixed) {
+      if (attributes.nodeType == 'regular' && !attributes.clusterFixed) {
         tarPositions[node] = {
-          x: attributes.moduleFixed ? attributes.x : attributes.layoutX,
-          y: attributes.moduleFixed ? attributes.y : attributes.layoutY,
+          x: attributes.clusterFixed ? attributes.x : attributes.layoutX,
+          y: attributes.clusterFixed ? attributes.y : attributes.layoutY,
           size: attributes.isRoot ? this.ROOT_DEFAULT_SIZE : this.DEFAULT_SIZE,
           nonHoverSize: attributes.isRoot
             ? this.ROOT_DEFAULT_SIZE
@@ -60,17 +60,17 @@ export function zoomLod(this: OverviewGraph): void {
     });
     this.graph.forEachNode((node, attributes) => {
       attributes.zoomHidden =
-        attributes.nodeType !== 'cluster' ? false : !attributes.moduleFixed;
+        attributes.nodeType !== 'cluster' ? false : !attributes.clusterFixed;
     });
   }
   if (this.prevFrameZoom < this.lodRatio && this.camera.ratio > this.lodRatio) {
     if (this.cancelCurrentAnimation) this.cancelCurrentAnimation();
     const tarPositions: PlainObject<PlainObject<number>> = {};
     this.graph.forEachNode((node, attributes) => {
-      if (attributes.nodeType == 'regular' && !attributes.moduleFixed) {
+      if (attributes.nodeType == 'regular' && !attributes.clusterFixed) {
         tarPositions[node] = {
-          x: this.graph.getNodeAttribute(attributes.modNum, 'layoutX'),
-          y: this.graph.getNodeAttribute(attributes.modNum, 'layoutY'),
+          x: this.graph.getNodeAttribute(attributes.clusterNum, 'layoutX'),
+          y: this.graph.getNodeAttribute(attributes.clusterNum, 'layoutY'),
           size: attributes.isRoot ? 30 : 0,
           nonHoverSize: attributes.isRoot ? 30 : 0,
         };
@@ -88,7 +88,7 @@ export function zoomLod(this: OverviewGraph): void {
           if (
             attributes.nodeType != 'root' &&
             attributes.nodeType != 'hierarchical' &&
-            !attributes.moduleFixed
+            !attributes.clusterFixed
           )
             attributes.zoomHidden = true;
           if (attributes.nodeType == 'cluster') attributes.zoomHidden = false;

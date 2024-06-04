@@ -1,84 +1,87 @@
 import { useMainStore } from '@/stores';
-import { glyphData, omicsData } from '../generalTypes';
-import { reactomeEntry } from '../reactomeGraphs/reactomeTypes';
+import _ from 'lodash';
+import { glyphData, omicsData } from '../reactomeGraphs/reactomeTypes';
 
 /**
  * Uses Omics Data from main pinia store and generates the data needed to draw the overview glyphs
  * @returns
  */
-export function generateGlyphDataReactome(): { [key: string]: glyphData } {
+export function generateGlyphDataReactome(targetMeasurement: 'fc' | 'slope'): {
+  [key: string]: glyphData;
+} {
   const outGlyphData: { [key: string]: glyphData } = {};
   const mainStore = useMainStore();
 
   // contains pathway lists
+  const accessor =
+    targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
   const omicsRecieved = mainStore.omicsRecieved;
   const overviewData = mainStore.overviewData;
   for (const pathwayID in overviewData) {
     const pathway = overviewData[pathwayID];
     const transcriptomicsData: omicsData = {
       available: omicsRecieved.transcriptomics,
-      foldChanges: [],
-      meanFoldchange: 0,
+      measurements: [],
+      meanMeasure: 0,
       nodeState: { total: 0, regulated: 0 },
     };
     const proteomicsData: omicsData = {
       available: omicsRecieved.proteomics,
-      foldChanges: [],
-      meanFoldchange: 0,
+      measurements: [],
+      meanMeasure: 0,
       nodeState: { total: 0, regulated: 0 },
     };
     const metabolomicsData: omicsData = {
       available: omicsRecieved.metabolomics,
-      meanFoldchange: 0,
-      foldChanges: [],
+      meanMeasure: 0,
+      measurements: [],
       nodeState: { total: 0, regulated: 0 },
     };
 
     transcriptomicsData.nodeState.total = pathway.entries.transcriptomics.total;
     for (const measureKey in pathway.entries.transcriptomics.measured) {
       const entry = pathway.entries.transcriptomics.measured[measureKey];
-      transcriptomicsData.foldChanges.push({
-        name: entry.name,
-        value: entry.value,
-        queryID: entry.queryId,
-      });
+      transcriptomicsData.measurements.push(entry);
       transcriptomicsData.nodeState.regulated += 1;
     }
 
     proteomicsData.nodeState.total = pathway.entries.proteomics.total;
     for (const measureKey in pathway.entries.proteomics.measured) {
       const entry = pathway.entries.proteomics.measured[measureKey];
-      proteomicsData.foldChanges.push({
-        name: entry.name,
-        value: entry.value,
-        queryID: entry.queryId,
-      });
+      proteomicsData.measurements.push(entry);
       proteomicsData.nodeState.regulated += 1;
     }
 
     metabolomicsData.nodeState.total = pathway.entries.metabolomics.total;
     for (const measureKey in pathway.entries.metabolomics.measured) {
       const entry = pathway.entries.metabolomics.measured[measureKey];
-      metabolomicsData.foldChanges.push({
-        name: entry.name,
-        value: entry.value,
-        queryID: entry.queryId,
-      });
+      metabolomicsData.measurements.push(entry);
       metabolomicsData.nodeState.regulated += 1;
     }
 
-    transcriptomicsData.foldChanges.sort((a, b) => a.value - b.value);
-    proteomicsData.foldChanges.sort((a, b) => a.value - b.value);
-    metabolomicsData.foldChanges.sort((a, b) => a.value - b.value);
-    transcriptomicsData.meanFoldchange =
-      transcriptomicsData.foldChanges.reduce((a, b) => a + b.value, 0) /
-      transcriptomicsData.foldChanges.length;
-    proteomicsData.meanFoldchange =
-      proteomicsData.foldChanges.reduce((a, b) => a + b.value, 0) /
-      proteomicsData.foldChanges.length;
-    metabolomicsData.meanFoldchange =
-      metabolomicsData.foldChanges.reduce((a, b) => a + b.value, 0) /
-      metabolomicsData.foldChanges.length;
+    transcriptomicsData.measurements.sort(
+      (a, b) => _.get(a, accessor) - _.get(b, accessor)
+    );
+    proteomicsData.measurements.sort(
+      (a, b) => _.get(a, accessor) - _.get(b, accessor)
+    );
+    metabolomicsData.measurements.sort(
+      (a, b) => _.get(a, accessor) - _.get(b, accessor)
+    );
+    transcriptomicsData.meanMeasure =
+      transcriptomicsData.measurements.reduce(
+        (a, b) => a + _.get(b, accessor),
+        0
+      ) / transcriptomicsData.measurements.length;
+    proteomicsData.meanMeasure =
+      proteomicsData.measurements.reduce((a, b) => a + _.get(b, accessor), 0) /
+      proteomicsData.measurements.length;
+    //console.log('proteomicsData', proteomicsData);
+    metabolomicsData.meanMeasure =
+      metabolomicsData.measurements.reduce(
+        (a, b) => a + _.get(b, accessor),
+        0
+      ) / metabolomicsData.measurements.length;
 
     outGlyphData[pathway.pathwayId] = {
       pathwayID: pathway.pathwayId,

@@ -1,151 +1,116 @@
 import Graph, { UndirectedGraph } from 'graphology';
 import Sigma from 'sigma';
+//import getNodeProgramImage from '@/core/custom-nodes/custom-image-node-program';
+import { NodeImageProgram } from '@sigma/node-image';
+
 import {
-  additionalData,
-  overviewGraphData,
+  fa2LayoutParams,
   overviewNodeAttr,
-} from '@/core/graphTypes';
-//import getNodeProgramImage from 'sigma/rendering/webgl/programs/node.image';
-import getNodeImageProgram from 'sigma/rendering/webgl/programs/node.combined';
-import DashedEdgeProgram from '@/core/custom-nodes/dashed-edge-program';
+  overviewGraphData,
+  additionalData,
+} from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 import { drawHover, drawLabel } from '@/core/customLabelRenderer';
 import { useMainStore } from '@/stores';
 import { DEFAULT_SETTINGS } from 'sigma/settings';
-import { animateNodes } from 'sigma/utils/animate';
-import { filterValues } from '../../generalTypes';
+import { animateNodes } from 'sigma/utils';
 import { nodeReducer, edgeReducer } from './reducerFunctions';
 import { resetZoom, zoomLod } from './camera';
-import {
-  filterElements,
-  setAverageFilter,
-  setRootNegativeFilter,
-  setRootFilter,
-} from './filter';
+import OverviewFilter from './filter';
+import { dijkstra, edgePathFromNodePath } from 'graphology-shortest-path';
+import { Attributes } from 'graphology-types';
 import subgraph from 'graphology-operators/subgraph';
 import { assignLayout, LayoutMapping } from 'graphology-layout/utils';
 import { nodeExtent } from 'graphology-metrics/graph/extent';
-import { generateGlyphs } from '@/core/overviewGlyphs/moduleGlyphGenerator';
+import { generateGlyphs } from '@/core/overviewGlyphs/clusterGlyphGenerator';
 import orderedCircularLayout from '../orderedCircularLayout';
 import fa2 from '../../layouting/modFa2/graphology-layout-forceatlas2.js';
 import { overviewColors } from '@/core/colors';
-import _, { curryRight } from 'lodash';
 import { ConvexPolygon } from '@/core/layouting/ConvexPolygon';
-import FilterData from './filterData';
-import { Loading } from 'quasar';
-import { PlainObject } from 'sigma/types';
+import { Coordinates, PlainObject } from 'sigma/types';
 import { vec2 } from 'gl-matrix';
+import BezierEdgeProgram from '@/core/custom-nodes/bezier-curve-program';
+import DontRender from '@/core/custom-nodes/dont-render-new';
+import { createNormalizationFunction, graphExtent } from 'sigma/utils';
+import { color } from '@/core/graphTypes';
+
 export default class OverviewGraph {
   // constants
   static readonly DEFAULT_SIZE = 6;
   static readonly ROOT_DEFAULT_SIZE = 15;
-  static readonly MODULE_DEFAULT_SIZE = 15;
+  static readonly CLUSTER_DEFAULT_SIZE = 15;
   static readonly FOCUS_NODE_SIZE = 10;
+  static readonly GLYPH_SIZE = 64;
+  static readonly CLUSTER_EXTENT = 400;
 
   protected DEFAULT_SIZE = 6;
   protected ROOT_DEFAULT_SIZE = 15;
-  protected MODULE_DEFAULT_SIZE = 15;
+  protected CLUSTER_DEFAULT_SIZE = 15;
   protected FOCUS_NODE_SIZE = 10;
 
   // data structures for reducers
-  protected shortestPathClick: string[] = [];
-  protected shortestPathNodes: string[] = [];
-  protected shortestPathEdges: string[] = [];
-  protected highlightedEdgesClick = new Set();
-  protected highlightedNodesClick = new Set();
+  highlightedEdgesClick = new Set();
+  highlightedNodesClick = new Set();
   //from events SIGMA2 example, initialze sets for highlight on hover:
-  protected highlighedNodesHover = new Set();
-  protected highlighedEdgesHover = new Set();
-  protected highlightedCenterHover = '';
-  protected currentPathway = '';
-  protected hierarchyClickStack: string[] = [];
-  protected pathwaysContainingIntersection: string[] = [];
-  protected pathwaysContainingUnion: string[] = [];
-  protected hierarchyNodes: string[] = [];
-  protected hierarchyLevels: { [key: number]: string[] } = {};
+  highlightedNodesHover = new Set();
+  highlightedEdgesHover = new Set();
+  highlightedCenterHover = '';
+  currentPathway = '';
+  hierarchyClickStack: string[] = [];
+  pathwaysContainingIntersection: string[] = [];
+  pathwaysContainingUnion: string[] = [];
+  hierarchyNodes: string[] = [];
+  hierarchyLevels: { [key: number]: string[] } = {};
   // renderer and camera
-  protected renderer;
-  protected camera;
-  protected prevFrameZoom;
-  protected graph;
-  protected clusterData;
-  protected graphWidth = 0;
-  protected windowWidth = 1080;
-  protected lodRatio = 1.3;
-  protected lastClickedClusterNode = -1;
-  protected additionalData!: additionalData;
-  protected animationStack: PlainObject<PlainObject<number>> = {};
-  protected nodeAttributeStack: {
+  renderer;
+  camera;
+  showAllEdges = false;
+  showBundling = true;
+  prevFrameZoom;
+  graph;
+  clusterData;
+  graphWidth = 0;
+  lodRatio = 1.3;
+  lastClickedClusterNode = -1;
+  additionalData!: additionalData;
+  polygonLayerID: string;
+  animationStack: PlainObject<PlainObject<number>> = {};
+  nodeAttributeStack: {
     [key: string]: { [key: string]: string | number | boolean };
   } = {};
-  protected edgeAttributeStack: {
+  edgeAttributeStack: {
     [key: string]: { [key: string]: string | number | boolean };
   } = {};
-  protected cancelCurrentAnimation: (() => void) | null = null;
+  cancelCurrentAnimation: (() => void) | null = null;
 
   // filter
-  protected filtersChanged = false;
-  protected filterFuncNegativeRoot: (x: string) => boolean = (_x: string) =>
-    true;
-  protected filterFuncRoot: (x: string) => boolean = (_x: string) => true;
-  protected filterFuncTrans: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsTrans: (x: number) => boolean = (_x: number) =>
-    true;
-  protected filterFuncAmtRelTrans: (x: number) => boolean = (_x: number) =>
-    true;
-  protected filterFuncProt: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsProt: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtRelProt: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncMeta: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsMeta: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtRelMeta: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtRelSum: (x: number) => boolean = (_x: number) => true;
-  protected filterFuncAmtAbsSum: (x: number) => boolean = (_x: number) => true;
 
-  protected regulateFilterTrans = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
-  protected regulateFilterProt = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
-  protected regulateFilterMeta = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
+  filter = new OverviewFilter(this);
 
-  protected regulatedFilter = {
-    relative: new FilterData(),
-    absolute: new FilterData(),
-  };
-  protected averageFilter: {
-    transcriptomics: filterValues;
-    proteomics: filterValues;
-    metabolomics: filterValues;
-  } = {
-    transcriptomics: new FilterData(),
-    proteomics: new FilterData(),
-    metabolomics: new FilterData(),
-  };
   polygons: { [key: number]: ConvexPolygon };
+  currentlyRenderedPolygons: { [key: number]: ConvexPolygon };
   initialFa2Params: fa2LayoutParams;
   clusterWeights: number[];
   maxClusterWeight: number;
   clusterSizeScalingFactor: number;
   rootOrder: number;
+  containerID: string;
 
   constructor(
     containerID: string,
+    polygonLayerID: string,
     graphData: overviewGraphData,
     polygons: { [key: number]: ConvexPolygon },
     layoutParams: fa2LayoutParams,
-    clusterWeights: number[],
-    windowWidth: number
+    clusterWeights: number[]
   ) {
+    console.log('GraphData:', graphData);
+    this.polygonLayerID = polygonLayerID;
+    this.containerID = containerID;
     this.graph = UndirectedGraph.from(graphData);
     this.initialFa2Params = layoutParams;
     this.clusterData = graphData.clusterData;
     this.polygons = polygons;
+    this.currentlyRenderedPolygons = graphData.clusterData.normalHullPoints;
     this.rootOrder = 0;
     this.clusterWeights = clusterWeights;
     this.clusterSizeScalingFactor = layoutParams.clusterSizeScalingFactor;
@@ -153,13 +118,88 @@ export default class OverviewGraph {
     this.renderer = this.mainGraph(containerID);
     this.camera = this.renderer.getCamera();
     this.prevFrameZoom = this.camera.ratio;
-    this.addModuleOverviewNodes();
+    this.addClusterOverviewNodes();
     this.calculateGraphWidth();
     this.layoutRoots();
     this.relayoutGraph(this.initialFa2Params);
-    this.setSize(windowWidth);
+    //this.generateHelperEdges();
+    this.generateBezierControlPoints();
+    this.setSize();
+    this.drawPolygons(
+      polygonLayerID,
+      containerID,
+      graphData.clusterData.normalHullPoints,
+      graphData.clusterData.clusterColors,
+      true
+    );
 
     this.refreshCurrentPathway();
+  }
+
+  /**
+   * draw the polygons for the clusters in the overview graph
+   * @param polygonLayerID
+   * @param polygons
+   * @param clusterColors
+   *
+   */
+  drawPolygons(
+    polygonLayerID: string,
+    containerId: string,
+    polygons: { [key: number]: ConvexPolygon },
+    clusterColors: { [key: number]: color },
+    init: boolean = false
+  ) {
+    const container = document.getElementById(containerId);
+    if (init) {
+      //append canvas to container
+      const createdCanvas = document.createElement('canvas');
+      createdCanvas?.setAttribute('id', polygonLayerID);
+      createdCanvas?.setAttribute('style', 'position: absolute;');
+      container?.insertBefore(createdCanvas, container.firstChild);
+    }
+    //select the canvas that is child of polygonLayerID
+    const canvas: HTMLCanvasElement | undefined | null =
+      container?.querySelector('#' + polygonLayerID);
+    if (canvas) {
+      canvas.setAttribute('width', container?.offsetWidth + 'px');
+      canvas.setAttribute('height', container?.offsetHeight + 'px');
+      canvas.style.width = container?.offsetWidth + 'px';
+      canvas.style.height = container?.offsetHeight + 'px';
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // draw polygons on the canvas
+        const iterateKeys =
+          this.lastClickedClusterNode == -1
+            ? Object.keys(polygons)
+            : [this.lastClickedClusterNode];
+        iterateKeys.forEach((element) => {
+          const polygonIdx = parseInt(String(element));
+          const currentPolygon = polygons[polygonIdx];
+          const polygonVertices = currentPolygon.verticesToArray();
+          const currentColor = clusterColors[polygonIdx];
+          ctx.fillStyle = `rgba(${currentColor[0]},${currentColor[1]},${currentColor[2]},${currentColor[3]})`;
+          ctx.strokeStyle = `rgba(${currentColor[0]},${currentColor[1]},${currentColor[2]},${currentColor[3]})`;
+          ctx.beginPath();
+          const trafoCoord = this.renderer.graphToViewport({
+            x: polygonVertices[0][0],
+            y: polygonVertices[0][1],
+          });
+          ctx.moveTo(trafoCoord.x, trafoCoord.y);
+          for (let i = 1; i < polygonVertices.length; i++) {
+            const trafoCoord = this.renderer.graphToViewport({
+              x: polygonVertices[i][0],
+              y: polygonVertices[i][1],
+            });
+            ctx.lineTo(trafoCoord.x, trafoCoord.y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fill();
+        });
+      }
+    }
   }
 
   /**
@@ -171,88 +211,74 @@ export default class OverviewGraph {
     this.additionalData = {
       clusterAreas: {
         hullPoints: this.clusterData.normalHullPoints,
-        greyValues: this.clusterData.greyValues,
+        clusterColors: this.clusterData.clusterColors,
       },
     };
-
+    console.log('addData', this.additionalData);
     const mainStore = useMainStore();
     // select target div and initialize graph
     const elem = document.getElementById(elemID) as HTMLElement;
     // construct Sigma main instance
-    const renderer = new Sigma(
-      this.graph,
-      elem,
-      {
-        nodeReducer: nodeReducer.bind(this),
-        edgeReducer: edgeReducer.bind(this),
-        zIndex: true, // enabling zIndex parameter
-        renderLabels: true, // do not render labels w/o hover
-        labelRenderedSizeThreshold: 999999,
-        edgeProgramClasses: {
-          ...DEFAULT_SETTINGS.edgeProgramClasses,
-          dashed: DashedEdgeProgram,
-        },
-        nodeProgramClasses: {
-          ...DEFAULT_SETTINGS.nodeProgramClasses,
-          image: getNodeImageProgram(),
-        },
-        hoverRenderer: drawHover,
-        labelRenderer: drawLabel,
-        getCameraSizeRatio: (x) => x,
-        clusterVis: 'ConvexHull',
+    const renderer = new Sigma(this.graph, elem, {
+      nodeReducer: nodeReducer.bind(this),
+      edgeReducer: edgeReducer.bind(this),
+      zIndex: true, // enabling zIndex parameter
+      renderLabels: true,
+      renderEdgeLabels: false,
+      labelRenderedSizeThreshold: 999999,
+      edgeProgramClasses: {
+        ...DEFAULT_SETTINGS.edgeProgramClasses,
+        dashed: BezierEdgeProgram,
+        line: BezierEdgeProgram,
+        helper: DontRender,
       },
-      this.additionalData
-    );
+      nodeProgramClasses: {
+        ...DEFAULT_SETTINGS.nodeProgramClasses,
+        image: NodeImageProgram,
+      },
+      defaultDrawNodeHover: drawHover,
+      defaultDrawNodeLabel: drawLabel,
+    });
     renderer.on('beforeRender', () => {
       zoomLod.bind(this)();
-      filterElements.bind(this)();
+      this.filter.filterElements();
     });
-
-    // TODO: from events example:
+    renderer.on('afterRender', () => {
+      this.drawPolygons(
+        this.polygonLayerID,
+        this.containerID,
+        this.lastClickedClusterNode == -1
+          ? this.clusterData.normalHullPoints
+          : this.clusterData.focusHullPoints,
+        this.clusterData.clusterColors
+      );
+    });
+    renderer.on('clickStage', () => {
+      console.log('clickStage');
+    });
+    //TODO: from events example:
     renderer.on('enterNode', ({ node }) => {
-      // console.log('Entering: ', node)
-      this.highlighedNodesHover = new Set(this.graph.neighbors(node));
-      this.highlighedNodesHover.add(node);
+      console.log('Entering: ', node);
+      this.highlightedNodesHover = new Set(this.graph.neighbors(node));
+      this.highlightedNodesHover.add(node);
       this.highlightedCenterHover = node;
-      this.highlighedEdgesHover = new Set(this.graph.edges(node));
+      this.highlightedEdgesHover = new Set(this.graph.edges(node));
       renderer.refresh();
     });
 
     renderer.on('leaveNode', () => {
-      this.highlighedNodesHover.clear();
-      this.highlighedEdgesHover.clear();
+      this.highlightedNodesHover.clear();
+      this.highlightedEdgesHover.clear();
       this.highlightedCenterHover = '';
       renderer.refresh();
     });
 
     renderer.on('clickNode', ({ node, event }) => {
+      console.log('clickNode', node, event);
       if (this.graph.getNodeAttribute(node, 'nodeType') != 'cluster') {
         if (event.original.ctrlKey) {
           mainStore.selectPathwayCompare([node]);
         } else if (event.original.altKey) {
-          // TODO Get working again
-          // if (this.shortestPathClick.length === 2) this.shortestPathClick.pop();
-          // this.shortestPathClick.push(node);
-          // if (this.shortestPathClick.length === 2) {
-          //   this.shortestPathNodes = bidirectional(
-          //     this.graph,
-          //     this.shortestPathClick[0],
-          //     this.shortestPathClick[1]
-          //   ) as string[];
-          //   if (this.shortestPathNodes?.length > 0) {
-          //     this.shortestPathEdges = edgePathFromNodePath(
-          //       this.graph,
-          //       this.shortestPathNodes as string[]
-          //     );
-          //     console.log('shortest Path edges', this.shortestPathEdges);
-          //     mainStore.selectPathwayCompare(this.shortestPathNodes);
-          //   } else {
-          //     this.shortestPathClick = [];
-          //   }
-          // }
-          this.shortestPathClick = [];
-          this.shortestPathNodes = [];
-          this.shortestPathEdges = [];
           this.highlightedEdgesClick.clear();
           this.highlightedNodesClick.clear();
           this.highlightedNodesClick = new Set(this.graph.neighbors(node));
@@ -270,12 +296,12 @@ export default class OverviewGraph {
           if (
             !defocus &&
             attributes.id != node &&
-            attributes.modNum == parseInt(node) &&
+            attributes.clusterNum == parseInt(node) &&
             !attributes.isRoot
           ) {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
-            attributes.moduleFixed = true;
+            attributes.clusterFixed = true;
             attributes.zoomHidden = false;
             attributes.size = this.FOCUS_NODE_SIZE; // size behavíour is strange!
             attributes.nonHoverSize = this.FOCUS_NODE_SIZE;
@@ -283,42 +309,28 @@ export default class OverviewGraph {
             attributes.x = attributes.xOnClusterFocus;
             attributes.y = attributes.yOnClusterFocus;
             if (attributes.id != node) {
-              attributes.moduleHidden = true;
+              attributes.clusterHidden = true;
             } else {
-              attributes.moduleFixed = true;
+              attributes.clusterFixed = true;
               attributes.zoomHidden = false;
             }
           } else if (!attributes.isRoot) {
             attributes.x = attributes.layoutX;
             attributes.y = attributes.layoutY;
-            attributes.moduleFixed = false;
-            attributes.moduleHidden = false;
+            attributes.clusterFixed = false;
+            attributes.clusterHidden = false;
             attributes.size = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'cluster'
-              ? this.MODULE_DEFAULT_SIZE
-              : this.DEFAULT_SIZE;
+                ? this.CLUSTER_DEFAULT_SIZE
+                : this.DEFAULT_SIZE;
             attributes.nonHoverSize = attributes.isRoot
               ? this.ROOT_DEFAULT_SIZE
               : attributes.nodeType == 'cluster'
-              ? this.MODULE_DEFAULT_SIZE
-              : this.DEFAULT_SIZE;
+                ? this.CLUSTER_DEFAULT_SIZE
+                : this.DEFAULT_SIZE;
           }
         });
-
-        this.additionalData = defocus
-          ? Object.assign(this.additionalData, {
-              clusterAreas: {
-                hullPoints: this.clusterData.normalHullPoints,
-                greyValues: this.clusterData.greyValues,
-              },
-            })
-          : Object.assign(this.additionalData, {
-              clusterAreas: {
-                hullPoints: [this.clusterData.focusHullPoints[parseInt(node)]],
-                greyValues: [this.clusterData.greyValues[parseInt(node)]],
-              },
-            });
         this.lastClickedClusterNode = defocus ? -1 : parseInt(node);
       }
     });
@@ -339,6 +351,10 @@ export default class OverviewGraph {
     this.renderer.refresh();
     //this.hierarchyClickStack = [];
   }
+
+  /**
+   * Sets graphWidth to the different found in the nodes extent
+   */
   calculateGraphWidth() {
     const nodeXyExtent = nodeExtent(this.graph, ['x', 'y']);
     this.graphWidth = nodeXyExtent['x'][1] - nodeXyExtent['x'][0];
@@ -372,6 +388,11 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * Pushes a node layer in the specified direction, either radially inwards or outwards
+   * @param nodeLayer array of node ids for layer to be pushed
+   * @param direction direction in which to push
+   */
   pushNodeLayer(nodeLayer: string[], direction: 'in' | 'out') {
     const layerSubgraph = subgraph(this.graph, (nodeID, attr) => {
       return (
@@ -404,6 +425,12 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * performs the complete hierarchy step out with a given target node.
+   * moves the hierarchy level of the target node one step outwards displays the nodes one level further
+   * into the hierarchy and animates the nodes by applying the animation and attribute stack
+   * @param targetNode target for the hierarch step out
+   */
   hierarchyStepOut(targetNode: string) {
     const subPathwaysIds = this.graph.getNodeAttribute(targetNode, 'children');
     // check if any upcoming nodes are hierarchy nodes
@@ -441,6 +468,14 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * performs the complete stepout of the hierarchy collapsing lower levels and moving in the remaining layer closer the the center.
+   * Can be used with reset mode, collapsing to the initial state and in callback mode allowing additional functions to be executed after
+   * the step in.
+   * @param resetMode if reset mode should be triggered, returning the graph to its initial state
+   * @param callbackMode if callback mode should be enaled, allowing the use of a callback function to be triggered after the stepout
+   * @param callback  callback function to be called after the step out
+   */
   hierarchyStepIn(
     resetMode = false,
     callbackMode = false,
@@ -488,8 +523,8 @@ export default class OverviewGraph {
             resetMode
               ? this.hierarchyStepIn
               : callbackMode
-              ? callback
-              : undefined,
+                ? callback
+                : undefined,
             resetMode
               ? [this.hierarchyClickStack.length > 0, callbackMode, callback]
               : [undefined]
@@ -501,6 +536,11 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * collapses the hierarchy for the target node an the given level.
+   * @param targetNode target node to cllapse on
+   * @param levelIdx index of current level
+   */
   collapseHierarchyLevel(targetNode: string, levelIdx: number) {
     const currentLevel = this.hierarchyLevels[levelIdx];
     const lastClickedNode =
@@ -522,6 +562,11 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * layouts a hierarchy level after a step out.
+   * @param targetNode parent node for which the subtree should be layout as a new hierarchy level
+   * @param skipNode node id
+   */
   layoutNewHierarchyLevel(targetNode: string, skipNode = '') {
     /**
      * Calculate the position of the nodes in the hierarchy
@@ -560,9 +605,12 @@ export default class OverviewGraph {
       minDivisions: this.rootOrder,
     }) as LayoutMapping<{ [dimension: string]: number }>;
     this.animationStack = { ...this.animationStack, ...currentLevelPositions };
-    this.hierarchyEdgeAttributes(currentLevelGraph);
+    this.setHierarchyEdgeAttributes(currentLevelGraph);
   }
 
+  /**
+   * sets the attributes of all edges to hierarchy hidden
+   */
   //TODO: broken! e.g. wrong edge types
   resetHierarchyHidden() {
     this.graph.forEachEdge((edge, attributes) => {
@@ -574,6 +622,11 @@ export default class OverviewGraph {
     this.applyEdgeAttributeStack();
   }
 
+  /**
+   * Finds the first visible node higher in the hierarchy from the given node and returns its ID
+   * @param nodeID target node id for which to find the first visible parent
+   * @returns node ID of the first visible node
+   */
   getVisibleParent(nodeID: string): string {
     let currentParentNode = this.graph.getNodeAttribute(nodeID, 'parents')[0];
     let notFoundVisibleParent = true;
@@ -598,6 +651,9 @@ export default class OverviewGraph {
     return currentParentNode;
   }
 
+  /**
+   * set the visibile subtree attribute for hierarchy and root nodes. this indicates if any of the child-nodes are visible in the graph
+   */
   setVisibleSubtree(): void {
     const nonRegularNodes: string[] = [];
     this.graph.forEachNode((node) => {
@@ -617,6 +673,11 @@ export default class OverviewGraph {
     this.applyNodeAttributeStack();
   }
 
+  /**
+   * traverses the subtree of a given node and return if any of its children are visible
+   * @param nodeID  node id of node for which to traverse its subtree
+   * @returns boolean indicating
+   */
   hasVisibleSubtreeNodes(nodeID: string): boolean {
     const subtreeIds = [
       ...this.graph
@@ -628,14 +689,18 @@ export default class OverviewGraph {
       return !(
         currentAttributes.filterHidden ||
         currentAttributes.zoomHidden ||
-        currentAttributes.moduleHidden ||
+        currentAttributes.clusterHidden ||
         currentAttributes.hierarchyHidden
       );
     });
     return visibleNodeFound;
   }
 
-  hierarchyEdgeAttributes(graph: Graph) {
+  /**
+   * unhides edges of the now visible hierarcvhy nodes
+   * @param graph
+   */
+  setHierarchyEdgeAttributes(graph: Graph) {
     //this.resetHierarchyHidden();
     // hide rootRegular edges which are there as
     const checkNodes: string[] = [];
@@ -660,6 +725,9 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * Applies the nodes attribute stack to the graph
+   */
   applyNodeAttributeStack() {
     const nodeKeys = Object.keys(this.nodeAttributeStack);
     nodeKeys.forEach((node) => {
@@ -673,6 +741,9 @@ export default class OverviewGraph {
     this.nodeAttributeStack = {};
   }
 
+  /**
+   * Applies the edge attribute stack to the graph
+   */
   applyEdgeAttributeStack() {
     const edgeKeys = Object.keys(this.edgeAttributeStack);
     edgeKeys.forEach((edge) => {
@@ -685,6 +756,13 @@ export default class OverviewGraph {
     });
     this.edgeAttributeStack = {};
   }
+
+  /**
+   * Applies the animation stack to the graph
+   * @param animationOptions options of the sigma animation function
+   * @param callback callback to be executed after the animation has finished
+   * @param callbackArgs arguments to be passed to the callback function
+   */
 
   applyAnimationStack(
     animationOptions?: { [key: string]: string | number | boolean },
@@ -702,6 +780,11 @@ export default class OverviewGraph {
     );
   }
 
+  /**
+   * Adds changes to a nodes attributes to the attribute stack
+   * @param nodeID ID of the node
+   * @param attrs attributes of the node
+   */
   addNodeAttributeStack(
     nodeID: string,
     attrs: { [key: string]: string | number | boolean }
@@ -716,6 +799,11 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * Adds changes to an edges attributes to the attributes stack
+   * @param edgeID ID of the edge
+   * @param attrs attributes of the edge
+   */
   addEdgeAttributeStack(
     edgeID: string,
     attrs: { [key: string]: string | number | boolean }
@@ -730,6 +818,10 @@ export default class OverviewGraph {
     }
   }
 
+  /**
+   * Function which is bound the the onclick event handler of node. Wraps the step in and outs
+   * @param targetNode target node for which to execute the layouting
+   */
   hierarchyLayoutClickfunc(targetNode: string) {
     // if we click the root node when the hierarchy is partly built, we take a step back in the hierarchy
     if (
@@ -783,12 +875,11 @@ export default class OverviewGraph {
       clusterSizeScalingFactor: number;
     }
   ) {
-    const maxExt = 250;
     Object.keys(this.polygons).forEach((element) => {
       const polygonIdx = parseInt(element);
       const currentSubgraph = subgraph(this.graph, function (_nodeID, attr) {
         return (
-          attr.modNum == polygonIdx &&
+          attr.clusterNum == polygonIdx &&
           attr.isRoot == false &&
           attr.nodeType == 'regular'
         );
@@ -797,10 +888,12 @@ export default class OverviewGraph {
       currentSubgraph.forEachNode((node, attr) => {
         currentSubgraph.forEachNode((nodeInner, attrInner) => {
           if (node != nodeInner) {
+            const splitOuter = attr.rootId.split('_')[0];
+            const splitInner = attrInner.rootId.split('_')[0];
             if (!currentSubgraph.hasEdge(node, nodeInner)) {
               currentSubgraph.addEdge(node, nodeInner, {
                 weight:
-                  attr.rootId == attrInner.rootId
+                  splitOuter == splitInner
                     ? layoutParams.weightShared
                     : layoutParams.weightDefault,
               });
@@ -858,11 +951,12 @@ export default class OverviewGraph {
         attributes.layoutY = attributes.y;
       }
     });
+
     Object.keys(this.polygons).forEach((element) => {
       const polygonIdx = parseInt(element);
       const currentPolygon = this.polygons[polygonIdx];
 
-      const currentNodes = useMainStore().modules[polygonIdx];
+      const currentNodes = useMainStore().clusterData.clusters[polygonIdx];
 
       const polygonBB = currentPolygon.getBoundingBox();
       const minX = polygonBB.vertices[0][0];
@@ -879,64 +973,46 @@ export default class OverviewGraph {
         this.graph.setNodeAttribute(
           node,
           'xOnClusterFocus',
-          (maxExt * centeredX) / (maxXY - minXY)
+          (OverviewGraph.CLUSTER_EXTENT * centeredX) / (maxXY - minXY)
         );
         this.graph.setNodeAttribute(
           node,
           'yOnClusterFocus',
-          (maxExt * centeredY) / (maxXY - minXY)
+          (OverviewGraph.CLUSTER_EXTENT * centeredY) / (maxXY - minXY)
         );
       });
       this.graph.setNodeAttribute(
         polygonIdx,
         'xOnClusterFocus',
-        (maxExt * (minX - currentPolygon.getCenter()[0])) / (maxXY - minXY)
+        (OverviewGraph.CLUSTER_EXTENT *
+          (minX - currentPolygon.getCenter()[0])) /
+          (maxXY - minXY)
       );
       this.graph.setNodeAttribute(
         polygonIdx,
         'yOnClusterFocus',
-        (maxExt * (minY - currentPolygon.getCenter()[1])) / (maxXY - minXY)
+        (OverviewGraph.CLUSTER_EXTENT *
+          (minY - currentPolygon.getCenter()[1])) /
+          (maxXY - minXY)
       );
     });
   }
 
-  getModuleNodeIds() {
-    const moduleNodeMapping: {
-      [key: string]: {
-        ids: string[];
-        pos: number[][];
-        posOnClusterFocus: number[][];
-      };
-    } = {};
-    this.graph.forEachNode((node, attr) => {
-      if (!attr.isRoot) {
-        // short circuit eval. to generate the corresponding entry
-        !(attr.modNum in moduleNodeMapping) &&
-          (moduleNodeMapping[attr.modNum] = {
-            ids: [],
-            pos: [],
-            posOnClusterFocus: [],
-          });
-        moduleNodeMapping[attr.modNum].ids.push(attr.id);
-        moduleNodeMapping[attr.modNum].pos.push([attr.x, attr.y]);
-        moduleNodeMapping[attr.modNum].posOnClusterFocus.push([
-          attr.xOnClusterFocus,
-          attr.yOnClusterFocus,
-        ]);
-      }
-    });
-    return moduleNodeMapping;
-  }
-
-  addModuleOverviewNodes() {
+  /**
+   * Adds cluster overview nodes to the graph, using data from the pina storage and from class functions
+   */
+  addClusterOverviewNodes() {
     const mainStore = useMainStore();
-    const moduleNodeMapping = this.getModuleNodeIds();
-    const glyphs = generateGlyphs(mainStore.glyphData, 128, moduleNodeMapping);
-    for (const key in Object.keys(moduleNodeMapping)) {
-      const xPos = this.polygons[key].getCenter()[0]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[0]));
-      const yPos = this.polygons[key].getCenter()[1]; //_.mean(moduleNodeMapping[key].pos.map((elem) => elem[1]));
-      const moduleNode: overviewNodeAttr = {
-        name: key,
+    const glyphs = generateGlyphs(
+      mainStore.glyphData,
+      mainStore.getTimeSeriesMode(),
+      OverviewGraph.GLYPH_SIZE,
+      mainStore.clusterData.clusters
+    );
+    for (const key in mainStore.clusterData.clusters) {
+      const xPos = this.polygons[key].getCenter()[0]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[0]));
+      const yPos = this.polygons[key].getCenter()[1]; //_.mean(clusterNodeMapping[key].pos.map((elem) => elem[1]));
+      const clusterNode: overviewNodeAttr = {
         id: key,
         x: xPos,
         y: yPos,
@@ -946,63 +1022,72 @@ export default class OverviewGraph {
         preFa2Y: yPos,
         xOnClusterFocus: -50,
         yOnClusterFocus: -50,
-        modNum: parseInt(key),
+        clusterNum: parseInt(key),
         isRoot: false,
         zIndex: 1,
-        color: overviewColors.modules,
-        size: this.MODULE_DEFAULT_SIZE,
+        color: overviewColors.clusters,
+        size: this.CLUSTER_DEFAULT_SIZE,
         nodeType: 'cluster',
-        nonHoverSize: this.MODULE_DEFAULT_SIZE,
+        nonHoverSize: this.CLUSTER_DEFAULT_SIZE,
         fixed: false,
-        up: { x: xPos, y: yPos, gamma: 0 },
         type: 'image',
         label: `Cluster: ${key}`,
         image: glyphs[key],
-        imageLowRes: glyphs[key],
-        imageHighRes: glyphs[key],
-        imageLowZoom: glyphs[key],
+        imageHighDetail: glyphs[key],
+        imageLowDetail: glyphs[key],
         hidden: this.camera.ratio >= this.lodRatio ? false : true,
         hierarchyHidden: false,
         filterHidden: false,
         zoomHidden: this.camera.ratio >= this.lodRatio ? true : true,
-        moduleHidden: false,
-        moduleFixed: false,
+        clusterHidden: false,
+        clusterFixed: false,
         forceLabel: false,
-        averageTranscriptomics: 0,
-        averageProteomics: 0,
-        averageMetabolomics: 0,
-        transcriptomicsNodeState: { regulated: 0, total: 0 },
-        proteomicsNodeState: { regulated: 0, total: 0 },
-        metabolomicsNodeState: { regulated: 0, total: 0 },
+        fcAverages: {
+          transcriptomics: 0,
+          proteomics: 0,
+          metabolomics: 0,
+        },
+        nodeState: {
+          transcriptomics: { regulated: 0, total: 0 },
+          proteomics: { regulated: 0, total: 0 },
+          metabolomics: { regulated: 0, total: 0 },
+        },
         rootId: '',
         parents: [],
         children: [],
         subtreeIds: [],
         visibleSubtree: true,
       };
-      this.graph.addNode(key, moduleNode);
+      this.graph.addNode(key, clusterNode);
     }
   }
 
-  setSize(windowWidth: number) {
-    this.windowWidth = windowWidth;
+  /**
+   * changes the default sizes depending on the supplied parameter
+   */
+  setSize() {
+    const windowWidth =
+      document.getElementById(this.containerID)?.offsetWidth || 0;
     console.log('Window Size', windowWidth);
     if (windowWidth < 1000) {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 0.7;
-      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
-      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 0.7;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 0.7;
+      this.CLUSTER_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 0.7;
     } else if (windowWidth < 1950) {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 1;
-      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
-      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 1;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 1;
+      this.CLUSTER_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 1;
     } else {
       this.DEFAULT_SIZE = OverviewGraph.DEFAULT_SIZE * 2.5;
-      this.ROOT_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 2.5;
-      this.MODULE_DEFAULT_SIZE = OverviewGraph.MODULE_DEFAULT_SIZE * 2.5;
+      this.ROOT_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 2.5;
+      this.CLUSTER_DEFAULT_SIZE = OverviewGraph.CLUSTER_DEFAULT_SIZE * 2.5;
     }
     this.applySize();
   }
 
+  /**
+   * Applies node sizes to all nodes, depending on the type of node
+   */
   applySize() {
     this.renderer.getGraph().forEachNode((node, attr) => {
       switch (attr.nodeType) {
@@ -1019,8 +1104,8 @@ export default class OverviewGraph {
           attr.nonHoverSize = this.ROOT_DEFAULT_SIZE;
           break;
         case 'cluster':
-          attr.size = this.MODULE_DEFAULT_SIZE;
-          attr.nonHoverSize = this.MODULE_DEFAULT_SIZE;
+          attr.size = this.CLUSTER_DEFAULT_SIZE;
+          attr.nonHoverSize = this.CLUSTER_DEFAULT_SIZE;
           break;
         default:
           attr.size = this.DEFAULT_SIZE;
@@ -1029,19 +1114,17 @@ export default class OverviewGraph {
     });
   }
 
+  /**
+   * Function to reset the zoom level
+   */
   public resetZoom = resetZoom;
-  public setAverageFilter = setAverageFilter;
-  public setRootFilter = setRootFilter;
-  public setRootNegativeFilter = setRootNegativeFilter;
+
   /**
    * Refresehes sets current pathway to the version selected in the store
    */
   public refreshCurrentPathway() {
     const mainStore = useMainStore();
-    this.currentPathway = mainStore.pathwayDropdown.value;
-    this.shortestPathClick = [];
-    this.shortestPathNodes = [];
-    this.shortestPathEdges = [];
+    this.currentPathway = mainStore.selectedPathway;
     this.highlightedEdgesClick.clear();
     this.highlightedNodesClick.clear();
     if (this.currentPathway) {
@@ -1054,7 +1137,9 @@ export default class OverviewGraph {
     }
     this.renderer.refresh();
   }
-
+  public refreshRenderer() {
+    this.renderer.resize();
+  }
   /**
    * Kills the Graph instance
    */
@@ -1064,7 +1149,7 @@ export default class OverviewGraph {
 
   /**
    * Sets Pathways containing an intersection of the selected entities of interest
-   * @param val list of IDs defining the intersection
+   * @param val array of IDs defining the intersection
    */
   public setPathwaysContainingIntersecion(val: string[] = []) {
     this.pathwaysContainingIntersection = val;
@@ -1073,10 +1158,264 @@ export default class OverviewGraph {
 
   /**
    * Sets Pathways containing an union of the selected entities of interest
-   * @param val  lost of IDs defining the union
+   * @param val array of IDs defining the union
    */
   public setPathwaysContainingUnion(val: string[] = []) {
     this.pathwaysContainingUnion = val;
     this.renderer.refresh();
+  }
+
+  setShowAllEdges(val: boolean) {
+    this.showAllEdges = val;
+    this.renderer.refresh();
+  }
+  getShowBundling() {
+    return this.showBundling;
+  }
+  setShowBundling(val: boolean) {
+    this.showBundling = val;
+
+    const graph = this.renderer.getGraph();
+    const edgeKeys = this.renderer.getGraph().edges();
+    edgeKeys.forEach((key) => {
+      graph.setEdgeAttribute(key, 'showBundling', val);
+    });
+
+    this.renderer.refresh();
+  }
+
+  // for each cluster:
+  // picks the last node in the cluster,
+  // makes a helper-edge between that node
+  // and every other node in the cluster
+  generateHelperEdges() {
+    const graph = this.renderer.getGraph();
+    const clusterData = useMainStore().clusterData.clusters;
+
+    clusterData.forEach((currNodes) => {
+      // todo: check if this really works
+      const centerNode = currNodes.pop() as string;
+
+      const subClusters: { [key: string]: string[] } = {};
+
+      // find sub-clusters
+      currNodes.forEach((node) => {
+        if (subClusters[graph.getNodeAttribute(node, 'rootId')] === undefined) {
+          subClusters[graph.getNodeAttribute(node, 'rootId')] = [];
+        }
+        subClusters[graph.getNodeAttribute(node, 'rootId')].push(node);
+      });
+
+      // in each sub-cluster
+      Object.keys(subClusters).forEach((subClustersKey) => {
+        const subCluster = subClusters[subClustersKey];
+        const centerSubCluster = subCluster.pop() as string;
+
+        // connect all nodes to the center
+        subCluster.forEach((node) => {
+          if (!graph.hasEdge(centerSubCluster, node)) {
+            this.addHelperEdge(centerSubCluster, node);
+          }
+        });
+      });
+    });
+  }
+
+  dropHelperEdges() {
+    const graph = this.renderer.getGraph();
+    const edges = graph.edges();
+
+    edges.forEach((edge) => {
+      const type = graph.getEdgeAttribute(edge, 'type');
+      if (type === 'helper') {
+        graph.dropEdge(edge);
+      }
+    });
+  }
+
+  // generates a helper-edge that won't be rendered
+  addHelperEdge(sourceID: string, targetID: string) {
+    const entry1 = sourceID;
+    const entry2 = targetID;
+    const edge = {
+      key: `${sourceID}+${targetID}`,
+      source: entry1,
+      target: entry2,
+      undirected: true,
+      attributes: {
+        weight: 0,
+        len: 0,
+        lock: false,
+        skip: false,
+        source: entry1,
+        target: entry2,
+        bezeierControlPoints: [],
+        showBundling: true,
+        zIndex: 0,
+        hidden: true,
+        type: 'helper',
+        color: 'rgba(0,0,0,0.0)',
+      },
+    };
+    this.renderer
+      .getGraph()
+      .addEdgeWithKey(edge.key, edge.source, edge.target, edge.attributes);
+  }
+
+  // generates bezier control points based on the edge-path bundling algorithm
+  generateBezierControlPoints(k = 2, d = 2) {
+    console.log('generating bezier control points');
+    this.generateHelperEdges();
+
+    const graph = this.renderer.getGraph();
+    const dijkstraGraph = graph.copy();
+    const edgeKeys = this.renderer.getGraph().edges();
+    const skip: {
+      edgeKey: string;
+      source: string;
+      target: string;
+      attributes: Attributes;
+    }[] = [];
+
+    edgeKeys.forEach((key) => {
+      graph.setEdgeAttribute(key, 'bezeierControlPoints', []);
+      const edgeAttribs = graph.getEdgeAttributes(key);
+
+      graph.setEdgeAttribute(key, 'skip', false);
+      graph.setEdgeAttribute(key, 'lock', false);
+
+      // retriving & calculating necessary data
+      const source = edgeAttribs.source;
+      const target = edgeAttribs.target;
+
+      const sx = graph.getNodeAttribute(source, 'x');
+      const sy = graph.getNodeAttribute(source, 'y');
+
+      const tx = graph.getNodeAttribute(target, 'x');
+      const ty = graph.getNodeAttribute(target, 'y');
+
+      const dx = tx - sx;
+      const dy = ty - sy;
+      const len = (dx * dx + dy * dy) ** (1 / 2);
+
+      graph.setEdgeAttribute(key, 'len', len);
+      graph.setEdgeAttribute(key, 'weight', len ** d);
+    });
+
+    edgeKeys.sort(
+      (a, b) =>
+        graph.getEdgeAttribute(b, 'weight') -
+        graph.getEdgeAttribute(a, 'weight')
+    ); // sorting edgeKeys by weight descending
+
+    edgeKeys.forEach((edgeKey) => {
+      const t0 = performance.now();
+      const edge = graph.getEdgeAttributes(edgeKey);
+      if (edge.lock) {
+        return;
+      }
+      graph.setEdgeAttribute(edgeKey, 'skip', true);
+
+      const source = edge.source;
+      const target = edge.target;
+
+      skip.push({
+        edgeKey: edgeKey,
+        source: source,
+        target: target,
+        attributes: graph.getEdgeAttributes(edgeKey),
+      });
+      dijkstraGraph.dropEdge(edgeKey);
+      const t1 = performance.now();
+      // skip.forEach((edgeDict) => {
+      //   graph.dropEdge(edgeDict.edgeKey);
+      // });
+      const t2 = performance.now();
+      const nodePath = dijkstra.bidirectional(
+        dijkstraGraph,
+        source,
+        target,
+        'weight'
+      );
+      const t3 = performance.now();
+      // restore edges dropped for skip
+      // skip.forEach((edgeDict) => {
+      //   graph.addEdgeWithKey(
+      //     edgeDict.edgeKey,
+      //     edgeDict.source,
+      //     edgeDict.target,
+      //     edgeDict.attributes
+      //   );
+      // });
+      const t4 = performance.now();
+      let path = null;
+      if (nodePath != null) {
+        path = edgePathFromNodePath(graph, nodePath);
+      }
+
+      if (path === null) {
+        graph.setEdgeAttribute(edgeKey, 'skip', false);
+        skip.pop();
+        dijkstraGraph.addEdgeWithKey(
+          edgeKey,
+          source,
+          target,
+          graph.getEdgeAttributes(edgeKey)
+        );
+        return;
+      } else if (this.pathLength(path) > k * edge.len) {
+        graph.setEdgeAttribute(edgeKey, 'skip', false);
+        skip.pop();
+        dijkstraGraph.addEdgeWithKey(
+          edgeKey,
+          source,
+          target,
+          graph.getEdgeAttributes(edgeKey)
+        );
+        return;
+      }
+
+      path.forEach((pathEdge) => {
+        graph.setEdgeAttribute(pathEdge, 'lock', true);
+      });
+      const t5 = performance.now();
+      const nodeExtent = graphExtent(graph);
+      const normalizationFunction = createNormalizationFunction(nodeExtent);
+
+      // get vertecies of path
+      const vertices: number[] = [];
+      nodePath.forEach((pathNode) => {
+        const norm_xy: Coordinates = {
+          x: graph.getNodeAttribute(pathNode, 'x'),
+          y: graph.getNodeAttribute(pathNode, 'y'),
+        };
+        normalizationFunction.applyTo(norm_xy);
+        vertices.push(norm_xy.x, norm_xy.y);
+      });
+      const t6 = performance.now();
+      graph.setEdgeAttribute(edgeKey, 'bezeierControlPoints', vertices);
+      // console.log(
+      //   `edge ${edgeKey} took ${
+      //     t6 - t0
+      //   }ms to calculate bezier control points with subtimings of
+      //   ${t1 - t0}ms for skip
+      //   ${t2 - t1}ms for drop
+      //   ${t3 - t2}ms for dijkstra
+      //   ${t4 - t3}ms for restore
+      //   ${t5 - t4}ms for lock
+      //   ${t6 - t5}ms for vertices
+      //   `
+      // );
+    });
+
+    this.dropHelperEdges();
+  }
+
+  pathLength(path: string[]): number {
+    let path_len = 0;
+    path.forEach((edgeKey) => {
+      path_len += this.renderer.getGraph().getEdgeAttribute(edgeKey, 'len');
+    });
+    return path_len;
   }
 }

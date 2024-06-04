@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { filterValues } from '@/core/generalTypes';
+import { filterValues } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 import { computed, PropType } from 'vue';
 
 const emit = defineEmits(['update:filterValue']);

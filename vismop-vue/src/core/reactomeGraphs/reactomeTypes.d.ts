@@ -1,19 +1,49 @@
 // https://reactome.org/dev/diagram/pathway-diagram-specs for infos
-import { upDatedPos } from '@/core/graphTypes';
+// types describing data structures in the reactome json files and detail diagrams
 /*
 Basic Types
 */
 
-import { glyphData } from '../core/generalTypes';
+/**
+ * Type corresponding to all the information needed for the construction of a single pathway glyph
+ */
+/**
+ *  Type corresponding to a single pathway and one type of omics
+ */
+type omicsData = {
+  available: boolean;
+  measurements: measure[];
+  meanMeasure: number;
+  nodeState: { total: number; regulated: number };
+};
+
+/**
+ * Type corresponding to all the information needed for the construction of a single pathway glyph
+ */
+export type glyphData = {
+  pathwayID: string;
+  proteomics: omicsData;
+  metabolomics: omicsData;
+  transcriptomics: omicsData;
+};
 
 type form = {
   name: string;
   toplevelId: number[];
 };
 
+type regressionData = {
+  slope: number;
+  intercept: number;
+  r2: number;
+  p_value: number;
+  std_err: number;
+};
+
 type measure = {
   queryId: string;
   value: number;
+  regressionData: regressionData;
   name: string;
   forms: { [key: string]: form };
 };
@@ -29,8 +59,7 @@ type reactomeEntry = {
   };
   pathwayId: string;
   isCentral: boolean;
-  moduleNum: number;
-  up: upDatedPos;
+  clusterNum: number;
   rootId: string;
   initialPosX: number;
   initialPosY: number;
@@ -259,12 +288,12 @@ type layoutJSON = {
 Misc. classes needed for detail View.
 */
 
-type foldChangesByType = {
+type measureByType = {
   proteomics: { [key: number]: number };
   transcriptomics: { [key: number]: number };
   metabolomics: { [key: number]: number };
 };
 
-type foldChangesByID = {
+type measureById = {
   [key: number]: glyphData;
 };

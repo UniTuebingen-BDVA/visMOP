@@ -20,7 +20,7 @@ export function nodeReducer(
     const hidden =
       data.filterHidden ||
       data.zoomHidden ||
-      data.moduleHidden ||
+      data.clusterHidden ||
       data.hierarchyHidden;
     let lodCondition = false;
     let xDisplay: number | undefined = -100;
@@ -29,137 +29,54 @@ export function nodeReducer(
     const currentView = this.renderer.viewRectangle();
     xDisplay = this.renderer.getNodeDisplayData(node)?.x;
     yDisplay = this.renderer.getNodeDisplayData(node)?.y;
-
     if (!xDisplay) {
       xDisplay = -100;
     }
     if (!yDisplay) {
       yDisplay = -100;
     }
-    lodCondition =
-      this.renderer.getCamera().ratio < 0.4 &&
-      xDisplay >= currentView.x1 &&
-      xDisplay <= currentView.x2 &&
-      yDisplay >= currentView.y1 - currentView.height &&
-      yDisplay <= currentView.y2;
-
-    const lodImage = lodCondition ? data.imageHighRes : data.imageLowZoom;
+    lodCondition = this.renderer.getCamera().ratio < 0.4;
+    // for some reason getNodeDisplayData is not working normally so we omitt the frustum-culling
+    // &&
+    // xDisplay >= currentView.x1 &&
+    // xDisplay <= currentView.x2 &&
+    // yDisplay >= currentView.y1 - currentView.height &&
+    // yDisplay <= currentView.y2;
+    //console.log('lodCondition', lodCondition, xDisplay, yDisplay, currentView);
+    const lodImage = lodCondition ? data.imageHighDetail : data.imageLowDetail;
 
     // handle node size
 
     const nodeSize =
       this.highlightedCenterHover === node ||
-      this.highlighedNodesHover.has(node) ||
+      this.highlightedNodesHover.has(node) ||
       this.currentPathway === node.replace('path:', '')
         ? data.nonHoverSize + 4
         : data.nonHoverSize;
+    let color = 'white';
+    if (
+      this.highlightedCenterHover === node ||
+      this.currentPathway === node.replace('path:', '')
+    ) {
+      color = overviewColors.selected;
+    } else if (
+      this.highlightedNodesHover.has(node) ||
+      this.highlightedNodesClick.has(node)
+    ) {
+      color = overviewColors.highlight;
+    } else if (
+      this.pathwaysContainingIntersection.includes(node.split('_')[0])
+    ) {
+      color = overviewColors.intersection;
+    } else if (this.pathwaysContainingUnion.includes(node.split('_')[0])) {
+      color = overviewColors.union;
+    }
 
-    // shortest Path
-    if (this.shortestPathNodes?.length > 0) {
-      if (!data.visibleSubtree) {
-        return {
-          ...data,
-          hidden: hidden,
-          image: lodImage,
-          color: overviewColors.noVisibleSubtree,
-        };
-      }
-      if (this.shortestPathClick.includes(node)) {
-        return {
-          ...data,
-          color: overviewColors.shortestPathClick,
-          zindex: 1,
-          size: data.size + 2,
-          image: lodImage,
-          hidden: hidden,
-        };
-      }
-      if (this.shortestPathNodes.includes(node)) {
-        return {
-          ...data,
-          color: overviewColors.onShortestPath,
-          zindex: 1,
-          size: data.nonHoverSize,
-          image: lodImage,
-          hidden: hidden,
-        };
-      } else {
-        return {
-          ...data,
-          color: overviewColors.default,
-          size: data.nonHoverSize - 2,
-          image: lodImage,
-          hidden: hidden,
-        };
-      }
-    }
-    if (this.shortestPathClick.includes(node)) {
-      return {
-        ...data,
-        color: overviewColors.shortestPathClick,
-        zindex: 1,
-        size: data.nonHoverSize + 2,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (
-      this.currentPathway === node.replace('path:', '') ||
-      this.highlightedCenterHover === node
-    ) {
-      return {
-        ...data,
-        color: overviewColors.selected,
-        zindex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (
-      this.pathwaysContainingIntersection.includes(node.replace('path:', ''))
-    ) {
-      return {
-        ...data,
-        color: overviewColors.intersection,
-        zindex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (this.pathwaysContainingUnion.includes(node.replace('path:', ''))) {
-      return {
-        ...data,
-        color: overviewColors.union,
-        zindex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (this.highlighedNodesHover.has(node)) {
-      return {
-        ...data,
-        color: overviewColors.highlight,
-        zIndex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
-    if (this.highlightedNodesClick.has(node)) {
-      return {
-        ...data,
-        color: overviewColors.highlight,
-        zIndex: 1,
-        size: nodeSize,
-        image: lodImage,
-        hidden: hidden,
-      };
-    }
     return {
       ...data,
+      color: color,
+      zIndex: 1,
+      nodeSize: nodeSize,
       hidden: hidden,
       image: lodImage,
     };
@@ -182,36 +99,21 @@ export function edgeReducer(
   data: Attributes
 ): Attributes {
   if (this.renderer) {
-    if (this.shortestPathNodes?.length > 0) {
-      if (this.shortestPathEdges?.includes(edge)) {
-        return {
-          ...data,
-          color: overviewColors.edgeShortestPath,
-          zIndex: 1,
-          size: 4,
-        };
-      } else {
-        return { ...data, size: 1 };
-      }
-    }
-    if (this.highlighedEdgesHover.has(edge)) {
-      return {
-        ...data,
-        color: overviewColors.edgesHighlight,
-        size: 4,
-        zIndex: 1,
-        hidden: false,
-      };
-    }
-    if (this.highlightedEdgesClick.has(edge)) {
-      return {
-        ...data,
-        color: overviewColors.edgesHighlight,
-        size: 1,
-        zIndex: 1,
-        hidden: false,
-      };
-    }
-    return { ...data, hidden: data.hierarchyHidden ? true : data.hidden };
+    const hidden =
+      this.highlightedEdgesHover.has(edge) ||
+      this.highlightedEdgesClick.has(edge) ||
+      this.showAllEdges
+        ? false
+        : true;
+    const width = this.highlightedEdgesHover.has(edge) ? 4 : 1;
+
+    const color = overviewColors.edgesHighlight;
+    return {
+      ...data,
+      hidden: hidden,
+      color: color,
+      size: width,
+      zIndex: 1,
+    };
   } else return data;
 }

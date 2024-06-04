@@ -92,6 +92,6 @@ def add_initial_positions(positions, nodes):
 
         nodes[k]["initialPosX"] = v[0]
         nodes[k]["initialPosY"] = v[1]
-        nodes[k]["moduleNum"] = v[2]
+        nodes[k]["clusterNum"] = v[2]
 
     return nodes

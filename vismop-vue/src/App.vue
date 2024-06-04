@@ -10,6 +10,7 @@
           </q-avatar>
           VisMOP
         </q-toolbar-title>
+        v0.1.1a
       </q-toolbar>
     </q-header>
 
@@ -48,6 +49,7 @@ export default {
 </script>
 <style>
 @import './css/networkGraph.css';
+@import './css/general.css';
 
 .limitToViewport {
   max-height: 100vh;

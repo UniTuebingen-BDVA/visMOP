@@ -1,0 +1,17 @@
+name: visMOPp3_11
+channels:
+  - conda
+dependencies:
+  - python=3.11
+  - flask
+  - flask-caching
+  - scikit-learn
+  - networkx
+  - openpyxl
+  - gunicorn
+  - redis-py
+  - numba
+  - pip
+  - pip:
+      - reactome2py
+      - git+https://github.com/lmcinnes/umap.git

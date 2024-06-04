@@ -7,6 +7,7 @@ dependencies:
   - scikit-learn
   - networkx
   - openpyxl
+  - gunicorn
   - pip
   - pip:
       - reactome2py

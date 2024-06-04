@@ -6,39 +6,36 @@ type typeExtractor<TarObj> = TarObj extends (infer U)[]
     : never
   : never;
 
+/**
+ * Type for QTable column
+ */
 // eslint-disable-next-line no-unused-vars
 type ColType = typeExtractor<QTableProps['columns']>;
 
+/**
+ * Type correspoinding to a single entity in one specific omics measurment
+ */
 type measureData = {
   name: string;
   value: number;
   queryID: string;
 };
 
-type omicsData = {
-  available: boolean;
-  foldChanges: measureData[];
-  meanFoldchange: number;
-  nodeState: { total: number; regulated: number };
-};
-
-export type glyphData = {
-  pathwayID: string;
-  proteomics: omicsData;
-  metabolomics: omicsData;
-  transcriptomics: omicsData;
-};
-
-export type filterValues = {
-  limits: {
-    min: number;
-    max: number;
+type LayoutSettings = {
+  transcriptomics: {
+    attributes: { text: string; value: string }[];
+    limits: number[];
   };
-  value: {
-    min: number;
-    max: number;
+  proteomics: {
+    attributes: { text: string; value: string }[];
+    limits: number[];
   };
-  filterActive: boolean;
-  inside: boolean;
-  disable: boolean;
+  metabolomics: {
+    attributes: { text: string; value: string }[];
+    limits: number[];
+  };
+  nonSpecific: {
+    attributes: { text: string; value: string }[];
+    limits: number[];
+  };
 };

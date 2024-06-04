@@ -70,7 +70,7 @@ afterwards run reactome mapping with two args for each of the \*2Reactome_PE_Pat
 In most cases this should be:
 
 ```
-python ./visMOP/python_scripts/reactome_mapping.py ./reactome_data UniProt2Reactome_PE_Pathway.txt
+python ./visMOP/python_scripts/reactome_mapping.py ./reactome_data/UniProt2Reactome_PE_Pathway.txt
 ```
 
 and repeat for the other (UniProt, ChEBI) files.
@@ -114,3 +114,8 @@ Mocha and Chai are already included es dev-dependencies
 ```
 npm run test
 ```
+
+local docker
+docker build -t vismop -f dockerfileFrontEndFlaskLocal . $(cat localSecrets.env | sed 's@^@--build-arg @g' | paste -s -d " ")
+docker compose --env-file localSecrets.env build
+docker compose --env-file localSecrets.env up

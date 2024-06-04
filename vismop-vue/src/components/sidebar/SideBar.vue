@@ -1,5 +1,6 @@
 <template>
   <q-list nav class="q-pa-sm">
+    <!-- DEPRECATED: For the time being, we only support one database
     <q-select
       v-model="targetDatabase"
       :options="targetDatabases"
@@ -8,6 +9,7 @@
       option-value="value"
       @update:model-value="setTargetDatabase"
     ></q-select>
+    -->
     <q-select
       v-model="targetOrganism"
       :options="targetOrganisms"
@@ -15,6 +17,15 @@
       option-label="text"
       option-value="value"
     ></q-select>
+    <!-- A toggle switch to switch between aggergate and individual time series mode-->
+    <q-toggle
+      v-model="timeseriesModeToggle"
+      :label="`Timeseries ${timeseriesModeToggle} Mode`"
+      color="primary"
+      :true-value="'fc'"
+      :false-value="'slope'"
+    ></q-toggle>
+    <q-separator />
     Selected Omics:
     {{ chosenOmics.length }}
     <!--
@@ -64,69 +75,56 @@
         @update:slider-value="(newVal) => (sliderValsMetabolomics = newVal)"
       ></omic-input>
       <q-separator />
+      <AttributeSelection
+        v-model:layout-settings="layoutAttributes"
+        :timeseries-mode-toggle="timeseriesModeToggle"
+        :layout-omics="layoutOmics"
+      ></AttributeSelection>
+      <!--Expansion Item "Advanced Settings" with one entry field for the cluster_min_size_quotient-->
       <q-expansion-item
-        label="Layout Attributes"
-        group="omicsSelect"
-        header-class="bg-primary text-white"
-        expand-icon-class="text-white"
-        icon="svguse:/icons/Metabolites.svg#metabolites|0 0 9 9"
+        dense
+        icon="settings"
+        label="Advanced Settings"
+        expand-icon-class="text-primary"
+        collapse-icon-class="text-primary"
       >
-        <q-card>
-          <q-card-section>
-            <q-select
-              v-model="currentLayoutOmic"
-              :options="layoutOmics"
-              label="Omic Type"
-            ></q-select>
-            <div v-if="currentLayoutOmic != ''">
-              <q-select
-                v-model="chosenLayoutAttributes"
-                :options="layoutAttributes"
-                label="Attributes"
-                use-chips
-                clearable
-                multiple
-              >
-                <template #option="{ itemProps, opt, selected, toggleOption }">
-                  <q-item v-bind="itemProps">
-                    <q-item-section side>
-                      <q-checkbox
-                        :model-value="selected"
-                        @update:model-value="toggleOption(opt)"
-                      />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>{{ opt }}</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </template>
-              </q-select>
-              <div
-                v-if="currentLayoutOmic != 'not related to specific omic'"
-                class="row"
-              >
-                <q-input
-                  v-model.number="omicLimitMin"
-                  type="number"
-                  step="0.1"
-                  style="max-width: 130px"
-                  class="mt-4 ml-2"
-                  label="minimal FC limit"
-                  filled
-                />
-                <q-input
-                  v-model.number="omicLimitMax"
-                  type="number"
-                  step="0.1"
-                  style="max-width: 130px"
-                  class="mt-2 mr-2"
-                  label="maximal FC limit"
-                  filled
-                />
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
+        <q-input
+          v-model="cluster_min_size_quotient"
+          label="Cluster Min Size Quotient"
+          type="number"
+          hint="Quotient influencing the minimum size of a cluster in relation to the number of nodes"
+          stack-label
+        />
+        <!-- Checkbox for "use UMAP before clustering", another checkbox with "automatic target dimensions" which is only enabled if the first one is ticked, and an input wich determines the number of target dimensions -->
+        <q-checkbox
+          v-model="useUMAP"
+          label="Use UMAP before clustering"
+          color="primary"
+        />
+        <q-checkbox
+          v-model="automaticClusterTargetDimensions"
+          label="Automatic target dimensions"
+          color="primary"
+          :disable="!useUMAP"
+        />
+        <q-input
+          v-model="clusterTargetDimensions"
+          label="Target dimensions"
+          type="number"
+          hint="Number of dimensions to which the data is projected before clustering"
+          stack-label
+          :disable="!useUMAP || automaticClusterTargetDimensions"
+        />
+
+        <!-- Input for cluster distance metrics -->
+        <q-select
+          v-model="umapDistanceMetric"
+          :options="umapDistanceMetrics"
+          label="Cluster distance metric"
+          option-label="text"
+          option-value="value"
+          :disable="!useUMAP"
+        ></q-select>
       </q-expansion-item>
     </q-list>
     <q-btn @click="dataQuery">Plot</q-btn>
@@ -137,14 +135,11 @@
 import { ColType } from '@/core/generalTypes';
 import { useMainStore } from '@/stores';
 import { useQuasar } from 'quasar';
-import { ref, Ref, computed, watch, onMounted } from 'vue';
+import { ref, Ref, computed, watch } from 'vue';
 import OmicInput from './OmicInput.vue';
-interface layoutSettingsInterface {
-  'Transcriptomics ': { attributes: string[]; limits: number[] };
-  'Proteomics ': { attributes: string[]; limits: number[] };
-  'Metabolomics ': { attributes: string[]; limits: number[] };
-  'not related to specific omic ': { attributes: string[]; limits: number[] };
-}
+import AttributeSelection from './AttributeSelection.vue';
+import { LayoutSettings } from '@/core/generalTypes';
+
 const mainStore = useMainStore();
 
 const $q = useQuasar();
@@ -154,13 +149,18 @@ const targetOrganisms = ref([
   { text: 'Human', value: 'hsa' },
 ]);
 const targetOrganism = ref({ text: 'Human', value: 'hsa' });
-const targetDatabases = ref([{ text: 'Reactome', value: 'reactome' }]);
+//const targetDatabases = ref([{ text: 'Reactome', value: 'reactome' }]);
 const targetDatabase = ref({ text: 'Reactome', value: 'reactome' });
 
 const recievedTranscriptomicsData = ref(false);
 const recievedProteomicsData = ref(false);
 const recievedMetabolomicsData = ref(false);
-
+const cluster_min_size_quotient = ref(80);
+const useUMAP = ref(true);
+const automaticClusterTargetDimensions = ref(true);
+const clusterTargetDimensions = ref(2);
+const umapDistanceMetric = ref('correlation');
+const umapDistanceMetrics = ['correlation', 'euclidean', 'cosine'];
 const sliderValsTranscriptomics = ref(
   {} as {
     [key: string]: {
@@ -188,6 +188,22 @@ const sliderValsMetabolomics = ref(
     };
   }
 );
+
+const chosenOmics = computed((): string[] => {
+  const chosen = [];
+  if (recievedTranscriptomicsData.value) chosen.push('transcriptomics');
+  if (recievedProteomicsData.value) chosen.push('proteomics');
+  if (recievedMetabolomicsData.value) chosen.push('metabolomics');
+  return chosen;
+});
+
+const layoutOmics = computed(() => chosenOmics.value.concat(['nonSpecific']));
+
+const timeseriesModeToggle = computed({
+  get: () => mainStore.timeseriesModeToggle,
+  set: (value) => mainStore.setTimeSeriesToggle(value),
+});
+
 const transcriptomicsTableHeaders = computed(
   () => mainStore.tableHeaders.transcriptomics
 );
@@ -210,12 +226,14 @@ const transcriptomicsSymbolCol: Ref<ColType> = ref({
   field: '',
   align: undefined,
 });
-const transcriptomicsValueCol: Ref<ColType> = ref({
-  field: '',
-  label: '',
-  name: '',
-  align: undefined,
-});
+const transcriptomicsValueCol: Ref<ColType[]> = ref([
+  {
+    field: '',
+    label: '',
+    name: '',
+    align: undefined,
+  },
+]);
 
 const proteomicsSymbolCol: Ref<ColType> = ref({
   name: '',
@@ -223,12 +241,14 @@ const proteomicsSymbolCol: Ref<ColType> = ref({
   field: '',
   align: undefined,
 });
-const proteomicsValueCol: Ref<ColType> = ref({
-  field: '',
-  label: '',
-  name: '',
-  align: undefined,
-});
+const proteomicsValueCol: Ref<ColType[]> = ref([
+  {
+    field: '',
+    label: '',
+    name: '',
+    align: undefined,
+  },
+]);
 
 const metabolomicsSymbolCol: Ref<ColType> = ref({
   name: '',
@@ -236,93 +256,137 @@ const metabolomicsSymbolCol: Ref<ColType> = ref({
   field: '',
   align: undefined,
 });
-const metabolomicsValueCol: Ref<ColType> = ref({
-  field: '',
-  label: '',
-  name: '',
-  align: undefined,
-});
-const allOmicLayoutAttributes = [
-  'Number of values',
-  'Mean expression above limit',
-  '% values above limit',
-  'Mean expression below limit ',
-  '% values below limit ',
-  '% regulated',
-  '% unregulated',
-  '% with measured value',
-];
-const allNoneOmicAttributes = ['% values measured over all omics'];
-const availableOmics = [
-  'Transcriptomics ',
-  'Proteomics ',
-  'Metabolomics ',
-  'not related to specific omic ',
-];
-const layoutSettings = ref({
-  'Transcriptomics ': {
-    attributes: allOmicLayoutAttributes,
-    limits: [0.8, 1.2],
+const metabolomicsValueCol: Ref<ColType[]> = ref([
+  {
+    field: '',
+    label: '',
+    name: '',
+    align: undefined,
   },
-  'Proteomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
-  'Metabolomics ': { attributes: allOmicLayoutAttributes, limits: [0.8, 1.2] },
-  'not related to specific omic ': {
-    attributes: allNoneOmicAttributes,
-    limits: [0, 0],
+]);
+
+const commonDefault = [
+  { text: '% regulated', value: 'common_reg' },
+  { text: '% with measured value', value: 'common_measured' },
+];
+
+const timeseriesDefault = [
+  { text: 'Mean Slope above limit', value: 'timeseries_meanSlopeAbove' },
+  { text: 'Mean Slope below limit', value: 'timeseries_meanSlopeBelow' },
+  { text: '% slopes below limit', value: 'timeseries_percentSlopeBelow' },
+  { text: '% slopes above limit', value: 'timeseries_percentSlopeAbove' },
+  {
+    text: 'Mean standard error above limit',
+    value: 'timeseries_meanSeAbove',
   },
+  {
+    text: 'Mean standard error below limit',
+    value: 'timeseries_meanSeBelow',
+  },
+  {
+    text: '% standard error above limit',
+    value: 'timeseries_percentSeAbove',
+  },
+  {
+    text: '% standard error below limit',
+    value: 'timeseries_percentSeBelow',
+  },
+];
+
+const foldChangeDefault = [
+  { text: 'Mean expression above limit', value: 'fc_meanFcAbove' },
+  { text: '% values above limit', value: 'fc_percentFcAbove' },
+  { text: 'Mean expression below limit ', value: 'fc_meanFcBelow' },
+  { text: '% values below limit ', value: 'fc_percentFcBelow' },
+];
+
+const layoutAttributes: Ref<LayoutSettings> = ref({
+  transcriptomics: {
+    attributes:
+      timeseriesModeToggle.value == 'slope'
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
+  },
+  proteomics: {
+    attributes:
+      timeseriesModeToggle.value == 'slope'
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
+  },
+  metabolomics: {
+    attributes:
+      timeseriesModeToggle.value == 'slope'
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
+  },
+  nonSpecific: {
+    attributes: [
+      {
+        text: '% values measured over all omics',
+        value: 'nonOmic_percentMeasured',
+      },
+    ],
+    limits: [0.8, 1.2, -0.1, 0.1, 0.1, 0.5],
+  },
+} as LayoutSettings);
+
+watch(timeseriesModeToggle, () => {
+  setAttributeDefaults();
 });
-const omicLimitMin = ref(-1.3);
-const omicLimitMax = ref(1.3);
-const currentLayoutOmic = ref('');
-const layoutOmics = ref(['']);
-const chosenLayoutAttributes = ref(['']);
-const layoutAttributes = ref(['']);
-const chosenOmics = computed((): string[] => {
-  const chosen = [];
-  if (recievedTranscriptomicsData.value) chosen.push('Transcriptomics');
-  if (recievedProteomicsData.value) chosen.push('Proteomics');
-  if (recievedMetabolomicsData.value) chosen.push('Metabolomics');
-  return chosen;
-});
-watch(chosenOmics, () => {
-  layoutOmics.value = chosenOmics.value.concat([
-    'not related to specific omic',
-  ]);
-});
-watch(currentLayoutOmic, () => {
-  // change dropdown list Attributes
-  layoutAttributes.value =
-    currentLayoutOmic.value === 'not related to specific omic'
-      ? allNoneOmicAttributes
-      : allOmicLayoutAttributes;
-  chosenLayoutAttributes.value =
-    layoutSettings.value[
-      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-    ].attributes;
-  // change limits
-  const limits =
-    layoutSettings.value[
-      (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-    ].limits;
-  omicLimitMin.value = limits[0];
-  omicLimitMax.value = limits[1];
-});
-watch(omicLimitMin, () => {
-  layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-  ].limits[0] = omicLimitMin.value;
-});
-watch(omicLimitMax, () => {
-  layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-  ].limits[1] = omicLimitMax.value;
-});
-watch(chosenLayoutAttributes, () => {
-  // save choosen Layout attribute for omic
-  layoutSettings.value[
-    (currentLayoutOmic.value + ' ') as keyof layoutSettingsInterface
-  ].attributes = chosenLayoutAttributes.value;
-});
+
+const setAttributeDefaults = () => {
+  (layoutAttributes.value.transcriptomics.attributes =
+    timeseriesModeToggle.value == 'slope'
+      ? [
+          ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ...timeseriesDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+        ]
+      : [
+          ...commonDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+          ...foldChangeDefault.map((x) => ({ ...x, value: 't_' + x.value })),
+        ]),
+    (layoutAttributes.value.proteomics.attributes =
+      timeseriesModeToggle.value == 'slope'
+        ? [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...timeseriesDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ]
+        : [
+            ...commonDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+            ...foldChangeDefault.map((x) => ({ ...x, value: 'p_' + x.value })),
+          ]);
+  layoutAttributes.value.metabolomics.attributes =
+    timeseriesModeToggle.value == 'slope'
+      ? [
+          ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ...timeseriesDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+        ]
+      : [
+          ...commonDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+          ...foldChangeDefault.map((x) => ({ ...x, value: 'm_' + x.value })),
+        ];
+};
 
 const dataQuery = () => {
   if (targetDatabase.value.value === 'reactome') {
@@ -334,29 +398,41 @@ const queryReactome = () => {
   const mainStore = useMainStore();
   mainStore.resetStore();
   $q.loading.show();
+  const amtTimepoints = Math.max(
+    transcriptomicsValueCol.value.map((entry) => entry.field).length,
+    proteomicsValueCol.value.map((entry) => entry.field).length,
+    metabolomicsValueCol.value.map((entry) => entry.field).length
+  );
+  mainStore.setAmtTimepoints(amtTimepoints);
   const payload = {
     targetOrganism: targetOrganism.value,
     transcriptomics: {
+      amtTimesteps: transcriptomicsValueCol.value.map((entry) => entry.field)
+        .length,
       recieved: recievedTranscriptomicsData.value,
       symbol: transcriptomicsSymbolCol.value.field,
-      value: transcriptomicsValueCol.value.field,
+      value: transcriptomicsValueCol.value.map((entry) => entry.field),
     },
     proteomics: {
+      amtTimesteps: proteomicsValueCol.value.map((entry) => entry.field).length,
       recieved: recievedProteomicsData.value,
       symbol: proteomicsSymbolCol.value.field,
-      value: proteomicsValueCol.value.field,
+      value: proteomicsValueCol.value.map((entry) => entry.field),
     },
     metabolomics: {
+      amtTimesteps: metabolomicsValueCol.value.map((entry) => entry.field)
+        .length,
       recieved: recievedMetabolomicsData.value,
       symbol: metabolomicsSymbolCol.value.field,
-      value: metabolomicsValueCol.value.field,
+      value: metabolomicsValueCol.value.map((entry) => entry.field),
     },
     sliderVals: {
       transcriptomics: sliderValsTranscriptomics.value,
       proteomics: sliderValsProteomics.value,
       metabolomics: sliderValsMetabolomics.value,
     },
-    layoutSettings: layoutSettings.value,
+    timeseriesMode: mainStore.getTimeSeriesMode(),
+    layoutSettings: layoutAttributes.value,
   };
   fetch('/reactome_parsing', {
     method: 'POST',
@@ -371,20 +447,36 @@ const queryReactome = () => {
         alert(dataContent.ErrorMsg);
         return Promise.reject(dataContent.errorMsg);
       }
-      mainStore.setOmicsRecieved(dataContent.omicsRecieved);
-      mainStore.setUsedSymbolCols(dataContent.used_symbol_cols);
-      mainStore.setFCSReactome(dataContent.fcs);
+      mainStore.setOmicsRecieved({
+        transcriptomics: recievedTranscriptomicsData.value,
+        proteomics: recievedProteomicsData.value,
+        metabolomics: recievedMetabolomicsData.value,
+      });
+      mainStore.setUsedSymbolCols({
+        transcriptomics: transcriptomicsSymbolCol.value.field.toString(),
+        proteomics: proteomicsSymbolCol.value.field.toString(),
+        metabolomics: metabolomicsSymbolCol.value.field.toString(),
+      });
       mainStore.setKeggChebiTranslate(dataContent.keggChebiTranslate);
     })
     .then(() => getReactomeData());
 };
 
 const getReactomeData = () => {
+  const payload = {
+    timeseriesMode: mainStore.timeseriesModeToggle,
+    cluster_min_size_quotient: cluster_min_size_quotient.value,
+    useUMAP: useUMAP.value,
+    automaticClusterTargetDimensions: automaticClusterTargetDimensions.value,
+    clusterTargetDimensions: clusterTargetDimensions.value,
+    umapDistanceMetric: umapDistanceMetric.value,
+  };
   fetch('/reactome_overview', {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
+    body: JSON.stringify(payload),
   })
     .then((response) => response.json())
     .then((dataContent) => {
@@ -392,12 +484,12 @@ const getReactomeData = () => {
         return Promise.reject(dataContent.ErrorMsg);
       }
       mainStore.setOverviewData(dataContent.overviewData);
-      //for voronoiTest
-      //mainStore.setModuleAreas(dataContent.moduleAreas);
-      mainStore.setModules(dataContent.modules);
-      mainStore.setNoiseClusterExists(dataContent.noiseClusterExists);
-      mainStore.setModuleCenters(dataContent.moduleCenters);
-      mainStore.setPathwayLayoutingReactome(dataContent.pathwayLayouting);
+      mainStore.setClusterData(dataContent.clusterData);
+      mainStore.setPathwayList(dataContent.pathwayList);
+      mainStore.setQueryToPathwayDictionary(
+        dataContent.queryToPathwayDictionary
+      );
+      mainStore.setRootIds(dataContent.rootIds);
     })
     .then(
       () => $q.loading.hide(),
@@ -407,7 +499,7 @@ const getReactomeData = () => {
       }
     );
 };
-const setTargetDatabase = (inputVal: { text: string; value: string }) => {
-  mainStore.setTargetDatabase(inputVal.value);
-};
+// const setTargetDatabase = (inputVal: { text: string; value: string }) => {
+//   mainStore.setTargetDatabase(inputVal.value);
+// };
 </script>

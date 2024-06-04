@@ -1,10 +1,12 @@
-import _ from 'lodash';
 import * as d3 from 'd3';
 import { defineStore } from 'pinia';
-import { entry, graphData, networkxNodeLink } from '@/core/graphTypes';
-import { ColType, glyphData } from '@/core/generalTypes';
-import { reactomeEntry } from '@/core/reactomeGraphs/reactomeTypes';
-import { Loading } from 'quasar';
+import { graphData } from '@/core/graphTypes';
+import { ColType } from '@/core/generalTypes';
+import {
+  measure,
+  reactomeEntry,
+  glyphData,
+} from '@/core/reactomeGraphs/reactomeTypes';
 
 interface State {
   sideBarExpand: boolean;
@@ -21,57 +23,38 @@ interface State {
     proteomics: { [key: string]: string | number }[];
     metabolomics: { [key: string]: string | number }[];
   };
-
-  clickedNodes: {
-    id: string;
-    name: string;
-    fcTranscript: number;
-    fcProt: number;
-    delete: unknown;
-  }[];
-
   usedSymbolCols: {
     transcriptomics: string;
     proteomics: string;
     metabolomics: string;
   };
   graphData: graphData;
-  fcs: {
-    [key: string]: {
-      transcriptomics: number;
-      proteomics: number;
-      metabolomics: number;
-    };
-  };
-  fcsReactome: {
-    transcriptomics: { [key: string]: number };
-    proteomics: { [key: string]: number };
-    metabolomics: { [key: string]: number };
-  };
-  fcQuantiles: {
-    transcriptomics: number[];
-    proteomics: number[];
-    metabolomics: number[];
-  };
-  fcScales: {
+
+  fcColorScales: {
     transcriptomics: d3.ScaleDiverging<string, never>;
     proteomics: d3.ScaleDiverging<string, never>;
     metabolomics: d3.ScaleDiverging<string, never>;
   };
-  interactionGraphData: networkxNodeLink;
-  pathwayLayouting: {
-    pathwayList: [{ text: string; value: string; title: string }];
-    pathwayNodeDictionary: { [key: string]: string[] };
-    nodePathwayDictionary: { [key: string]: string[] };
-    pathwayNodeDictionaryClean: { [key: string]: (string | number)[] };
-    rootIds: string[];
+
+  slopeColorScales: {
+    transcriptomics: d3.ScaleDiverging<string, never>;
+    proteomics: d3.ScaleDiverging<string, never>;
+    metabolomics: d3.ScaleDiverging<string, never>;
   };
-  pathwayDropdown: { title: string; value: string; text: string };
+
+  pathwayList: [{ text: string; value: string; title: string }];
+  queryToPathwayDictionary: { [key: string]: string[] };
+  rootIds: string[];
+
+  selectedPathway: string;
+  detailDropdown: string;
   omicsRecieved: {
     proteomics: boolean;
     transcriptomics: boolean;
     metabolomics: boolean;
   };
+  amtTimepoints: number;
+  timeseriesModeToggle: 'slope' | 'fc';
   pathayAmountDict: {
     [key: string]: { genes: number; maplinks: number; compounds: number };
   };
@@ -83,10 +66,12 @@ interface State {
     url: { [key: string]: string };
     svg: { [key: string]: SVGElement };
   };
-  moduleAreas: [number[]];
-  modules: string[][];
-  noiseClusterExists: boolean;
-  moduleCenters: [number, number][];
+  clusterData: {
+    clusters: string[][];
+    noiseClusterExists: boolean;
+    clusterCenters: [number, number][];
+  };
+
   keggChebiTranslate: { [key: string]: string[] };
 }
 
@@ -95,7 +80,6 @@ export const useMainStore = defineStore('mainStore', {
     sideBarExpand: true,
     overviewData: {},
     targetDatabase: 'reactome',
-    clickedNodes: [],
     tableHeaders: { transcriptomics: [], proteomics: [], metabolomics: [] },
     tableData: { transcriptomics: [], proteomics: [], metabolomics: [] },
     usedSymbolCols: { transcriptomics: '', proteomics: '', metabolomics: '' },
@@ -105,138 +89,58 @@ export const useMainStore = defineStore('mainStore', {
       edges: [],
       options: null,
     },
-    fcs: {},
-    fcsReactome: { transcriptomics: {}, proteomics: {}, metabolomics: {} },
-    fcQuantiles: {
-      transcriptomics: [0, 0],
-      proteomics: [0, 0],
-      metabolomics: [0, 0],
-    },
-    fcScales: {
+
+    fcColorScales: {
       transcriptomics: d3.scaleDiverging(),
       proteomics: d3.scaleDiverging(),
       metabolomics: d3.scaleDiverging(),
     },
-    interactionGraphData: {
-      graph: { identities: [] },
-      nodes: [{}],
-      links: [{}],
+
+    slopeColorScales: {
+      transcriptomics: d3.scaleDiverging(),
+      proteomics: d3.scaleDiverging(),
+      metabolomics: d3.scaleDiverging(),
     },
-    pathwayLayouting: {
-      pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
-      pathwayNodeDictionary: {},
-      nodePathwayDictionary: {},
-      pathwayNodeDictionaryClean: {},
-      rootIds: [],
-    },
-    pathwayDropdown: { title: '', value: '', text: '' },
+
+    pathwayList: [{ text: 'empty', value: 'empty', title: 'empty' }],
+    queryToPathwayDictionary: {},
+    rootIds: [],
+
+    selectedPathway: '',
+    detailDropdown: '',
     omicsRecieved: {
       transcriptomics: false,
       proteomics: false,
       metabolomics: false,
     },
+    amtTimepoints: 0,
+    timeseriesModeToggle: 'fc',
     pathayAmountDict: {},
     pathwayCompare: [],
     glyphData: {},
     glyphs: { url: {}, svg: {} },
-    moduleAreas: [[]],
-    modules: [],
-    noiseClusterExists: false,
-    moduleCenters: [],
+    clusterData: {
+      clusters: [],
+      noiseClusterExists: false,
+      clusterCenters: [],
+    },
     keggChebiTranslate: {},
   }),
   actions: {
     resetStore() {
-      this.resetPathwayCompare();
-    },
-    addClickedNode(val: { queryID: string; name: string }) {
-      // TODO atm uniprot IDs will be used when no transcriptomics id is saved
-      // TODO multiIDs will not work at the moment
-      const idArray = val.queryID.split(';');
-      const enteredKeys = this.clickedNodes.map((row) => {
-        return row.id;
-      });
-      idArray.forEach((element) => {
-        try {
-          if (!enteredKeys.includes(element)) {
-            this.appendClickedNode(val);
-          }
-        } catch (error) {
-          console.log('click nodes: ', error);
-        }
-      });
-    },
-    addClickedNodeFromTable(row: { [key: string]: string }) {
-      const id = row[this.usedSymbolCols.proteomics];
-      const enteredKeys = this.clickedNodes.map((row) => {
-        return row.id;
-      });
-      try {
-        if (!enteredKeys.includes(id)) {
-          this.appendClickedNode({ queryID: id, name: '' });
-        }
-      } catch (error) {
-        console.log('click nodes: ', error);
-      }
-    },
-    appendClickedNode(val: { queryID: string; name: string }) {
-      let tableEntry = {
-        id: '',
-        name: '',
-        fcTranscript: -1,
-        fcProt: -1,
-        delete: val,
-      };
-      if (this.targetDatabase === 'reactome') {
-        tableEntry = {
-          id: val.queryID,
-          name: `${val.name}`,
-          fcTranscript: -1,
-          fcProt: this.fcsReactome.proteomics[val.queryID],
-          delete: val,
-        };
-      }
-      this.clickedNodes.push(tableEntry);
-    },
-    queryEgoGraps(val: number) {
-      Loading.show();
-      let ids: string[] = [];
-      if (this.targetDatabase === 'reactome') {
-        ids = this.clickedNodes.map((elem) => {
-          return elem.id;
-        });
-      }
-      fetch('/interaction_graph', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodes: ids, threshold: val }),
-      })
-        .then((response) => response.json())
-        .then((content) => {
-          this.interactionGraphData = content.interaction_graph;
-          Loading.hide();
-        });
-    },
-    setInteractionGraphData(val: networkxNodeLink) {
-      this.interactionGraphData = val;
-    },
-    removeClickedNode(val: string) {
-      const indexNode = this.clickedNodes
-        .map((row) => {
-          return row.id;
-        })
-        .indexOf(val);
-      if (indexNode > -1) {
-        this.clickedNodes.splice(indexNode, 1);
-      }
+      //this.$reset();
+      this.pathwayCompare = [];
     },
     setTargetDatabase(val: string) {
       this.targetDatabase = val;
     },
     setOverviewData(val: { [key: string]: reactomeEntry }) {
       this.overviewData = val;
+      this.setOmicsScales(val);
     },
-
+    setAmtTimepoints(val: number) {
+      this.amtTimepoints = val;
+    },
     setOmicsTableHeaders(
       payload: ColType[],
       omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
@@ -273,7 +177,7 @@ export const useMainStore = defineStore('mainStore', {
                 chebiIDs.forEach((element: string) => {
                   try {
                     pathwaysContaining.push(
-                      ...this.pathwayLayouting.nodePathwayDictionary[element]
+                      ...this.queryToPathwayDictionary[element]
                     );
                   } catch (error) {
                     //
@@ -281,12 +185,10 @@ export const useMainStore = defineStore('mainStore', {
                 });
               }
             } else {
-              pathwaysContaining =
-                this.pathwayLayouting.nodePathwayDictionary[symbol];
+              pathwaysContaining = this.queryToPathwayDictionary[symbol];
             }
           } else {
-            pathwaysContaining =
-              this.pathwayLayouting.nodePathwayDictionary[symbol];
+            pathwaysContaining = this.queryToPathwayDictionary[symbol];
           }
           row._reserved_available = pathwaysContaining
             ? pathwaysContaining.length
@@ -300,6 +202,14 @@ export const useMainStore = defineStore('mainStore', {
         }
       });
     },
+    setTimeSeriesToggle(val: 'slope' | 'fc') {
+      this.timeseriesModeToggle = val;
+    },
+    getTimeSeriesMode() {
+      return this.amtTimepoints > 1 && this.timeseriesModeToggle == 'slope'
+        ? 'slope'
+        : 'fc';
+    },
 
     setUsedSymbolCols(val: {
       transcriptomics: string;
@@ -311,212 +221,138 @@ export const useMainStore = defineStore('mainStore', {
     setGraphData(val: graphData) {
       this.graphData = val;
     },
-    setModuleAreas(val: [number[]]) {
-      this.moduleAreas = val;
-    },
-    setModules(val: string[][]) {
-      this.modules = val;
-    },
-    setNoiseClusterExists(val: boolean) {
-      this.noiseClusterExists = val;
-    },
-    setModuleCenters(val: [number, number][]) {
-      this.moduleCenters = val;
-    },
-    setFCS(val: {
-      [x: string]: {
-        transcriptomics: number;
-        proteomics: number;
-        metabolomics: number;
-      };
+    setClusterData(val: {
+      clusters: string[][];
+      noiseClusterExists: boolean;
+      clusterCenters: [number, number][];
     }) {
-      this.fcs = val;
-      const fcsTranscriptomics: number[] = [];
-      const fcsProteomics: number[] = [];
-      const fcsMetabolomics: number[] = [];
+      this.clusterData = val;
+    },
 
-      for (const key in val) {
-        const entry: {
-          transcriptomics: string | number;
-          proteomics: string | number;
-          metabolomics: string | number;
-        } = val[key];
-        if (!(typeof entry.transcriptomics === 'string')) {
-          fcsTranscriptomics.push(entry.transcriptomics);
-        }
-        if (!(typeof entry.proteomics === 'string')) {
-          fcsProteomics.push(entry.proteomics);
-        }
-        if (!(typeof entry.metabolomics === 'string')) {
-          fcsMetabolomics.push(entry.metabolomics);
-        }
+    /**
+     * reduce the reactome data to a single object containing all the measured data
+     * @param baseData
+     * @param omicsType
+     * @returns
+     */
+    reduceReactomeData(
+      baseData: { [key: string]: reactomeEntry },
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      return Object.keys(baseData)
+        .map((key) => baseData[key].entries[omicsType].measured)
+        .reduce(
+          (acc, cur) => ({ ...acc, ...cur }),
+          {} as { [key: string]: measure }
+        );
+    },
+
+    /**
+     * function to set the fold change scales for the omics data
+     * @param baseData
+     * @param omicsType
+     * @returns
+     */
+    generateFoldChangeScale(
+      baseData: { [key: string]: reactomeEntry },
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      const data = this.reduceReactomeData(baseData, omicsType);
+      const dataValues = Object.values(data).map((entry) => entry.value);
+      return this.generateQuantileColorscale(
+        dataValues,
+        d3.interpolateRdBu,
+        true
+      );
+    },
+
+    /**
+     * function to set the slope scales for the omics data
+     * @param baseData
+     * @param omicsType
+     * @returns
+     */
+    generateSlopeScale(
+      baseData: { [key: string]: reactomeEntry },
+      omicsType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+    ) {
+      const data = this.reduceReactomeData(baseData, omicsType);
+      const dataValues = Object.values(data).map((entry) => {
+        return entry.regressionData.slope;
+      });
+      return this.generateQuantileColorscale(dataValues, d3.interpolatePRGn);
+    },
+
+    /**
+     * function to generate a quantile colorscale
+     * @param dataValues
+     * @param interpolator
+     * @returns
+     */
+    generateQuantileColorscale(
+      dataValues: number[],
+      interpolator: (t: number) => string,
+      invert = false
+    ) {
+      const sortedValues = dataValues.sort((a, b) => a - b);
+
+      const colorScale = d3
+        .scaleDiverging(interpolator)
+        .domain([
+          d3.quantile(sortedValues, invert ? 0.95 : 0.05) as number,
+          (d3.quantile(sortedValues, 0.05) as number) < 0.0 ? 0.0 : 1.0,
+          d3.quantile(sortedValues, invert ? 0.05 : 0.95) as number,
+        ]);
+
+      return colorScale;
+    },
+
+    setOmicsScales(val: { [key: string]: reactomeEntry }) {
+      this.fcColorScales = {
+        transcriptomics: this.omicsRecieved.transcriptomics
+          ? this.generateFoldChangeScale(val, 'transcriptomics')
+          : d3.scaleDiverging(),
+        proteomics: this.omicsRecieved.proteomics
+          ? this.generateFoldChangeScale(val, 'proteomics')
+          : d3.scaleDiverging(),
+        metabolomics: this.omicsRecieved.metabolomics
+          ? this.generateFoldChangeScale(val, 'metabolomics')
+          : d3.scaleDiverging(),
+      };
+      if (this.getTimeSeriesMode() == 'slope') {
+        this.slopeColorScales = {
+          transcriptomics: this.omicsRecieved.transcriptomics
+            ? this.generateSlopeScale(val, 'transcriptomics')
+            : d3.scaleDiverging(),
+          proteomics: this.omicsRecieved.proteomics
+            ? this.generateSlopeScale(val, 'proteomics')
+            : d3.scaleDiverging(),
+          metabolomics: this.omicsRecieved.metabolomics
+            ? this.generateSlopeScale(val, 'metabolomics')
+            : d3.scaleDiverging(),
+        };
       }
-      const fcsTranscriptomicsAsc = fcsTranscriptomics.sort((a, b) => a - b);
-      const fcsProteomicsAsc = fcsProteomics.sort((a, b) => a - b);
-      const fcsMetabolomicsAsc = fcsMetabolomics.sort((a, b) => a - b);
-
-      // https://stackoverflow.com/a/55297611
-      const quantile = (arr: number[], q: number) => {
-        const pos = (arr.length - 1) * q;
-        const base = Math.floor(pos);
-        const rest = pos - base;
-        if (arr[base + 1] !== undefined) {
-          return arr[base] + rest * (arr[base + 1] - arr[base]);
-        } else {
-          return arr[base];
-        }
-      };
-      const quantTranscriptomics = [
-        quantile(fcsTranscriptomicsAsc, 0.05),
-        quantile(fcsTranscriptomicsAsc, 0.95),
-      ];
-      const quantProteomics = [
-        quantile(fcsProteomicsAsc, 0.05),
-        quantile(fcsProteomicsAsc, 0.95),
-      ];
-      const quantMetabolomics = [
-        quantile(fcsMetabolomicsAsc, 0.05),
-        quantile(fcsMetabolomicsAsc, 0.95),
-      ];
-
-      const colorScaleTranscriptomics = d3
-        .scaleDiverging((d) => d3.interpolateRdBu(1 - d))
-        .domain([
-          quantTranscriptomics[0],
-          quantTranscriptomics[0] < 0.0 ? 0.0 : 1.0,
-          quantTranscriptomics[1],
-        ]);
-      const colorScaleProteomics = d3
-        .scaleDiverging((d) => d3.interpolateRdBu(1 - d))
-        .domain([
-          quantProteomics[0],
-          quantProteomics[0] < 0.0 ? 0.0 : 1.0,
-          quantProteomics[1],
-        ]);
-      const colorScaleMetabolomics = d3
-        //.scaleDiverging(d3.interpolatePRGn) // try rdbu aswell
-        .scaleDiverging((d) => d3.interpolateRdBu(1 - d))
-        .domain([
-          quantMetabolomics[0],
-          quantProteomics[0] < 0.0 ? 0.0 : 1.0,
-          quantMetabolomics[1],
-        ]);
-
-      this.fcQuantiles = {
-        transcriptomics: quantTranscriptomics,
-        proteomics: quantProteomics,
-        metabolomics: quantMetabolomics,
-      };
-      this.fcScales = {
-        transcriptomics: colorScaleTranscriptomics,
-        proteomics: colorScaleProteomics,
-        metabolomics: colorScaleMetabolomics,
-      };
     },
-    setFCSReactome(val: {
-      transcriptomics: { [key: string]: number };
-      proteomics: { [key: string]: number };
-      metabolomics: { [key: string]: number };
-    }) {
-      this.fcsReactome = val;
-      const fcsTranscriptomicsAsc = Object.values(val.transcriptomics).sort(
-        (a, b) => a - b
-      );
-      const fcsProteomicsAsc = Object.values(val.proteomics).sort(
-        (a, b) => a - b
-      );
-      const fcsMetabolomicsAsc = Object.values(val.metabolomics).sort(
-        (a, b) => a - b
-      );
-      // https://stackoverflow.com/a/55297611
-      const quantile = (arr: number[], q: number) => {
-        const pos = (arr.length - 1) * q;
-        const base = Math.floor(pos);
-        const rest = pos - base;
-        if (arr[base + 1] !== undefined) {
-          return arr[base] + rest * (arr[base + 1] - arr[base]);
-        } else {
-          return arr[base];
-        }
-      };
-      const quantTranscriptomics = [
-        quantile(fcsTranscriptomicsAsc, 0.05),
-        quantile(fcsTranscriptomicsAsc, 0.95),
-      ];
-      const quantProteomics = [
-        quantile(fcsProteomicsAsc, 0.05),
-        quantile(fcsProteomicsAsc, 0.95),
-      ];
-      const quantMetabolomics = [
-        quantile(fcsMetabolomicsAsc, 0.05),
-        quantile(fcsMetabolomicsAsc, 0.95),
-      ];
-
-      const colorScaleTranscriptomics = d3
-        .scaleDiverging(d3.interpolateRdBu)
-        .domain([
-          quantTranscriptomics[1],
-          quantTranscriptomics[0] < 0.0 ? 0.0 : 1.0,
-          quantTranscriptomics[0],
-        ]);
-      const colorScaleProteomics = d3
-        .scaleDiverging(d3.interpolateRdBu)
-        .domain([
-          quantProteomics[1],
-          quantProteomics[0] < 0.0 ? 0.0 : 1.0,
-          quantProteomics[0],
-        ]);
-      const colorScaleMetabolomics = d3
-        .scaleDiverging(d3.interpolateRdBu)
-        .domain([
-          quantMetabolomics[1],
-          quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
-          quantMetabolomics[0],
-        ]);
-      // .scaleDiverging(d3.interpolatePRGn) // try rdbu aswell
-      // .domain([
-      //   quantMetabolomics[0],
-      //   quantMetabolomics[0] < 0.0 ? 0.0 : 1.0,
-      //   quantMetabolomics[1],
-      // ]);
-
-      this.fcQuantiles = {
-        transcriptomics: quantTranscriptomics,
-        proteomics: quantProteomics,
-        metabolomics: quantMetabolomics,
-      };
-      this.fcScales = {
-        transcriptomics: colorScaleTranscriptomics,
-        proteomics: colorScaleProteomics,
-        metabolomics: colorScaleMetabolomics,
-      };
+    setPathwayList(val: [{ text: string; value: string; title: string }]) {
+      this.pathwayList = val;
     },
-    setPathwayLayoutingReactome(val: {
-      pathwayList: [{ text: string; value: string; title: string }];
-      pathwayNodeDictionary: { [key: string]: string[] };
-      rootIds: string[];
-    }) {
-      this.pathwayLayouting = {
-        ...val,
-        nodePathwayDictionary: val.pathwayNodeDictionary,
-        pathwayNodeDictionaryClean: val.pathwayNodeDictionary,
-        rootIds: val.rootIds,
-      };
+    setQueryToPathwayDictionary(val: { [key: string]: string[] }) {
+      this.queryToPathwayDictionary = val;
+    },
+    setRootIds(val: string[]) {
+      this.rootIds = val;
     },
     focusPathwayViaOverview(val: { nodeID: string; label: string }) {
-      const valClean = val.nodeID.replace('path:', '');
-      this.pathwayDropdown = {
-        title: val.label,
-        value: valClean,
-        text: `${valClean}: ${val.label}`,
-      };
+      this.selectedPathway = val.nodeID.split('_')[0];
+      this.detailDropdown = val.nodeID;
     },
     focusPathwayViaDropdown(val: {
       title: string;
       value: string;
       text: string;
     }) {
-      this.pathwayDropdown = val;
+      this.selectedPathway = val.value.split('_')[0];
+      this.detailDropdown = val.value;
     },
 
     selectPathwayCompare(val: string[]) {
@@ -540,9 +376,6 @@ export const useMainStore = defineStore('mainStore', {
     removePathwayCompare(val: string) {
       const idx = this.pathwayCompare.findIndex((elem) => elem.pathway == val);
       this.pathwayCompare.splice(idx, 1);
-    },
-    resetPathwayCompare() {
-      this.pathwayCompare = [];
     },
     setKeggChebiTranslate(val: { [key: string]: string[] }) {
       this.keggChebiTranslate = val;

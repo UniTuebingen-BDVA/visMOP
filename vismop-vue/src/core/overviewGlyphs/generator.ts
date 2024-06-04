@@ -1,4 +1,4 @@
-import { glyphData } from '../generalTypes';
+import { glyphData } from '@/core/reactomeGraphs/reactomeTypes';
 import { HighDetailGlyph } from './highDetailGlyph';
 import { LowDetailGlyph } from './lowDetailGlyph';
 
@@ -10,6 +10,7 @@ import { LowDetailGlyph } from './lowDetailGlyph';
  */
 export function generateGlyphs(
   inputData: { [key: string]: glyphData },
+  targetMeasurement: 'fc' | 'slope',
   glyphType: typeof HighDetailGlyph | typeof LowDetailGlyph,
   diameter = 28
 ): {
@@ -22,7 +23,14 @@ export function generateGlyphs(
   for (const key in inputData) {
     const glyphData = inputData[key];
     const serializer = new XMLSerializer();
-    const currentGlyph = new glyphType(glyphData, false, idx, diameter, true);
+    const currentGlyph = new glyphType(
+      glyphData,
+      targetMeasurement,
+      false,
+      idx,
+      diameter,
+      true
+    );
     const glyphSVGstring = serializer.serializeToString(
       currentGlyph.generateGlyphSvg()
     );

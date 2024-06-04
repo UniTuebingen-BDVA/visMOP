@@ -12,18 +12,16 @@
           v-model="omicsFile"
           chips
           label=".xlsx File Input"
-          @update:model-value="fetchOmicsTable"
+          @update:model-value="setSheetOptions"
         ></q-file>
 
         <q-separator />
 
-        <q-input
-          v-model="sheetVal"
-          :rules="sheetRules"
-          label="Sheet Number"
-          :value="sheetVal"
-          :disable="$q.loading.isActive"
-        ></q-input>
+        <q-select
+          v-model="sheetSelection"
+          :options="sheetOptions"
+          label="Sheet Names"
+        ></q-select>
 
         <q-separator />
 
@@ -36,14 +34,32 @@
         ></q-select>
 
         <q-separator />
-
-        <q-select
-          v-model="valueColInternal"
-          :options="dropdownHeaders"
-          option-label="label"
-          option-value="name"
-          label="Value Col."
-        ></q-select>
+        <div
+          v-for="timepoint in [...Array(amtValueCols).keys()]"
+          :key="timepoint"
+        >
+          <q-select
+            v-model="valueColInternal[timepoint]"
+            :options="dropdownHeaders"
+            option-label="label"
+            option-value="name"
+            :label="'Value Col.' + timepoint"
+          ></q-select>
+        </div>
+        <div class="row">
+          <q-btn
+            flat
+            color="primary"
+            icon="fa-solid fa-plus"
+            @click="changeValueColAmt('+')"
+          />
+          <q-btn
+            flat
+            color="primary"
+            icon="fa-solid fa-minus"
+            @click="changeValueColAmt('-')"
+          />
+        </div>
         <q-separator />
         Input Filter:
         <div v-for="variable in slider" :key="variable.text" class="row">
@@ -96,6 +112,7 @@ import { computed, ref, defineProps, watch, defineEmits } from 'vue';
 import type { Ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { ColType } from '@/core/generalTypes';
+import * as Excel from 'exceljs';
 
 const emit = defineEmits([
   'update:recievedOmicsData',
@@ -111,7 +128,7 @@ const props = defineProps<{
     [x: string]: string | number;
   }[];
   symbolCol: ColType;
-  valueCol: ColType;
+  valueCol: ColType[];
   recievedOmicsData: boolean;
   sliderVals: {
     [key: string]: {
@@ -126,7 +143,7 @@ const mainStore = useMainStore();
 
 const $q = useQuasar();
 const omicsFile: Ref<File | null> = ref(null);
-const sheetVal = ref('0');
+const amtValueCols = ref(1);
 const dropdownHeaders = computed(() => {
   return props.tableHeaders.filter(
     (elem) =>
@@ -157,6 +174,31 @@ const slidersInternal = computed({
   get: () => props.sliderVals,
   set: (value) => emit('update:sliderValue', value),
 });
+
+const sheetSelection = ref('');
+const sheetOptions: Ref<string[]> = ref([]);
+
+const setSheetOptions = () => {
+  if (omicsFile.value) {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const data = reader.result as ArrayBuffer;
+      const workbook = new Excel.Workbook();
+      workbook.xlsx.load(data).then(
+        (workbookThen) => {
+          const sheetNames = workbookThen.worksheets.map((sheet) => sheet.name);
+          sheetOptions.value = sheetNames;
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+    };
+
+    reader.readAsArrayBuffer(omicsFile.value);
+  }
+};
 
 const slider = computed(() => {
   const outObj: {
@@ -217,19 +259,37 @@ watch(slider, () => {
   }
 });
 
-watch(sheetVal, () => {
+watch(sheetSelection, () => {
   fetchOmicsTable(omicsFile.value);
 });
+
+const changeValueColAmt = (type: '+' | '-') => {
+  if (type === '+') {
+    valueColInternal.value = [
+      ...valueColInternal.value,
+      {
+        field: '',
+        label: '',
+        name: '',
+        align: undefined,
+      },
+    ];
+    amtValueCols.value += 1;
+  } else if (type === '-' && amtValueCols.value > 1) {
+    amtValueCols.value -= 1;
+    valueColInternal.value.pop();
+  }
+};
 
 const fetchOmicsTable = (fileInput: File | null) => {
   mainStore.setOmicsTableHeaders([], props.omicsType);
   mainStore.setOmicsTableData([], props.omicsType);
   slidersInternal.value = {};
-  if (fileInput !== null && sheetVal.value) {
+  if (fileInput !== null && sheetSelection.value) {
     $q.loading.show();
     const formData = new FormData();
     formData.append('dataTable', fileInput);
-    formData.append('sheetNumber', sheetVal.value);
+    formData.append('sheetName', sheetSelection.value);
     fetch(`/${props.omicsType}_table`, {
       method: 'POST',
       headers: {},
@@ -250,7 +310,11 @@ const fetchOmicsTable = (fileInput: File | null) => {
           recievedOmicsDataInternal.value = true;
         }
       })
-      .then(() => $q.loading.hide());
+      .then(() => {
+        symbolColInternal.value = dropdownHeaders.value[0];
+        valueColInternal.value = [dropdownHeaders.value[1]];
+        $q.loading.hide();
+      });
   } else {
     // more errorhandling?
     recievedOmicsDataInternal.value = false;

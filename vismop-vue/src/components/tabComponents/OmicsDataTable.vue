@@ -44,12 +44,14 @@ const selectedEntriesComp = computed({
 });
 
 /* Store Variables */
-const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
+const queryToPathwayDictionary = computed(
+  () => mainStore.queryToPathwayDictionary
+);
 const tableData = computed(() => mainStore.tableData[props.omicsType]);
 const tableHeaders = computed(() => mainStore.tableHeaders[props.omicsType]);
 const usedSymbolCols = computed(() => mainStore.usedSymbolCols);
 const keggChebiTranslate = computed(() => mainStore.keggChebiTranslate);
-const selectedPathway = computed(() => mainStore.pathwayDropdown);
+const selectedPathway = computed(() => mainStore.selectedPathway);
 const targetDatabase = computed(() => mainStore.targetDatabase);
 
 /* watchers */
@@ -71,9 +73,9 @@ watch(selectedPathway, () => {
               chebiIDs.forEach((element) => {
                 try {
                   includedInSelectedPathway = selectedPathway.value
-                    ? pathwayLayouting.value.pathwayNodeDictionary[
-                        element
-                      ].includes(selectedPathway.value.value)
+                    ? queryToPathwayDictionary.value[element].includes(
+                        selectedPathway.value
+                      )
                     : false;
                 } catch (error) {
                   //
@@ -82,15 +84,15 @@ watch(selectedPathway, () => {
             }
           } else {
             includedInSelectedPathway = selectedPathway.value
-              ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                  selectedPathway.value.value
+              ? queryToPathwayDictionary.value[symbol].includes(
+                  selectedPathway.value
                 )
               : false;
           }
         } else {
           includedInSelectedPathway = selectedPathway.value
-            ? pathwayLayouting.value.pathwayNodeDictionary[symbol].includes(
-                selectedPathway.value.value
+            ? queryToPathwayDictionary.value[symbol].includes(
+                selectedPathway.value
               )
             : false;
         }

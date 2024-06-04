@@ -1,5 +1,0 @@
-https://reactome.org/download/current/UniProt2Reactome_PE_Pathway.txt
-https://reactome.org/download/current/Ensembl2Reactome_PE_Pathway.txt
-https://reactome.org/download/current/ChEBI2Reactome_PE_Pathway.txt
-https://reactome.org/download/current/ReactomePathwaysRelation.txt
-https://reactome.org/download/current/diagram.tgz

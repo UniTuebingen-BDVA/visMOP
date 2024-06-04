@@ -2,7 +2,7 @@ import { useMainStore } from '@/stores';
 import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import * as _ from 'lodash';
-import { glyphData } from '../generalTypes';
+import { glyphData } from '@/core/reactomeGraphs/reactomeTypes';
 import { glyphsNoValueGrey } from '@/core/colors';
 
 /**
@@ -13,6 +13,7 @@ export class LowDetailGlyph {
   private availableOmics = 0;
   private drawLabels = false;
   private glyphData: glyphData;
+  private accessor: 'value' | 'regressionData.slope';
   private diameter: number;
   private thirdCircle: number;
   private thirdCircleElement: number;
@@ -35,9 +36,10 @@ export class LowDetailGlyph {
 
   constructor(
     glyphData: glyphData,
+    targetMeasurement: 'fc' | 'slope',
     drawLabels: boolean,
     glyphIdx: number,
-    diameter: number,
+    imgWidth: number,
     pathwayCompare = true
   ) {
     const mainStore = useMainStore();
@@ -46,8 +48,13 @@ export class LowDetailGlyph {
     this.drawLabels = drawLabels;
     this.pathwayCompare = pathwayCompare;
     this.glyphIdx = glyphIdx;
-    this.diameter = diameter;
-
+    this.diameter = imgWidth - imgWidth / 10 - (this.drawLabels ? 7 : 0);
+    this.accessor =
+      targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
+    this.colorScales =
+      targetMeasurement === 'fc'
+        ? mainStore.fcColorScales
+        : mainStore.slopeColorScales;
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;
     if (this.glyphData.proteomics.available) this.availableOmics += 1;
     if (this.glyphData.metabolomics.available) this.availableOmics += 1;
@@ -55,10 +62,9 @@ export class LowDetailGlyph {
     this.thirdCircle = 2 * (Math.PI / this.availableOmics);
     this.thirdCircleElement = 1.8 * (Math.PI / this.availableOmics);
     this.circlePadding = 0.1 * (Math.PI / this.availableOmics);
-    this.width = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
+    this.width = imgWidth;
+    this.height = imgWidth;
     this.radius = this.diameter / 2;
-    this.colorScales = mainStore.fcScales;
     if (this.glyphData.transcriptomics.available) {
       this.prepareOmics('transcriptomics');
     }
@@ -77,15 +83,12 @@ export class LowDetailGlyph {
   prepareOmics(
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
-    this.glyphData[omicsType].foldChanges.sort((a, b) => a.value - b.value);
+    this.glyphData[omicsType].measurements.sort(
+      (a, b) => _.get(a, this.accessor) - _.get(b, this.accessor)
+    );
     const avgColor =
-      this.glyphData[omicsType].foldChanges.length > 0
-        ? this.colorScales[omicsType](
-            this.glyphData[omicsType].foldChanges.reduce(
-              (a, b) => a + b.value,
-              0
-            ) / this.glyphData[omicsType].foldChanges.length
-          )
+      this.glyphData[omicsType].measurements.length > 0
+        ? this.colorScales[omicsType](this.glyphData[omicsType].meanMeasure)
         : glyphsNoValueGrey;
     this.outerColors.push(avgColor);
     const startAngleVal =

@@ -1,16 +1,8 @@
 import { Attributes } from 'graphology-types';
-/**
- * Defines a set of edge attributes
- */
-type fadeEdgeAttr = Attributes & {
-  sourceColor: string;
-  targetColor: string;
-  zIndex: number;
-  fadeColor: string;
-  nonFadeColor: string;
-  type: string;
-};
 
+/**
+ * Set of attributes common to all edge types
+ */
 type baseEdgeAttr = Attributes & {
   type: string;
   zIndex: number;
@@ -27,20 +19,10 @@ type edge = {
   attributes: Attributes;
 };
 
-type detailNodeAttr = baseNodeAttr & {
-  origPos: { [key: string]: number[] };
-  secondaryColor: string;
-  outlineColor: string;
-  nonFadeColor: string;
-  nonFadeColorSecondary: string;
-  fadeColor: string;
-  fadeColorSecondary: string;
-  initialX: number;
-  initialY: number;
-};
-
+/**
+ * Attributes common to all node types
+ */
 type baseNodeAttr = {
-  name: string;
   id: string;
   x: number;
   y: number;
@@ -52,55 +34,6 @@ type baseNodeAttr = {
   label: string;
 };
 
-type overviewNodeAttr = baseNodeAttr & {
-  layoutX: number;
-  layoutY: number;
-  preFa2X: number;
-  preFa2Y: number;
-  yOnClusterFocus: number;
-  xOnClusterFocus: number;
-  modNum: number;
-  up: upDatedPos;
-  isRoot: boolean;
-  nodeType: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other';
-  nonHoverSize: number;
-  image: string;
-  imageLowRes: string;
-  imageHighRes: string;
-  imageLowZoom: string;
-  hidden: boolean;
-  hierarchyHidden: boolean;
-  filterHidden: boolean;
-  zoomHidden: boolean;
-  moduleHidden: boolean;
-  moduleFixed: boolean;
-  forceLabel: boolean;
-  averageTranscriptomics: number;
-  averageProteomics: number;
-  averageMetabolomics: number;
-  transcriptomicsNodeState: { regulated: number; total: number };
-  proteomicsNodeState: { regulated: number; total: number };
-  metabolomicsNodeState: { regulated: number; total: number };
-  rootId: string;
-  parents: string[];
-  children: string[];
-  subtreeIds: string[];
-  visibleSubtree: boolean;
-};
-
-type CartesianVector = {
-  x: number;
-  y: number;
-};
-/**
- * Defines a updated node position
- */
-type upDatedPos = {
-  x: number;
-  y: number;
-  gamma: number;
-};
-
 /**
  * Defines a node
  */
@@ -108,10 +41,6 @@ type node = {
   key: string;
   index: number;
   attributes: baseNodeAttr;
-};
-
-type overviewNode = node & {
-  attributes: overviewNodeAttr;
 };
 
 /**
@@ -125,67 +54,8 @@ type graphData = {
   options: unkown;
 };
 
-type hullPoints = number[][][];
-
-type additionalData = {
-  clusterAreas: {
-    hullPoints: hullPoints;
-    greyValues: number[];
-  };
-};
-
-type clusterData = {
-  normalHullPoints: hullPoints;
-  focusHullPoints: hullPoints;
-  greyValues: number[];
-};
 /**
- * Defines overview Graph Data
+ * defines a colors object
+ * @example  [255, 255, 255, 1.0]
  */
-type overviewGraphData = graphData & {
-  clusterData: clusterData;
-  nodes: overviewNode[];
-};
-
-type networkxNode = {
-  labelName: string;
-  key: string;
-  egoNode: string;
-  size: number;
-  identity: string;
-};
-type networkxNodeLink = {
-  graph: { identities: number[] };
-  nodes: networkxNode[];
-  links: [{ [key: string]: string }];
-};
-/**
- * Defines a graph relation
- */
-type relation = {
-  relationID: string;
-  source: string;
-  target: string;
-  relationType: string;
-  edgeType: string;
-};
-/**
- * Defines an graph entry
- */
-type entry = {
-  // seems Deprecated
-  moduleNum: number;
-  name: string;
-  entryType: string;
-  entryID: string;
-  isempty: boolean;
-  initialPosX: number;
-  initialPosY: number;
-  outgoingEdges: relation[];
-  outgoingOnceRemoved: relation[];
-  trascriptomicsValue: number | string;
-  proteomicsValue: number | string;
-  metabolomicsValue: number | string;
-  label: string;
-  origPos: { [key: string]: number[] };
-};
+type color = [number, number, number, number];

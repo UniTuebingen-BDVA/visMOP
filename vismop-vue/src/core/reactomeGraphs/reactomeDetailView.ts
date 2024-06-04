@@ -1,8 +1,8 @@
 import { useMainStore } from '@/stores';
 import * as d3 from 'd3';
 import {
-  foldChangesByID,
-  foldChangesByType,
+  measureById,
+  measureByType,
   layoutJSON,
   reactomeEdge,
   shape,
@@ -66,31 +66,40 @@ export default class ReactomeDetailView {
   private layoutData: layoutJSON;
   private graphData: graphJSON;
   private containerID: string;
-  private colorScaleTranscriptomics = useMainStore().fcScales.transcriptomics;
-  private colorScaleProteomics = useMainStore().fcScales.proteomics;
-  private colorScaleMetabolomics = useMainStore().fcScales.metabolomics;
-  private foldChanges: foldChangesByType;
-  private foldChangeReactome: foldChangesByID;
+  private foldChanges: measureByType;
+  private foldChangeReactome: measureById;
+  colorScales: {
+    transcriptomics: d3.ScaleDiverging<string, never>;
+    proteomics: d3.ScaleDiverging<string, never>;
+    metabolomics: d3.ScaleDiverging<string, never>;
+  };
+  targetMeasurement: 'fc' | 'slope';
   /**
    * Initializes the Reactome detail View
    * @param {layoutJSON} layoutData
    * @param {graphJSON} graphData
    * @param {string} containerID
    * @param {proteomics: {[key: number]: number}, transcriptomics:{[key: number]: number}, metabolomics:{[key: number]: number}} foldchanges
-   * @param {foldChangesByID} foldChangeReactome
+   * @param {measureById} measureById
    */
   constructor(
     layoutData: layoutJSON,
     graphData: graphJSON,
+    targetMeasurement: 'fc' | 'slope',
     containerID: string,
-    foldchanges: foldChangesByType,
-    foldChangeReactome: foldChangesByID
+    measureByType: measureByType,
+    measureById: measureById
   ) {
     this.containerID = containerID;
     this.layoutData = layoutData;
     this.graphData = graphData;
-    this.foldChanges = foldchanges; // by stable ID: R-MMU-12345
-    this.foldChangeReactome = foldChangeReactome; // by internal ID: 12345
+    this.foldChanges = measureByType; // by stable ID: R-MMU-12345
+    this.foldChangeReactome = measureById; // by internal ID: 12345
+    this.targetMeasurement = targetMeasurement;
+    this.colorScales =
+      targetMeasurement === 'fc'
+        ? useMainStore().fcColorScales
+        : useMainStore().slopeColorScales;
     const box = document.querySelector(containerID)?.getBoundingClientRect();
     const width = box?.width as number;
     const height = box?.height as number;
@@ -525,7 +534,7 @@ export default class ReactomeDetailView {
       .attr('d', (d) => this.proteinPath(d, 'left'))
       .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.transcriptomics
-          ? this.colorScaleTranscriptomics(
+          ? this.colorScales.transcriptomics(
               this.foldChanges.transcriptomics[d.reactomeId]
             )
           : colors[d.renderableClass]
@@ -545,7 +554,9 @@ export default class ReactomeDetailView {
       .attr('d', (d) => this.proteinPath(d, 'right'))
       .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.proteomics
-          ? this.colorScaleProteomics(this.foldChanges.proteomics[d.reactomeId])
+          ? this.colorScales.proteomics(
+              this.foldChanges.proteomics[d.reactomeId]
+            )
           : colors[d.renderableClass]
       )
       .append('title')
@@ -569,7 +580,7 @@ export default class ReactomeDetailView {
       const mainStore = useMainStore();
       // maybe save uniprot id when drawing?
       const uniprotID = self.graphData.nodes[d.reactomeId].identifier;
-      mainStore.addClickedNode({ queryID: uniprotID, name: d.displayName });
+      //mainStore.addClickedNode({ queryID: uniprotID, name: d.displayName });
     });
 
     enterG
@@ -680,11 +691,13 @@ export default class ReactomeDetailView {
       self.tooltipG.append(() => {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
-          true,
+          self.targetMeasurement,
+          false,
           d.reactomeId,
-          28,
+          64,
           false
         );
+        currentGlyph.setDrawLabels(true);
         return currentGlyph.generateGlyphSvg();
       });
     });
@@ -744,7 +757,7 @@ export default class ReactomeDetailView {
       .attr('d', (d) => this.proteinPath(d, 'left'))
       .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.transcriptomics
-          ? this.colorScaleTranscriptomics(
+          ? this.colorScales.transcriptomics(
               this.foldChanges.transcriptomics[d.reactomeId]
             )
           : colors[d.renderableClass]
@@ -764,7 +777,9 @@ export default class ReactomeDetailView {
       .attr('d', (d) => this.proteinPath(d, 'right'))
       .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.proteomics
-          ? this.colorScaleProteomics(this.foldChanges.proteomics[d.reactomeId])
+          ? this.colorScales.proteomics(
+              this.foldChanges.proteomics[d.reactomeId]
+            )
           : colors[d.renderableClass]
       )
       .append('title')
@@ -825,11 +840,13 @@ export default class ReactomeDetailView {
       self.tooltipG.append(() => {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
-          true,
+          self.targetMeasurement,
+          false,
           d.reactomeId,
-          28,
+          64,
           false
         );
+        currentGlyph.setDrawLabels(true);
         return currentGlyph.generateGlyphSvg();
       });
     });
@@ -930,11 +947,13 @@ export default class ReactomeDetailView {
       self.tooltipG.append(() => {
         const currentGlyph = new HighDetailGlyph(
           self.foldChangeReactome[d.reactomeId],
-          true,
+          self.targetMeasurement,
+          false,
           d.reactomeId,
-          28,
+          64,
           false
         );
+        currentGlyph.setDrawLabels(true);
         return currentGlyph.generateGlyphSvg();
       });
     });
@@ -981,7 +1000,7 @@ export default class ReactomeDetailView {
       .attr('stroke', lineColor)
       .attr('fill', (d) =>
         d.reactomeId in this.foldChanges.metabolomics
-          ? this.colorScaleMetabolomics(
+          ? this.colorScales.proteomics(
               this.foldChanges.metabolomics[d.reactomeId]
             )
           : colors[d.renderableClass]
@@ -1080,28 +1099,26 @@ export default class ReactomeDetailView {
     if (reactomeId in this.foldChangeReactome) {
       if (type === 'proteomics') {
         color =
-          this.foldChangeReactome[reactomeId].proteomics.meanFoldchange !== -100
-            ? this.colorScaleProteomics(
-                this.foldChangeReactome[reactomeId].proteomics.meanFoldchange
+          this.foldChangeReactome[reactomeId].proteomics.meanMeasure !== -100
+            ? this.colorScales.proteomics(
+                this.foldChangeReactome[reactomeId].proteomics.meanMeasure
               )
             : colors.Complex;
       }
       if (type === 'transcriptomics') {
         color =
-          this.foldChangeReactome[reactomeId].transcriptomics.meanFoldchange !==
+          this.foldChangeReactome[reactomeId].transcriptomics.meanMeasure !==
           -100
-            ? this.colorScaleTranscriptomics(
-                this.foldChangeReactome[reactomeId].transcriptomics
-                  .meanFoldchange
+            ? this.colorScales.transcriptomics(
+                this.foldChangeReactome[reactomeId].transcriptomics.meanMeasure
               )
             : colors.Complex;
       }
       if (type === 'metabolomics') {
         color =
-          this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange !==
-          -100
-            ? this.colorScaleMetabolomics(
-                this.foldChangeReactome[reactomeId].metabolomics.meanFoldchange
+          this.foldChangeReactome[reactomeId].metabolomics.meanMeasure !== -100
+            ? this.colorScales.metabolomics(
+                this.foldChangeReactome[reactomeId].metabolomics.meanMeasure
               )
             : colors.Complex;
       }

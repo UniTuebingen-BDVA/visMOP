@@ -2,7 +2,7 @@ import { useMainStore } from '@/stores';
 import * as d3 from 'd3';
 import { PieArcDatum } from 'd3-shape';
 import * as _ from 'lodash';
-import { glyphData } from '../generalTypes';
+import { glyphData } from '../reactomeGraphs/reactomeTypes';
 import { glyphsNoValueGrey } from '@/core/colors';
 
 /**
@@ -17,6 +17,7 @@ export class HighDetailGlyph {
   private pathwayCompare = false;
   private glyphIdx;
   private glyphData: glyphData;
+  private accessor: 'value' | 'regressionData.slope';
   private diameter: number;
   private thirdCircle: number;
   private thirdCircleElement: number;
@@ -74,9 +75,10 @@ export class HighDetailGlyph {
 
   constructor(
     glyphData: glyphData,
+    targetMeasurement: 'fc' | 'slope',
     drawLabels: boolean,
     glyphIdx: number,
-    diameter: number,
+    imgWidth: number,
     pathwayCompare = true
   ) {
     const mainStore = useMainStore();
@@ -85,7 +87,9 @@ export class HighDetailGlyph {
     this.drawLabels = drawLabels;
     this.pathwayCompare = pathwayCompare;
     this.glyphIdx = glyphIdx;
-    this.diameter = diameter;
+    this.diameter = imgWidth - imgWidth / 10 - (this.drawLabels ? 7 : 0);
+    this.accessor =
+      targetMeasurement === 'fc' ? 'value' : 'regressionData.slope';
 
     if (this.glyphData.transcriptomics.available) this.availableOmics += 1;
     if (this.glyphData.proteomics.available) this.availableOmics += 1;
@@ -95,12 +99,15 @@ export class HighDetailGlyph {
     this.thirdCircleElement = 1.8 * (Math.PI / this.availableOmics);
     this.circlePadding = 0.1 * (Math.PI / this.availableOmics);
     this.layerWidth = this.diameter / 7;
-    this.width = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + this.diameter / 5 + (this.drawLabels ? 7 : 0);
+    this.width = imgWidth;
+    this.height = imgWidth;
     this.outermostRadius = this.diameter / 2;
     this.firstLayer = this.outermostRadius - this.layerWidth;
     this.secondLayer = this.firstLayer - this.layerWidth;
-    this.colorScales = mainStore.fcScales;
+    this.colorScales =
+      targetMeasurement === 'fc'
+        ? mainStore.fcColorScales
+        : mainStore.slopeColorScales;
     if (this.glyphData.transcriptomics.available) {
       this.prepareOmics('transcriptomics');
     }
@@ -117,8 +124,8 @@ export class HighDetailGlyph {
    */
   setDrawLabels(val: boolean) {
     this.drawLabels = val;
-    this.width = this.diameter + (this.drawLabels ? 7 : 0);
-    this.height = this.diameter + (this.drawLabels ? 7 : 0);
+    this.width = this.diameter + (this.drawLabels ? 15 : 0);
+    this.height = this.diameter + (this.drawLabels ? 15 : 0);
     this.backroundArcDat = [];
     this.innerArcDat = [];
     this.outerArcDat = [];
@@ -148,7 +155,6 @@ export class HighDetailGlyph {
    * @returns SVGElement of the glyph
    */
   generateGlyphSvg(): SVGElement {
-    const mainStore = useMainStore();
     let svg;
     let labelG;
     let glyphG;
@@ -167,89 +173,6 @@ export class HighDetailGlyph {
         .attr('id', `glyph${this.glyphIdx}`)
         .attr('transform', `translate(${this.width / 2},${this.height / 2})`);
       glyphG = labelG.append('g');
-      // DOMMouseScroll seems to work in FF
-      glyphG.on('mouseenter', (event, _dat) => {
-        event.preventDefault();
-        const amtElems = d3
-          .select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .size();
-        this.highlightSection = 0 % amtElems;
-        d3.select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .data(this.outerArcDat)
-          .attr('fill-opacity', (d, i) => {
-            if (i === this.highlightSection) {
-              const label = d.name.split(' ')[0]; // more of a temp fix
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan1')
-                .attr(
-                  'class',
-                  label.length > textSmallThreshold
-                    ? label.length > textTinyThreshold
-                      ? 'glyphTextTiny'
-                      : 'glyphTextSmall'
-                    : 'glyphText'
-                )
-                .text(label);
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan2')
-                .text(d.fc.toFixed(3));
-              return 1.0;
-            } else return 0.2;
-          });
-      });
-      glyphG.on('mouseleave', (event, _dat) => {
-        this.highlightSection = 0;
-        d3.select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .attr('fill-opacity', (_d, _i) => {
-            d3.select(`#glyph${this.glyphIdx}`)
-              .select('#tspan1')
-              .attr('class', 'glyphText')
-              .text('Total:');
-            d3.select(`#glyph${this.glyphIdx}`)
-              .select('#tspan2')
-              .text(this.totalNodes);
-            return 1.0;
-          });
-      });
-      glyphG.on('wheel.zoom', (event, _dat) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const amtElems = d3
-          .select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .size();
-        this.highlightSection =
-          (((this.highlightSection + (event.wheelDelta > 0 ? 1 : -1)) %
-            amtElems) +
-            amtElems) %
-          amtElems;
-        d3.select(`#glyph${this.glyphIdx}`)
-          .selectAll('.foldArc')
-          .data(this.outerArcDat)
-          .attr('fill-opacity', (d, i) => {
-            if (i === this.highlightSection) {
-              const label = d.name.split(' ')[0]; // more of a temp fix
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan1')
-                .attr(
-                  'class',
-                  label.length > textSmallThreshold
-                    ? label.length > textTinyThreshold
-                      ? 'glyphTextTiny'
-                      : 'glyphTextSmall'
-                    : 'glyphText'
-                )
-                .text(label);
-              d3.select(`#glyph${this.glyphIdx}`)
-                .select('#tspan2')
-                .text(d.fc.toFixed(3));
-              return 1.0;
-            } else return 0.2;
-          });
-      });
     } else {
       svg = d3
         .create('svg')
@@ -279,10 +202,10 @@ export class HighDetailGlyph {
       .attr('d', arcOuter)
       .attr('fill', (_d, i) => this.outerColors[i])
       .attr('class', 'foldArc')
+      .attr('id', (_d, i) => `foldArc_${i}`)
       .attr('stroke-width', -2);
     if (!this.pathwayCompare) {
       arcSeg.on('click', (event, d) => {
-        mainStore.addClickedNode({ queryID: d.queryID, name: d.name });
         event.stopPropagation();
       });
     }
@@ -321,8 +244,8 @@ export class HighDetailGlyph {
     if (this.drawLabels) {
       const labelArcOmics = d3
         .arc<PieArcDatum<number>>()
-        .innerRadius(this.outermostRadius + 2)
-        .outerRadius(this.outermostRadius + 2);
+        .innerRadius(this.outermostRadius + 4)
+        .outerRadius(this.outermostRadius + 4);
       const labelArcRegulated = d3
         .arc<PieArcDatum<number>>()
         .innerRadius((this.firstLayer + this.secondLayer) * 0.5)
@@ -413,6 +336,92 @@ export class HighDetailGlyph {
         .attr('x', 0)
         .attr('dy', '1em')
         .text(this.totalNodes);
+
+      // DOMMouseScroll seems to work in FF
+      arcSeg.on('mouseenter', (event, _dat) => {
+        event.preventDefault();
+        //console.log('glyph mouseenter', event, _dat);
+        const amtElems = d3
+          .select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .size();
+        const current_Id = event.target.id.split('foldArc_')[1];
+        this.highlightSection = current_Id % amtElems;
+        d3.select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .data(this.outerArcDat)
+          .attr('fill-opacity', (d, i) => {
+            if (i === this.highlightSection) {
+              const label = d.name.split(' ')[0]; // more of a temp fix
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan1')
+                .attr(
+                  'class',
+                  label.length > textSmallThreshold
+                    ? label.length > textTinyThreshold
+                      ? 'glyphTextTiny'
+                      : 'glyphTextSmall'
+                    : 'glyphText'
+                )
+                .text(label);
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan2')
+                .text(d.fc.toFixed(3));
+              return 1.0;
+            } else return 0.2;
+          });
+      });
+      arcSeg.on('mouseleave', (_event, _dat) => {
+        this.highlightSection = 0;
+        d3.select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .attr('fill-opacity', (_d, _i) => {
+            d3.select(`#glyph${this.glyphIdx}`)
+              .select('#tspan1')
+              .attr('class', 'glyphText')
+              .text('Total:');
+            d3.select(`#glyph${this.glyphIdx}`)
+              .select('#tspan2')
+              .text(this.totalNodes);
+            return 1.0;
+          });
+      });
+      arcSeg.on('wheel.zoom', (event, _dat) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const amtElems = d3
+          .select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .size();
+        this.highlightSection =
+          (((this.highlightSection + (event.wheelDelta > 0 ? 1 : -1)) %
+            amtElems) +
+            amtElems) %
+          amtElems;
+        d3.select(`#glyph${this.glyphIdx}`)
+          .selectAll('.foldArc')
+          .data(this.outerArcDat)
+          .attr('fill-opacity', (d, i) => {
+            if (i === this.highlightSection) {
+              const label = d.name.split(' ')[0]; // more of a temp fix
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan1')
+                .attr(
+                  'class',
+                  label.length > textSmallThreshold
+                    ? label.length > textTinyThreshold
+                      ? 'glyphTextTiny'
+                      : 'glyphTextSmall'
+                    : 'glyphText'
+                )
+                .text(label);
+              d3.select(`#glyph${this.glyphIdx}`)
+                .select('#tspan2')
+                .text(d.fc.toFixed(3));
+              return 1.0;
+            } else return 0.2;
+          });
+      });
     }
     return svg.node() as SVGElement;
   }
@@ -447,16 +456,16 @@ export class HighDetailGlyph {
     omicsType: 'metabolomics' | 'proteomics' | 'transcriptomics'
   ): void {
     this.totalNodes += this.glyphData[omicsType].nodeState.total;
-    this.glyphData[omicsType].foldChanges.sort((a, b) => a.value - b.value);
-    const omicsColors = this.glyphData[omicsType].foldChanges.map((elem) =>
-      this.colorScales[omicsType](elem.value)
+    this.glyphData[omicsType].measurements.sort(
+      (a, b) => _.get(a, this.accessor) - _.get(b, this.accessor)
+    );
+    const omicsColors = this.glyphData[omicsType].measurements.map((elem) =>
+      this.colorScales[omicsType](_.get(elem, this.accessor))
     );
     this.outerColors.push(...omicsColors);
     const startAngleVal =
       this.addedElements * this.thirdCircle + this.circlePadding;
-    this.omicsAverages.push(
-      this.glyphData[omicsType].meanFoldchange.toFixed(3)
-    );
+    this.omicsAverages.push(this.glyphData[omicsType].meanMeasure.toFixed(3));
     const angleFCs = _.range(
       startAngleVal,
       startAngleVal +
@@ -482,9 +491,9 @@ export class HighDetailGlyph {
         startAngle: angleFCs[idx],
         endAngle: angleFCs[idx + 1],
         padAngle: 0,
-        name: this.glyphData[omicsType].foldChanges[idx].name,
-        fc: this.glyphData[omicsType].foldChanges[idx].value,
-        queryID: this.glyphData[omicsType].foldChanges[idx].queryID,
+        name: this.glyphData[omicsType].measurements[idx].name,
+        fc: _.get(this.glyphData[omicsType].measurements[idx], this.accessor),
+        queryID: this.glyphData[omicsType].measurements[idx].queryId,
       };
       this.outerArcDat.push(pushDat);
     });

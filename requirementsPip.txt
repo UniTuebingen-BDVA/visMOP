@@ -1,0 +1,11 @@
+Flask
+Flask-Caching
+gunicorn
+networkx
+openpyxl
+reactome2py
+redis
+pandas
+numpy
+scikit-learn
+umap-learn

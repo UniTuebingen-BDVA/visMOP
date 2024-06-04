@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { filterValues } from '@/core/generalTypes';
+import { filterValues } from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
 import { useMainStore } from '@/stores/index.js';
 import { computed, defineProps, defineEmits, PropType, ref, watch } from 'vue';
 import RegulationFilter from './RegulationFilter.vue';
@@ -207,8 +207,8 @@ const rootFilter = computed({
 });
 
 const rootFilterOptions = computed(() => {
-  const rootIDs = mainStore.pathwayLayouting.rootIds;
-  const pathways = mainStore.pathwayLayouting.pathwayList;
+  const rootIDs = mainStore.rootIds;
+  const pathways = mainStore.pathwayList;
   const options: { text: string; value: string; title: string }[] = [];
   rootIDs.forEach((v) => {
     const text = pathways.filter((d) => {

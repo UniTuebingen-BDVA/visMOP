@@ -1,0 +1,15 @@
+.lowestZ{
+ z-index: 0 !important; 
+}
+.mediumLowZ{
+  z-index: 2 !important;
+}
+.centerZ{
+  z-index: 4 !important;
+}
+.mediumHighZ{
+  z-index: 6 !important;
+}
+.highZ{
+  z-index: 8 !important;
+}

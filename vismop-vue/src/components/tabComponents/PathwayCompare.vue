@@ -30,12 +30,13 @@
                 <a
                   class="doc-link"
                   :href="
-                    'https://reactome.org/content/detail/' + element.pathway
+                    'https://reactome.org/content/detail/' +
+                    element.pathway.split('_')[0]
                   "
                   target="_blank"
                   rel="noopener"
                 >
-                  {{ element.pathway }}
+                  {{ element.pathway.split('_')[0] }}
                   <q-icon name="fa-solid fa-arrow-up-right-from-square" />
                 </a>
               </div>
@@ -44,9 +45,13 @@
           <div class="row justify-center">
             <div class="positionCardTitle">
               {{
-                pathwayLayouting.pathwayList.find(
-                  (elem) => elem.value === element.pathway
-                )?.title
+                pathwayList.find((elem) => elem.value === element.pathway)
+                  ?.title +
+                (amtTimepoints > 1
+                  ? ' ' +
+                    formatTime(element.pathway.split('_')[1]) +
+                    ' Timepoint'
+                  : '')
               }}
             </div>
           </div>
@@ -157,14 +162,15 @@
 <script setup lang="ts">
 import * as d3 from 'd3';
 import { useMainStore } from '@/stores';
-import { computed, nextTick, watch } from 'vue';
+import { computed, nextTick } from 'vue';
 import { Sortable } from 'sortablejs-vue3';
 
 const mainStore = useMainStore();
 
 const pathwayCompare = computed(() => mainStore.pathwayCompare);
-const glyphData = computed(() => mainStore.glyphData);
-const pathwayLayouting = computed(() => mainStore.pathwayLayouting);
+const amtTimepoints = computed(() => mainStore.amtTimepoints);
+//const glyphData = computed(() => mainStore.glyphData);
+const pathwayList = computed(() => mainStore.pathwayList);
 const glyphs = computed(() => mainStore.glyphs);
 
 const options = {
@@ -182,6 +188,18 @@ const appendGlyph = (pathway: string) => {
   nextTick(() => {
     d3.select(`#glyph${pathway}`).append(() => glyphs.value.svg[pathway]);
   });
+};
+
+const formatTime = (time: number) => {
+  if (time == 1) {
+    return '1st';
+  } else if (time == 2) {
+    return '2nd';
+  } else if (time == 3) {
+    return '3rd';
+  } else {
+    return time + 'th';
+  }
 };
 </script>
 <style>

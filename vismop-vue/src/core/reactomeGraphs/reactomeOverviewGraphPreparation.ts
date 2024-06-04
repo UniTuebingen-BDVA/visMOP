@@ -1,17 +1,16 @@
 import * as _ from 'lodash';
+import { edge, baseEdgeAttr, color } from '@/core/graphTypes';
 import {
-  edge,
-  baseEdgeAttr,
-  overviewNode,
   overviewGraphData,
-} from '@/core/graphTypes';
-import { reactomeEntry } from './reactomeTypes';
-import { glyphData } from '../generalTypes';
+  overviewNode,
+} from '@/core/reactomeGraphs/reactomeOverviewNetwork/overviewTypes';
+import { reactomeEntry, glyphData } from './reactomeTypes';
 import ClusterHulls from '@/core/layouting/convexHullsForClusters';
 import OverviewGraph from './reactomeOverviewNetwork/overviewNetwork';
 import { overviewColors } from '../colors';
 import { useMainStore } from '@/stores';
 import { ConvexPolygon } from '../layouting/ConvexPolygon';
+import { generateClusterGlyphData } from '@/core/overviewGlyphs/clusterGlyphGenerator';
 /**
  * Function generating a graph representation of multiomics data, to be used with sigma and graphology
  * @param nodeData list of node data
@@ -19,14 +18,12 @@ import { ConvexPolygon } from '../layouting/ConvexPolygon';
  */
 export function generateGraphData(
   nodeData: { [key: string]: reactomeEntry },
-  glyphs: { [key: string]: string },
-  glyphsHighres: { [key: string]: string },
-  glyphsLowZoom: { [key: string]: string },
+  glyphHighDetail: { [key: string]: string },
+  glyphsLowDetail: { [key: string]: string },
   glyphData: {
     [key: string]: glyphData;
   },
   rootIds: string[],
-  moduleAreas: [number[]] = [[]],
   voronoiPolygons: {
     [key: number]: ConvexPolygon;
   },
@@ -44,9 +41,9 @@ export function generateGraphData(
     nodes: [],
     edges: [],
     clusterData: {
-      normalHullPoints: [[[]]],
-      focusHullPoints: [[[]]],
-      greyValues: [],
+      normalHullPoints: {},
+      focusHullPoints: {},
+      clusterColors: {},
     },
     options: [],
   };
@@ -63,61 +60,62 @@ export function generateGraphData(
     }
   }
   let index = 0;
-  let maxModuleNum = 0;
+  let maxClusterNum = 0;
   for (const entryKey in nodeData) {
     const entry = nodeData[entryKey];
     const name = entry.pathwayName;
     const id = entry.pathwayId ? entry.pathwayId : 'noID';
     const initPosX = positionMapping[id] ? positionMapping[id].xInit : 0;
     const initPosY = positionMapping[id] ? positionMapping[id].yInit : 0;
-    const modNum = positionMapping[id] ? positionMapping[id].clusterIDx : 0;
-    maxModuleNum = Math.max(maxModuleNum, modNum);
+    const clusterNum = positionMapping[id] ? positionMapping[id].clusterIDx : 0;
+    maxClusterNum = Math.max(maxClusterNum, clusterNum);
     const currentNode: overviewNode = {
       key: id,
       index: index,
       // label: "",
       attributes: {
         type: 'image',
-        modNum: modNum,
-        image: glyphs[id],
-        imageLowRes: glyphs[id],
-        imageHighRes: glyphsHighres[id],
-        imageLowZoom: glyphsLowZoom[id],
-        name: _.escape(name),
+        clusterNum: clusterNum,
+        image: glyphHighDetail[id],
+        imageHighDetail: glyphHighDetail[id],
+        imageLowDetail: glyphsLowDetail[id],
         id: id,
         hidden: !entry.isCentral,
         filterHidden: false,
         zoomHidden: false,
-        moduleHidden: false,
-        moduleFixed: false,
+        clusterHidden: false,
+        clusterFixed: false,
         hierarchyHidden: !entry.isCentral,
         color:
           entry.rootId === entry.pathwayId
             ? overviewColors.roots
             : overviewColors.default,
-        label: `${_.escape(name)}`,
+        label: _.escape(name),
         forceLabel: !entry.isCentral,
-        averageTranscriptomics: glyphData[id].transcriptomics.available
-          ? glyphData[id].transcriptomics.meanFoldchange
-          : NaN,
-        averageProteomics: glyphData[id].proteomics.available
-          ? glyphData[id].proteomics.meanFoldchange
-          : NaN,
-        averageMetabolomics: glyphData[id].metabolomics.available
-          ? glyphData[id].metabolomics.meanFoldchange
-          : NaN,
-        transcriptomicsNodeState: glyphData[id].transcriptomics.available
-          ? glyphData[id].transcriptomics.nodeState
-          : { regulated: 0, total: 0 },
-        proteomicsNodeState: glyphData[id].proteomics.available
-          ? glyphData[id].proteomics.nodeState
-          : { regulated: 0, total: 0 },
-        metabolomicsNodeState: glyphData[id].metabolomics.available
-          ? glyphData[id].metabolomics.nodeState
-          : { regulated: 0, total: 0 },
+        fcAverages: {
+          transcriptomics: glyphData[id].transcriptomics.available
+            ? glyphData[id].transcriptomics.meanMeasure
+            : NaN,
+          proteomics: glyphData[id].proteomics.available
+            ? glyphData[id].proteomics.meanMeasure
+            : NaN,
+          metabolomics: glyphData[id].metabolomics.available
+            ? glyphData[id].metabolomics.meanMeasure
+            : NaN,
+        },
+        nodeState: {
+          transcriptomics: glyphData[id].transcriptomics.available
+            ? glyphData[id].transcriptomics.nodeState
+            : { regulated: 0, total: 0 },
+          proteomics: glyphData[id].proteomics.available
+            ? glyphData[id].proteomics.nodeState
+            : { regulated: 0, total: 0 },
+          metabolomics: glyphData[id].metabolomics.available
+            ? glyphData[id].metabolomics.nodeState
+            : { regulated: 0, total: 0 },
+        },
         x: initPosX, // Math.random() * 20,
         y: initPosY,
-        up: { x: initPosX, y: initPosY, gamma: 0 },
         layoutX: initPosX,
         layoutY: initPosX,
         preFa2X: initPosX,
@@ -135,10 +133,10 @@ export function generateGraphData(
           entry.rootId === entry.pathwayId
             ? 'root'
             : entry.isCentral
-            ? 'regular'
-            : entry.isOverview
-            ? 'hierarchical'
-            : 'other',
+              ? 'regular'
+              : entry.isOverview
+                ? 'hierarchical'
+                : 'other',
         size: !entry.isCentral
           ? OverviewGraph.ROOT_DEFAULT_SIZE
           : OverviewGraph.DEFAULT_SIZE,
@@ -172,6 +170,23 @@ export function generateGraphData(
         addEdge(entry.pathwayId, element, edgeType);
       }
     });
+
+    if (useMainStore().amtTimepoints > 1) {
+      const pathwayIdSplit = entry.pathwayId.split('_');
+      const pathwayBaseId = pathwayIdSplit[0];
+      const timePoint = pathwayIdSplit[1];
+
+      if (parseInt(timePoint) == 0) {
+        for (let idx = 0; idx < useMainStore().amtTimepoints - 1; idx++) {
+          addEdge(
+            pathwayBaseId + '_' + idx,
+            pathwayBaseId + '_' + (idx + 1),
+            'temporal'
+          );
+        }
+      }
+    }
+
     /*
     for (const [maplink] of Object.entries(entry.maplinks)) {
       if (!rootIds.includes(entry.pathwayId)) {
@@ -187,25 +202,121 @@ export function generateGraphData(
     } */
     index += 1;
   }
-  const maxExt = 250;
   const clusterHullsAdjustment = new ClusterHulls(60);
-  const clusterHulls = [] as number[][][];
-  const focusClusterHulls = [] as number[][][];
-  const greyValues = [] as number[];
-  const firstNoneNoiseCluster = useMainStore().noiseClusterExists ? 1 : 0;
-  // const totalNumHulls = moduleAreas.length;
+  const clusterHulls: { [key: number]: ConvexPolygon } = {};
+  const focusClusterHulls: { [key: number]: ConvexPolygon } = {};
+  const clusterColors: { [key: number]: color } = {};
+  const firstNoneNoiseCluster = useMainStore().clusterData.noiseClusterExists
+    ? 1
+    : 0;
+
+  const mainStore = useMainStore();
+  const clusterNodeMapping = mainStore.clusterData.clusters;
+  const clusterGlyphs = generateClusterGlyphData(
+    mainStore.glyphData,
+    clusterNodeMapping
+  );
+  const noiseClusterGreyValue = 250;
+  const maxBrightnessVoronoiColors = 230;
+
+  // Takes: clusterNum, omicType
+  // Returns: color of that omic type for the cluster
+  function clusterOmicsToColor(
+    clusterNum: number,
+    omicType: 'transcriptomics' | 'proteomics' | 'metabolomics'
+  ): color {
+    // TODO: This is a hack to get the color scale for the current measurement type
+    const targetMeasurement = 'fc';
+    const colorScales =
+      targetMeasurement === 'fc'
+        ? mainStore.fcColorScales
+        : mainStore.slopeColorScales;
+    const clusterMeanMeasure = clusterGlyphs[clusterNum][omicType].meanMeasure;
+
+    if (Number.isNaN(clusterMeanMeasure)) return [127, 127, 127, 1];
+
+    const clusterColor = colorScales[omicType](clusterMeanMeasure)
+      .replaceAll(/rgb\(|\)/gm, '')
+      .split(',');
+    return [
+      parseInt(clusterColor[0]),
+      parseInt(clusterColor[1]),
+      parseInt(clusterColor[2]),
+      1.0,
+    ];
+  }
+
+  function mixOmicsColors(omicColors: color[]): color {
+    const len = omicColors.length;
+    const outColor: color = [0, 0, 0, 0];
+    omicColors.forEach((color) => {
+      outColor[0] += color[0] / len;
+      outColor[1] += color[1] / len;
+      outColor[2] += color[2] / len;
+      outColor[3] += color[3] / len;
+    });
+    return outColor;
+  }
+
+  function lightenValue(
+    x: number,
+    minBrightness = 120,
+    maxBrightness = 255
+  ): number {
+    return minBrightness + ((maxBrightness - minBrightness) / 255) * x;
+  }
+  function lightenColor(color: color): color {
+    const threshold = maxBrightnessVoronoiColors;
+    const total = color[0] + color[1] + color[2];
+
+    const new_color: color = [
+      lightenValue(color[0]),
+      lightenValue(color[1]),
+      lightenValue(color[2]),
+      color[3],
+    ];
+    if (total > 3 * threshold) {
+      return [threshold, threshold, threshold, 1];
+    }
+    return new_color;
+  }
+  // const totalNumHulls = clusterAreas.length;
   //let clusterNum = totalNumHulls == nodes_per_cluster.length ? 0 : -1;
   let clusterNum = 0;
-  _.forEach(voronoiPolygons, (polygon) => {
+  Object.keys(voronoiPolygons).forEach((polygonKey) => {
+    const intPolygonKey = parseInt(polygonKey);
+    const polygon = voronoiPolygons[intPolygonKey];
     if (clusterNum > -1) {
       const hullAdjustment = clusterHullsAdjustment.adjustOneHull(
         polygon,
-        maxExt
+        OverviewGraph.CLUSTER_EXTENT
       );
-      const greyValue = clusterNum >= firstNoneNoiseCluster ? 150 : 250;
-      greyValues.push(greyValue);
-      clusterHulls.push(hullAdjustment.finalHullNodes);
-      focusClusterHulls.push(hullAdjustment.focusHullPoints);
+      const omicsRecieved = mainStore.omicsRecieved;
+      const omicColors: color[] = [];
+
+      if (clusterNum >= firstNoneNoiseCluster) {
+        for (const [omic, omicsVal] of Object.entries(omicsRecieved) as [
+          'transcriptomics' | 'proteomics' | 'metabolomics',
+          boolean,
+        ][]) {
+          if (omicsVal) {
+            omicColors.push(clusterOmicsToColor(clusterNum, omic));
+          }
+        }
+
+        const clusterColor = mixOmicsColors(omicColors);
+        const lighterColor = lightenColor(clusterColor);
+        clusterColors[intPolygonKey] = lighterColor;
+      } else {
+        clusterColors[intPolygonKey] = [
+          noiseClusterGreyValue,
+          noiseClusterGreyValue,
+          noiseClusterGreyValue,
+          1.0,
+        ];
+      }
+      clusterHulls[intPolygonKey] = hullAdjustment.finalHullNodes;
+      focusClusterHulls[intPolygonKey] = hullAdjustment.focusHullPoints;
     }
     clusterNum += 1;
   });
@@ -213,13 +324,19 @@ export function generateGraphData(
 
   graph.clusterData.normalHullPoints = clusterHulls;
   graph.clusterData.focusHullPoints = focusClusterHulls;
-  graph.clusterData.greyValues = greyValues;
+  graph.clusterData.clusterColors = clusterColors;
 
   //graph.nodes = norm_node_pos;
 
   return graph;
 }
 
+/**
+ * Determines the type of edge depending on the type of the source and target nodes
+ * @param type1 type of node one
+ * @param type2 type of node 2
+ * @returns
+ */
 function determineEdgeType(
   type1: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other',
   type2: 'root' | 'regular' | 'hierarchical' | 'cluster' | 'other'
@@ -265,10 +382,19 @@ function generateForceGraphEdge(
     target: entry2,
     undirected: true,
     attributes: {
+      weight: 0,
+      len: 0,
+      lock: false,
+      skip: false,
+      source: entry1,
+      target: entry2,
+      bezeierControlPoints: [],
+      showBundling: true,
       zIndex: 0,
-      hidden: true,
+      size: 2,
+      hidden: type === 'temporal' ? false : true,
       edgeType: type,
-      hierarchyHidden: true,
+      hierarchyHidden: type === 'temporal' ? false : true,
       type: type === 'maplink' ? 'dashed' : 'line',
       color:
         type === 'maplink'
