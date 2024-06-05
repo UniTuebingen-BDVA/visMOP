@@ -11,3 +11,11 @@ More specifically to find pathways in which the regulation of genes, proteins an
 For this, all measurements are mapped to Reactome pathways and meta-measurements are calculated for each pathway.
 Using clustering algorithms, the pathways are grouped into clusters of similar regulation patterns.
 The user can then explore these clusters and pathways in an interactive graph visualization.
+
+# Installation
+
+```bash
+docker build -t vismop -f dockerfileFrontEndFlask . $(cat localSecrets.env | sed 's@^@--build-arg=@g' | paste -s -d " ")
+docker compose --env-file localSecrets.env build
+docker compose --env-file localSecrets.env up // -d if you want to run the tool in the background
+```
